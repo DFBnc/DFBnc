@@ -28,6 +28,7 @@ import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.io.IOException;
 import java.util.Hashtable;
+import com.dmdirc.parser.IRCParser;
 
 /**
  * This socket handles actual clients connected to the bnc.
@@ -41,6 +42,18 @@ public class UserSocket extends ConnectedSocket {
 
 	/** This sockets info. */
 	private final String myInfo;
+	
+	/** Given username */
+	private String username = null;
+	/** Given realname */
+	private String realname = null;
+	/** Given nickname */
+	private String nickname = null;
+	/** Given password */
+	private String password = null;
+	
+	/** The Account object for this connect (This is null before authentication) */
+	private Account myAccount;
 	
 	/**
 	 * Create a new UserSocket.
@@ -74,7 +87,6 @@ public class UserSocket extends ConnectedSocket {
 	 */
 	public void socketOpened() {
 		sendLine("NOTICE AUTH :- Welcome to DFBnc ("+DFBnc.VERSION+")");
-		close();
 	}
 	
 	/**
@@ -93,6 +105,88 @@ public class UserSocket extends ConnectedSocket {
 	 * @param line Line to handle
 	 */
 	protected void processLine(final String line) {
-		// Woo!
+		// Tokenise the line
+		final String[] newLine = IRCParser.tokeniseLine(line);
+		
+		if (newLine.length < 2) {
+			sendIRCLine(Consts.ERR_NEEDMOREPARAMS, newLine[0], "Not enough parameters");
+			return;
+		}
+		
+		newLine[0] = newLine[0].toUpperCase();
+		
+		// Pass it on the appropriate processing function
+		if (newLine[0].equals("QUIT")) {
+			sendLine("Closing Connection");
+			close();
+		} else if (myAccount != null) {
+			processAuthenticated(newLine);
+		} else {
+			processNonAuthenticated(newLine);
+		}
 	}
+	
+	/**
+	 * Process a line of data from a non-authenticated user.
+	 *
+	 * @param line IRCTokenised version of Line to handle
+	 */
+	private void processNonAuthenticated(final String[] line) {
+		if (line[0].equals("USER")) {
+			// Username may be given in PASS so check that it hasn't before assigning
+			if (username == null) { username = line[1]; }
+			realname = line[line.length-1];
+			if (nickname != null && password == null) {
+				sendLine("NOTICE AUTH :- Please enter your password.");
+				sendLine("NOTICE AUTH :- This can be done using either: ");
+				sendLine("NOTICE AUTH :-     /QUOTE PASS [<username>:]<password");
+				sendLine("NOTICE AUTH :-     /RAW PASS [<username>:]<password>");
+			}
+		} else if (line[0].equals("NICK")) {
+			nickname = line[1];
+			if (realname != null && password == null) {
+				sendLine("NOTICE AUTH :- Please enter your password.");
+				sendLine("NOTICE AUTH :- This can be done using either: ");
+				sendLine("NOTICE AUTH :-     /QUOTE PASS [<username>:]<password");
+				sendLine("NOTICE AUTH :-     /RAW PASS [<username>:]<password>");
+			}
+		} else if (line[0].equals("PASS")) {
+			String[] bits = line[line.length-1].split(":",2);
+			if (bits.length == 2) {
+				username = bits[0];
+				password = bits[1];
+			} else {
+				password = bits[0];
+			}
+		} else {
+			sendIRCLine(Consts.ERR_NOTREGISTERED, line[0], "You must login first.");
+		}
+		
+		if (realname != null && password != null && nickname != null) {
+			if (Account.count() == 0) {
+				Account acc = Account.createAccount(username, password);
+				acc.setAdmin(true);
+				sendLine("NOTICE AUTH :- You are the first user of this bnc, and have been made admin");
+				Config.saveAll(DFBnc.getConfigFileName());
+			}
+			if (Account.checkPassword(username, password)) {
+				myAccount = Account.get(username);
+				sendLine("NOTICE AUTH :- You are now logged in");
+				if (myAccount.isAdmin()) {
+					sendLine("NOTICE AUTH :- This is an Admin account");
+				}
+				close();
+			} else {
+				sendIRCLine(Consts.ERR_PASSWDMISMATCH, line[0], "Password incorrect, or account not found");
+				close();
+			}
+		}
+	}
+	
+	/**
+	 * Process a line of data from an authenticated user.
+	 *
+	 * @param line IRCTokenised version of Line to handle
+	 */
+	private void processAuthenticated(final String[] line) { }
 }

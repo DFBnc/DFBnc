@@ -42,6 +42,9 @@ public class DFBnc {
 	
 	/** The CLIParser */
 	private CLIParser cli = CLIParser.getCLIParser();
+	
+	/** The CLIParser */
+	private static String configFile = "DFBnc.conf";
 
 	/**
 	 * Run the application.
@@ -70,10 +73,12 @@ public class DFBnc {
 			Logger.setLevel(LogLevel.DEBUG);
 		}
 		
-		String configFile = "DFBnc.conf";
 		if (cli.getParamNumber("-config") > 0) { configFile = cli.getParam("-type").getStringValue(); }
 		Logger.info("Loading Config..");
 		Config.loadConfig(configFile);
+		
+		Logger.info("Loading Accounts..");
+		Account.loadAccounts();
 		
 		try {
 			Logger.info("Opening Socket..");
@@ -84,6 +89,15 @@ public class DFBnc {
 			System.exit(0);
 		}
 		Logger.info("Running!");
+	}
+	
+	/**
+	 * Get the name of the configfile
+	 *
+	 * @return The name of the configfile
+	 */
+	public static String getConfigFileName() {
+		return configFile;
 	}
 	
 	/**

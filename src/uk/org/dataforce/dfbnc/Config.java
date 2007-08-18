@@ -38,6 +38,15 @@ public class Config {
 	private static Properties config = getDefaults();
 	
 	/**
+	 * Get a copy of the properties object.
+	 *
+	 * @return A copy of the properties object
+	 */
+	public static Properties getProperties() {
+		return (Properties)config.clone();
+	}
+	
+	/**
 	 * Get the default settings.
 	 *
 	 * @return Defaults config settings
@@ -46,6 +55,7 @@ public class Config {
 		final Properties defaults = new Properties();
 		defaults.setProperty("General.bindhost", "0.0.0.0");
 		defaults.setProperty("General.bindport", "33262");
+		defaults.setProperty("General.serverName", "DFBnc.Server");
 		defaults.setProperty("users.count", "0");
 		return defaults;
 	}
@@ -68,7 +78,18 @@ public class Config {
 	}
 	
 	/**
-	 * Save the config file
+	 * Save the accounts to the config file, and then the config file to disk.
+	 *
+	 * @param filename Filename to save config to
+	 */
+	public static void saveAll(final String filename) {
+		Account.saveAccounts();
+		Logger.error("Saving config to '"+filename+"'");
+		saveConfig(filename);
+	}
+	
+	/**
+	 * Save the current config file to disk
 	 *
 	 * @param filename Filename to save config to
 	 */
@@ -87,6 +108,7 @@ public class Config {
 	 * @param domain Domain for option
 	 * @param key key for option
 	 * @param fallback Value to return if key is not found
+	 * @return the requested option, or the fallback value if not defined
 	 */
 	public static String getOption(final String domain, final String key, final String fallback) {
 		return config.getProperty(domain.toLowerCase()+"."+key.toLowerCase(), fallback);
@@ -108,6 +130,7 @@ public class Config {
 	 *
 	 * @param domain Domain for option
 	 * @param key key for option
+	 * @return True if the option exists, else false
 	 */
 	public static boolean hasOption(final String domain, final String key) {
 		return (getOption(domain,key,null) == null);
@@ -119,6 +142,7 @@ public class Config {
 	 * @param domain Domain for option
 	 * @param key key for option
 	 * @param fallback Value to return if key is not found
+ 	 * @return the requested option, or the fallback value if not defined
 	 */
 	public static boolean getBoolOption(final String domain, final String key, final boolean fallback) {
 		return Boolean.parseBoolean(getOption(domain, key, Boolean.toString(fallback)));
@@ -141,6 +165,7 @@ public class Config {
 	 * @param domain Domain for option
 	 * @param key key for option
 	 * @param fallback Value to return if key is not found
+	 * @return the requested option, or the fallback value if not defined
 	 */
 	public static int getIntOption(final String domain, final String key, final int fallback) {
 		return Integer.parseInt(getOption(domain, key, Integer.toString(fallback)));
