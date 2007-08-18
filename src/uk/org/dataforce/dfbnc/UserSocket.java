@@ -23,15 +23,9 @@
  */
 package uk.org.dataforce.dfbnc;
 
+import uk.org.dataforce.logger.Logger;
 import java.net.InetSocketAddress;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.channels.SocketChannel;
-import java.nio.channels.Selector;
-import java.nio.channels.SelectionKey;
-import java.util.Iterator;
 import java.io.IOException;
 import java.util.Hashtable;
 
@@ -43,7 +37,10 @@ public class UserSocket extends ConnectedSocket {
 	private static Hashtable<String,UserSocket> knownSockets = new Hashtable<String,UserSocket>();
 	
 	/** This sockets ID in the hashtable. */
-	private String myID = this.toString();
+	private final String myID;
+
+	/** This sockets info. */
+	private final String myInfo;
 	
 	/**
 	 * Create a new UserSocket.
@@ -54,18 +51,40 @@ public class UserSocket extends ConnectedSocket {
 	public UserSocket(SocketChannel sChannel) throws IOException {
 		super(sChannel, "[UserSocket "+sChannel+"]");
 		synchronized (knownSockets) {
-			while (knownSockets.containsKey(myID)) {
-				myID = this.toString()+"-"+Math.random();
+			String tempid = this.toString();
+			while (knownSockets.containsKey(tempid)) {
+				tempid = this.toString()+"-"+Math.random();
 			}
+			myID = tempid;
 			knownSockets.put(myID, this);
 		}
+		// myInfo = mySocket.getRemoteSocketAddress()+" ("+mySocket.getLocalSocketAddress()+") ["+myID+"]";
+		// Do this rather than above because we want to enclose the addresses in []
+		InetSocketAddress address = (InetSocketAddress)mySocket.getRemoteSocketAddress();
+		String remoteInfo = "["+address.getAddress()+"]:"+address.getPort();
+		address = (InetSocketAddress)mySocket.getLocalSocketAddress();
+		String localInfo = "["+address.getAddress()+"]:"+address.getPort();
+		myInfo = remoteInfo+" ("+localInfo+") ["+myID+"]";
+		
+		Logger.info("User Connected: "+myInfo);
+	}
+	
+	/**
+	 * Action to take when socket is opened and ready.
+	 */
+	public void socketOpened() {
+		sendLine("NOTICE AUTH :- Welcome to DFBnc ("+DFBnc.VERSION+")");
+		close();
 	}
 	
 	/**
 	 * Action to take when socket is closed.
+	 *
+	 * @param userRequested True if socket was closed by the user, false otherwise
 	 */
-	protected void socketClosed() {
+	protected void socketClosed(final boolean userRequested) {
 		knownSockets.remove(myID);
+		Logger.info("User Disconnected: "+myInfo);
 	}
 	
 	/**

@@ -23,6 +23,7 @@
  */
 package uk.org.dataforce.dfbnc;
 
+import uk.org.dataforce.logger.Logger;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.ServerSocketChannel;
@@ -59,6 +60,7 @@ public class ListenSocket implements Runnable {
 		ssChannel.register(selector, SelectionKey.OP_ACCEPT);
 		myThread.setName("[ListenSocket "+host+":"+port+"]");
 		myThread.start();
+		Logger.info("Listen Socket Opened: "+host+":"+port);
 	}
 		
 	/**
@@ -85,6 +87,7 @@ public class ListenSocket implements Runnable {
 						SocketChannel sChannel = ssChannel.accept();
 						if (sChannel != null) {
 							UserSocket userSocket = new UserSocket(sChannel);
+							userSocket.socketOpened();
 						}
 					} catch (IOException e) { }
 				}

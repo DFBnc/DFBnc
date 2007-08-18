@@ -24,6 +24,7 @@
 package uk.org.dataforce.dfbnc;
 
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.ByteBuffer;
@@ -47,6 +48,10 @@ public abstract class ConnectedSocket implements Runnable {
 	private ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
 	/** Used to process incomming data. */
 	private StringBuilder lineBuffer = new StringBuilder();
+	/** My socket channel. */
+	private final SocketChannel mySocketChannel;
+	/** My socket channel socket. */
+	protected final Socket mySocket;
 
 	/**
 	 * Create a new ConnectedSocket.
@@ -62,12 +67,36 @@ public abstract class ConnectedSocket implements Runnable {
 		
 		myThread.setName(threadName);
 		myThread.start();
+		mySocketChannel = sChannel;
+		mySocket = mySocketChannel.socket();
+	}
+		
+	/**
+	 * Used to close this socket.
+	 */
+	protected final void close() {
+		try {
+			mySocketChannel.close();
+		} catch (IOException e) { }
+		this.socketClosed(false);
+	}
+	
+	/**
+	 * Used to send a line of data to this socket.
+	 *
+	 * @param line Line to send
+	 */
+	protected final void sendLine(final String line) {
+		ByteBuffer buf = ByteBuffer.wrap((line+"\r\n").getBytes());
+		try {
+			mySocketChannel.write(buf);
+		} catch (IOException e) { }
 	}
 		
 	/**
 	 * Used to actually do stuff.
 	 */
-	public final void run() {	
+	public final void run() {
 		while (true) {
 			try {
 				selector.select();
@@ -89,7 +118,7 @@ public abstract class ConnectedSocket implements Runnable {
 				}
 			}
 		}
-		this.socketClosed();
+		this.socketClosed(true);
 	}
 	
 	/**
@@ -115,6 +144,7 @@ public abstract class ConnectedSocket implements Runnable {
 	
 			if (numBytesRead == -1) {
 				sChannel.close();
+				this.socketClosed(true);
 			} else {
 				buffer.flip();
 				CharBuffer charBuffer = Charset.forName("us-ascii").newDecoder().decode(buffer);
@@ -141,9 +171,15 @@ public abstract class ConnectedSocket implements Runnable {
 	 */
 	abstract void processLine(final String line);
 	
+	/**
+	 * Action to take when socket is opened and ready.
+	 */
+	public void socketOpened() { }
 	
 	/**
 	 * Action to take when socket is closed.
+	 *
+	 * @param userRequested True if socket was closed by the user, false otherwise
 	 */
-	protected void socketClosed() { }
+	protected void socketClosed(final boolean userRequested) { }
 }
