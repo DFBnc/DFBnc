@@ -113,18 +113,10 @@ public class UserSocket extends ConnectedSocket {
 	 * @param args The args for the format string
 	 */
 	public void sendBotMessage(final String data, final Object... args) {
-		sendBotMessage(String.format(data, args));
+		sendBotLine("PRIVMSG", data, args);
 	}
 	
-	/**
-	 * Send a message to the user from the bnc bot
-	 *
-	 * @param message the Message to send
-	 */
-	public void sendBotMessage(final String message) {
-		sendBotMessage("PRIVMSG", message);
-	}
-	
+
 	/**
 	 * Send a message to the user from the bnc bot in printf format.
 	 *
@@ -132,18 +124,8 @@ public class UserSocket extends ConnectedSocket {
 	 * @param data The format string
 	 * @param args The args for the format string
 	 */
-	public void sendBotMessage(final String type, final String data, final Object... args) {
-		sendBotMessage(type, String.format(data, args));
-	}
-	
-	/**
-	 * Send a message to the user from the bnc bot
-	 *
-	 * @param type the Type of message to send
-	 * @param message the Message to send
-	 */
-	public void sendBotMessage(final String type, final String message) {
-		sendLine(":%s!bot@%s %s :%s", Functions.getBotName(), Functions.getServerName(), type, message);
+	public void sendBotLine(final String type, final String data, final Object... args) {
+		sendLine(":%s!bot@%s %s :%s", Functions.getBotName(), Functions.getServerName(), type, String.format(data, args));
 	}
 	
 	/**
@@ -245,7 +227,6 @@ public class UserSocket extends ConnectedSocket {
 				if (myAccount.isAdmin()) {
 					sendLine("NOTICE AUTH :- This is an Admin account");
 				}
-				close();
 			} else {
 				sendIRCLine(Consts.ERR_PASSWDMISMATCH, line[0], "Password incorrect, or account not found");
 				close();
@@ -259,8 +240,8 @@ public class UserSocket extends ConnectedSocket {
 	 * @param line IRCTokenised version of Line to handle
 	 */
 	private void processAuthenticated(final String[] line) {
-		if (line[0].equals("PRIVMSG") && line.length > 3) {
-			if (line[1].equals(Functions.getBotName())) {
+		if (line[0].equals("PRIVMSG") && line.length > 2) {
+			if (line[1].equalsIgnoreCase(Functions.getBotName())) {
 				String[] bits = line[2].split(" ", 2);
 				try {
 					DFBnc.getCommandManager().handle(this, bits);
