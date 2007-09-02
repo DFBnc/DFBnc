@@ -116,12 +116,12 @@ public class UserSocket extends ConnectedSocket {
 		if (myAccount != null) {
 			final String method = myAccount.getContactMethod();
 			if (method.equalsIgnoreCase("SNOTICE")) {
-				sendLine(":%s NOTICE %s :%s", Functions.getServerName(), nickname, String.format(data, args));
+				sendServerLine("NOTICE", data, args);
 			} else {
 				sendBotLine(method, data, args);
 			}
 		} else {
-			sendBotLine("PRIVMSG", data, args);
+			sendServerLine("NOTICE", data, args);
 		}
 	}
 	
@@ -135,6 +135,17 @@ public class UserSocket extends ConnectedSocket {
 	 */
 	public void sendBotLine(final String type, final String data, final Object... args) {
 		sendLine(":%s!bot@%s %s %s :%s", Functions.getBotName(), Functions.getServerName(), type, nickname, String.format(data, args));
+	}
+	
+	/**
+	 * Send a message to the user from the bnc server in printf format.
+	 *
+	 * @param type the Type of message to send
+	 * @param data The format string
+	 * @param args The args for the format string
+	 */
+	public void sendServerLine(final String type, final String data, final Object... args) {
+		sendLine(":%s %s %s :%s", Functions.getServerName(), type, nickname, String.format(data, args));
 	}
 	
 	/**

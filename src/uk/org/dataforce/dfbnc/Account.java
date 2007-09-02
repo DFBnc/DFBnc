@@ -51,7 +51,7 @@ public final class Account {
 	private String myPassword;
 	/** Is this account an admin */
 	private boolean isAdmin;
-	/** How should -BNC contact the user? (PRIVMSG/NOTICE) */
+	/** How should -BNC contact the user? (PRIVMSG/NOTICE/SNOTICE/) */
 	private String contactMethod;
 
 	//----------------------------------------------------------------------------
@@ -164,7 +164,7 @@ public final class Account {
 		// Get settings
 		myPassword = Config.getOption(configName, "password", "...");
 		isAdmin = Config.getBoolOption(configName, "admin", false);
-		contactMethod = Config.getOption(configName, "contactMethod", "PRIVMSG");
+		contactMethod = Config.getOption(configName, "contactMethod", "SNOTICE");
 		
 		// Add to hashtable
 		accounts.put(username.toLowerCase(), this);
