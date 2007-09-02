@@ -49,13 +49,13 @@ public class UserSocket extends ConnectedSocket {
 	private String username = null;
 	/** Given realname */
 	private String realname = null;
-	/** Given nickname */
+	/** Given nickname (post-authentication this is the nickname the client knows itself as) */
 	private String nickname = null;
 	/** Given password */
 	private String password = null;
 	
 	/** The Account object for this connect (This is null before authentication) */
-	private Account myAccount;
+	private Account myAccount = null;
 	
 	/**
 	 * Create a new UserSocket.
@@ -113,7 +113,16 @@ public class UserSocket extends ConnectedSocket {
 	 * @param args The args for the format string
 	 */
 	public void sendBotMessage(final String data, final Object... args) {
-		sendBotLine("PRIVMSG", data, args);
+		if (myAccount != null) {
+			final String method = myAccount.getContactMethod();
+			if (method.equalsIgnoreCase("SNOTICE")) {
+				sendLine(":%s NOTICE %s :%s", Functions.getServerName(), nickname, String.format(data, args));
+			} else {
+				sendBotLine(method, data, args);
+			}
+		} else {
+			sendBotLine("PRIVMSG", data, args);
+		}
 	}
 	
 
@@ -125,7 +134,7 @@ public class UserSocket extends ConnectedSocket {
 	 * @param args The args for the format string
 	 */
 	public void sendBotLine(final String type, final String data, final Object... args) {
-		sendLine(":%s!bot@%s %s :%s", Functions.getBotName(), Functions.getServerName(), type, String.format(data, args));
+		sendLine(":%s!bot@%s %s %s :%s", Functions.getBotName(), Functions.getServerName(), type, nickname, String.format(data, args));
 	}
 	
 	/**
@@ -240,17 +249,37 @@ public class UserSocket extends ConnectedSocket {
 	 * @param line IRCTokenised version of Line to handle
 	 */
 	private void processAuthenticated(final String[] line) {
+		// The bnc accepts commands as either:
+		// /msg -BNC This is a command
+		// or /DFBNC This is a command (not there is no : used to separate arguments anywhere)
 		if (line[0].equals("PRIVMSG") && line.length > 2) {
 			if (line[1].equalsIgnoreCase(Functions.getBotName())) {
-				String[] bits = line[2].split(" ", 2);
-				try {
-					DFBnc.getCommandManager().handle(this, bits);
-				} catch (CommandNotFound c) {
-					sendBotMessage("Unknown command '%s' Please try 'ShowCommands'", bits[0]);
-				} catch (Exception e) {
-					sendBotMessage("Exception with command '%s': %s", bits[0], e.getMessage());
-				}
+				handleBotCommand(line[2].split(" "));
+				return;
 			}
+		} else if (line[0].equals("DFBNC") && line.length > 1) {
+			String[] bits = new String[line.length-1];
+			System.arraycopy(line, 1, bits, 0, line.length-1);
+			handleBotCommand(bits);
+			return;
+		}
+		
+		// We don't handle this ourselves, send it to the server.
+	}
+	
+	/**
+	 * Handle a command sent to the bot
+	 *
+	 * @param bits This is the command and its parameters.
+	 *             bits[0] is the command, bits[1]..bits[n] are the params.
+	 */
+	private void handleBotCommand(final String[] bits) {
+		try {
+			DFBnc.getCommandManager().handle(this, bits);
+		} catch (CommandNotFound c) {
+			sendBotMessage("Unknown command '%s' Please try 'ShowCommands'", bits[0]);
+		} catch (Exception e) {
+			sendBotMessage("Exception with command '%s': %s", bits[0], e.getMessage());
 		}
 	}
 }
