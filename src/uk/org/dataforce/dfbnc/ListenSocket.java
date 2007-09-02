@@ -40,8 +40,10 @@ import java.util.Hashtable;
 public class ListenSocket implements Runnable {
 	/** Used to monitor the socket. */
 	private Selector selector = null;
+	/** My ServerSocketChannel. */
+	private ServerSocketChannel ssChannel = ServerSocketChannel.open();
 	/** Thread to run the listen socket under */	
-	private Thread myThread = new Thread(this);
+	private volatile Thread myThread = new Thread(this);
 
 	/**
 	 * Create a new ListenSocket.
@@ -50,10 +52,8 @@ public class ListenSocket implements Runnable {
 	 * @param port Hostname to listen on
 	 * @throws IOException if there is problems with the sockets.
 	 */
-	public ListenSocket(String host, int port) throws IOException {
+	public ListenSocket(final String host, final int port) throws IOException {
 		selector = Selector.open();
-		
-		ServerSocketChannel ssChannel = ServerSocketChannel.open();
 		
 		ssChannel.configureBlocking(false);
 		ssChannel.socket().bind(new InetSocketAddress(host, port));
@@ -64,10 +64,27 @@ public class ListenSocket implements Runnable {
 	}
 		
 	/**
+	 * Close the socket
+	 */
+	public synchronized void close() {
+		Logger.info("Listen Socket closing ("+myThread.getName()+")");
+
+		// Kill the thread
+		Thread tmp = myThread;
+		myThread = null;
+		if (tmp != null) { tmp.interrupt(); }
+		
+		// Close the actual socket
+		try {
+			ssChannel.socket().close();
+		} catch (IOException e) { }
+	}
+		
+	/**
 	 * Used to actually do stuff!
 	 */
-	public void run() {	
-		while (true) {
+	public void run() {
+		while (myThread == Thread.currentThread()) {
 			try {
 				selector.select();
 			} catch (IOException e) {

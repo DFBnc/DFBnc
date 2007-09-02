@@ -24,6 +24,8 @@
 package uk.org.dataforce.dfbnc;
 
 import uk.org.dataforce.logger.Logger;
+import uk.org.dataforce.dfbnc.commands.CommandManager;
+import uk.org.dataforce.dfbnc.commands.CommandNotFound;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.io.IOException;
@@ -71,6 +73,9 @@ public class UserSocket extends ConnectedSocket {
 			myID = tempid;
 			knownSockets.put(myID, this);
 		}
+		
+		myThread.setName("[UserSocket: "+myID+"]");
+		
 		// myInfo = mySocket.getRemoteSocketAddress()+" ("+mySocket.getLocalSocketAddress()+") ["+myID+"]";
 		// Do this rather than above because we want to enclose the addresses in []
 		InetSocketAddress address = (InetSocketAddress)mySocket.getRemoteSocketAddress();
@@ -83,10 +88,62 @@ public class UserSocket extends ConnectedSocket {
 	}
 	
 	/**
+	 * Close all usersockets
+	 *
+	 * @param reason Reason for all sockets to close.
+	 */
+	public static void closeAll(final String reason) {
+		for (String name : knownSockets.keySet()) {
+			UserSocket socket = knownSockets.get(name);
+			socket.sendLine(":%s NOTICE :Connection terminating (%s)", Functions.getServerName(), reason);
+		}
+	}
+	
+	/**
 	 * Action to take when socket is opened and ready.
 	 */
 	public void socketOpened() {
 		sendLine("NOTICE AUTH :- Welcome to DFBnc ("+DFBnc.VERSION+")");
+	}
+	
+	/**
+	 * Send a message to the user from the bnc bot in printf format.
+	 *
+	 * @param data The format string
+	 * @param args The args for the format string
+	 */
+	public void sendBotMessage(final String data, final Object... args) {
+		sendBotMessage(String.format(data, args));
+	}
+	
+	/**
+	 * Send a message to the user from the bnc bot
+	 *
+	 * @param message the Message to send
+	 */
+	public void sendBotMessage(final String message) {
+		sendBotMessage("PRIVMSG", message);
+	}
+	
+	/**
+	 * Send a message to the user from the bnc bot in printf format.
+	 *
+	 * @param type the Type of message to send
+	 * @param data The format string
+	 * @param args The args for the format string
+	 */
+	public void sendBotMessage(final String type, final String data, final Object... args) {
+		sendBotMessage(type, String.format(data, args));
+	}
+	
+	/**
+	 * Send a message to the user from the bnc bot
+	 *
+	 * @param type the Type of message to send
+	 * @param message the Message to send
+	 */
+	public void sendBotMessage(final String type, final String message) {
+		sendLine(":%s!bot@%s %s :%s", Functions.getBotName(), Functions.getServerName(), type, message);
 	}
 	
 	/**
@@ -100,6 +157,21 @@ public class UserSocket extends ConnectedSocket {
 	}
 	
 	/**
+	 * Check if there is enough parameters, if not, return an error.
+	 *
+	 * @param newLine the Parameters String
+	 * @param count the number of parameters required
+	 * @return True if there is enough parameters, else false
+	 */
+	private boolean checkParamCount(final String[] newLine, final int count) {
+		if (newLine.length < count) {
+			sendIRCLine(Consts.ERR_NEEDMOREPARAMS, newLine[0], "Not enough parameters");
+			return false;
+		}
+		return true;
+	}
+	
+	/**
 	 * Process a line of data.
 	 *
 	 * @param line Line to handle
@@ -108,10 +180,7 @@ public class UserSocket extends ConnectedSocket {
 		// Tokenise the line
 		final String[] newLine = IRCParser.tokeniseLine(line);
 		
-		if (newLine.length < 2) {
-			sendIRCLine(Consts.ERR_NEEDMOREPARAMS, newLine[0], "Not enough parameters");
-			return;
-		}
+		if (!checkParamCount(newLine, 1)) { return; }
 		
 		newLine[0] = newLine[0].toUpperCase();
 		
@@ -132,6 +201,7 @@ public class UserSocket extends ConnectedSocket {
 	 * @param line IRCTokenised version of Line to handle
 	 */
 	private void processNonAuthenticated(final String[] line) {
+		if (!checkParamCount(line, 2)) { return; }
 		if (line[0].equals("USER")) {
 			// Username may be given in PASS so check that it hasn't before assigning
 			if (username == null) { username = line[1]; }
@@ -188,5 +258,18 @@ public class UserSocket extends ConnectedSocket {
 	 *
 	 * @param line IRCTokenised version of Line to handle
 	 */
-	private void processAuthenticated(final String[] line) { }
+	private void processAuthenticated(final String[] line) {
+		if (line[0].equals("PRIVMSG") && line.length > 3) {
+			if (line[1].equals(Functions.getBotName())) {
+				String[] bits = line[2].split(" ", 2);
+				try {
+					DFBnc.getCommandManager().handle(this, bits);
+				} catch (CommandNotFound c) {
+					sendBotMessage("Unknown command '%s' Please try 'ShowCommands'", bits[0]);
+				} catch (Exception e) {
+					sendBotMessage("Exception with command '%s': %s", bits[0], e.getMessage());
+				}
+			}
+		}
+	}
 }

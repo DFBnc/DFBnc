@@ -84,7 +84,7 @@ public class Config {
 	 */
 	public static void saveAll(final String filename) {
 		Account.saveAccounts();
-		Logger.error("Saving config to '"+filename+"'");
+		Logger.info("Saving config to '"+filename+"'");
 		saveConfig(filename);
 	}
 	

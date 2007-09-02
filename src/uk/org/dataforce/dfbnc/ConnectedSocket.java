@@ -35,6 +35,8 @@ import java.nio.channels.SelectionKey;
 import java.util.Iterator;
 import java.io.IOException;
 
+import uk.org.dataforce.logger.Logger;
+
 /**
  * This is responsible for taking incomming data, and separating it
   * into "\n" separated lines.
@@ -43,7 +45,7 @@ public abstract class ConnectedSocket implements Runnable {
 	/** Used to monitor the socket. */
 	private Selector selector = null;
 	/** Thread to run the listen socket under */	
-	private Thread myThread = new Thread(this);
+	protected Thread myThread = new Thread(this);
 	/** Used to process incomming data. */
 	private ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
 	/** Used to process incomming data. */
@@ -74,7 +76,15 @@ public abstract class ConnectedSocket implements Runnable {
 	/**
 	 * Used to close this socket.
 	 */
-	protected final void close() {
+	public final void close() {
+		Logger.info("Connected Socket closing ("+myThread.getName()+")");
+
+		// Kill the thread
+		Thread tmp = myThread;
+		myThread = null;
+		if (tmp != null) { tmp.interrupt(); }
+		
+		// Close the actual socket
 		try {
 			mySocketChannel.close();
 		} catch (IOException e) { }
@@ -88,8 +98,18 @@ public abstract class ConnectedSocket implements Runnable {
 	 * @param params The parameters for this line
 	 * @param line Information
 	 */
-	protected final void sendIRCLine(final int numeric, final String params, final String line) {
-		sendLine(String.format(":%s %03d %s :%s", Functions.getServerName(), numeric, params, line));
+	public final void sendIRCLine(final int numeric, final String params, final String line) {
+		sendLine(":%s %03d %s :%s", Functions.getServerName(), numeric, params, line);
+	}
+	
+	/**
+	 * Used to send a line of data to this socket, in printf format.
+	 *
+	 * @param data The format string
+	 * @param args The args for the format string
+	 */
+	public final void sendLine(final String data, final Object... args) {
+		sendLine(String.format(data, args));
 	}
 	
 	/**
@@ -97,7 +117,7 @@ public abstract class ConnectedSocket implements Runnable {
 	 *
 	 * @param line Line to send
 	 */
-	protected final void sendLine(final String line) {
+	public final void sendLine(final String line) {
 		ByteBuffer buf = ByteBuffer.wrap((line+"\r\n").getBytes());
 		try {
 			mySocketChannel.write(buf);
@@ -108,7 +128,7 @@ public abstract class ConnectedSocket implements Runnable {
 	 * Used to actually do stuff.
 	 */
 	public final void run() {
-		while (true) {
+		while (myThread == Thread.currentThread()) {
 			try {
 				selector.select();
 			} catch (IOException e) {
@@ -129,7 +149,6 @@ public abstract class ConnectedSocket implements Runnable {
 				}
 			}
 		}
-		this.socketClosed(true);
 	}
 	
 	/**

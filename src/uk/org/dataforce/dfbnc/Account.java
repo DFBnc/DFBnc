@@ -140,7 +140,7 @@ public final class Account {
 	 */
 	protected static void saveAccounts() {
 		for (Account acc : accounts.values()) {
-			Logger.debug("Sacing account: "+acc.getName());
+			Logger.debug("Saving account: "+acc.getName());
 			acc.save();
 		}
 	}

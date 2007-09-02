@@ -53,6 +53,15 @@ public final class Functions {
 	 * @return Server name that the BNC Uses
 	 */
 	public static String getServerName() {
-		return Config.getOption("general", "serverName", "DFBnc.Server");
+		return Config.getOption("general", "ServerName", "DFBnc.Server");
+	}
+	
+	/**
+	 * Get the Bot name that the BNC Uses
+	 *
+	 * @return Bot name that the BNC Uses
+	 */
+	public static String getBotName() {
+		return Config.getOption("general", "BotName", "-BNC");
 	}
 }

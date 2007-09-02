@@ -30,21 +30,32 @@ import uk.org.dataforce.cliparser.CLIParam;
 import uk.org.dataforce.cliparser.BooleanParam;
 import uk.org.dataforce.cliparser.StringParam;
 import uk.org.dataforce.cliparser.IntegerParam;
+import uk.org.dataforce.dfbnc.commands.CommandManager;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * Main BNC Class.
  */
 public class DFBnc {
+	/** Me */
+	private static DFBnc me = null;
+
 	/** Version String */
 	public final static String VERSION = "DFBnc-Java 0.1";
 	
 	/** The CLIParser */
-	private CLIParser cli = CLIParser.getCLIParser();
+	private static CLIParser cli = CLIParser.getCLIParser();
 	
-	/** The CLIParser */
+	/** The config file name */
 	private static String configFile = "DFBnc.conf";
+	
+	/** The command manager for this bnc */
+	private static CommandManager myCommandManager = new CommandManager();
+	
+	/** The arraylist of listenSockets */
+	private static ArrayList<ListenSocket> listenSockets = new ArrayList<ListenSocket>();
 
 	/**
 	 * Run the application.
@@ -52,7 +63,7 @@ public class DFBnc {
 	 *
 	 * @param args CLI Arguments passed to application
 	 */
-	public DFBnc(String[] args) {
+	private DFBnc(String[] args) {
 		Logger.setLevel(LogLevel.INFO);
 		Logger.info("Starting DFBnc..");
 		setupCLIParser();
@@ -80,9 +91,16 @@ public class DFBnc {
 		Logger.info("Loading Accounts..");
 		Account.loadAccounts();
 		
+		Logger.info("Setting up Command Manager");
+		myCommandManager.init();
+		
+		Logger.info("Adding shutdown hook");
+		Runtime.getRuntime().addShutdownHook(new ShutdownHook(this));
+		
 		try {
+			// This allows for adding multiple listen sockets, altho it is not currently implemented
 			Logger.info("Opening Socket..");
-			ListenSocket listenSocet = new ListenSocket(Config.getOption("general", "bindhost", "0.0.0.0"), Config.getIntOption("general", "bindport", 33262));
+			listenSockets.add(new ListenSocket(Config.getOption("general", "bindhost", "0.0.0.0"), Config.getIntOption("general", "bindport", 33262)));
 		} catch (IOException e) {
 			Logger.error("Unable to open socket: "+e.getMessage());
 			Logger.info("Terminating");
@@ -90,6 +108,31 @@ public class DFBnc {
 		}
 		Logger.info("Running!");
 	}
+	
+	/**
+	 * Handle shutdown
+	 */
+	public void shutdown() {
+		Logger.info("---------------------");
+		Logger.info("Shuting down.");
+		
+		Logger.info("Closing Listen Sockets");
+		for (int i = 0; i < listenSockets.size() ; ++i) {
+			final ListenSocket ls = listenSockets.get(i);
+			ls.close();
+		}
+		listenSockets.clear();
+		
+		Logger.info("Closing User Sockets");
+		UserSocket.closeAll("BNC Shutdown");
+		
+		Logger.info("Saving Accounts");
+		Account.saveAccounts();
+		
+		Logger.info("Saving config to '"+configFile+"'");
+		Config.saveConfig(configFile);
+	}
+	
 	
 	/**
 	 * Get the name of the configfile
@@ -101,12 +144,30 @@ public class DFBnc {
 	}
 	
 	/**
+	 * Get the CommandManager
+	 *
+	 * @return The CommandManager
+	 */
+	public static CommandManager getCommandManager() {
+		return myCommandManager;
+	}
+	
+	/**
+	 * Get the listenSockets array list
+	 *
+	 * @return The name of the configfile
+	 */
+	public static ArrayList<ListenSocket> getListenSockets() {
+		return listenSockets;
+	}
+	
+	/**
 	 * Setup the cli parser.
 	 * This clears the current CLIParser params and creates new ones.
 	 *
 	 * @return the CLIParser.
 	 */
-	private void setupCLIParser() {
+	private static void setupCLIParser() {
 		cli.clear();
 		cli.add(new BooleanParam('h', "help", "Show Help"));
 		cli.add(new BooleanParam('d', "debug", "Enable extra debugging. (Use twice for more)"));
@@ -115,11 +176,20 @@ public class DFBnc {
 		cli.add(new StringParam('c', "config", "Alternative config file to use"));
 		cli.setHelp(cli.getParam("-help"));
 	}
+	
+	/**
+	 * Get the DFBnc instance.
+	 *
+	 * @return the DFBnc instance.
+	 */
+	public static DFBnc getBNC() {
+		return me;
+	}
 
 	/**
 	 * Start the application.
 	 *
 	 * @param args CLI Arguments passed to application
 	 */
-	public static void main(String[] args) { new DFBnc(args); }
+	public static void main(String[] args) { me = new DFBnc(args); }
 }
