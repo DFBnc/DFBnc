@@ -23,37 +23,25 @@
  */
 package uk.org.dataforce.dfbnc;
 
-import uk.org.dataforce.util.MD5;
+import uk.org.dataforce.logger.Logger;
+import uk.org.dataforce.dfbnc.DFBnc;
 
 /**
- * This file stores various useful functions
+ * Shutdown hook.
  */
-public final class Functions {
-	/**
-	 * Get the md5 hash of a string.
-	 *
-	 * @param string String to hash
-	 * @return md5 hash of given string
-	 */
-	public static String md5(final String string) {
-		return MD5.string(string);
+public class ShutdownHook extends Thread {
+	/** The DFBnc instance that this ShutdownHook is for. */
+	private final DFBnc myBnc;
+	
+	/** Create the Shutdown Hook */
+	public ShutdownHook(final DFBnc bnc) {
+		myBnc = bnc;
 	}
 	
 	/**
-	 * Get the Server name that the BNC Uses
-	 *
-	 * @return Server name that the BNC Uses
+	 * What todo when shutting down
 	 */
-	public static String getServerName() {
-		return Config.getOption("general", "ServerName", "DFBnc.Server");
-	}
-	
-	/**
-	 * Get the Bot name that the BNC Uses
-	 *
-	 * @return Bot name that the BNC Uses
-	 */
-	public static String getBotName() {
-		return Config.getOption("general", "BotName", "-BNC");
+	public void run() {
+		myBnc.shutdown();
 	}
 }

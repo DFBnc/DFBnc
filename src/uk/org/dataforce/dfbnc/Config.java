@@ -24,7 +24,8 @@
 package uk.org.dataforce.dfbnc;
 
 import uk.org.dataforce.logger.Logger;
-import java.util.Properties;
+import uk.org.dataforce.util.TypedProperties;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -35,15 +36,15 @@ import java.io.IOException;
  */
 public class Config {
 	/** Config File */
-	private static Properties config = getDefaults();
+	private static TypedProperties config = getDefaults();
 	
 	/**
 	 * Get a copy of the properties object.
 	 *
 	 * @return A copy of the properties object
 	 */
-	public static Properties getProperties() {
-		return (Properties)config.clone();
+	public static TypedProperties getProperties() {
+		return (TypedProperties)config.clone();
 	}
 	
 	/**
@@ -51,12 +52,12 @@ public class Config {
 	 *
 	 * @return Defaults config settings
 	 */
-	private static Properties getDefaults() {
-		final Properties defaults = new Properties();
+	private static TypedProperties getDefaults() {
+		final TypedProperties defaults = new TypedProperties();
 		defaults.setProperty("General.bindhost", "0.0.0.0");
-		defaults.setProperty("General.bindport", "33262");
+		defaults.setIntProperty("General.bindport", 33262);
 		defaults.setProperty("General.serverName", "DFBnc.Server");
-		defaults.setProperty("users.count", "0");
+		defaults.setIntProperty("users.count", 0);
 		return defaults;
 	}
 	
@@ -66,7 +67,7 @@ public class Config {
 	 * @param filename Filename of config to load
 	 */
 	public static void loadConfig(final String filename) {
-		config = new Properties(getDefaults());
+		config = new TypedProperties(getDefaults());
 		final File file = new File(filename);
 		if (file.exists()) {
 			try {
@@ -133,7 +134,7 @@ public class Config {
 	 * @return True if the option exists, else false
 	 */
 	public static boolean hasOption(final String domain, final String key) {
-		return (getOption(domain,key,null) == null);
+		return config.hasProperty(domain.toLowerCase()+"."+key.toLowerCase());
 	}
 	
 	/**
@@ -145,7 +146,7 @@ public class Config {
  	 * @return the requested option, or the fallback value if not defined
 	 */
 	public static boolean getBoolOption(final String domain, final String key, final boolean fallback) {
-		return Boolean.parseBoolean(getOption(domain, key, Boolean.toString(fallback)));
+		return config.getBoolProperty(domain.toLowerCase()+"."+key.toLowerCase(), fallback);
 	}
 	
 	/**
@@ -156,7 +157,7 @@ public class Config {
 	 * @param value Value for option
 	 */
 	public static void setBoolOption(final String domain, final String key, final boolean value) {
-		setOption(domain, key, Boolean.toString(value));
+		config.setBoolProperty(domain.toLowerCase()+"."+key.toLowerCase(), value);
 	}
 	
 	/**
@@ -168,7 +169,7 @@ public class Config {
 	 * @return the requested option, or the fallback value if not defined
 	 */
 	public static int getIntOption(final String domain, final String key, final int fallback) {
-		return Integer.parseInt(getOption(domain, key, Integer.toString(fallback)));
+		return config.getIntProperty(domain.toLowerCase()+"."+key.toLowerCase(), fallback);
 	}
 	
 	/**
@@ -179,6 +180,6 @@ public class Config {
 	 * @param value Value for option
 	 */
 	public static void setIntOption(final String domain, final String key, final int value) {
-		setOption(domain, key, Integer.toString(value));
+		config.setIntProperty(domain.toLowerCase()+"."+key.toLowerCase(), value);
 	}
 }

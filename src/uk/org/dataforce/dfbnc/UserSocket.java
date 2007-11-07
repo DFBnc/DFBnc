@@ -45,6 +45,13 @@ public class UserSocket extends ConnectedSocket {
 	/** This sockets info. */
 	private final String myInfo;
 	
+	/**
+	 * This is true if a 001 has been sent to the user.
+	 * Before 001 NOTICE AUTH should be used for messages rather than
+	 * NOTICE/PRIVMSG/SNOTICE
+	 */
+	private boolean post001 = false;
+	
 	/** Given username */
 	private String username = null;
 	/** Given realname */
@@ -103,8 +110,15 @@ public class UserSocket extends ConnectedSocket {
 	 * Action to take when socket is opened and ready.
 	 */
 	public void socketOpened() {
-		sendLine("NOTICE AUTH :- Welcome to DFBnc ("+DFBnc.VERSION+")");
+		sendBotMessage("Welcome to DFBnc ("+DFBnc.VERSION+")");
 	}
+	
+	/**
+	 * Get the account linked to this socket
+	 *
+	 * @return Account object that is associated with this socket
+	 */
+	public Account getAccount() { return myAccount; }
 	
 	/**
 	 * Send a message to the user from the bnc bot in printf format.
@@ -113,15 +127,19 @@ public class UserSocket extends ConnectedSocket {
 	 * @param args The args for the format string
 	 */
 	public void sendBotMessage(final String data, final Object... args) {
-		if (myAccount != null) {
-			final String method = myAccount.getContactMethod();
-			if (method.equalsIgnoreCase("SNOTICE")) {
-				sendServerLine("NOTICE", data, args);
+		if (post001) {
+			if (myAccount != null) {
+				final String method = myAccount.getContactMethod();
+				if (method.equalsIgnoreCase("SNOTICE")) {
+					sendServerLine("NOTICE", data, args);
+				} else {
+					sendBotLine(method, data, args);
+				}
 			} else {
-				sendBotLine(method, data, args);
+				sendServerLine("NOTICE", data, args);
 			}
 		} else {
-			sendServerLine("NOTICE", data, args);
+			sendLine("NOTICE AUTH :- "+String.format(data, args));
 		}
 	}
 	
@@ -209,18 +227,18 @@ public class UserSocket extends ConnectedSocket {
 			if (username == null) { username = line[1]; }
 			realname = line[line.length-1];
 			if (nickname != null && password == null) {
-				sendLine("NOTICE AUTH :- Please enter your password.");
-				sendLine("NOTICE AUTH :- This can be done using either: ");
-				sendLine("NOTICE AUTH :-     /QUOTE PASS [<username>:]<password");
-				sendLine("NOTICE AUTH :-     /RAW PASS [<username>:]<password>");
+				sendBotMessage("Please enter your password.");
+				sendBotMessage("This can be done using either: ");
+				sendBotMessage("    /QUOTE PASS [<username>:]<password");
+				sendBotMessage("    /RAW PASS [<username>:]<password>");
 			}
 		} else if (line[0].equals("NICK")) {
 			nickname = line[1];
 			if (realname != null && password == null) {
-				sendLine("NOTICE AUTH :- Please enter your password.");
-				sendLine("NOTICE AUTH :- This can be done using either: ");
-				sendLine("NOTICE AUTH :-     /QUOTE PASS [<username>:]<password");
-				sendLine("NOTICE AUTH :-     /RAW PASS [<username>:]<password>");
+				sendBotMessage("Please enter your password.");
+				sendBotMessage("This can be done using either: ");
+				sendBotMessage("    /QUOTE PASS [<username>:]<password");
+				sendBotMessage("    /RAW PASS [<username>:]<password>");
 			}
 		} else if (line[0].equals("PASS")) {
 			String[] bits = line[line.length-1].split(":",2);
@@ -238,14 +256,22 @@ public class UserSocket extends ConnectedSocket {
 			if (Account.count() == 0) {
 				Account acc = Account.createAccount(username, password);
 				acc.setAdmin(true);
-				sendLine("NOTICE AUTH :- You are the first user of this bnc, and have been made admin");
+				sendBotMessage("You are the first user of this bnc, and have been made admin");
 				Config.saveAll(DFBnc.getConfigFileName());
 			}
 			if (Account.checkPassword(username, password)) {
 				myAccount = Account.get(username);
-				sendLine("NOTICE AUTH :- You are now logged in");
+				sendBotMessage("You are now logged in");
 				if (myAccount.isAdmin()) {
-					sendLine("NOTICE AUTH :- This is an Admin account");
+					sendBotMessage("This is an Admin account");
+				}
+				// Run the firsttime command if this is the first time the account has been used
+				if (myAccount.isFirst()) {
+					handleBotCommand(new String[]{"firsttime"});
+					if (myAccount.isAdmin()) {
+						sendBotMessage("");
+						handleBotCommand(new String[]{"firsttime", "admin"});
+					}
 				}
 			} else {
 				sendIRCLine(Consts.ERR_PASSWDMISMATCH, line[0], "Password incorrect, or account not found");

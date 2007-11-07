@@ -23,6 +23,7 @@
  */
 package uk.org.dataforce.dfbnc;
 
+import uk.org.dataforce.util.TypedProperties;
 import uk.org.dataforce.logger.Logger;
 import java.util.Hashtable;
 import java.util.Enumeration;
@@ -47,12 +48,10 @@ public final class Account {
 	//----------------------------------------------------------------------------
 	/** This account name */
 	private final String myName;
-	/** This account password */
-	private String myPassword;
 	/** Is this account an admin */
 	private boolean isAdmin;
-	/** How should -BNC contact the user? (PRIVMSG/NOTICE/SNOTICE/) */
-	private String contactMethod;
+	/** Propeties file with all the relevent settings for this account/ */
+	private TypedProperties accountOptions = new TypedProperties();
 
 	//----------------------------------------------------------------------------
 	// Static Methods
@@ -158,16 +157,40 @@ public final class Account {
 	 * @param username Name of this account
 	 */
 	private Account(final String username) {
-		final String configName = "user_"+username.replace('.', '_');
+		final String configName = "user_"+username.replace('.', '_')+".";
 		myName = username;
 		
-		// Get settings
-		myPassword = Config.getOption(configName, "password", "...");
-		isAdmin = Config.getBoolOption(configName, "admin", false);
-		contactMethod = Config.getOption(configName, "contactMethod", "SNOTICE");
+		// Set Default settings
+		accountOptions.setProperty("password", "...");
+		accountOptions.setBoolProperty("admin", false);
+		accountOptions.setProperty("contactMethod", "SNOTICE");
+		accountOptions.setBoolProperty("first", true);
+		
+		// Get actual settings
+		for (Object obj : Config.getProperties().keySet()) {
+			String name = (String)obj;
+			if (name.toLowerCase().startsWith(configName)) {
+				// Turn "user_foo.password" into "password"
+				String option = name.split("\\.", 2)[1];
+				accountOptions.setProperty(option, Config.getProperties().getProperty(name));
+			}
+		}
 		
 		// Add to hashtable
 		accounts.put(username.toLowerCase(), this);
+	}
+	
+	/**
+	 * Save the account settings for this account to the config file
+	 */
+	protected void save() {
+		final String configName = "user_"+myName.replace('.', '_');
+		
+		// Store settings in main config
+		for (Object obj : accountOptions.keySet()) {
+			String name = (String)obj;
+			Config.setOption(configName, name, accountOptions.getProperty(name));
+		}
 	}
 	
 	/**
@@ -176,16 +199,6 @@ public final class Account {
 	 * @return Name of this account
 	 */
 	public String getName() { return myName; }
-	
-	/**
-	 * Save the account settings for this account to the config file
-	 */
-	protected void save() {
-		final String configName = "user_"+myName.replace('.', '_');
-		
-		Config.setOption(configName, "password", myPassword);
-		Config.setBoolOption(configName, "admin", isAdmin);
-	}
 	
 	/**
 	 * Check if a password matches this account password.
@@ -199,7 +212,7 @@ public final class Account {
 		else {hashedPassword.append(password.toLowerCase());}
 		hashedPassword.append(salt);
 		
-		return Functions.md5(hashedPassword.toString()).equals(myPassword);
+		return Functions.md5(hashedPassword.toString()).equals(accountOptions.getProperty("password"));
 	}
 	
 	/**
@@ -213,7 +226,7 @@ public final class Account {
 		else {hashedPassword.append(password.toLowerCase());}
 		hashedPassword.append(salt);
 		
-		myPassword = Functions.md5(hashedPassword.toString());
+		accountOptions.setProperty("password", Functions.md5(hashedPassword.toString()));
 	}
 	
 	/**
@@ -222,7 +235,7 @@ public final class Account {
 	 * @param value true/false for new value of isAdmin
 	 */
 	public void setAdmin(final boolean value) {
-		isAdmin = value;
+		accountOptions.setBoolProperty("admin", value);
 	}
 
 	/**
@@ -231,7 +244,25 @@ public final class Account {
 	 * @return the value of isAdmin
 	 */
 	public boolean isAdmin() {
-		return isAdmin;
+		return accountOptions.getBoolProperty("admin", false);
+	}
+	
+	/**
+	 * Change the first-time setting for this account
+	 *
+	 * @param value true/false for new value of isFirst
+	 */
+	public void setFirst(final boolean value) {
+		accountOptions.setBoolProperty("first", value);
+	}
+	
+	/**
+	 * Return the value of isFirst.
+	 *
+	 * @return the value of isFirst
+	 */
+	public boolean isFirst() {
+		return accountOptions.getBoolProperty("first", true);
 	}
 	
 	/**
@@ -240,7 +271,7 @@ public final class Account {
 	 * @param value new value for contactMethod
 	 */
 	public void setContactMethod(final String value) {
-		contactMethod = value;
+		accountOptions.setProperty("contactMethod", value);
 	}
 
 	/**
@@ -249,6 +280,6 @@ public final class Account {
 	 * @return value for contactMethod
 	 */
 	public String getContactMethod() {
-		return contactMethod;
+		return accountOptions.getProperty("contactMethod", "SNOTICE");
 	}
 }

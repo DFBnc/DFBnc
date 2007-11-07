@@ -31,6 +31,7 @@ import uk.org.dataforce.cliparser.BooleanParam;
 import uk.org.dataforce.cliparser.StringParam;
 import uk.org.dataforce.cliparser.IntegerParam;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
+import uk.org.dataforce.dfbnc.servers.ServerManager;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -53,6 +54,9 @@ public class DFBnc {
 	
 	/** The command manager for this bnc */
 	private static CommandManager myCommandManager = new CommandManager();
+	
+	/** The server manager for this bnc */
+	private static ServerManager myServerManager = new ServerManager();
 	
 	/** The arraylist of listenSockets */
 	private static ArrayList<ListenSocket> listenSockets = new ArrayList<ListenSocket>();
@@ -88,11 +92,14 @@ public class DFBnc {
 		Logger.info("Loading Config..");
 		Config.loadConfig(configFile);
 		
-		Logger.info("Loading Accounts..");
-		Account.loadAccounts();
-		
 		Logger.info("Setting up Command Manager");
 		myCommandManager.init();
+		
+		Logger.info("Setting up Server Manager");
+		myServerManager.init();
+		
+		Logger.info("Loading Accounts..");
+		Account.loadAccounts();
 		
 		Logger.info("Adding shutdown hook");
 		Runtime.getRuntime().addShutdownHook(new ShutdownHook(this));
@@ -150,6 +157,15 @@ public class DFBnc {
 	 */
 	public static CommandManager getCommandManager() {
 		return myCommandManager;
+	}
+	
+	/**
+	 * Get the ServerManager
+	 *
+	 * @return The ServerManager
+	 */
+	public static ServerManager getServerManager() {
+		return myServerManager;
 	}
 	
 	/**

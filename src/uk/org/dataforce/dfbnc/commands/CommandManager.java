@@ -53,6 +53,9 @@ public final class CommandManager {
 		//------------------------------------------------
 		// VERSION
 		addCommand(new VersionCommand(this));
+		// FIRSTTIME
+		// FT
+		addCommand(new FirstTimeCommand(this));
 	}
 	
 	/**
@@ -83,8 +86,9 @@ public final class CommandManager {
 	 *
 	 * @param handles String Array of tokens to add this command as a hadler for
 	 * @param command Command subclass for the Command.
+	 * @return the Command that was added, or null if adding failed.
 	 */
-	public void addCommand(final String[] handles, final Command command) {	
+	public Command addCommand(final String[] handles, final Command command) {	
 		Logger.debug("Adding command: "+command.getName());
 		
 		try {
@@ -99,7 +103,9 @@ public final class CommandManager {
 		} catch (Exception e) {
 			Logger.error("Error adding Command '"+command.toString()+"': "+e.getMessage());
 			delCommand(command);
+			return null;
 		}
+		return command;
 	}
 		
 	/**
