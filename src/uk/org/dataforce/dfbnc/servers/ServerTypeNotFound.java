@@ -19,18 +19,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
- * SVN: $Id: ServerNotFound.java 1320 2007-05-21 09:53:01Z ShaneMcC $
+ * SVN: $Id: ServerTypeNotFound.java 1320 2007-05-21 09:53:01Z ShaneMcC $
  */
 
 package uk.org.dataforce.dfbnc.servers;
 
 /**
- * Server Not Found Exception.
+ * ServerType Not Found Exception.
  *
  * @author Shane Mc Cormack
  * @version $Id: ProcessorNotFound.java 1320 2007-05-21 09:53:01Z ShaneMcC $
  */
-public class ServerNotFound extends Exception {
+public class ServerTypeNotFound extends Exception {
 	/**
 	 * A version number for this class.
 	 * It should be changed whenever the class structure is changed (or anything
@@ -40,16 +40,16 @@ public class ServerNotFound extends Exception {
 	private static final long serialVersionUID = 1;
 	
 	/**
-	 * Create a new ServerNotFound Exception.
+	 * Create a new ServerTypeNotFound Exception.
 	 *
 	 * @param message Reason for exception
 	 */
-	public ServerNotFound(String message) { super(message); }
+	public ServerTypeNotFound(String message) { super(message); }
 	
 	/**
 	 * Get SVN Version information.
 	 *
 	 * @return SVN Version String
 	 */
-	public static String getSvnInfo () { return "$Id: ServerNotFound.java 1320 2007-05-21 09:53:01Z ShaneMcC $"; }	
+	public static String getSvnInfo () { return "$Id: ServerTypeNotFound.java 1320 2007-05-21 09:53:01Z ShaneMcC $"; }	
 }

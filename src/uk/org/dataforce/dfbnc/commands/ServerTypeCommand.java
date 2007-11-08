@@ -25,6 +25,8 @@ package uk.org.dataforce.dfbnc.commands;
 
 import uk.org.dataforce.dfbnc.UserSocket;
 import uk.org.dataforce.dfbnc.Functions;
+import uk.org.dataforce.dfbnc.DFBnc;
+import uk.org.dataforce.dfbnc.servers.ServerType;
 
 /**
  * This file represents the 'ServerType' command
@@ -38,10 +40,39 @@ public class ServerTypeCommand extends Command {
 	 */
 	public void handle(final UserSocket user, final String[] params) {
 		if (params.length > 1 && params[1].equalsIgnoreCase("settype")) {
-		} else if (params.length > 1 && params[1].equalsIgnoreCase("list")) {
+			user.sendBotMessage("----------------");
+			if (params.length > 2) {
+				try {
+					ServerType serverType = DFBnc.getServerTypeManager().getServerType(params[2]);
+					serverType.activate(user.getAccount());
+					user.getAccount().getProperties().setProperty("servertype", params[2].toLowerCase());
+					user.sendBotMessage("Your ServerType is now "+params[2].toLowerCase()+".");
+				} catch (Exception e) {
+					user.sendBotMessage("Sorry, "+params[2]+" is not a valid ServerType");
+				}
+			} else {
+				user.sendBotMessage("Available Types:");
+				for (String server : DFBnc.getServerTypeManager().getServerTypeNames()) {
+					try {
+						ServerType serverType = DFBnc.getServerTypeManager().getServerType(server);
+						user.sendBotMessage("    "+server+" - "+serverType.getDescription());
+					} catch (Exception e) { /* Should never happen */}
+				}
+			}
 		} else if (params.length > 1 && params[1].equalsIgnoreCase("help")) {
 			user.sendBotMessage("----------------");
 			user.sendBotMessage("This command allows you to set the servertype for this account.");
+			final String currentType = user.getAccount().getProperties().getProperty("servertype", "");
+			if (currentType.equals("")) {
+				user.sendBotMessage("You currently do not have a servertype selected.");
+			} else {
+				user.sendBotMessage("Your current servertype is: "+currentType);
+			}
+			user.sendBotMessage("");
+			user.sendBotMessage("You can set your type using the command: /dfbnc "+params[0]+" settype <type>");
+			user.sendBotMessage("A list of available types can be seen by ommiting the <type> param");
+		} else {
+			user.sendBotMessage("For usage information use /dfbnc "+params[0]+" help");
 		}
 	}
 	

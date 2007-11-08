@@ -282,4 +282,13 @@ public final class Account {
 	public String getContactMethod() {
 		return accountOptions.getProperty("contactMethod", "SNOTICE");
 	}
+	
+	/**
+	 * Get the accountOptions TypedProperties file for this account.
+	 *
+	 * @return accountOptions
+	 */
+	public TypedProperties getProperties() {
+		return accountOptions;
+	}
 }

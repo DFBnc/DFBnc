@@ -48,11 +48,42 @@ public class ListenSocket implements Runnable {
 	/**
 	 * Create a new ListenSocket.
 	 *
+	 * @param listenhost Host/port to listen on (in format host:port)
+	 * @throws IOException if there is problems with the sockets.
+	 */
+	public ListenSocket(final String listenhost) throws IOException {
+		final String bits[] = listenhost.split(":");
+		if (bits.length > 1) {
+			try {
+				setupSocket(bits[0], Integer.parseInt(bits[1]));
+			} catch (NumberFormatException nfe) {
+				throw new IOException(bits[1]+" is not a valid port");
+			}
+		} else {
+			throw new IOException(listenhost+" is not a valid listenhost");
+		}
+	}
+	
+	
+	/**
+	 * Create a new ListenSocket.
+	 *
 	 * @param host Hostname to listen on
 	 * @param port Hostname to listen on
 	 * @throws IOException if there is problems with the sockets.
 	 */
 	public ListenSocket(final String host, final int port) throws IOException {
+		setupSocket(host, port);
+	}
+	
+	/**
+	 * Setup the ListenSocket.
+	 *
+	 * @param host Hostname to listen on
+	 * @param port Hostname to listen on
+	 * @throws IOException if there is problems with the sockets.
+	 */
+	private void setupSocket(final String host, final int port) throws IOException {
 		selector = Selector.open();
 		
 		ssChannel.configureBlocking(false);

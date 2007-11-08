@@ -31,10 +31,11 @@ import uk.org.dataforce.cliparser.BooleanParam;
 import uk.org.dataforce.cliparser.StringParam;
 import uk.org.dataforce.cliparser.IntegerParam;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
-import uk.org.dataforce.dfbnc.servers.ServerManager;
+import uk.org.dataforce.dfbnc.servers.ServerTypeManager;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Main BNC Class.
@@ -55,8 +56,8 @@ public class DFBnc {
 	/** The command manager for this bnc */
 	private static CommandManager myCommandManager = new CommandManager();
 	
-	/** The server manager for this bnc */
-	private static ServerManager myServerManager = new ServerManager();
+	/** The ServerType manager for this bnc */
+	private static ServerTypeManager myServerTypeManager = new ServerTypeManager();
 	
 	/** The arraylist of listenSockets */
 	private static ArrayList<ListenSocket> listenSockets = new ArrayList<ListenSocket>();
@@ -95,8 +96,8 @@ public class DFBnc {
 		Logger.info("Setting up Command Manager");
 		myCommandManager.init();
 		
-		Logger.info("Setting up Server Manager");
-		myServerManager.init();
+		Logger.info("Setting up ServerType Manager");
+		myServerTypeManager.init();
 		
 		Logger.info("Loading Accounts..");
 		Account.loadAccounts();
@@ -104,14 +105,23 @@ public class DFBnc {
 		Logger.info("Adding shutdown hook");
 		Runtime.getRuntime().addShutdownHook(new ShutdownHook(this));
 		
-		try {
-			// This allows for adding multiple listen sockets, altho it is not currently implemented
-			Logger.info("Opening Socket..");
-			listenSockets.add(new ListenSocket(Config.getOption("general", "bindhost", "0.0.0.0"), Config.getIntOption("general", "bindport", 33262)));
-		} catch (IOException e) {
-			Logger.error("Unable to open socket: "+e.getMessage());
-			Logger.info("Terminating");
-			System.exit(0);
+		Logger.info("Opening Listen Sockets..");
+		int count = 0;
+		List<String> defaulthosts = new ArrayList<String>();
+		defaulthosts.add("0.0.0.0:33262");
+		List<String> listenhosts = Config.getProperties().getListProperty("general.listenhost", defaulthosts);
+		
+		for (String listenhost : listenhosts) {
+			try {
+				listenSockets.add(new ListenSocket(listenhost));
+				count++;
+			} catch (IOException e) {
+				Logger.error("Unable to open socket: "+e.getMessage());
+			}
+			if (count == 0) {
+				Logger.info("No sockets could be opened, Terminating");
+				System.exit(0);
+			}
 		}
 		Logger.info("Running!");
 	}
@@ -160,12 +170,12 @@ public class DFBnc {
 	}
 	
 	/**
-	 * Get the ServerManager
+	 * Get the ServerTypeManager
 	 *
-	 * @return The ServerManager
+	 * @return The ServerTypeManager
 	 */
-	public static ServerManager getServerManager() {
-		return myServerManager;
+	public static ServerTypeManager getServerTypeManager() {
+		return myServerTypeManager;
 	}
 	
 	/**

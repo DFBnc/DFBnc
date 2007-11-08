@@ -23,55 +23,48 @@
  */
 package uk.org.dataforce.dfbnc.servers;
 
-import uk.org.dataforce.dfbnc.UserSocket;
+import uk.org.dataforce.dfbnc.Account;
 
 /**
- * This file represents a Server
+ * This file gives the ability to connect to an IRC Server
  */
-public abstract class Server {
-	/** Reference to the ServerManager in charge of this Server. */
-	protected ServerManager myManager;
-
+public class IRCServerType extends ServerType {
 	/**
-	 * Create a new instance of the Server Object.
+	 * Create a new instance of the ServerType Object
 	 *
-	 * @param manager ServerManager that is in charge of this Server
+	 * @param manager ServerTypeManager that is in charge of this ServerType
 	 */
-	protected Server(final ServerManager manager) {
-		this.myManager = manager;
+	protected IRCServerType (final ServerTypeManager manager) { super(manager); }
+	
+	/**
+	 * Get the Description for this ServerType
+	 *
+	 * @return lower case name of this ServerType
+	 */
+	public String getDescription() {
+		return "This allows connecting to an IRC Server";
 	}
 	
 	/**
-	 * Get the name for this Server.
-	 * @return the name of this Server
+	 * Called when this ServerType is activated
+	 *
+	 * @param account Account that activated the servertype
 	 */
-	public final String getName() {
-		final Package thisPackage = this.getClass().getPackage();
-		int packageLength = 0;
-		if (thisPackage != null) {
-			packageLength = thisPackage.getName().length() + 1;
-		}
-		return this.getClass().getName().substring(packageLength);
+	public void activate(final Account account) {
 	}
 	
 	/**
-	 * Get the name for this Server in lowercase.
-	 * @return lower case name of this Server
+	 * Called when this ServerType is deactivated
+	 *
+	 * @param account Account that deactivated the servertype
 	 */
-	public final String getLowerName() {
-		return this.getName().toLowerCase();
+	public void deactivate(final Account account) {
 	}
-	
-	/**
-	 * Get the name for this Server.
-	 * @return the name of this Server
-	 */
-	public final String toString() { return this.getName(); }
 	
 	/**
 	 * Get SVN Version information.
 	 *
 	 * @return SVN Version String
 	 */
-	public static String getSvnInfo() { return "$Id: Server.java 1320 2007-05-21 09:53:01Z ShaneMcC $"; }	
+	public static String getSvnInfo () { return "$Id: Process001.java 1508 2007-06-11 20:08:12Z ShaneMcC $"; }	
 }

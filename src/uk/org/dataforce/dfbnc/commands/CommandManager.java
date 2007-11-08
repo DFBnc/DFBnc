@@ -56,6 +56,9 @@ public final class CommandManager {
 		// FIRSTTIME
 		// FT
 		addCommand(new FirstTimeCommand(this));
+		// SERVERTYPE
+		// ST
+		addCommand(new ServerTypeCommand(this));
 	}
 	
 	/**

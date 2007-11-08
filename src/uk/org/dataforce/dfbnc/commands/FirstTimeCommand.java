@@ -47,7 +47,6 @@ public class FirstTimeCommand extends Command {
 				user.sendBotMessage("    /dfbnc ShowCommands all");
 				user.sendBotMessage("----");
 				user.sendBotMessage("You may view this again at anytime by issuing: /dfbnc firsttime admin");
-				user.sendBotMessage("----------------");
 			} else {
 				user.sendBotMessage("You do not have permission to access this command.");
 			}
@@ -78,7 +77,6 @@ public class FirstTimeCommand extends Command {
 			user.sendBotMessage("    /msg "+Functions.getBotName()+" ShowCommands");
 			user.sendBotMessage(" will do the same as:");
 			user.sendBotMessage("    /dfbnc ShowCommands");
-			user.sendBotMessage("----------------");
 		}
 		user.getAccount().setFirst(false);
 	}
