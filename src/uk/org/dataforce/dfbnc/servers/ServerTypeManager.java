@@ -26,7 +26,7 @@ package uk.org.dataforce.dfbnc.servers;
 import uk.org.dataforce.dfbnc.servers.irc.IRCServerType;
 import uk.org.dataforce.logger.Logger;
 import java.util.Collection;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Enumeration;
 
 /**
@@ -37,8 +37,8 @@ import java.util.Enumeration;
  * @version $Id: ServerTypeManager.java 1360 2007-05-25 19:12:05Z ShaneMcC $
  */
 public final class ServerTypeManager {
-	/** Hashtable used to store the different types of ServerType known. */
-	private Hashtable<String,ServerType> knownServerTypes = new Hashtable<String,ServerType>();
+	/** HashMap used to store the different types of ServerType known. */
+	private HashMap<String,ServerType> knownServerTypes = new HashMap<String,ServerType>();
 
 	/**
 	 * Constructor to create a ServerTypeManager

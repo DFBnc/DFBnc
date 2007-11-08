@@ -26,8 +26,9 @@ package uk.org.dataforce.dfbnc.commands;
 import uk.org.dataforce.logger.Logger;
 import uk.org.dataforce.dfbnc.UserSocket;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * DFBNC Command Manager.
@@ -37,8 +38,8 @@ import java.util.List;
  * @version $Id: CommandManager.java 1360 2007-05-25 19:12:05Z ShaneMcC $
  */
 public final class CommandManager {
-	/** Hashtable used to store the different types of Command known. */
-	private Hashtable<String,Command> knownCommands = new Hashtable<String,Command>();
+	/** HashMap used to store the different types of Command known. */
+	private HashMap<String,Command> knownCommands = new HashMap<String,Command>();
 	
 	/** List used to store sub command mamangers */
 	private List<CommandManager> subManagers = new ArrayList<CommandManager>();
@@ -95,15 +96,15 @@ public final class CommandManager {
 	 * Get all the commands available to this CommandManager.
 	 * This is a *very* expensive command.
 	 *
-	 * @return Hashtable of available commands.
+	 * @return Map of available commands.
 	 */
-	public Hashtable<String, Command> getAllCommands() {	
+	public Map<String, Command> getAllCommands() {	
 		// First get our own commands,
-		Hashtable<String, Command> result = new Hashtable<String, Command>(knownCommands);
+		Map<String, Command> result = new HashMap<String, Command>(knownCommands);
 		
 		// Now all our submanagers commands
 		for (CommandManager subManager : subManagers) {
-			Hashtable<String, Command> subResult = subManager.getAllCommands();
+			Map<String, Command> subResult = subManager.getAllCommands();
 			for (String commandName : subResult.keySet()) {
 				if (!result.containsKey(commandName)) {
 					result.put(commandName, subResult.get(commandName));

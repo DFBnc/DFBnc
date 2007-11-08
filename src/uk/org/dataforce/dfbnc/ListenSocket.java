@@ -31,7 +31,6 @@ import java.nio.channels.Selector;
 import java.nio.channels.SelectionKey;
 import java.util.Iterator;
 import java.io.IOException;
-import java.util.Hashtable;
 
 /**
  * The ServerSocket for the application.

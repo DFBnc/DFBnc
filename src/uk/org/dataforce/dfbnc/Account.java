@@ -28,7 +28,7 @@ import uk.org.dataforce.logger.Logger;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.servers.ServerType;
 import uk.org.dataforce.dfbnc.servers.ServerTypeNotFound;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Enumeration;
 import java.util.Date;
 
@@ -40,7 +40,7 @@ public final class Account {
 	// Static Variables
 	//----------------------------------------------------------------------------
 	/** List of loaded Accounts */
-	private static Hashtable<String, Account> accounts = new Hashtable<String, Account>();
+	private static HashMap<String, Account> accounts = new HashMap<String, Account>();
 	/** Salt used when generating passwords */
 	private static final String salt = "a5S5l1N4u4O2y9Z4l6W7t1A9b9L8a1X5a7F4s5E8";
 	/** Are passwords case sensitive? */
@@ -187,7 +187,7 @@ public final class Account {
 			myCommandManager.addSubCommandManager(DFBnc.getAdminCommandManager());
 		}
 		
-		// Add to hashtable
+		// Add to HashMap
 		accounts.put(username.toLowerCase(), this);
 	}
 	

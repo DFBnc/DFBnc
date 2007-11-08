@@ -29,17 +29,17 @@ import uk.org.dataforce.dfbnc.commands.CommandNotFound;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.io.IOException;
-import java.util.Hashtable;
+import java.util.HashMap;
 import com.dmdirc.parser.IRCParser;
 
 /**
  * This socket handles actual clients connected to the bnc.
  */
 public class UserSocket extends ConnectedSocket {
-	/** Known sockets are referenced in this hashtable. */
-	private static Hashtable<String,UserSocket> knownSockets = new Hashtable<String,UserSocket>();
+	/** Known sockets are referenced in this HashMap. */
+	private static HashMap<String,UserSocket> knownSockets = new HashMap<String,UserSocket>();
 	
-	/** This sockets ID in the hashtable. */
+	/** This sockets ID in the HashMap. */
 	private final String myID;
 
 	/** This sockets info. */
