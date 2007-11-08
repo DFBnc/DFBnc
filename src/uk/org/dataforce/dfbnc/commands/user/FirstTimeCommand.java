@@ -21,8 +21,10 @@
  *
  * SVN: $Id$
  */
-package uk.org.dataforce.dfbnc.commands;
+package uk.org.dataforce.dfbnc.commands.user;
 
+import uk.org.dataforce.dfbnc.commands.Command;
+import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.UserSocket;
 import uk.org.dataforce.dfbnc.Functions;
 
@@ -95,7 +97,7 @@ public class FirstTimeCommand extends Command {
 	 *
 	 * @param manager CommandManager that is in charge of this Command
 	 */
-	protected FirstTimeCommand (final CommandManager manager) { super(manager); }
+	public FirstTimeCommand (final CommandManager manager) { super(manager); }
 	
 	/**
 	 * Get SVN Version information.

@@ -25,6 +25,7 @@ package uk.org.dataforce.dfbnc;
 
 import uk.org.dataforce.util.TypedProperties;
 import uk.org.dataforce.logger.Logger;
+import uk.org.dataforce.dfbnc.commands.CommandManager;
 import java.util.Hashtable;
 import java.util.Enumeration;
 import java.util.Date;
@@ -50,8 +51,10 @@ public final class Account {
 	private final String myName;
 	/** Is this account an admin */
 	private boolean isAdmin;
-	/** Propeties file with all the relevent settings for this account/ */
+	/** Propeties file with all the relevent settings for this account */
 	private TypedProperties accountOptions = new TypedProperties();
+	/** CommandManager for this account */
+	private CommandManager myCommandManager = new CommandManager();
 
 	//----------------------------------------------------------------------------
 	// Static Methods
@@ -176,8 +179,23 @@ public final class Account {
 			}
 		}
 		
+		// Enable global commands.
+		myCommandManager.addSubCommandManager(DFBnc.getUserCommandManager());
+		if (isAdmin) {
+			myCommandManager.addSubCommandManager(DFBnc.getAdminCommandManager());
+		}
+		
 		// Add to hashtable
 		accounts.put(username.toLowerCase(), this);
+	}
+	
+	/**
+	 * Get the CommandManager for this account
+	 *
+	 * @return The CommandManager for this account
+	 */
+	public CommandManager getCommandManager() {
+		return myCommandManager;
 	}
 	
 	/**
@@ -235,6 +253,14 @@ public final class Account {
 	 * @param value true/false for new value of isAdmin
 	 */
 	public void setAdmin(final boolean value) {
+		if (value != isAdmin) {
+			// Change command manager to reflect new setting
+			if (value) {
+				myCommandManager.addSubCommandManager(DFBnc.getAdminCommandManager());
+			} else {
+				myCommandManager.delSubCommandManager(DFBnc.getAdminCommandManager());
+			}
+		}
 		accountOptions.setBoolProperty("admin", value);
 	}
 

@@ -56,13 +56,6 @@ public abstract class Command {
 	 */
 	public abstract String[] handles();
 	
-	/**
-	 * Is this command admin only?
-	 *
-	 * @return true/false if the command is admin only.
-	 */
-	public boolean isAdminOnly() { return false; }
-	
 	/** 
 	 * Get the name for this Command.
 	 * @return the name of this Command

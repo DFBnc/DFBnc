@@ -31,6 +31,8 @@ import uk.org.dataforce.cliparser.BooleanParam;
 import uk.org.dataforce.cliparser.StringParam;
 import uk.org.dataforce.cliparser.IntegerParam;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
+// import uk.org.dataforce.dfbnc.commands.admin.*;
+import uk.org.dataforce.dfbnc.commands.user.*;
 import uk.org.dataforce.dfbnc.servers.ServerTypeManager;
 
 import java.io.IOException;
@@ -53,8 +55,11 @@ public class DFBnc {
 	/** The config file name */
 	private static String configFile = "DFBnc.conf";
 	
-	/** The command manager for this bnc */
-	private static CommandManager myCommandManager = new CommandManager();
+	/** The user command manager for this bnc */
+	private static CommandManager userCommandManager = new CommandManager();
+	
+	/** The admin command manager for this bnc */
+	private static CommandManager adminCommandManager = new CommandManager();
 	
 	/** The ServerType manager for this bnc */
 	private static ServerTypeManager myServerTypeManager = new ServerTypeManager();
@@ -93,8 +98,12 @@ public class DFBnc {
 		Logger.info("Loading Config..");
 		Config.loadConfig(configFile);
 		
-		Logger.info("Setting up Command Manager");
-		myCommandManager.init();
+		Logger.info("Setting up User Command Manager");
+		userCommandManager.addCommand(new VersionCommand(userCommandManager));
+		userCommandManager.addCommand(new FirstTimeCommand(userCommandManager));
+		userCommandManager.addCommand(new ServerTypeCommand(userCommandManager));
+		
+		Logger.info("Setting up Admin Command Manager");
 		
 		Logger.info("Setting up ServerType Manager");
 		myServerTypeManager.init();
@@ -161,12 +170,21 @@ public class DFBnc {
 	}
 	
 	/**
-	 * Get the CommandManager
+	 * Get the user CommandManager
 	 *
-	 * @return The CommandManager
+	 * @return The user CommandManager
 	 */
-	public static CommandManager getCommandManager() {
-		return myCommandManager;
+	public static CommandManager getUserCommandManager() {
+		return userCommandManager;
+	}
+	
+	/**
+	 * Get the admin CommandManager
+	 *
+	 * @return The admin CommandManager
+	 */
+	public static CommandManager getAdminCommandManager() {
+		return adminCommandManager;
 	}
 	
 	/**

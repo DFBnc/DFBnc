@@ -25,8 +25,9 @@ package uk.org.dataforce.dfbnc.commands;
 
 import uk.org.dataforce.logger.Logger;
 import uk.org.dataforce.dfbnc.UserSocket;
+import java.util.ArrayList;
 import java.util.Hashtable;
-import java.util.Enumeration;
+import java.util.List;
 
 /**
  * DFBNC Command Manager.
@@ -38,6 +39,9 @@ import java.util.Enumeration;
 public final class CommandManager {
 	/** Hashtable used to store the different types of Command known. */
 	private Hashtable<String,Command> knownCommands = new Hashtable<String,Command>();
+	
+	/** List used to store sub command mamangers */
+	private List<CommandManager> subManagers = new ArrayList<CommandManager>();
 
 	/**
 	 * Constructor to create a CommandManager
@@ -45,20 +49,12 @@ public final class CommandManager {
 	public CommandManager() { }
 	
 	/**
-	 * Initialise the CommandManager with the default commands
+	 * Constructor to create a CommandManager, specifying a sub command manager.
+	 *
+	 * @param submanager Sub command manager to add
 	 */
-	public void init() {
-		//------------------------------------------------
-		// Add Commands
-		//------------------------------------------------
-		// VERSION
-		addCommand(new VersionCommand(this));
-		// FIRSTTIME
-		// FT
-		addCommand(new FirstTimeCommand(this));
-		// SERVERTYPE
-		// ST
-		addCommand(new ServerTypeCommand(this));
+	public CommandManager(final CommandManager submanager) {
+		subManagers.add(submanager);
 	}
 	
 	/**
@@ -71,6 +67,28 @@ public final class CommandManager {
 	/** Empty clone method to prevent cloning to get more copies of the CommandManager */
 	public Object clone() throws CloneNotSupportedException {
 		throw new CloneNotSupportedException();
+	}
+
+	/**
+	 * Add new Sub Command Manager.
+	 *
+	 * @param manager Sub CommandManager to add.
+	 */
+	public void addSubCommandManager(final CommandManager manager) {	
+		if (!subManagers.contains(manager)) {
+			subManagers.add(manager);
+		}
+	}
+	
+	/**
+	 * Delete Sub Command Manager.
+	 *
+	 * @param manager Sub CommandManager to remove.
+	 */
+	public void delSubCommandManager(final CommandManager manager) {	
+		if (subManagers.contains(manager)) {
+			subManagers.remove(manager);
+		}
 	}
 
 	/**
@@ -118,10 +136,8 @@ public final class CommandManager {
 	 */
 	public void delCommand(final Command command) {	
 		Command testCommand;
-		String elementName;
 		Logger.debug("Deleting command: "+command.getName());
-		for (Enumeration e = knownCommands.keys(); e.hasMoreElements();) {
-			elementName = (String)e.nextElement();
+		for (String elementName : knownCommands.keySet()) {
 			Logger.debug2("\t Checking handler for: "+elementName);
 			testCommand = knownCommands.get(elementName);
 			if (testCommand.getName().equalsIgnoreCase(command.getName())) {
@@ -141,6 +157,12 @@ public final class CommandManager {
 		if (knownCommands.containsKey(name.toLowerCase())) {
 			return knownCommands.get(name.toLowerCase());
 		} else {
+			for (CommandManager manager : subManagers) {
+				try {
+					return manager.getCommand(name);
+				} catch (CommandNotFound cnf) { /* Ignore, it might be in other managers */ }
+			}
+			// Command was not found in any manager.
 			throw new CommandNotFound("No command is known by "+name);
 		}
 	}

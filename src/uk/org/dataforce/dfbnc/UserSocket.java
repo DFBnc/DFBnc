@@ -312,7 +312,9 @@ public class UserSocket extends ConnectedSocket {
 	 */
 	private void handleBotCommand(final String[] bits) {
 		try {
-			DFBnc.getCommandManager().handle(this, bits);
+			if (myAccount != null) {
+				myAccount.getCommandManager().handle(this, bits);
+			}
 		} catch (CommandNotFound c) {
 			sendBotMessage("Unknown command '%s' Please try 'ShowCommands'", bits[0]);
 		} catch (Exception e) {

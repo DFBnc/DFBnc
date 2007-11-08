@@ -21,8 +21,10 @@
  *
  * SVN: $Id$
  */
-package uk.org.dataforce.dfbnc.commands;
+package uk.org.dataforce.dfbnc.commands.user;
 
+import uk.org.dataforce.dfbnc.commands.Command;
+import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.UserSocket;
 import uk.org.dataforce.dfbnc.DFBnc;
 
@@ -54,7 +56,7 @@ public class VersionCommand extends Command {
 	 *
 	 * @param manager CommandManager that is in charge of this Command
 	 */
-	protected VersionCommand (final CommandManager manager) { super(manager); }
+	public VersionCommand (final CommandManager manager) { super(manager); }
 	
 	/**
 	 * Get SVN Version information.
