@@ -21,8 +21,10 @@
  *
  * SVN: $Id$
  */
-package uk.org.dataforce.dfbnc.servers;
+package uk.org.dataforce.dfbnc.servers.irc;
 
+import uk.org.dataforce.dfbnc.servers.ServerType;
+import uk.org.dataforce.dfbnc.servers.ServerTypeManager;
 import uk.org.dataforce.dfbnc.Account;
 
 /**
@@ -34,7 +36,7 @@ public class IRCServerType extends ServerType {
 	 *
 	 * @param manager ServerTypeManager that is in charge of this ServerType
 	 */
-	protected IRCServerType (final ServerTypeManager manager) { super(manager); }
+	public IRCServerType (final ServerTypeManager manager) { super(manager); }
 	
 	/**
 	 * Get the Description for this ServerType

@@ -23,6 +23,7 @@
  */
 package uk.org.dataforce.dfbnc.servers;
 
+import uk.org.dataforce.dfbnc.servers.irc.IRCServerType;
 import uk.org.dataforce.logger.Logger;
 import java.util.Collection;
 import java.util.Hashtable;
