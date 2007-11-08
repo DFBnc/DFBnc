@@ -87,17 +87,49 @@ public class CommandManagerTest {
 	}
 	
 	/**
-	 * This is another test for deep duplicates, this one will fail.
+	 * This is another test for deep duplicates, adding a subnode that has a duplicate
 	 */
 	@Test
 	public void DontAllowDeepDuplicate2() {
 		// Allow another command Manager
+		assertTrue("CommandManager didn't allow a non-duplicate Manager to be added", commandManager[0].addSubCommandManager(commandManager[2]));
+		// Allow non-duplicate
+		assertTrue("CommandManager didn't allow duplicate to be added", commandManager[0].addSubCommandManager(commandManager[3]));
+		// SubManager should allow this
+		assertTrue("SubCommandManager didn't allow a-non Duplicate to be added", commandManager[1].addSubCommandManager(commandManager[3]));
+		// Don't allow the manager with the duplicate
+		assertFalse("CommandManager allowed subCommandManager with duplicate to be added", commandManager[0].addSubCommandManager(commandManager[1]));
+	}
+	
+	/**
+	 * This is another test for deep duplicates, adding a duplicate to a subnode
+	 * This will be allowed as the the subnode has no way of tellig that this is
+	 * a duplicate.
+	 */
+	@Test
+	public void AllowDeepDuplicate() {
+		// Allow another command Manager
 		assertTrue("CommandManager didn't allow a non-duplicate Manager to be added", commandManager[0].addSubCommandManager(commandManager[1]));
 		// Allow another command Manager
 		assertTrue("CommandManager didn't allow a non-duplicate Manager to be added", commandManager[0].addSubCommandManager(commandManager[2]));
-		// Don't allow non-duplicate
+		// Allow non-duplicate
 		assertTrue("CommandManager didn't allow duplicate to be added", commandManager[0].addSubCommandManager(commandManager[3]));
-		// SubManager should allow this
-		assertFalse("SubCommandManager allowed a Duplicate to be added", commandManager[1].addSubCommandManager(commandManager[3]));
+		// Allow the Duplicate
+		assertTrue("CommandManager allowed subCommandManager with duplicate to be added", commandManager[1].addSubCommandManager(commandManager[2]));
+	}
+	
+	/**
+	 * This tests that recursion is not possible via AllowDeepDuplicate
+	 */
+	@Test
+	public void AllowDeepDuplicate2() {
+		// Allow another command Manager
+		assertTrue("CommandManager didn't allow a non-duplicate Manager to be added", commandManager[0].addSubCommandManager(commandManager[1]));
+		// Allow another command Manager
+		assertTrue("CommandManager didn't allow a non-duplicate Manager to be added", commandManager[0].addSubCommandManager(commandManager[2]));
+		// Allow non-duplicate
+		assertTrue("CommandManager didn't allow duplicate to be added", commandManager[0].addSubCommandManager(commandManager[3]));
+		// Don't Allow the Duplicate
+		assertFalse("CommandManager allowed subCommandManager with recursion", commandManager[1].addSubCommandManager(commandManager[0]));
 	}
 }

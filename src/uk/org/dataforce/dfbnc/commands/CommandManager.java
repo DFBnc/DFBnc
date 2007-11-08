@@ -42,6 +42,9 @@ public final class CommandManager {
 	
 	/** List used to store sub command mamangers */
 	private List<CommandManager> subManagers = new ArrayList<CommandManager>();
+	
+	/** Nesting limit for calls to getCommand() */
+	private final static int nestingLimit = 10;
 
 	/**
 	 * Constructor to create a CommandManager
@@ -87,6 +90,29 @@ public final class CommandManager {
 		}
 		return false;
 	}
+	
+	/**
+	 * Get all the commands available to this CommandManager.
+	 * This is a *very* expensive command.
+	 *
+	 * @return Hashtable of available commands.
+	 */
+	public Hashtable<String, Command> getAllCommands() {	
+		// First get our own commands,
+		Hashtable<String, Command> result = new Hashtable<String, Command>(knownCommands);
+		
+		// Now all our submanagers commands
+		for (CommandManager subManager : subManagers) {
+			Hashtable<String, Command> subResult = subManager.getAllCommands();
+			for (String commandName : subResult.keySet()) {
+				if (!result.containsKey(commandName)) {
+					result.put(commandName, subResult.get(commandName));
+				}
+			}
+		}
+		
+		return result;
+	}
 
 	/**
 	 * Add new Sub Command Manager.
@@ -95,7 +121,14 @@ public final class CommandManager {
 	 * @return true if the CommandManager was added, else false.
 	 */
 	public boolean addSubCommandManager(final CommandManager manager) {	
+		// Check that we don't have this already, its not us, and it doesn't have us.
 		if (!hasSubCommandManager(manager) && manager != this && !manager.hasSubCommandManager(this)) {
+			// now check that this doesn't have any of our sub-managers available
+			for (CommandManager subManager : subManagers) {
+				if (manager.hasSubCommandManager(subManager)) {
+					return false;
+				}
+			}
 			subManagers.add(manager);
 			return true;
 		}
@@ -113,7 +146,7 @@ public final class CommandManager {
 			subManagers.remove(manager);
 			return true;
 		}
-	return false;
+		return false;
 	}
 
 	/**
@@ -123,7 +156,7 @@ public final class CommandManager {
 	 */
 	public void addCommand(final Command command) {	
 		// handles() returns a String array of all the namess
-		// that this commadn will handle.
+		// that this command will handle.
 		addCommand(command.handles(), command);
 	}
 	
@@ -179,13 +212,26 @@ public final class CommandManager {
 	 * @return Command for the given name.
 	 */
 	public Command getCommand(final String name) throws CommandNotFound {
+		return getCommand(name, 0);
+	}
+	
+	/**
+	 * Get the command used for a specified name.
+	 *
+	 * @param name Name to look for
+	 * @param nesting Amount of previous calls.
+	 * @return Command for the given name.
+	 */
+	protected Command getCommand(final String name, final int nesting) throws CommandNotFound {
 		if (knownCommands.containsKey(name.toLowerCase())) {
 			return knownCommands.get(name.toLowerCase());
 		} else {
-			for (CommandManager manager : subManagers) {
-				try {
-					return manager.getCommand(name);
-				} catch (CommandNotFound cnf) { /* Ignore, it might be in other managers */ }
+			if (nesting <= nestingLimit) {
+				for (CommandManager manager : subManagers) {
+					try {
+						return manager.getCommand(name, (nesting+1));
+					} catch (CommandNotFound cnf) { /* Ignore, it might be in other managers */ }
+				}
 			}
 			// Command was not found in any manager.
 			throw new CommandNotFound("No command is known by "+name);
@@ -203,7 +249,11 @@ public final class CommandManager {
 		Command commandHandler = null;
 		try {
 			commandHandler = getCommand(params[0]);
-			commandHandler.handle(user, params);
+			if (commandHandler.isAdminOnly() && !user.getAccount().isAdmin()) {
+				throw new CommandNotFound("No command is known by "+params[0]);
+			} else {
+				commandHandler.handle(user, params);
+			}
 		} catch (CommandNotFound p) {
 			throw p;
 		} catch (Exception e) {

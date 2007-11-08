@@ -100,6 +100,15 @@ public class FirstTimeCommand extends Command {
 	public FirstTimeCommand (final CommandManager manager) { super(manager); }
 	
 	/**
+	 * Get a description of what this command does
+	 *
+	 * @return A description of what this command does
+	 */
+	public String getDescription() {
+		return "This command gives information on firsttime usage of dfbnc";
+	}
+	
+	/**
 	 * Get SVN Version information.
 	 *
 	 * @return SVN Version String

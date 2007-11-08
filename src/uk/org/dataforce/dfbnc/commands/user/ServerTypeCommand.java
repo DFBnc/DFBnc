@@ -108,6 +108,15 @@ public class ServerTypeCommand extends Command {
 	public ServerTypeCommand (final CommandManager manager) { super(manager); }
 	
 	/**
+	 * Get a description of what this command does
+	 *
+	 * @return A description of what this command does
+	 */
+	public String getDescription() {
+		return "This command changes your ServerType";
+	}
+	
+	/**
 	 * Get SVN Version information.
 	 *
 	 * @return SVN Version String

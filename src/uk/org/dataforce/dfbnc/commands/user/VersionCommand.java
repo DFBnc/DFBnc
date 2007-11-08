@@ -59,6 +59,15 @@ public class VersionCommand extends Command {
 	public VersionCommand (final CommandManager manager) { super(manager); }
 	
 	/**
+	 * Get a description of what this command does
+	 *
+	 * @return A description of what this command does
+	 */
+	public String getDescription() {
+		return "This command tells you what version of dfbnc you are running";
+	}
+	
+	/**
 	 * Get SVN Version information.
 	 *
 	 * @return SVN Version String

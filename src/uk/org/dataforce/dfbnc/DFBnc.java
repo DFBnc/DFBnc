@@ -102,6 +102,7 @@ public class DFBnc {
 		userCommandManager.addCommand(new VersionCommand(userCommandManager));
 		userCommandManager.addCommand(new FirstTimeCommand(userCommandManager));
 		userCommandManager.addCommand(new ServerTypeCommand(userCommandManager));
+		userCommandManager.addCommand(new ShowCommandsCommand(userCommandManager));
 		
 		Logger.info("Setting up Admin Command Manager");
 		

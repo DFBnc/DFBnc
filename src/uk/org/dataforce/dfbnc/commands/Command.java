@@ -56,7 +56,7 @@ public abstract class Command {
 	 */
 	public abstract String[] handles();
 	
-	/** 
+	/**
 	 * Get the name for this Command.
 	 * @return the name of this Command
 	 */
@@ -67,6 +67,22 @@ public abstract class Command {
 			packageLength = thisPackage.getName().length() + 1;
 		}
 		return this.getClass().getName().substring(packageLength);
+	}
+	
+	/**
+	 * Get a description of what this command does
+	 *
+	 * @return A description of what this command does
+	 */
+	public abstract String getDescription();
+	
+	/**
+	 * Is this command Admin only?
+	 *
+	 * @return true if admin-only command
+	 */
+	public final boolean isAdminOnly() {
+		return false;
 	}
 	
 	/**

@@ -59,6 +59,15 @@ public class ServerListCommand extends Command {
 	public ServerListCommand (final CommandManager manager) { super(manager); }
 	
 	/**
+	 * Get a description of what this command does
+	 *
+	 * @return A description of what this command does
+	 */
+	public String getDescription() {
+		return "This command lets you manipulate the irc server list";
+	}
+	
+	/**
 	 * Get SVN ServerList information.
 	 *
 	 * @return SVN ServerList String
