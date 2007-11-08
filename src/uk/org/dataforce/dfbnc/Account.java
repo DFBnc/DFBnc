@@ -26,6 +26,8 @@ package uk.org.dataforce.dfbnc;
 import uk.org.dataforce.util.TypedProperties;
 import uk.org.dataforce.logger.Logger;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
+import uk.org.dataforce.dfbnc.servers.ServerType;
+import uk.org.dataforce.dfbnc.servers.ServerTypeNotFound;
 import java.util.Hashtable;
 import java.util.Enumeration;
 import java.util.Date;
@@ -187,6 +189,24 @@ public final class Account {
 		
 		// Add to hashtable
 		accounts.put(username.toLowerCase(), this);
+	}
+	
+	/**
+	 * Get the ServerType for this account
+	 *
+	 * @return The ServerType for this account (or null if not defined, or invalid)
+	 */
+	public ServerType getServerType() {
+		final String currentType = getProperties().getProperty("servertype", "");
+		if (!currentType.isEmpty()) {
+			try {
+				return DFBnc.getServerTypeManager().getServerType(currentType);
+			} catch (ServerTypeNotFound stnf) {
+				return null;
+			}
+		} else {
+			return null;
+		}
 	}
 	
 	/**

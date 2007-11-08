@@ -70,25 +70,50 @@ public final class CommandManager {
 	}
 
 	/**
+	 * This checks if this CommandManager, or any of its sub-managers has the
+	 * given manager.
+	 *
+	 * @param manager CommandManager to look for.
+	 */
+	public boolean hasSubCommandManager(final CommandManager manager) {	
+		if (subManagers.contains(manager)) {
+			return true;
+		} else {
+			for (CommandManager subManager : subManagers) {
+				if (subManager.hasSubCommandManager(manager)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Add new Sub Command Manager.
 	 *
 	 * @param manager Sub CommandManager to add.
+	 * @return true if the CommandManager was added, else false.
 	 */
-	public void addSubCommandManager(final CommandManager manager) {	
-		if (!subManagers.contains(manager)) {
+	public boolean addSubCommandManager(final CommandManager manager) {	
+		if (!hasSubCommandManager(manager) && manager != this && !manager.hasSubCommandManager(this)) {
 			subManagers.add(manager);
+			return true;
 		}
+		return false;
 	}
 	
 	/**
 	 * Delete Sub Command Manager.
 	 *
 	 * @param manager Sub CommandManager to remove.
+	 * @return true if the CommandManager was removed, else false.
 	 */
-	public void delSubCommandManager(final CommandManager manager) {	
+	public boolean delSubCommandManager(final CommandManager manager) {	
 		if (subManagers.contains(manager)) {
 			subManagers.remove(manager);
+			return true;
 		}
+	return false;
 	}
 
 	/**

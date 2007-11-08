@@ -44,13 +44,21 @@ public class ServerTypeCommand extends Command {
 		if (params.length > 1 && params[1].equalsIgnoreCase("settype")) {
 			user.sendBotMessage("----------------");
 			if (params.length > 2) {
-				try {
-					ServerType serverType = DFBnc.getServerTypeManager().getServerType(params[2]);
-					serverType.activate(user.getAccount());
-					user.getAccount().getProperties().setProperty("servertype", params[2].toLowerCase());
-					user.sendBotMessage("Your ServerType is now "+params[2].toLowerCase()+".");
-				} catch (Exception e) {
-					user.sendBotMessage("Sorry, "+params[2]+" is not a valid ServerType");
+				final ServerType currentType = user.getAccount().getServerType();
+				if (params[2].equalsIgnoreCase("none")) {
+					user.getAccount().getProperties().setProperty("servertype", "");
+					user.sendBotMessage("You now have no servertype.");
+					if (currentType != null) { currentType.deactivate(user.getAccount()); }
+				} else {
+					try {
+						ServerType serverType = DFBnc.getServerTypeManager().getServerType(params[2]);
+						if (currentType != null) { currentType.deactivate(user.getAccount()); }
+						serverType.activate(user.getAccount());
+						user.getAccount().getProperties().setProperty("servertype", params[2].toLowerCase());
+						user.sendBotMessage("Your ServerType is now "+params[2].toLowerCase()+".");
+					} catch (Exception e) {
+						user.sendBotMessage("Sorry, "+params[2]+" is not a valid ServerType");
+					}
 				}
 			} else {
 				user.sendBotMessage("Available Types:");
@@ -68,7 +76,12 @@ public class ServerTypeCommand extends Command {
 			if (currentType.equals("")) {
 				user.sendBotMessage("You currently do not have a servertype selected.");
 			} else {
-				user.sendBotMessage("Your current servertype is: "+currentType);
+				String info = "";
+				final ServerType st = user.getAccount().getServerType();
+				if (st == null) {
+					info = " (Currently not available)";
+				}
+				user.sendBotMessage("Your current servertype is: "+currentType+info);
 			}
 			user.sendBotMessage("");
 			user.sendBotMessage("You can set your type using the command: /dfbnc "+params[0]+" settype <type>");

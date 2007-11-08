@@ -23,59 +23,45 @@
  */
 package uk.org.dataforce.dfbnc.servers.irc;
 
+import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
-import uk.org.dataforce.dfbnc.servers.ServerType;
-import uk.org.dataforce.dfbnc.servers.ServerTypeManager;
-import uk.org.dataforce.dfbnc.Account;
+import uk.org.dataforce.dfbnc.UserSocket;
+import uk.org.dataforce.dfbnc.DFBnc;
 
 /**
- * This file gives the ability to connect to an IRC Server
+ * This file represents the 'ServerList' command
  */
-public class IRCServerType extends ServerType {
-	/** CommandManager for IRCServerType */
-	final CommandManager myCommandManager = new CommandManager();
-	 
+public class ServerListCommand extends Command {
 	/**
-	 * Create a new instance of the ServerType Object
+	 * Handle a ServerList command.
 	 *
-	 * @param manager ServerTypeManager that is in charge of this ServerType
+	 * @param user the UserSocket that performed this command
+	 * @param params Params for command (param 0 is the command name)
 	 */
-	public IRCServerType (final ServerTypeManager manager) {
-		super(manager);
-		myCommandManager.addCommand(new ServerListCommand(myCommandManager));
+	public void handle(final UserSocket user, final String[] params) {
+		user.sendBotMessage("ServerList Command Called");
 	}
 	
 	/**
-	 * Get the Description for this ServerType
+	 * What does this Command handle.
 	 *
-	 * @return lower case name of this ServerType
+	 * @return String[] with the names of the tokens we handle.
 	 */
-	public String getDescription() {
-		return "This allows connecting to an IRC Server";
+	public String[] handles() {
+		return new String[]{"serverlist", "sl"};
 	}
 	
 	/**
-	 * Called when this ServerType is activated
+	 * Create a new instance of the Command Object
 	 *
-	 * @param account Account that activated the servertype
+	 * @param manager CommandManager that is in charge of this Command
 	 */
-	public void activate(final Account account) {
-		account.getCommandManager().addSubCommandManager(myCommandManager);
-	}
+	public ServerListCommand (final CommandManager manager) { super(manager); }
 	
 	/**
-	 * Called when this ServerType is deactivated
+	 * Get SVN ServerList information.
 	 *
-	 * @param account Account that deactivated the servertype
-	 */
-	public void deactivate(final Account account) {
-		account.getCommandManager().delSubCommandManager(myCommandManager);
-	}
-	
-	/**
-	 * Get SVN Version information.
-	 *
-	 * @return SVN Version String
+	 * @return SVN ServerList String
 	 */
 	public static String getSvnInfo () { return "$Id: Process001.java 1508 2007-06-11 20:08:12Z ShaneMcC $"; }	
 }
