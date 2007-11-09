@@ -28,6 +28,9 @@ import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.UserSocket;
 import uk.org.dataforce.dfbnc.DFBnc;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * This file represents the 'ServerList' command
  */
@@ -39,7 +42,59 @@ public class ServerListCommand extends Command {
 	 * @param params Params for command (param 0 is the command name)
 	 */
 	public void handle(final UserSocket user, final String[] params) {
-		user.sendBotMessage("ServerList Command Called");
+		user.sendBotMessage("----------------");
+		if (params.length > 1) {
+			List<String> serverList = new ArrayList<String>();
+			serverList = user.getAccount().getProperties().getListProperty("irc.serverlist", serverList);
+			if (params[1].equalsIgnoreCase("list")) {
+				if (serverList.size() > 0) {
+					user.sendBotMessage("You currently have the following servers in your list:");
+					for (int i = 0; i < serverList.size(); ++i) {
+						user.sendBotMessage(String.format("    %2d: %s", i, serverList.get(i)));
+					}
+				} else {
+					user.sendBotMessage("Your server list is currently empty.");
+				}
+			} else if (params[1].equalsIgnoreCase("add")) {
+				if (params.length > 2) {
+					StringBuilder allInput = new StringBuilder("");
+					for (int i = 2 ; i < params.length; ++i) { allInput.append(params[i]+" "); }
+					String[] input = IRCServerType.parseServerString(allInput.toString());
+					serverList.add(input[3]);
+					user.sendBotMessage("Server ("+input[3]+") has been added to your serverList");
+				} else {
+					user.sendBotMessage("You must specify a server to add in the format: <server>[:port] [password]");
+				}
+			} else if (params[1].equalsIgnoreCase("del")) {
+				if (params.length > 2) {
+					try {
+						final int position = Integer.parseInt(params[2]);
+						if (position < serverList.size()) {
+							final String serverName = serverList.get(position);
+							serverList.remove(position);
+							user.sendBotMessage("Server number "+position+" ("+serverName+") has been removed from your server list.");
+						} else {
+							user.sendBotMessage("There is no server with the number "+position+" in your server list");
+							user.sendBotMessage("Use /dfbnc "+params[0]+" list to view your server list");
+						}
+					} catch (NumberFormatException nfe) {
+						user.sendBotMessage("You must specify a server number to delete");
+					}
+				} else {
+					user.sendBotMessage("You must specify a server number to delete");
+				}
+			} else if (params[1].equalsIgnoreCase("clear")) {
+				serverList.clear();
+				user.sendBotMessage("Your server list has been cleared.");
+			}
+			user.getAccount().getProperties().setListProperty("irc.serverlist", serverList);
+		} else {
+			user.sendBotMessage("This command can be used to modify your irc serverlist using the following params:");
+			user.sendBotMessage("  /dfbnc "+params[0]+" list");
+			user.sendBotMessage("  /dfbnc "+params[0]+" add <Server>[:Port] [password]");
+			user.sendBotMessage("  /dfbnc "+params[0]+" del <number>");
+			user.sendBotMessage("  /dfbnc "+params[0]+" clear");
+		}
 	}
 	
 	/**

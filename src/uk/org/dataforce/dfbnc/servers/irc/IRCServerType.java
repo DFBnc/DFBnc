@@ -27,6 +27,7 @@ import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.servers.ServerType;
 import uk.org.dataforce.dfbnc.servers.ServerTypeManager;
 import uk.org.dataforce.dfbnc.Account;
+import uk.org.dataforce.dfbnc.UserSocket;
 
 /**
  * This file gives the ability to connect to an IRC Server
@@ -43,6 +44,8 @@ public class IRCServerType extends ServerType {
 	public IRCServerType (final ServerTypeManager manager) {
 		super(manager);
 		myCommandManager.addCommand(new ServerListCommand(myCommandManager));
+		myCommandManager.addCommand(new IRCSetCommand(myCommandManager));
+		myCommandManager.addCommand(new ConnectCommand(myCommandManager));
 	}
 	
 	/**
@@ -61,6 +64,18 @@ public class IRCServerType extends ServerType {
 	 */
 	public void activate(final Account account) {
 		account.getCommandManager().addSubCommandManager(myCommandManager);
+		String nickname = account.getProperties().getProperty("irc.nickname", "");
+		String altnickname = account.getProperties().getProperty("irc.altnickname", "");
+		String username = account.getProperties().getProperty("irc.username", "");
+		if (nickname.isEmpty()) {
+			account.getProperties().setProperty("irc.nickname", account.getName());
+		}
+		if (altnickname.isEmpty()) {
+			account.getProperties().setProperty("irc.altnickname", "_"+account.getName());
+		}
+		if (username.isEmpty()) {
+			account.getProperties().setProperty("irc.username", account.getName());
+		}
 	}
 	
 	/**
@@ -70,6 +85,49 @@ public class IRCServerType extends ServerType {
 	 */
 	public void deactivate(final Account account) {
 		account.getCommandManager().delSubCommandManager(myCommandManager);
+	}
+	
+	/**
+	 * Called to close any Active connections.
+	 * This is called when an account is being disabled/removed or the BNC
+	 * is shutting down.
+	 *
+	 * @param acc Account to handle close for.
+	 * @param reason Reason for closing.
+	 */
+	public void close(final Account account, final String reason) {
+	}
+	
+	/**
+	 * Parse a String to get server information.
+	 *
+	 * @param input in the form Server[:port] [password]
+	 * @return String[4] = {"server", "port", "password", "server:port password"}
+	 *         Password will be set to "" if not specified
+	 *         Port will be set to 6667 if not specified or an invalid port is specified
+	 *         The last parameter will be set as the interpreted value of the input.
+	 */
+	public static String[] parseServerString(final String input) {
+		String[] result = new String[]{"", "6667", "", ""};
+		String[] parts = input.split(" ", 2);
+		String[] hostBits = parts[0].split(":");
+		// Set password
+		if (parts.length > 1) { result[2] = parts[1].trim(); }
+		// Set port
+		if (hostBits.length > 1) {
+			try {
+				final int portNum = Integer.parseInt(hostBits[1]);
+				if (portNum > 0 && portNum <= 65535) {
+					result[1] = hostBits[1];
+				}
+			} catch (NumberFormatException nfe) { /* Ignore the Wrong port and use default */ }
+		}
+		// Set Host
+		result[0] = hostBits[0];
+		// Set interpreted value
+		result[3] = (result[0]+":"+result[1]+" "+result[2]).trim();
+		
+		return result;
 	}
 	
 	/**

@@ -146,14 +146,15 @@ public class DFBnc {
 		Logger.info("Closing Listen Sockets");
 		for (int i = 0; i < listenSockets.size() ; ++i) {
 			final ListenSocket ls = listenSockets.get(i);
-			ls.close();
+			//ls.close();
 		}
-		listenSockets.clear();
+		//listenSockets.clear();
 		
 		Logger.info("Closing User Sockets");
 		UserSocket.closeAll("BNC Shutdown");
 		
 		Logger.info("Saving Accounts");
+		Account.shutdown();
 		Account.saveAccounts();
 		
 		Logger.info("Saving config to '"+configFile+"'");

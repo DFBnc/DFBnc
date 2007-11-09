@@ -39,12 +39,12 @@ public class Config {
 	private static TypedProperties config = getDefaults();
 	
 	/**
-	 * Get a copy of the properties object.
+	 * Get the properties object.
 	 *
-	 * @return A copy of the properties object
+	 * @return The properties object
 	 */
 	public static TypedProperties getProperties() {
-		return (TypedProperties)config.clone();
+		return config;
 	}
 	
 	/**
@@ -54,6 +54,7 @@ public class Config {
 	 */
 	private static TypedProperties getDefaults() {
 		final TypedProperties defaults = new TypedProperties();
+		defaults.setCaseSensitivity(false);
 		defaults.setProperty("General.bindhost", "0.0.0.0");
 		defaults.setIntProperty("General.bindport", 33262);
 		defaults.setProperty("General.serverName", "DFBnc.Server");
@@ -68,6 +69,7 @@ public class Config {
 	 */
 	public static void loadConfig(final String filename) {
 		config = new TypedProperties(getDefaults());
+		config.setCaseSensitivity(false);
 		final File file = new File(filename);
 		if (file.exists()) {
 			try {

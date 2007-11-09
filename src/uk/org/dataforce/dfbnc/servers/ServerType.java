@@ -24,6 +24,7 @@
 package uk.org.dataforce.dfbnc.servers;
 
 import uk.org.dataforce.dfbnc.Account;
+import uk.org.dataforce.dfbnc.UserSocket;
 
 /**
  * This file represents a ServerType
@@ -85,6 +86,29 @@ public abstract class ServerType {
 	 */
 	public abstract void deactivate(final Account account);
 	
+	/**
+	 * Called when a user connects to an account with this servertype
+	 *
+	 * @param user UserSocket for user
+	 */
+	public void userConnected(final UserSocket user) { }
+	
+	/**
+	 * Called when a user disconnects from an account with this servertype
+	 *
+	 * @param user UserSocket for user
+	 */
+	public void userDisconnected(final UserSocket user) { }
+	
+	/**
+	 * Called to close any Active connections.
+	 * This is called when an account is being disabled/removed or the BNC
+	 * is shutting down.
+	 *
+	 * @param acc Account to handle close for.
+	 * @param reason Reason for closing.
+	 */
+	public abstract void close(final Account account, final String reason);
 	
 	/**
 	 * Get the name for this ServerType.

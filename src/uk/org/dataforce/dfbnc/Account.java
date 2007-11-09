@@ -29,6 +29,9 @@ import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.servers.ServerType;
 import uk.org.dataforce.dfbnc.servers.ServerTypeNotFound;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Date;
 
@@ -57,6 +60,10 @@ public final class Account {
 	private TypedProperties accountOptions = new TypedProperties();
 	/** CommandManager for this account */
 	private CommandManager myCommandManager = new CommandManager();
+	/** ConnectionHandler for this account */
+	private ConnectionHandler myConnectionHandler = null;
+	/** List of all sockets that are part of this account. */
+	private List<UserSocket> myUserSockets = new ArrayList<UserSocket>();
 
 	//----------------------------------------------------------------------------
 	// Static Methods
@@ -151,6 +158,21 @@ public final class Account {
 		}
 	}
 	
+	/**
+	 * Shutdown all accounts.
+	 */
+	protected static void shutdown() {
+		for (Account acc : accounts.values()) {
+			ServerType st = acc.getServerType();
+			if (st != null) {
+				st.close(acc, "BNC Shuting Down");
+			}
+			if (myConnectionHandler != null) {
+				myConnectionHandler.shutdown("BNC Shuting Down");
+			}
+		}
+	}
+	
 	//----------------------------------------------------------------------------
 	// Per-Account Methods
 	//----------------------------------------------------------------------------
@@ -166,6 +188,7 @@ public final class Account {
 		myName = username;
 		
 		// Set Default settings
+		accountOptions.setCaseSensitivity(false);
 		accountOptions.setProperty("password", "...");
 		accountOptions.setBoolProperty("admin", false);
 		accountOptions.setProperty("contactMethod", "SNOTICE");
@@ -187,8 +210,40 @@ public final class Account {
 			myCommandManager.addSubCommandManager(DFBnc.getAdminCommandManager());
 		}
 		
+		final ServerType myServerType = getServerType();
+		if (myServerType != null) {
+			myServerType.activate(this);
+		}
+		
 		// Add to HashMap
 		accounts.put(username.toLowerCase(), this);
+	}
+	
+	/**
+	 * Called when a user connects to this account
+	 *
+	 * @param user UserSocket for user
+	 */
+	public void userConnected(final UserSocket user) {
+		myUserSockets.add(user);
+	}
+	
+	/**
+	 * Called when a user connects from this account
+	 *
+	 * @param user UserSocket for user
+	 */
+	public void userDisconnected(final UserSocket user) {
+		myUserSockets.remove(user);
+	}
+	
+	/**
+	 * Get a List of all UserSockets that are part of this account
+	 *
+	 * @return a List of all UserSockets that are part of this account
+	 */
+	public List<UserSocket> getUserSockets() {
+		return myUserSockets;
 	}
 	
 	/**
@@ -219,6 +274,24 @@ public final class Account {
 	}
 	
 	/**
+	 * Get the ConnectionHandler for this account
+	 *
+	 * @return The ConnectionHandler for this account
+	 */
+	public ConnectionHandler getConnectionHandler() {
+		return myConnectionHandler;
+	}
+	
+	/**
+	 * Set the ConnectionHandler for this account
+	 *
+	 * @param handler The New ConnectionHandler for this account
+	 */
+	public void setConnectionHandler(final ConnectionHandler handler) {
+		myConnectionHandler = handler;
+	}
+	
+	/**
 	 * Save the account settings for this account to the config file
 	 */
 	protected void save() {
@@ -227,6 +300,7 @@ public final class Account {
 		// Store settings in main config
 		for (Object obj : accountOptions.keySet()) {
 			String name = (String)obj;
+			Logger.debug2("Saving property: "+configName+"."+name+" -> "+accountOptions.getProperty(name));
 			Config.setOption(configName, name, accountOptions.getProperty(name));
 		}
 	}

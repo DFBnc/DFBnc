@@ -131,7 +131,11 @@
 	  Build and run the jar
 	  -->
 	<target name="run" depends="jar" description="Build and run jar.">
-		<java fork="true" jar="${dist.jar}"/>
+		<echo message="This task is disabled due to the fact the ShutdownHook used to save settings is unable to run completely when run via ant"/>
+		<echo message="Please use:"/>
+		<echo message="    java -jar ${dist.jar}"/>
+		<echo message="Instead."/>
+		<!-- <java fork="true" spawn="true" jar="${dist.jar}"/> -->
 	</target>
 	
 	<!--

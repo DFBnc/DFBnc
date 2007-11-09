@@ -26,11 +26,14 @@ package uk.org.dataforce.dfbnc;
 import uk.org.dataforce.logger.Logger;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.commands.CommandNotFound;
+import uk.org.dataforce.dfbnc.servers.ServerType;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.io.IOException;
 import java.util.HashMap;
 import com.dmdirc.parser.IRCParser;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This socket handles actual clients connected to the bnc.
@@ -95,14 +98,30 @@ public class UserSocket extends ConnectedSocket {
 	}
 	
 	/**
+	 * Get a List of all UserSockets that are part of a given account
+	 *
+	 * @param account Account to check sockets against
+	 * @return a Collection of all UserSockets that are part of the given account
+	 */
+	public static List<UserSocket> getUserSockets(final Account account) {
+		ArrayList<UserSocket> list = new ArrayList<UserSocket>();
+		for (UserSocket socket : knownSockets.values()) {
+			if (socket.getAccount() == account) {
+				list.add(socket);
+			}
+		}
+		return list;
+	}
+	
+	/**
 	 * Close all usersockets
 	 *
 	 * @param reason Reason for all sockets to close.
 	 */
 	public static void closeAll(final String reason) {
-		for (String name : knownSockets.keySet()) {
-			UserSocket socket = knownSockets.get(name);
+		for (UserSocket socket : knownSockets.values()) {
 			socket.sendLine(":%s NOTICE :Connection terminating (%s)", Functions.getServerName(), reason);
+			socket.close();
 		}
 	}
 	
@@ -119,6 +138,13 @@ public class UserSocket extends ConnectedSocket {
 	 * @return Account object that is associated with this socket
 	 */
 	public Account getAccount() { return myAccount; }
+	
+	/**
+	 * Get the realname supplied to this socket
+	 *
+	 * @return Realname supplied to this socket
+	 */
+	public String getRealname() { return realname; }
 	
 	/**
 	 * Send a message to the user from the bnc bot in printf format.
@@ -174,6 +200,9 @@ public class UserSocket extends ConnectedSocket {
 	protected void socketClosed(final boolean userRequested) {
 		knownSockets.remove(myID);
 		Logger.info("User Disconnected: "+myInfo);
+		if (myAccount != null) {
+			myAccount.userDisconnected(this);
+		}
 	}
 	
 	/**
@@ -209,7 +238,7 @@ public class UserSocket extends ConnectedSocket {
 			sendLine("Closing Connection");
 			close();
 		} else if (myAccount != null) {
-			processAuthenticated(newLine);
+			processAuthenticated(line, newLine);
 		} else {
 			processNonAuthenticated(newLine);
 		}
@@ -273,6 +302,7 @@ public class UserSocket extends ConnectedSocket {
 						handleBotCommand(new String[]{"firsttime", "admin"});
 					}
 				}
+				myAccount.userConnected(this);
 			} else {
 				sendIRCLine(Consts.ERR_PASSWDMISMATCH, line[0], "Password incorrect, or account not found");
 				close();
@@ -283,9 +313,10 @@ public class UserSocket extends ConnectedSocket {
 	/**
 	 * Process a line of data from an authenticated user.
 	 *
+	 * @param normalLine Non-IRCTokenised version of Line to handle
 	 * @param line IRCTokenised version of Line to handle
 	 */
-	private void processAuthenticated(final String[] line) {
+	private void processAuthenticated(final String normalLine, final String[] line) {
 		// The bnc accepts commands as either:
 		// /msg -BNC This is a command
 		// or /DFBNC This is a command (not there is no : used to separate arguments anywhere)
@@ -301,7 +332,11 @@ public class UserSocket extends ConnectedSocket {
 			return;
 		}
 		
-		// We don't handle this ourselves, send it to the server.
+		// We don't handle this ourselves, send it to the ConnectionHandler
+		ConnectionHandler myConnectionHandler = myAccount.getConnectionHandler();
+		if (myConnectionHandler != null) {
+			myConnectionHandler.dataRecieved(this, normalLine, line);
+		}
 	}
 	
 	/**
