@@ -133,7 +133,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	public void onPost005(IRCParser tParser) {
 		hasPost005 = true;
 		// We no longer need this callback, so lets remove it
-		// myParser.getCallbackManager().delCallback("OnNumeric", this);
+		myParser.getCallbackManager().delCallback("OnNumeric", this);
 	}
 	
 	/**

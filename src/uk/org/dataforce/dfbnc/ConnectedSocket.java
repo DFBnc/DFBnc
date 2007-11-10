@@ -55,6 +55,9 @@ public abstract class ConnectedSocket implements Runnable {
 	/** My socket channel socket. */
 	protected final Socket mySocket;
 
+	/** Lines to be sent to the user go into this buffer. */
+	protected StringBuffer outBuffer = new StringBuffer();
+
 	/**
 	 * Create a new ConnectedSocket.
 	 *
@@ -103,14 +106,14 @@ public abstract class ConnectedSocket implements Runnable {
 	
 	/**
 	 * Used to send a line of data to this socket.
+	 * This adds to the buffer.
 	 *
 	 * @param line Line to send
 	 */
 	public final void sendLine(final String line) {
-		ByteBuffer buf = ByteBuffer.wrap((line+"\r\n").getBytes());
-		try {
-			mySocketChannel.write(buf);
-		} catch (IOException e) { }
+		synchronized (outBuffer) {
+			outBuffer.append(line+"\r\n");
+		}
 	}
 		
 	/**
@@ -123,7 +126,7 @@ public abstract class ConnectedSocket implements Runnable {
 			} catch (IOException e) {
 				break;
 			}
-
+			
 			Iterator it = selector.selectedKeys().iterator();
 			
 			while (it.hasNext()) {
@@ -179,6 +182,23 @@ public abstract class ConnectedSocket implements Runnable {
 						lineBuffer.append(c);
 					}
 				}
+			}
+		} else if (selKey.isValid() && selKey.isWritable()) {
+			SocketChannel sChannel = (SocketChannel)selKey.channel();
+			
+			ByteBuffer buf;
+			synchronized (outBuffer) {
+				if (outBuffer.length() > 0) {
+					buf = ByteBuffer.wrap(outBuffer.toString().getBytes());
+					outBuffer = new StringBuffer();
+				} else {
+					return;
+				}
+			}
+			try {
+				mySocketChannel.write(buf);
+			} catch (IOException e) {
+				this.socketClosed(false);
 			}
 		}
 	}
