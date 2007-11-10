@@ -25,6 +25,7 @@ package uk.org.dataforce.dfbnc.servers.irc;
 
 import uk.org.dataforce.dfbnc.ConnectionHandler;
 import uk.org.dataforce.dfbnc.Account;
+import uk.org.dataforce.dfbnc.Consts;
 import uk.org.dataforce.dfbnc.UserSocket;
 import uk.org.dataforce.dfbnc.UnableToConnectException;
 import uk.org.dataforce.dfbnc.UserSocketWatcher;
@@ -78,11 +79,82 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	 * @param data Data that was recieved
 	 */
 	public void dataRecieved(final UserSocket user, final String data, final String[] line) {
-		if (line[0].equalsIgnoreCase("quit")) {
-			// Ignore Quits
-		} else {
-			myParser.sendLine(data);
+		StringBuilder outData = new StringBuilder();
+		if (line[0].equalsIgnoreCase("topic") || line[0].equalsIgnoreCase("names") || line[0].equalsIgnoreCase("mode")) {
+			if (handleCommandProxy(user, line, outData)) {
+				for (String channelName : line[1].split(",")) {
+					ClientInfo client = myParser.getClientInfo(channelName);
+					ChannelInfo channel = myParser.getChannelInfo(channelName);
+					if (channel != null || line[0].equalsIgnoreCase("mode")) {
+						if (line[0].equalsIgnoreCase("topic")) {
+							sendTopic(user, channel);
+						} else if (line[0].equalsIgnoreCase("topic")) {
+							sendNames(user, channel);
+						} else if (line[0].equalsIgnoreCase("mode")) {
+							if (channel != null) {
+								user.sendIRCLine(324, myParser.getMyNickname()+" "+channel, channel.getModeStr(), false);
+								if (channel.getCreateTime() > 0) {
+									user.sendIRCLine(329, myParser.getMyNickname()+" "+channel, ""+channel.getCreateTime(), false);
+								}
+							} else if (client == myParser.getMyself()) {
+								user.sendIRCLine(221, myParser.getMyNickname(), client.getUserModeStr(), false);
+							} else {
+								if (outData.length() == 0) { outData.append(line[0].toUpperCase()); }
+								outData.append(" "+channelName);
+							}
+						}
+					} else {
+						if (outData.length() == 0) { outData.append(line[0].toUpperCase()); }
+						outData.append(" "+channelName);
+					}
+				}
+			}
+			if (outData.length() == 0) { return; }
+		} else if (line[0].equalsIgnoreCase("quit")) {
+			return;
 		}
+		
+		if (outData.length() == 0) {
+			myParser.sendLine(data);
+		} else {
+			System.out.println("Sending: "+outData.toString());
+			myParser.sendLine(outData.toString());
+		}
+	}
+	
+	/**
+	 * This function does the grunt work for dataRecieved.
+	 * This function checks for -f in the first param, and if its there returns
+	 * false and modifies outData.
+	 * This function also returns false if line.length > 2
+	 *
+	 * @param user User who send the command
+	 * @param line Input tokenised line
+	 * @param outData This StringBuilder will be modified if needed. If result is
+	 *                false, this StringBuilder will contain the line needed to be
+	 *                send to the server. (If this is empty, nothing should be sent)
+	 * @return true if we should handle this command, else false.
+	 */
+	public boolean handleCommandProxy(final UserSocket user, final String[] line, final StringBuilder outData) {
+		// If line length is 2 or 3
+		// ie (/topic #foo or /topic -f #foo or /topic #foo bar)
+		if (line.length == 2 || line.length == 3) {
+			// if (/topic -f)
+			if (line[1].equalsIgnoreCase("-f")) {
+				// if (/topic -f #foo)
+				if (line.length == 3) {
+					outData.append(line[0]+" "+line[2]);
+					return false;
+				} else {
+					user.sendIRCLine(Consts.ERR_NEEDMOREPARAMS, line[0], "Not enough parameters-");
+					return false;
+				}
+			// if /topic #foo
+			} else if (line.length == 2) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	/**
@@ -202,16 +274,30 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 				// Rejoin channels
 				for (ChannelInfo channel : myParser.getChannels()) {
 					user.sendLine(":%s JOIN %s", me, channel);
-					if (!channel.getTopic().isEmpty()) {
-						user.sendIRCLine(332, myParser.getMyNickname()+" "+channel, channel.getTopic());
-						user.sendIRCLine(333, myParser.getMyNickname()+" "+channel, channel.getTopicUser()+" "+channel.getTopicTime(), false);
-					} else {
-						user.sendIRCLine(331, myParser.getMyNickname()+" "+channel, "No topic is set.");
+					user.sendIRCLine(324, myParser.getMyNickname()+" "+channel, channel.getModeStr(), false);
+					if (channel.getCreateTime() > 0) {
+						user.sendIRCLine(329, myParser.getMyNickname()+" "+channel, ""+channel.getCreateTime(), false);
 					}
 					
+					sendTopic(user, channel);
 					sendNames(user, channel);
 				}
 			}
+		}
+	}
+	
+	/**
+	 * Send a topic reply for a channel to the given user
+	 *
+	 * @param user User to send reply to
+	 * @param channel Channel to send reply for
+	 */
+	public void sendTopic(final UserSocket user, final ChannelInfo channel) {
+		if (!channel.getTopic().isEmpty()) {
+			user.sendIRCLine(332, myParser.getMyNickname()+" "+channel, channel.getTopic());
+			user.sendIRCLine(333, myParser.getMyNickname()+" "+channel, channel.getTopicUser()+" "+channel.getTopicTime(), false);
+		} else {
+			user.sendIRCLine(331, myParser.getMyNickname()+" "+channel, "No topic is set.");
 		}
 	}
 	

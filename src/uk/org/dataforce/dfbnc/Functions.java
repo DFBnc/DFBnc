@@ -58,6 +58,35 @@ public final class Functions {
 	}
 	
 	/**
+	 * Join an array of Strings back together.
+	 *
+	 * @param input String to work with.
+	 * @param joiner String to use in between parts
+	 * @param start position to start with
+	 * @param end position to end with. (Same as start means end of array, negative
+	 *            works from the end of the array (-1 = end of array))
+	 * @return Joined string (or "" if given parameters are out of range)
+	 */
+	public static String joinString(final String[] input, final String joiner, final int start, final int end) {
+		if (start > input.length) { throw new IllegalArgumentException("Start > input length"); }
+		if (end < 0 && (input.length + end > start)) { throw new IllegalArgumentException("End too far back"); }
+		if (end < start) { throw new IllegalArgumentException("End < Start"); }
+		if (end > input.length) { throw new IllegalArgumentException("End > input length"); }
+		int limit = input.length-1;
+		if (end < 0) {
+			limit = input.length + end;
+		} else if (end != start) {
+			limit = end;
+		}
+		StringBuilder result = new StringBuilder();
+		for (int i = start; i <= limit; ++i) {
+			if (result.length() > 0) { result.append(joiner); }
+			result.append(input[i]);
+		}
+		return input.toString();
+	}
+	
+	/**
 	 * Get the Bot name that the BNC Uses
 	 *
 	 * @return Bot name that the BNC Uses
