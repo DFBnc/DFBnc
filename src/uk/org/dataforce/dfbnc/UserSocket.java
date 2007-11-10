@@ -64,8 +64,14 @@ public class UserSocket extends ConnectedSocket {
 	/** Given password */
 	private String password = null;
 	
+	/** IP Address of this socket */
+	private String myIP = "0.0.0.0";
+	
 	/** The Account object for this connect (This is null before authentication) */
 	private Account myAccount = null;
+	
+	/** Is closeAll being run? (This prevents socketClosed removing the HashMap entry) */
+	private static boolean closeAll = false;
 	
 	/**
 	 * Create a new UserSocket.
@@ -95,6 +101,16 @@ public class UserSocket extends ConnectedSocket {
 		myInfo = remoteInfo+" ("+localInfo+") ["+myID+"]";
 		
 		Logger.info("User Connected: "+myInfo);
+		myIP = address.getAddress().getHostAddress();
+	}
+	
+	/**
+	 * Get the IP address of this socket
+	 *
+	 * @return IP Address of this socket.
+	 */
+	public String getIP() {
+		return myIP;
 	}
 	
 	/**
@@ -105,9 +121,11 @@ public class UserSocket extends ConnectedSocket {
 	 */
 	public static List<UserSocket> getUserSockets(final Account account) {
 		ArrayList<UserSocket> list = new ArrayList<UserSocket>();
-		for (UserSocket socket : knownSockets.values()) {
-			if (socket.getAccount() == account) {
-				list.add(socket);
+		synchronized (knownSockets) {
+			for (UserSocket socket : knownSockets.values()) {
+				if (socket.getAccount() == account) {
+					list.add(socket);
+				}
 			}
 		}
 		return list;
@@ -119,10 +137,14 @@ public class UserSocket extends ConnectedSocket {
 	 * @param reason Reason for all sockets to close.
 	 */
 	public static void closeAll(final String reason) {
-		for (UserSocket socket : knownSockets.values()) {
-			socket.sendLine(":%s NOTICE :Connection terminating (%s)", Functions.getServerName(), reason);
-			socket.close();
+		closeAll = true;
+		synchronized (knownSockets) {
+			for (UserSocket socket : knownSockets.values()) {
+				socket.sendLine(":%s NOTICE :Connection terminating (%s)", Functions.getServerName(socket.getAccount()), reason);
+				socket.close();
+			}
 		}
+		closeAll = false;
 	}
 	
 	/**
@@ -169,7 +191,20 @@ public class UserSocket extends ConnectedSocket {
 		}
 	}
 	
-
+	/**
+	 * Get the status of post001
+	 *
+	 * @return True if this socket has had a 001 sent to it, else false
+	 */
+	public boolean getPost001() { return post001; }
+	
+	/**
+	 * Get the status of post001
+	 *
+	 * @param value new value for post001, True if this socket has had a 001 sent to it, else false
+	 */
+	public void setPost001(final boolean newValue) { post001 = newValue; }
+	
 	/**
 	 * Send a message to the user from the bnc bot in printf format.
 	 *
@@ -178,7 +213,7 @@ public class UserSocket extends ConnectedSocket {
 	 * @param args The args for the format string
 	 */
 	public void sendBotLine(final String type, final String data, final Object... args) {
-		sendLine(":%s!bot@%s %s %s :%s", Functions.getBotName(), Functions.getServerName(), type, nickname, String.format(data, args));
+		sendLine(":%s!bot@%s %s %s :%s", Functions.getBotName(), Functions.getServerName(myAccount), type, nickname, String.format(data, args));
 	}
 	
 	/**
@@ -189,7 +224,7 @@ public class UserSocket extends ConnectedSocket {
 	 * @param args The args for the format string
 	 */
 	public void sendServerLine(final String type, final String data, final Object... args) {
-		sendLine(":%s %s %s :%s", Functions.getServerName(), type, nickname, String.format(data, args));
+		sendLine(":%s %s %s :%s", Functions.getServerName(myAccount), type, nickname, String.format(data, args));
 	}
 	
 	/**
@@ -198,7 +233,11 @@ public class UserSocket extends ConnectedSocket {
 	 * @param userRequested True if socket was closed by the user, false otherwise
 	 */
 	protected void socketClosed(final boolean userRequested) {
-		knownSockets.remove(myID);
+		if (!closeAll) {
+			synchronized (knownSockets) {
+				knownSockets.remove(myID);
+			}
+		}
 		Logger.info("User Disconnected: "+myInfo);
 		if (myAccount != null) {
 			myAccount.userDisconnected(this);
@@ -235,7 +274,6 @@ public class UserSocket extends ConnectedSocket {
 		
 		// Pass it on the appropriate processing function
 		if (newLine[0].equals("QUIT")) {
-			sendLine("Closing Connection");
 			close();
 		} else if (myAccount != null) {
 			processAuthenticated(line, newLine);
@@ -307,6 +345,33 @@ public class UserSocket extends ConnectedSocket {
 				sendIRCLine(Consts.ERR_PASSWDMISMATCH, line[0], "Password incorrect, or account not found");
 				close();
 			}
+		}
+	}
+	
+	/**
+	 * Used to send a line of data to this socket, for an irc response
+	 *
+	 * @param numeric The numeric for this line
+	 * @param params The parameters for this line
+	 * @param line Information
+	 */
+	public final void sendIRCLine(final int numeric, final String params, final String line) {
+		sendIRCLine(numeric, params, line, true);
+	}
+	
+	/**
+	 * Used to send a line of data to this socket, for an irc response
+	 *
+	 * @param numeric The numeric for this line
+	 * @param params The parameters for this line
+	 * @param line Information
+	 * @param addColon Automatically add : before line
+	 */
+	public final void sendIRCLine(final int numeric, final String params, final String line, final boolean addColon) {
+		if (addColon) {
+			sendLine(":%s %03d %s :%s", Functions.getServerName(myAccount), numeric, params, line);
+		} else {
+			sendLine(":%s %03d %s %s", Functions.getServerName(myAccount), numeric, params, line);
 		}
 	}
 	

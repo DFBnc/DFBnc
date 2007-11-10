@@ -92,17 +92,6 @@ public abstract class ConnectedSocket implements Runnable {
 	}
 	
 	/**
-	 * Used to send a line of data to this socket, for an irc response
-	 *
-	 * @param numeric The numeric for this line
-	 * @param params The parameters for this line
-	 * @param line Information
-	 */
-	public final void sendIRCLine(final int numeric, final String params, final String line) {
-		sendLine(":%s %03d %s :%s", Functions.getServerName(), numeric, params, line);
-	}
-	
-	/**
 	 * Used to send a line of data to this socket, in printf format.
 	 *
 	 * @param data The format string

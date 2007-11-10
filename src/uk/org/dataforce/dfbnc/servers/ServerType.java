@@ -25,11 +25,12 @@ package uk.org.dataforce.dfbnc.servers;
 
 import uk.org.dataforce.dfbnc.Account;
 import uk.org.dataforce.dfbnc.UserSocket;
+import uk.org.dataforce.dfbnc.UserSocketWatcher;
 
 /**
  * This file represents a ServerType
  */
-public abstract class ServerType {
+public abstract class ServerType implements UserSocketWatcher {
 	/** Reference to the ServerTypeManager in charge of this ServerType. */
 	protected ServerTypeManager myManager;
 
@@ -87,14 +88,16 @@ public abstract class ServerType {
 	public abstract void deactivate(final Account account);
 	
 	/**
-	 * Called when a user connects to an account with this servertype
+	 * Called when a new UserSocket is opened on an account that this class is
+	 * linked to.
 	 *
 	 * @param user UserSocket for user
 	 */
 	public void userConnected(final UserSocket user) { }
 	
 	/**
-	 * Called when a user disconnects from an account with this servertype
+	 * Called when a UserSocket is closed on an account that this class is
+	 * linked to.
 	 *
 	 * @param user UserSocket for user
 	 */

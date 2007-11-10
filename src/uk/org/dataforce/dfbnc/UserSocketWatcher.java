@@ -24,30 +24,22 @@
 package uk.org.dataforce.dfbnc;
 
 /**
- * This file represents a ConnectionHandler
+ * This file represents a file that wants to know about changes with UserSockets
  */
-public interface ConnectionHandler {
+public interface UserSocketWatcher {
 	/**
-	 * Shutdown this ConnectionHandler
+	 * Called when a new UserSocket is opened on an account that this class is
+	 * linked to.
 	 *
-	 * @param reason Reason for the Shutdown
+	 * @param user UserSocket for user
 	 */
-	public void shutdown(final String reason);
+	public void userConnected(final UserSocket user);
 	
 	/**
-	 * Called when data is recieved on the user socket.
+	 * Called when a UserSocket is closed on an account that this class is
+	 * linked to.
 	 *
-	 * @param user The socket that the data arrived on
-	 * @param data Un-tokenised version of the Data that was recieved
-	 * @param line IRC-Tokenised version of the Data that was recieved
+	 * @param user UserSocket for user
 	 */
-	public void dataRecieved(final UserSocket user, final String data, final String[] line);
-	
-	/**
-	 * Servername to use in sendIRCLine and Bot SNOTICEs as an alternative to
-	 * Functions.getServerName() or null if no change.
-	 *
-	 * @return servername to use.
-	 */
-	public String getServerName();
+	public void userDisconnected(final UserSocket user);
 }

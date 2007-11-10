@@ -40,11 +40,20 @@ public final class Functions {
 	}
 	
 	/**
-	 * Get the Server name that the BNC Uses
+	 * Get the Server name that the BNC should use
 	 *
+	 * @param account If account has a ConnectionHandler it can define a different
+	 *                name that we should use.
 	 * @return Server name that the BNC Uses
 	 */
-	public static String getServerName() {
+	public static String getServerName(final Account account) {
+		if (account != null) {
+			if (account.getConnectionHandler() != null) {
+				if (account.getConnectionHandler().getServerName() != null) {
+					return account.getConnectionHandler().getServerName();
+				}
+			}
+		}
 		return Config.getOption("general", "ServerName", "DFBnc.Server");
 	}
 	

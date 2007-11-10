@@ -63,7 +63,8 @@ public class ServerListCommand extends Command {
 					serverList.add(input[3]);
 					user.sendBotMessage("Server ("+input[3]+") has been added to your serverList");
 				} else {
-					user.sendBotMessage("You must specify a server to add in the format: <server>[:port] [password]");
+					user.sendBotMessage("You must specify a server to add in the format: [@]<server>[:port] [password]");
+					user.sendBotMessage("Prefixing the servername with @ signifies an SSL connection");
 				}
 			} else if (params[1].equalsIgnoreCase("del")) {
 				if (params.length > 2) {
@@ -91,7 +92,7 @@ public class ServerListCommand extends Command {
 		} else {
 			user.sendBotMessage("This command can be used to modify your irc serverlist using the following params:");
 			user.sendBotMessage("  /dfbnc "+params[0]+" list");
-			user.sendBotMessage("  /dfbnc "+params[0]+" add <Server>[:Port] [password]");
+			user.sendBotMessage("  /dfbnc "+params[0]+" add [@]<Server>[:Port] [password]");
 			user.sendBotMessage("  /dfbnc "+params[0]+" del <number>");
 			user.sendBotMessage("  /dfbnc "+params[0]+" clear");
 		}

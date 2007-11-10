@@ -36,9 +36,9 @@ import java.util.Enumeration;
 import java.util.Date;
 
 /**
- * Functions related to Accountss
+ * Functions related to Accounts
  */
-public final class Account {
+public final class Account implements UserSocketWatcher {
 	//----------------------------------------------------------------------------
 	// Static Variables
 	//----------------------------------------------------------------------------
@@ -167,8 +167,8 @@ public final class Account {
 			if (st != null) {
 				st.close(acc, "BNC Shuting Down");
 			}
-			if (myConnectionHandler != null) {
-				myConnectionHandler.shutdown("BNC Shuting Down");
+			if (acc.getConnectionHandler() != null) {
+				acc.getConnectionHandler().shutdown("BNC Shuting Down");
 			}
 		}
 	}
@@ -220,21 +220,39 @@ public final class Account {
 	}
 	
 	/**
-	 * Called when a user connects to this account
+	 * Called when a new UserSocket is opened on an account that this class is
+	 * linked to.
 	 *
 	 * @param user UserSocket for user
 	 */
 	public void userConnected(final UserSocket user) {
 		myUserSockets.add(user);
+		if (myConnectionHandler != null && myConnectionHandler instanceof UserSocketWatcher) {
+			((UserSocketWatcher)myConnectionHandler).userConnected(user);
+		}
+		for (UserSocket socket : myUserSockets) {
+			if (user != socket) {
+				socket.sendBotMessage("Another client has connected ("+user.getIP()+")");
+			}
+		}
 	}
 	
 	/**
-	 * Called when a user connects from this account
+	 * Called when a UserSocket is closed on an account that this class is
+	 * linked to.
 	 *
 	 * @param user UserSocket for user
 	 */
 	public void userDisconnected(final UserSocket user) {
 		myUserSockets.remove(user);
+		if (myConnectionHandler != null && myConnectionHandler instanceof UserSocketWatcher) {
+			((UserSocketWatcher)myConnectionHandler).userDisconnected(user);
+		}
+		for (UserSocket socket : myUserSockets) {
+			if (user != socket) {
+				socket.sendBotMessage("Client has Disconnected ("+user.getIP()+")");
+			}
+		}
 	}
 	
 	/**
