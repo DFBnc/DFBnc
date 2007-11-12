@@ -38,6 +38,7 @@ public class VersionCommand extends Command {
 	 * @param user the UserSocket that performed this command
 	 * @param params Params for command (param 0 is the command name)
 	 */
+	@Override
 	public void handle(final UserSocket user, final String[] params) {
 		user.sendBotMessage("This is %s", DFBnc.VERSION);
 	}
@@ -47,6 +48,7 @@ public class VersionCommand extends Command {
 	 *
 	 * @return String[] with the names of the tokens we handle.
 	 */
+	@Override
 	public String[] handles() {
 		return new String[]{"version"};
 	}
@@ -63,6 +65,7 @@ public class VersionCommand extends Command {
 	 *
 	 * @return A description of what this command does
 	 */
+	@Override
 	public String getDescription() {
 		return "This command tells you what version of dfbnc you are running";
 	}

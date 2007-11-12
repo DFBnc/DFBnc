@@ -62,7 +62,13 @@ public final class ServerTypeManager {
 		knownServerTypes.clear();
 	}
 	
-	/** Empty clone method to prevent cloning to get more copies of the ServerTypeManager */
+	/**
+	 * Empty clone method to prevent cloning to get more copies of the ServerTypeManager
+	 * 
+	 * @throws CloneNotSupportedException Always
+	 * @return Nothing.
+	 */
+	@Override
 	public Object clone() throws CloneNotSupportedException {
 		throw new CloneNotSupportedException();
 	}
@@ -113,6 +119,7 @@ public final class ServerTypeManager {
 	 *
 	 * @param name Name to look for
 	 * @return ServerType for the given name.
+	 * @throws ServerTypeNotFound If the requested serverType does not exist.
 	 */
 	public ServerType getServerType(final String name) throws ServerTypeNotFound {
 		if (knownServerTypes.containsKey(name.toLowerCase())) {

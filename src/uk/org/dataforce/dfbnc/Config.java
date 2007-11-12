@@ -184,4 +184,9 @@ public class Config {
 	public static void setIntOption(final String domain, final String key, final int value) {
 		config.setIntProperty(domain.toLowerCase()+"."+key.toLowerCase(), value);
 	}
+
+	/**
+	 * Prevent Creation of Config Object
+	 */
+	private Config() { }
 }

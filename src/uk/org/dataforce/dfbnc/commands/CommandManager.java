@@ -68,7 +68,13 @@ public final class CommandManager {
 		knownCommands.clear();
 	}
 	
-	/** Empty clone method to prevent cloning to get more copies of the CommandManager */
+	/**
+	 * Empty clone method to prevent cloning to get more copies of the CommandManager
+	 * 
+	 * @throws CloneNotSupportedException Always
+	 * @return Nothing
+	 */
+	@Override
 	public Object clone() throws CloneNotSupportedException {
 		throw new CloneNotSupportedException();
 	}
@@ -78,6 +84,7 @@ public final class CommandManager {
 	 * given manager.
 	 *
 	 * @param manager CommandManager to look for.
+	 * @return True if manager is a SubManager of this or one of its SubManagers.
 	 */
 	public boolean hasSubCommandManager(final CommandManager manager) {	
 		if (subManagers.contains(manager)) {
@@ -211,6 +218,7 @@ public final class CommandManager {
 	 *
 	 * @param name Name to look for
 	 * @return Command for the given name.
+	 * @throws CommandNotFound If the requested command doesn't exist in this or any sub managers
 	 */
 	public Command getCommand(final String name) throws CommandNotFound {
 		return getCommand(name, 0);
@@ -222,6 +230,7 @@ public final class CommandManager {
 	 * @param name Name to look for
 	 * @param nesting Amount of previous calls.
 	 * @return Command for the given name.
+	 * @throws CommandNotFound If the requested command doesn't exist in this or any sub managers
 	 */
 	protected Command getCommand(final String name, final int nesting) throws CommandNotFound {
 		if (knownCommands.containsKey(name.toLowerCase())) {

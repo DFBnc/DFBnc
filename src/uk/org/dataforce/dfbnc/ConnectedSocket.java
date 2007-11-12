@@ -23,14 +23,12 @@
  */
 package uk.org.dataforce.dfbnc;
 
-import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.Selector;
 import java.nio.channels.SelectionKey;
 import java.util.Iterator;
 import java.io.IOException;
 
-import javax.net.ssl.SSLSocketFactory;
 
 import uk.org.dataforce.logger.Logger;
 
@@ -55,6 +53,7 @@ public abstract class ConnectedSocket implements Runnable {
 	 * @param sChannel Socket to control
 	 * @param threadName Name to call thread that this socket runs under.
 	 * @param fromSSL Did this come from an SSL ListenSocket?
+	 * @throws IOException If there is a problem creating Socket
 	 */
 	protected ConnectedSocket(SocketChannel sChannel, String threadName, final boolean fromSSL) throws IOException {
 		isSSL = fromSSL;
@@ -114,6 +113,7 @@ public abstract class ConnectedSocket implements Runnable {
 	/**
 	 * Used to actually do stuff.
 	 */
+	@Override
 	public final void run() {
 		while (myThread == Thread.currentThread()) {
 			try {

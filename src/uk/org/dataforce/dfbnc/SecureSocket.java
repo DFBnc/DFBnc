@@ -27,9 +27,6 @@ import java.nio.channels.SocketChannel;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLEngineResult;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
 import java.io.File;
@@ -57,6 +54,14 @@ public class SecureSocket extends SocketWrapper {
 	 * Get (and create if needed) a copy of the SSLContext we are using.
 	 *
 	 * @return SSLContext to use for new SSLEngines
+	 * @throws IllegalArgumentException If there is a problem with the config settings related to ssl
+	 * @throws KeyStoreException If there is a problem with the keystore
+	 * @throws FileNotFoundException If the keystore does not exist
+	 * @throws NoSuchAlgorithmException If there is a problem getting the right algorithm for the SSLContext
+	 * @throws KeyManagementException If there is a problem with the keystore
+	 * @throws UnrecoverableKeyException  If there is a problem with the key in the keystore
+	 * @throws IOException If there is a problem opening the keystore
+	 * @throws CertificateException If there is a problem with the keystore
 	 */
 	public static synchronized SSLContext getSSLContext() throws IllegalArgumentException, KeyStoreException, FileNotFoundException, NoSuchAlgorithmException, KeyManagementException, UnrecoverableKeyException, IOException, CertificateException {
 		if (sslContext == null) {
@@ -96,6 +101,7 @@ public class SecureSocket extends SocketWrapper {
 	 *
 	 * @param channel Channel to Wrap.
 	 * @param owner ConnectedSocket that owns this.
+	 * @throws IOException If there is a problem creating and setting up the socket
 	 */
 	public SecureSocket (final SocketChannel channel, final ConnectedSocket owner) throws IOException {
 		super(channel, owner);

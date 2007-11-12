@@ -36,6 +36,7 @@ public class PlainSocket extends SocketWrapper {
 	 *
 	 * @param channel Channel to Wrap.
 	 * @param owner ConnectedSocket that owns this.
+	 * @throws IOException If there is a problem creating the socket
 	 */
 	public PlainSocket (final SocketChannel channel, final ConnectedSocket owner) throws IOException {
 		super(channel, owner);

@@ -131,6 +131,7 @@ public class ListenSocket implements Runnable {
 	/**
 	 * Used to actually do stuff!
 	 */
+	@Override
 	public void run() {
 		while (myThread == Thread.currentThread()) {
 			try {
@@ -146,10 +147,10 @@ public class ListenSocket implements Runnable {
 				it.remove();
 
 				if (selKey.isAcceptable()) {
-					ServerSocketChannel ssChannel = (ServerSocketChannel)selKey.channel();
+					ServerSocketChannel selChannel = (ServerSocketChannel)selKey.channel();
 					
 					try {
-						SocketChannel sChannel = ssChannel.accept();
+						SocketChannel sChannel = selChannel.accept();
 						if (sChannel != null) {
 							UserSocket userSocket = new UserSocket(sChannel, isSSL);
 							userSocket.socketOpened();

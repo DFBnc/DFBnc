@@ -38,4 +38,9 @@ public final class Consts {
 	public final static int ERR_NOTREGISTERED = 451;
 	public final static int ERR_NEEDMOREPARAMS = 461;
 	public final static int ERR_PASSWDMISMATCH = 464;
+
+	/**
+	 * Prevent Creation of Consts object
+	 */
+	private Consts() {	}
 }

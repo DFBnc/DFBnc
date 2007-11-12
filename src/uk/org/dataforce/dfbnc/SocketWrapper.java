@@ -26,7 +26,6 @@ package uk.org.dataforce.dfbnc;
 import java.net.Socket;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.channels.SelectionKey;
@@ -94,6 +93,8 @@ public abstract class SocketWrapper {
 	
 	/**
 	 * Close this SocketWrapper
+	 * 
+	 * @throws IOException If there is a problem closing either of the ByteChannels
 	 */
 	public void close() throws IOException {
 		if (myByteChannel != null && myByteChannel != mySocketChannel) {
@@ -106,6 +107,8 @@ public abstract class SocketWrapper {
 	 * Write to this Socket
 	 *
 	 * @param data ByteBuffer to write
+	 * @return Number of bytes that were written to the channel.
+	 * @throws IOException If there is a problem writing to the channel.
 	 */
 	protected int write(final ByteBuffer data) throws IOException {
 		return getByteChannel().write(data);
@@ -115,6 +118,8 @@ public abstract class SocketWrapper {
 	 * Read from this socket
 	 *
 	 * @param data ByteBuffer to read into
+	 * @return Number of bytes that were read from the channel.
+	 * @throws IOException If there is a problem reading from the channel.
 	 */
 	protected int read(final ByteBuffer data) throws IOException {
 		return getByteChannel().read(data);
@@ -142,8 +147,9 @@ public abstract class SocketWrapper {
 	 * Handles events from the socket.
 	 *
 	 * @param selKey SelectionKey from socket selector
+	 * @throws IOException If there is a problem processing the key
 	 */
-	public final void processSelectionKey(SelectionKey selKey) throws IOException {
+	public final void processSelectionKey(final SelectionKey selKey) throws IOException {
 		if (selKey.isValid() && selKey.isConnectable()) {
 			SocketChannel sChannel = (SocketChannel)selKey.channel();
 			if (sChannel != mySocketChannel) { throw new IOException("Message for wrong channel."); }

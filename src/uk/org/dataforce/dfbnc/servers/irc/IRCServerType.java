@@ -27,7 +27,6 @@ import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.servers.ServerType;
 import uk.org.dataforce.dfbnc.servers.ServerTypeManager;
 import uk.org.dataforce.dfbnc.Account;
-import uk.org.dataforce.dfbnc.UserSocket;
 
 /**
  * This file gives the ability to connect to an IRC Server
@@ -53,6 +52,7 @@ public class IRCServerType extends ServerType {
 	 *
 	 * @return lower case name of this ServerType
 	 */
+	@Override
 	public String getDescription() {
 		return "This allows connecting to an IRC Server";
 	}
@@ -62,6 +62,7 @@ public class IRCServerType extends ServerType {
 	 *
 	 * @param account Account that activated the servertype
 	 */
+	@Override
 	public void activate(final Account account) {
 		account.getCommandManager().addSubCommandManager(myCommandManager);
 		String nickname = account.getProperties().getProperty("irc.nickname", "");
@@ -83,6 +84,7 @@ public class IRCServerType extends ServerType {
 	 *
 	 * @param account Account that deactivated the servertype
 	 */
+	@Override
 	public void deactivate(final Account account) {
 		account.getCommandManager().delSubCommandManager(myCommandManager);
 	}
@@ -92,9 +94,10 @@ public class IRCServerType extends ServerType {
 	 * This is called when an account is being disabled/removed or the BNC
 	 * is shutting down.
 	 *
-	 * @param acc Account to handle close for.
+	 * @param account Account to handle close for.
 	 * @param reason Reason for closing.
 	 */
+	@Override
 	public void close(final Account account, final String reason) {
 	}
 	

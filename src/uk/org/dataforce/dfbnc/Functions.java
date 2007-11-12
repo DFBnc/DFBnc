@@ -94,4 +94,9 @@ public final class Functions {
 	public static String getBotName() {
 		return Config.getOption("general", "BotName", "-BNC");
 	}
+
+	/**
+	 * Prevent Creation of Functions Object
+	 */
+	private Functions() {	}
 }

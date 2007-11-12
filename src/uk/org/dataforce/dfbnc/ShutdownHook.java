@@ -23,7 +23,6 @@
  */
 package uk.org.dataforce.dfbnc;
 
-import uk.org.dataforce.logger.Logger;
 import uk.org.dataforce.dfbnc.DFBnc;
 
 /**

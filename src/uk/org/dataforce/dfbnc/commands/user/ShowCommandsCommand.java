@@ -41,6 +41,7 @@ public class ShowCommandsCommand extends Command {
 	 * @param user the UserSocket that performed this command
 	 * @param params Params for command (param 0 is the command name)
 	 */
+	@Override
 	public void handle(final UserSocket user, final String[] params) {
 		// This stores the output for any admin commands we run across, these are
 		// displayed at the end after the normal-user commands.
@@ -80,6 +81,7 @@ public class ShowCommandsCommand extends Command {
 	 *
 	 * @return String[] with the names of the tokens we handle.
 	 */
+	@Override
 	public String[] handles() {
 		return new String[]{"showcommands"};
 	}
@@ -89,6 +91,7 @@ public class ShowCommandsCommand extends Command {
 	 *
 	 * @return A description of what this command does
 	 */
+	@Override
 	public String getDescription() {
 		return "This command shows what commands are available to you";
 	}

@@ -93,6 +93,7 @@ public abstract class ServerType implements UserSocketWatcher {
 	 *
 	 * @param user UserSocket for user
 	 */
+	@Override
 	public void userConnected(final UserSocket user) { }
 	
 	/**
@@ -101,6 +102,7 @@ public abstract class ServerType implements UserSocketWatcher {
 	 *
 	 * @param user UserSocket for user
 	 */
+	@Override
 	public void userDisconnected(final UserSocket user) { }
 	
 	/**
@@ -108,7 +110,7 @@ public abstract class ServerType implements UserSocketWatcher {
 	 * This is called when an account is being disabled/removed or the BNC
 	 * is shutting down.
 	 *
-	 * @param acc Account to handle close for.
+	 * @param account Account to handle close for.
 	 * @param reason Reason for closing.
 	 */
 	public abstract void close(final Account account, final String reason);
@@ -118,6 +120,7 @@ public abstract class ServerType implements UserSocketWatcher {
 	 *
 	 * @return the name of this ServerType
 	 */
+	@Override
 	public final String toString() { return this.getName(); }
 	
 	/**

@@ -24,9 +24,7 @@
 package uk.org.dataforce.dfbnc;
 
 import uk.org.dataforce.logger.Logger;
-import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.commands.CommandNotFound;
-import uk.org.dataforce.dfbnc.servers.ServerType;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.io.IOException;
@@ -78,6 +76,7 @@ public class UserSocket extends ConnectedSocket {
 	 *
 	 * @param sChannel Socket to control
 	 * @param fromSSL Did this come from an SSL ListenSocket ?
+	 * @throws IOException If there is a problem setting up the socket.
 	 */
 	public UserSocket(SocketChannel sChannel, final boolean fromSSL) throws IOException {
 		super(sChannel, "[UserSocket "+sChannel+"]", fromSSL);
@@ -158,6 +157,7 @@ public class UserSocket extends ConnectedSocket {
 	/**
 	 * Action to take when socket is opened and ready.
 	 */
+	@Override
 	public void socketOpened() {
 		sendBotMessage("Welcome to DFBnc ("+DFBnc.VERSION+")");
 	}
@@ -209,7 +209,7 @@ public class UserSocket extends ConnectedSocket {
 	/**
 	 * Get the status of post001
 	 *
-	 * @param value new value for post001, True if this socket has had a 001 sent to it, else false
+	 * @param newValue new value for post001, True if this socket has had a 001 sent to it, else false
 	 */
 	public void setPost001(final boolean newValue) { post001 = newValue; }
 	
@@ -240,6 +240,7 @@ public class UserSocket extends ConnectedSocket {
 	 *
 	 * @param userRequested True if socket was closed by the user, false otherwise
 	 */
+	@Override
 	protected void socketClosed(final boolean userRequested) {
 		if (!closeAll) {
 			synchronized (knownSockets) {
@@ -272,6 +273,7 @@ public class UserSocket extends ConnectedSocket {
 	 *
 	 * @param line Line to handle
 	 */
+	@Override
 	protected void processLine(final String line) {
 		// Tokenise the line
 		final String[] newLine = IRCParser.tokeniseLine(line);

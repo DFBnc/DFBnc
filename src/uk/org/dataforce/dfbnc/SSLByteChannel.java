@@ -67,6 +67,7 @@ public class SSLByteChannel implements ByteChannel {
 	 * Create a new SSLByteChannel by wrapping an old one.
 	 *
 	 * @param channel Channel to wrap
+	 * @param engine SSLEngine to use
 	 */
 	public SSLByteChannel(final ByteChannel channel, final SSLEngine engine) {
 		myChannel = channel;
@@ -86,6 +87,7 @@ public class SSLByteChannel implements ByteChannel {
 	 *
 	 * @throws IOException If there is any problem closing the channel
 	 */
+	@Override
 	public void close() throws IOException {
 		if (socketOpen) {
 			try {
@@ -103,6 +105,7 @@ public class SSLByteChannel implements ByteChannel {
 	 *
 	 * @return True if the Channel has not yet been closed.
 	 */
+	@Override
 	public boolean isOpen() {
 		return socketOpen;
 	}
@@ -114,6 +117,7 @@ public class SSLByteChannel implements ByteChannel {
 	 * @return Number of bytes read, or -1 if the socket was closed.
 	 * @throws IOException If there was a problem reading from the ByteChannel
 	 */
+	@Override
 	public int read(final ByteBuffer buffer) throws IOException {
 		// Try and get the data.
 		if (isOpen()) {
@@ -150,6 +154,7 @@ public class SSLByteChannel implements ByteChannel {
 	 * @return Number of bytes written.
 	 * @throws IOException If there was a problem writing to the ByteChannel
 	 */
+	@Override
 	public int write(final ByteBuffer buffer) throws IOException {
 		if (!isOpen()) { return 0; }
 		
@@ -225,6 +230,12 @@ public class SSLByteChannel implements ByteChannel {
 	
 	/**
 	 * This handles handshaking if needed
+	 * 
+	 * @param inputResult SSLEngineResult to work on (This lets us know if we need
+	 *                    to handshake again or not.
+	 * @return Last SSLEngineResult from tasks
+	 * @throws SSLException If there is a problem with the SSL Tasks
+	 * @throws IOException If there is a problem with the socket
 	 */
 	private SSLEngineResult sslLoop(final SSLEngineResult inputResult) throws SSLException, IOException {
 		if (inputResult == null) { return null; }

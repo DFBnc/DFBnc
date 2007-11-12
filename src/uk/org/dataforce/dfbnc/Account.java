@@ -29,11 +29,9 @@ import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.servers.ServerType;
 import uk.org.dataforce.dfbnc.servers.ServerTypeNotFound;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.Date;
 
 /**
  * Functions related to Accounts
@@ -225,6 +223,7 @@ public final class Account implements UserSocketWatcher {
 	 *
 	 * @param user UserSocket for user
 	 */
+	@Override
 	public void userConnected(final UserSocket user) {
 		myUserSockets.add(user);
 		if (myConnectionHandler != null && myConnectionHandler instanceof UserSocketWatcher) {
@@ -243,6 +242,7 @@ public final class Account implements UserSocketWatcher {
 	 *
 	 * @param user UserSocket for user
 	 */
+	@Override
 	public void userDisconnected(final UserSocket user) {
 		myUserSockets.remove(user);
 		if (myConnectionHandler != null && myConnectionHandler instanceof UserSocketWatcher) {

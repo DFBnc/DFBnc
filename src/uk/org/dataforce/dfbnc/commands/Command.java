@@ -97,6 +97,7 @@ public abstract class Command {
 	 * Get the name for this Command.
 	 * @return the name of this Command
 	 */
+	@Override
 	public final String toString() { return this.getName(); }
 	
 	/**

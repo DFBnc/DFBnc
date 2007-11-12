@@ -26,11 +26,8 @@ package uk.org.dataforce.dfbnc.servers.irc;
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.UserSocket;
-import uk.org.dataforce.dfbnc.DFBnc;
 import uk.org.dataforce.dfbnc.UnableToConnectException;
 
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This file represents the 'Connect' command
@@ -42,6 +39,7 @@ public class ConnectCommand extends Command {
 	 * @param user the UserSocket that performed this command
 	 * @param params Params for command (param 0 is the command name)
 	 */
+	@Override
 	public void handle(final UserSocket user, final String[] params) {
 		user.sendBotMessage("----------------");
 		if (user.getAccount().getConnectionHandler() == null) {
@@ -62,6 +60,7 @@ public class ConnectCommand extends Command {
 	 *
 	 * @return String[] with the names of the tokens we handle.
 	 */
+	@Override
 	public String[] handles() {
 		return new String[]{"connect"};
 	}
@@ -78,6 +77,7 @@ public class ConnectCommand extends Command {
 	 *
 	 * @return A description of what this command does
 	 */
+	@Override
 	public String getDescription() {
 		return "This command lets you connect to an IRC Server if not already connected";
 	}

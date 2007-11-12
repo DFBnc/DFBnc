@@ -26,7 +26,6 @@ package uk.org.dataforce.dfbnc.servers.irc;
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.UserSocket;
-import uk.org.dataforce.dfbnc.DFBnc;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +40,7 @@ public class ServerListCommand extends Command {
 	 * @param user the UserSocket that performed this command
 	 * @param params Params for command (param 0 is the command name)
 	 */
+	@Override
 	public void handle(final UserSocket user, final String[] params) {
 		user.sendBotMessage("----------------");
 		if (params.length > 1) {
@@ -103,6 +103,7 @@ public class ServerListCommand extends Command {
 	 *
 	 * @return String[] with the names of the tokens we handle.
 	 */
+	@Override
 	public String[] handles() {
 		return new String[]{"serverlist", "sl"};
 	}
@@ -119,6 +120,7 @@ public class ServerListCommand extends Command {
 	 *
 	 * @return A description of what this command does
 	 */
+	@Override
 	public String getDescription() {
 		return "This command lets you manipulate the irc server list";
 	}

@@ -68,6 +68,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	 *
 	 * @param reason Reason for the Shutdown
 	 */
+	@Override
 	public void shutdown(final String reason) {
 		myParser.disconnect(reason);
 	}
@@ -78,6 +79,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	 * @param user The socket that the data arrived on
 	 * @param data Data that was recieved
 	 */
+	@Override
 	public void dataRecieved(final UserSocket user, final String data, final String[] line) {
 		StringBuilder outData = new StringBuilder();
 		if (line[0].equalsIgnoreCase("topic") || line[0].equalsIgnoreCase("names") || line[0].equalsIgnoreCase("mode")) {
@@ -163,6 +165,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	 *
 	 * @return servername to use.
 	 */
+	@Override
 	public String getServerName() {
 		if (myParser.isReady()) {
 			return myParser.getServerName();
@@ -178,6 +181,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	 * @param sData Incomming Line.
 	 * @see com.dmdirc.parser.IRCParser#callDataIn
 	 */
+	@Override
 	public void onDataIn(IRCParser tParser, String sData) {
 		for (UserSocket socket : myAccount.getUserSockets()) {
 			socket.sendLine(sData);
@@ -190,6 +194,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	 * @param tParser Reference to the parser object that made the callback.
 	 * @see com.dmdirc.parser.Process001#callServerReady
 	 */
+	@Override
 	public void onServerReady(IRCParser tParser) {
 		for (UserSocket socket : myAccount.getUserSockets()) {
 			socket.setPost001(true);
@@ -202,6 +207,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	 * @param tParser Reference to the parser object that made the callback.
 	 * @see com.dmdirc.parser.Process001#callPost005
 	 */
+	@Override
 	public void onPost005(IRCParser tParser) {
 		hasPost005 = true;
 		// We no longer need this callback, so lets remove it
@@ -216,6 +222,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	 * @param sData The contents of the line (incase of language changes or so)
 	 * @see com.dmdirc.parser.ProcessMOTD#callMOTDEnd
 	 */
+	@Override
 	public void onMOTDEnd(IRCParser tParser, boolean noMOTD, String sData) {
 		hasMOTDEnd = true;
 	}
@@ -228,6 +235,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	 * @param token IRC Tokenised line
 	 * @see com.dmdirc.parser.ProcessingManager#callNumeric
 	 */
+	@Override
 	public void onNumeric(IRCParser tParser, int numeric, String[] token) {
 		if (numeric > 1 && numeric < 6) {
 			connectionLines.add(tParser.getLastLine());
@@ -240,6 +248,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	 *
 	 * @param user UserSocket for user
 	 */
+	@Override
 	public void userConnected(final UserSocket user) {
 		// If the parser has processed a 001, we need to send our own
 		if (myParser.isReady()) {
@@ -329,6 +338,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	 *
 	 * @param user UserSocket for user
 	 */
+	@Override
 	public void userDisconnected(final UserSocket user) {
 	}
 	
@@ -337,6 +347,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	 *
 	 * @param user User who requested the connection
 	 * @param serverNumber Server number to use to connect, negative = random
+	 * @throws UnableToConnectException If there is a problem connecting to the server
 	 */
 	public IRCConnectionHandler(final UserSocket user, final int serverNumber) throws UnableToConnectException {
 		this(user, user.getAccount(), serverNumber);
@@ -345,8 +356,10 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	/**
 	 * Create a new IRCConnectionHandler
 	 *
+	 * @param user User who requested the connection
 	 * @param acc Account that requested the connection
 	 * @param serverNum Server number to use to connect, negative = random
+	 * @throws UnableToConnectException If there is a problem connecting to the server
 	 */
 	public IRCConnectionHandler(final UserSocket user, final Account acc, final int serverNum) throws UnableToConnectException {
 		myAccount = acc;
