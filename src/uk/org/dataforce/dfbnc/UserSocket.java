@@ -77,10 +77,10 @@ public class UserSocket extends ConnectedSocket {
 	 * Create a new UserSocket.
 	 *
 	 * @param sChannel Socket to control
-	 * @param threadName Name to call thread that this socket runs under.
+	 * @param fromSSL Did this come from an SSL ListenSocket ?
 	 */
-	public UserSocket(SocketChannel sChannel) throws IOException {
-		super(sChannel, "[UserSocket "+sChannel+"]");
+	public UserSocket(SocketChannel sChannel, final boolean fromSSL) throws IOException {
+		super(sChannel, "[UserSocket "+sChannel+"]", fromSSL);
 		synchronized (knownSockets) {
 			String tempid = this.toString();
 			while (knownSockets.containsKey(tempid)) {
@@ -94,14 +94,18 @@ public class UserSocket extends ConnectedSocket {
 		
 		// myInfo = mySocket.getRemoteSocketAddress()+" ("+mySocket.getLocalSocketAddress()+") ["+myID+"]";
 		// Do this rather than above because we want to enclose the addresses in []
-		InetSocketAddress address = (InetSocketAddress)mySocket.getRemoteSocketAddress();
+		InetSocketAddress address = (InetSocketAddress)mySocketWrapper.getRemoteSocketAddress();
 		String remoteInfo = "["+address.getAddress()+"]:"+address.getPort();
-		address = (InetSocketAddress)mySocket.getLocalSocketAddress();
+		address = (InetSocketAddress)mySocketWrapper.getLocalSocketAddress();
 		String localInfo = "["+address.getAddress()+"]:"+address.getPort();
-		myInfo = remoteInfo+" ("+localInfo+") ["+myID+"]";
+		if (fromSSL) {
+			myInfo = remoteInfo+" ("+localInfo+" [SSL]) ["+myID+"]";
+		} else {
+			myInfo = remoteInfo+" ("+localInfo+") ["+myID+"]";
+		}
 		
-		Logger.info("User Connected: "+myInfo);
 		myIP = address.getAddress().getHostAddress();
+		Logger.info("User Connected: "+myInfo);
 	}
 	
 	/**
@@ -110,7 +114,11 @@ public class UserSocket extends ConnectedSocket {
 	 * @return IP Address of this socket.
 	 */
 	public String getIP() {
-		return myIP;
+		if (isSSL) {
+			return '@'+myIP;
+		} else {
+			return myIP;
+		}
 	}
 	
 	/**

@@ -24,16 +24,13 @@
 package uk.org.dataforce.dfbnc;
 
 import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.Selector;
 import java.nio.channels.SelectionKey;
 import java.util.Iterator;
 import java.io.IOException;
+
+import javax.net.ssl.SSLSocketFactory;
 
 import uk.org.dataforce.logger.Logger;
 
@@ -46,34 +43,34 @@ public abstract class ConnectedSocket implements Runnable {
 	private Selector selector = null;
 	/** Thread to run the listen socket under */	
 	protected Thread myThread = new Thread(this);
-	/** Used to process incomming data. */
-	private ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
-	/** Used to process incomming data. */
-	private StringBuilder lineBuffer = new StringBuilder();
-	/** My socket channel. */
-	private final SocketChannel mySocketChannel;
-	/** My socket channel socket. */
-	protected final Socket mySocket;
-
-	/** Lines to be sent to the user go into this buffer. */
-	protected StringBuffer outBuffer = new StringBuffer();
+	/** SocketWrapper, used to allow for SSL Sockets */
+	protected final SocketWrapper mySocketWrapper;
+	
+	/** Are we an SSL Socket? */
+	protected final boolean isSSL;
 
 	/**
 	 * Create a new ConnectedSocket.
 	 *
 	 * @param sChannel Socket to control
 	 * @param threadName Name to call thread that this socket runs under.
+	 * @param fromSSL Did this come from an SSL ListenSocket?
 	 */
-	protected ConnectedSocket(SocketChannel sChannel, String threadName) throws IOException {
+	protected ConnectedSocket(SocketChannel sChannel, String threadName, final boolean fromSSL) throws IOException {
+		isSSL = fromSSL;
 		selector = Selector.open();
 		
 		sChannel.configureBlocking(false);
 		sChannel.register(selector, sChannel.validOps());
 		
+		if (isSSL) {
+			mySocketWrapper = new SecureSocket(sChannel, this);
+		} else {
+			mySocketWrapper = new PlainSocket(sChannel, this);
+		}
+		
 		myThread.setName(threadName);
 		myThread.start();
-		mySocketChannel = sChannel;
-		mySocket = mySocketChannel.socket();
 	}
 		
 	/**
@@ -89,7 +86,7 @@ public abstract class ConnectedSocket implements Runnable {
 		
 		// Close the actual socket
 		try {
-			mySocketChannel.close();
+			mySocketWrapper.close();
 		} catch (IOException e) { }
 		this.socketClosed(false);
 	}
@@ -111,9 +108,7 @@ public abstract class ConnectedSocket implements Runnable {
 	 * @param line Line to send
 	 */
 	public final void sendLine(final String line) {
-		synchronized (outBuffer) {
-			outBuffer.append(line+"\r\n");
-		}
+		mySocketWrapper.sendLine(line);
 	}
 		
 	/**
@@ -134,71 +129,11 @@ public abstract class ConnectedSocket implements Runnable {
 				it.remove();
 
 				try {
-					processSelectionKey(selKey);
+					mySocketWrapper.processSelectionKey(selKey);
 				} catch (IOException e) {
 					selKey.cancel();
 					break;
 				}
-			}
-		}
-	}
-	
-	/**
-	 * Handles events from the socket.
-	 *
-	 * @param selKey SelectionKey from socket selector
-	 */
-	private final void processSelectionKey(SelectionKey selKey) throws IOException {
-		if (selKey.isValid() && selKey.isConnectable()) {
-			SocketChannel sChannel = (SocketChannel)selKey.channel();
-			
-			boolean success = sChannel.finishConnect();
-			if (!success) {
-				selKey.cancel();
-			}
-		}
-		if (selKey.isValid() && selKey.isReadable()) {
-			SocketChannel sChannel = (SocketChannel)selKey.channel();
-		
-			// Clear the buffer and read bytes from socket
-			buffer.clear();
-			int numBytesRead = sChannel.read(buffer);
-	
-			if (numBytesRead == -1) {
-				sChannel.close();
-				this.socketClosed(true);
-			} else {
-				buffer.flip();
-				CharBuffer charBuffer = Charset.forName("us-ascii").newDecoder().decode(buffer);
-				char c;
-				for (int i = 0; i < charBuffer.limit(); ++i) {
-					c = charBuffer.get();
-					if (c == '\n') {
-						try {
-							processLine(lineBuffer.toString());
-						} catch (Exception e) { }
-						lineBuffer = new StringBuilder();
-					} else if (c != '\r') {
-						lineBuffer.append(c);
-					}
-				}
-			}
-		} else if (selKey.isValid() && selKey.isWritable()) {
-			SocketChannel sChannel = (SocketChannel)selKey.channel();
-			
-			ByteBuffer buf;
-			synchronized (outBuffer) {
-				if (outBuffer.length() > 0) {
-					buf = ByteBuffer.wrap(outBuffer.toString().getBytes());
-					outBuffer = new StringBuffer();
-				} else {
-					return;
-				}
-			}
-			try {
-				mySocketChannel.write(buf);
-			} catch (IOException e) {
-				this.socketClosed(false);
 			}
 		}
 	}

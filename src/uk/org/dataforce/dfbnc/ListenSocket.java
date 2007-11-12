@@ -43,6 +43,8 @@ public class ListenSocket implements Runnable {
 	private ServerSocketChannel ssChannel = ServerSocketChannel.open();
 	/** Thread to run the listen socket under */	
 	private volatile Thread myThread = new Thread(this);
+	/** Is this an ssl listen socket */
+	private boolean isSSL;
 
 	/**
 	 * Create a new ListenSocket.
@@ -83,10 +85,26 @@ public class ListenSocket implements Runnable {
 	 * @throws IOException if there is problems with the sockets.
 	 */
 	private void setupSocket(final String host, final int port) throws IOException {
+		String listenhost;
+		if (host.charAt(0) == '@') {
+			listenhost = host.substring(1);
+			isSSL = true;
+			// Check that SSL settings are correct.
+			// If this throws any exceptions, we have a problem and shouldn't open
+			// the socket.
+			try { SecureSocket.getSSLContext(); }
+			catch (Exception e) {
+				Logger.error("Failed to open SSL Socket '"+host+":"+port+"'");
+				Logger.error("Reason: "+e.getMessage());
+			}
+		} else {
+			listenhost = host;
+			isSSL = false;
+		}
 		selector = Selector.open();
 		
 		ssChannel.configureBlocking(false);
-		ssChannel.socket().bind(new InetSocketAddress(host, port));
+		ssChannel.socket().bind(new InetSocketAddress(listenhost, port));
 		ssChannel.register(selector, SelectionKey.OP_ACCEPT);
 		myThread.setName("[ListenSocket "+host+":"+port+"]");
 		myThread.start();
@@ -133,10 +151,12 @@ public class ListenSocket implements Runnable {
 					try {
 						SocketChannel sChannel = ssChannel.accept();
 						if (sChannel != null) {
-							UserSocket userSocket = new UserSocket(sChannel);
+							UserSocket userSocket = new UserSocket(sChannel, isSSL);
 							userSocket.socketOpened();
 						}
-					} catch (IOException e) { }
+					} catch (IOException e) {
+						Logger.error("Unable to open UserSocket: "+e.getMessage());
+					}
 				}
 			}
 		}

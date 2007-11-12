@@ -119,6 +119,7 @@ public class DFBnc {
 		int count = 0;
 		List<String> defaulthosts = new ArrayList<String>();
 		defaulthosts.add("0.0.0.0:33262");
+		defaulthosts.add("@0.0.0.0:33263");
 		List<String> listenhosts = Config.getProperties().getListProperty("general.listenhost", defaulthosts);
 		
 		for (String listenhost : listenhosts) {
