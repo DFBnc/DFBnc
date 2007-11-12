@@ -54,6 +54,9 @@ public abstract class SocketWrapper {
 	/** My Byte Channel. */
 	protected ByteChannel myByteChannel;
 	
+	/** Are we currently registered for write? */
+	protected boolean writeRegistered = false;
+	
 	/**
 	 * Used to send a line of data to this socket.
 	 * This adds to the buffer.
@@ -63,6 +66,11 @@ public abstract class SocketWrapper {
 	public final void sendLine(final String line) {
 		synchronized (outBuffer) {
 			outBuffer.append(line+"\r\n");
+			if (!writeRegistered) {
+				SelectionKey key = mySocketChannel.keyFor(myOwner.getSelector());
+				key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_CONNECT | SelectionKey.OP_WRITE);
+				writeRegistered = true;
+			}
 		}
 	}
 	
@@ -77,6 +85,15 @@ public abstract class SocketWrapper {
 		} else {
 			return myByteChannel;
 		}
+	}
+	
+	/**
+	 * Used to get the SocketChannel we are wrapping
+	 *
+	 * @return SocketChannel we are wrapping
+	 */
+	protected SocketChannel getSocketChannel() {
+		return mySocketChannel;
 	}
 	
 	/**
@@ -199,6 +216,9 @@ public abstract class SocketWrapper {
 					buf = ByteBuffer.wrap(outBuffer.toString().getBytes());
 					outBuffer = new StringBuffer();
 				} else {
+					SelectionKey key = mySocketChannel.keyFor(myOwner.getSelector());
+					key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_CONNECT);
+					writeRegistered = false;
 					return;
 				}
 			}

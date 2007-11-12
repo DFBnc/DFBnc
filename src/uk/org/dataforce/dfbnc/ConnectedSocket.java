@@ -35,6 +35,11 @@ import uk.org.dataforce.logger.Logger;
 /**
  * This is responsible for taking incomming data, and separating it
   * into "\n" separated lines.
+  *
+  * This can be run in 2 ways, multi-thread and single-thread.
+  * Multi-thread mode uses individual selectors for each socket
+  * Single-thread mode uses a single selector for all sockets.
+  * The mode in use is defined in the config, Single-Thread is the default 
  */
 public abstract class ConnectedSocket implements Runnable {
 	/** Used to monitor the socket. */
@@ -43,6 +48,8 @@ public abstract class ConnectedSocket implements Runnable {
 	protected Thread myThread = new Thread(this);
 	/** SocketWrapper, used to allow for SSL Sockets */
 	protected final SocketWrapper mySocketWrapper;
+	/** String to identify socket by */
+	private String socketID = "ConnectedSocket";
 	
 	/** Are we an SSL Socket? */
 	protected final boolean isSSL;
@@ -51,16 +58,18 @@ public abstract class ConnectedSocket implements Runnable {
 	 * Create a new ConnectedSocket.
 	 *
 	 * @param sChannel Socket to control
-	 * @param threadName Name to call thread that this socket runs under.
+	 * @param idstring Name to call this socket.
 	 * @param fromSSL Did this come from an SSL ListenSocket?
 	 * @throws IOException If there is a problem creating Socket
 	 */
-	protected ConnectedSocket(SocketChannel sChannel, String threadName, final boolean fromSSL) throws IOException {
+	protected ConnectedSocket(SocketChannel sChannel, String idstring, final boolean fromSSL) throws IOException {
 		isSSL = fromSSL;
-		selector = Selector.open();
 		
 		sChannel.configureBlocking(false);
-		sChannel.register(selector, sChannel.validOps());
+		if (!isSingleThread()) {
+			selector = Selector.open();
+			sChannel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_CONNECT);
+		}
 		
 		if (isSSL) {
 			mySocketWrapper = new SecureSocket(sChannel, this);
@@ -68,26 +77,64 @@ public abstract class ConnectedSocket implements Runnable {
 			mySocketWrapper = new PlainSocket(sChannel, this);
 		}
 		
-		myThread.setName(threadName);
-		myThread.start();
+		setSocketID(socketID);
+		if (isSingleThread()) {
+			ConnectedSocketSelector.getConnectedSocketSelector().registerSocket(sChannel, this);
+		} else {
+			myThread.start();
+		}
+	}
+		
+	/**
+	 * Check if we are in single thread or multi thread mode.
+	 *
+	 * @return The negative of the value of config option general.socket.multithread,
+	 *         or true if the option is undefined.
+	 */
+	public final boolean isSingleThread() {
+		return !Config.getBoolOption("general", "socket.multithread", false);
 	}
 		
 	/**
 	 * Used to close this socket.
 	 */
 	public final void close() {
-		Logger.info("Connected Socket closing ("+myThread.getName()+")");
+		Logger.info("Connected Socket closing ("+socketID+")");
 
-		// Kill the thread
-		Thread tmp = myThread;
-		myThread = null;
-		if (tmp != null) { tmp.interrupt(); }
+		if (!isSingleThread()) {
+			// Kill the thread
+			Thread tmp = myThread;
+			myThread = null;
+			if (tmp != null) { tmp.interrupt(); }
+		}
 		
 		// Close the actual socket
 		try {
+			if (isSingleThread()) {
+				ConnectedSocketSelector.getConnectedSocketSelector().unregisterSocket(mySocketWrapper.getSocketChannel());
+			}
 			mySocketWrapper.close();
 		} catch (IOException e) { }
 		this.socketClosed(false);
+	}
+	
+	/**
+	 * Get the SocketWrapper this socket uses
+	 *
+	 * @return The SocketWrapper this socket uses
+	 */
+	public SocketWrapper getSocketWrapper() {
+		return mySocketWrapper;
+	}
+	
+	/**
+	 * Set this Sockets ID
+	 *
+	 * @param idstring New ID String for this socket
+	 */
+	public void setSocketID (final String idstring) {
+		socketID = idstring;
+		myThread.setName(socketID);
 	}
 	
 	/**
@@ -115,9 +162,16 @@ public abstract class ConnectedSocket implements Runnable {
 	 */
 	@Override
 	public final void run() {
+		if (isSingleThread()) { return; }
+		
 		while (myThread == Thread.currentThread()) {
 			try {
-				selector.select();
+				int res = selector.select();
+				if (res == 0) {
+					try {
+						Thread.sleep(100);
+					} catch (InterruptedException ie) { }
+				}
 			} catch (IOException e) {
 				break;
 			}
@@ -135,6 +189,19 @@ public abstract class ConnectedSocket implements Runnable {
 					break;
 				}
 			}
+		}
+	}
+		
+	/**
+	 * Get the selector in use by this Socket
+	 *
+	 * @return The selector in use by this Socket
+	 */
+	public Selector getSelector() {
+		if (isSingleThread()) {
+			return ConnectedSocketSelector.getConnectedSocketSelector().getSelector();
+		} else {
+			return selector;
 		}
 	}
 	

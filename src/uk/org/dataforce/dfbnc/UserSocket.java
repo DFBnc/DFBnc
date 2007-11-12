@@ -89,7 +89,7 @@ public class UserSocket extends ConnectedSocket {
 			knownSockets.put(myID, this);
 		}
 		
-		myThread.setName("[UserSocket: "+myID+"]");
+		super.setSocketID("[UserSocket: "+myID+"]");
 		
 		// myInfo = mySocket.getRemoteSocketAddress()+" ("+mySocket.getLocalSocketAddress()+") ["+myID+"]";
 		// Do this rather than above because we want to enclose the addresses in []
@@ -160,6 +160,11 @@ public class UserSocket extends ConnectedSocket {
 	@Override
 	public void socketOpened() {
 		sendBotMessage("Welcome to DFBnc ("+DFBnc.VERSION+")");
+		if (isSSL) {
+			sendBotMessage("You are connected using SSL");
+		} else {
+			sendBotMessage("You are not connected using SSL");
+		}
 	}
 	
 	/**

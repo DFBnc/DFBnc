@@ -135,7 +135,7 @@ public class SSLByteChannel implements ByteChannel {
 		int posBefore = buffer.position();
 		buffer.put(inAppData);
 		int posAfter = buffer.position();
-		buffer.compact();
+		inAppData.compact();
 
 		// Return status
 		if (posAfter - posBefore > 0) {

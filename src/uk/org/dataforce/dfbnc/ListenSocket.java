@@ -135,7 +135,12 @@ public class ListenSocket implements Runnable {
 	public void run() {
 		while (myThread == Thread.currentThread()) {
 			try {
-				selector.select();
+				int res = selector.select();
+				if (res == 0) {
+					try {
+						Thread.sleep(100);
+					} catch (InterruptedException ie) { }
+				}
 			} catch (IOException e) {
 				break;
 			}
