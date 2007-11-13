@@ -88,24 +88,26 @@ public abstract class AbstractListEditCommand extends Command {
 	 * @param command The command passed as param[0]
 	 * @return The name of the property to store the list in.
 	 */
-	public abstract String getPropertyName();
+	public abstract String getPropertyName(final String command);
 	
 	/**
 	 * Get the name of the list.
 	 * This is used in various outputs from the command.
 	 *
+	 * @param command The command passed as param[0]
 	 * @return The name of the list
 	 */
-	public abstract String getListName();
+	public abstract String getListName(final String command);
 	
 	/**
 	 * Check an item.
 	 * This should return a ListOption for the given input.
 	 *
+	 * @param command The command passed as param[0]
 	 * @param input The input to validate
 	 * @return ListOption for this parameter.
 	 */
-	public ListOption checkItem(final String input) {
+	public ListOption checkItem(final String command, final String input) {
 		return new ListOption(true, input, null);
 	}
 	
@@ -118,9 +120,20 @@ public abstract class AbstractListEditCommand extends Command {
 	public abstract String[] getUsageOutput(final String command);
 	
 	/**
-	 * Get the output to give for the help command for the syntax for add
+	 * Get the output to give for /dfbnc <command> on its own.
+	 * Returning null gives default output.
 	 *
-	 * @return The output to give for an "add" request without sufficient parameters
+	 * @param command Command to get output for
+	 * @return The output to give
+	 */
+	public String[] getHelpOutput(final String command) {
+		return null;
+	}
+	
+	/**
+	 * Get the output to give for the syntax to add/edit commands to show valid input
+	 *
+	 * @return The output to give for the syntax to add/edit commands to show valid input
 	 */
 	public abstract String getAddUsageSyntax();
 	
@@ -128,9 +141,10 @@ public abstract class AbstractListEditCommand extends Command {
 	 * Can this list be added to?
 	 * (This also disables edit and insert)
 	 *
+	 * @param command Command to get output for
 	 * @return If this list can be added to.
 	 */
-	public boolean canAdd() { return true; }
+	public boolean canAdd(final String command) { return true; }
 	
 	/**
 	 * Handle this command.
@@ -142,18 +156,23 @@ public abstract class AbstractListEditCommand extends Command {
 	public final void handle(final UserSocket user, final String[] params) {
 		user.sendBotMessage("----------------");
 		if (params.length > 1) {
+			if (getPropertyName(params[0]).equals("")) {
+				user.sendBotMessage("There is no list to modify using '"+params[0]+"'");
+				user.sendBotMessage("Please try /dfbnc '"+params[0]+"' for more information");
+				return;
+			}
 			List<String> myList = new ArrayList<String>();
 			myList = user.getAccount().getProperties().getListProperty(getPropertyName(params[0]), myList);
 			if (params[1].equalsIgnoreCase("list")) {
 				if (myList.size() > 0) {
-					user.sendBotMessage("You currently have the following items in your "+getListName()+":");
+					user.sendBotMessage("You currently have the following items in your "+getListName(params[0])+":");
 					for (int i = 0; i < myList.size(); ++i) {
 						user.sendBotMessage(String.format("    %2d: %s", i, myList.get(i)));
 					}
 				} else {
-					user.sendBotMessage("Your "+getListName()+" is currently empty.");
+					user.sendBotMessage("Your "+getListName(params[0])+" is currently empty.");
 				}
-			} else if (canAdd() && (params[1].equalsIgnoreCase("add") || params[1].equalsIgnoreCase("edit") || params[1].equalsIgnoreCase("ins"))) {
+			} else if (canAdd(params[0]) && (params[1].equalsIgnoreCase("add") || params[1].equalsIgnoreCase("edit") || params[1].equalsIgnoreCase("ins"))) {
 				int numParams = 3;
 				if (params[1].equalsIgnoreCase("add")) { numParams = 2; }
 				if (params.length > numParams) {
@@ -162,19 +181,19 @@ public abstract class AbstractListEditCommand extends Command {
 						try {
 							position = Integer.parseInt(params[2]);
 							if (position >= myList.size()) {
-								user.sendBotMessage("'"+params[2]+"' is not a valid position in the "+getListName());
+								user.sendBotMessage("'"+params[2]+"' is not a valid position in the "+getListName(params[0]));
 							}
 						} catch (NumberFormatException nfe) {
-							user.sendBotMessage("'"+params[2]+"' is not a valid position in the "+getListName());
+							user.sendBotMessage("'"+params[2]+"' is not a valid position in the "+getListName(params[0]));
 						}
 					}
 					StringBuilder allInput = new StringBuilder("");
 					for (int i = numParams ; i < params.length; ++i) { allInput.append(params[i]+" "); }
-					ListOption listOption = checkItem(allInput.toString());
+					ListOption listOption = checkItem(params[0], allInput.toString());
 					if (listOption.isValid()) {
 						if (params[1].equalsIgnoreCase("add")) {
 							myList.add(listOption.getParam());
-							user.sendBotMessage("'"+listOption.getParam()+"' has been added to your "+getListName());
+							user.sendBotMessage("'"+listOption.getParam()+"' has been added to your "+getListName(params[0]));
 						} else if (params[1].equalsIgnoreCase("edit")) {
 							myList.remove(position);
 							myList.add(position, listOption.getParam());
@@ -200,10 +219,10 @@ public abstract class AbstractListEditCommand extends Command {
 						if (position < myList.size()) {
 							final String itemName = myList.get(position);
 							myList.remove(position);
-							user.sendBotMessage("Item number "+position+" ("+itemName+") has been removed from your "+getListName()+".");
+							user.sendBotMessage("Item number "+position+" ("+itemName+") has been removed from your "+getListName(params[0])+".");
 						} else {
-							user.sendBotMessage("There is no item with the number "+position+" in your "+getListName());
-							user.sendBotMessage("Use /dfbnc "+params[0]+" list to view your "+getListName());
+							user.sendBotMessage("There is no item with the number "+position+" in your "+getListName(params[0]));
+							user.sendBotMessage("Use /dfbnc "+params[0]+" list to view your "+getListName(params[0]));
 						}
 					} catch (NumberFormatException nfe) {
 						user.sendBotMessage("You must specify an item number to delete");
@@ -213,19 +232,26 @@ public abstract class AbstractListEditCommand extends Command {
 				}
 			} else if (params[1].equalsIgnoreCase("clear")) {
 				myList.clear();
-				user.sendBotMessage("Your "+getListName()+" has been cleared.");
+				user.sendBotMessage("Your "+getListName(params[0])+" has been cleared.");
 			}
 			user.getAccount().getProperties().setListProperty(getPropertyName(params[0]), myList);
 		} else {
-			user.sendBotMessage("This command can be used to modify your "+getListName()+" using the following params:");
-			user.sendBotMessage("  /dfbnc "+params[0]+" list");
-			if (canAdd()) {
-				user.sendBotMessage("  /dfbnc "+params[0]+" add "+getAddUsageSyntax());
-				user.sendBotMessage("  /dfbnc "+params[0]+" edit <number> "+getAddUsageSyntax());
-				user.sendBotMessage("  /dfbnc "+params[0]+" ins <number> "+getAddUsageSyntax());
+			String[] output = getHelpOutput(params[0]);
+			if (output != null) {
+				for (String out : output) {
+					user.sendBotMessage(out);
+				}
+			} else {
+				user.sendBotMessage("This command can be used to modify your "+getListName(params[0])+" using the following params:");
+				user.sendBotMessage("  /dfbnc "+params[0]+" list");
+				if (canAdd(params[0])) {
+					user.sendBotMessage("  /dfbnc "+params[0]+" add "+getAddUsageSyntax());
+					user.sendBotMessage("  /dfbnc "+params[0]+" edit <number> "+getAddUsageSyntax());
+					user.sendBotMessage("  /dfbnc "+params[0]+" ins <number> "+getAddUsageSyntax());
+				}
+				user.sendBotMessage("  /dfbnc "+params[0]+" del <number>");
+				user.sendBotMessage("  /dfbnc "+params[0]+" clear");
 			}
-			user.sendBotMessage("  /dfbnc "+params[0]+" del <number>");
-			user.sendBotMessage("  /dfbnc "+params[0]+" clear");
 		}
 	}
 	
@@ -247,10 +273,12 @@ public abstract class AbstractListEditCommand extends Command {
 	/**
 	 * Get a description of what this command does
 	 *
+	 * @param command The command to describe (incase one Command does multiple
+	 *                things under different names)
 	 * @return A description of what this command does
 	 */
 	@Override
-	public abstract String getDescription();
+	public abstract String getDescription(final String command);
 	
 	/**
 	 * Get SVN information.

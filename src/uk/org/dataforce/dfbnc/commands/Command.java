@@ -72,9 +72,11 @@ public abstract class Command {
 	/**
 	 * Get a description of what this command does
 	 *
+	 * @param command The command to describe (incase one Command does multiple
+	 *                things under different names)
 	 * @return A description of what this command does
 	 */
-	public abstract String getDescription();
+	public abstract String getDescription(final String command);
 	
 	/**
 	 * Is this command Admin only?

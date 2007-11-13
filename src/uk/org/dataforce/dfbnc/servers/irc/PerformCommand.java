@@ -27,9 +27,9 @@ import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.UserSocket;
 
 /**
- * This file represents the 'ServerList' command
+ * This file represents the Perform-related commands
  */
-public class ServerListCommand extends AbstractListEditCommand {
+public class PerformCommand extends AbstractListEditCommand {
 	/**
 	 * Get the name of the property to store the list in.
 	 *
@@ -37,7 +37,16 @@ public class ServerListCommand extends AbstractListEditCommand {
 	 * @return The name of the property to store the list in.
 	 */
 	@Override
-	public String getPropertyName(final String command) { return "irc.serverlist"; };
+	public String getPropertyName(final String command) {
+		if (command.equalsIgnoreCase("cperform")) {
+			return "irc.perform.connect";
+		} else if (command.equalsIgnoreCase("dperform")) {
+			return "irc.perform.lastdetach";
+		} else if (command.equalsIgnoreCase("aperform")) {
+			return "irc.perform.firstattach";
+		}
+		return "";
+	};
 	
 	/**
 	 * Get the name of the list.
@@ -47,20 +56,15 @@ public class ServerListCommand extends AbstractListEditCommand {
 	 * @return The name of the list
 	 */
 	@Override
-	public String getListName(final String command) { return "Server list"; }
-	
-	/**
-	 * Check an item.
-	 * This should return a ListOption for the given input.
-	 *
-	 * @param command The command passed as param[0]
-	 * @param input The input to validate
-	 * @return ListOption for this parameter.
-	 */
-	@Override
-	public ListOption checkItem(final String command, final String input) {
-		String[] inputBits = IRCServerType.parseServerString(input);
-		return new ListOption(true, inputBits[3], null);
+	public String getListName(final String command) {
+		if (command.equalsIgnoreCase("cperform")) {
+			return "onConnect Perform";
+		} else if (command.equalsIgnoreCase("dperform")) {
+			return "onLastDetach Perform";
+		} else if (command.equalsIgnoreCase("aperform")) {
+			return "onFirstAttach Perform";
+		}
+		return "";
 	}
 	
 	/**
@@ -73,18 +77,15 @@ public class ServerListCommand extends AbstractListEditCommand {
 	public String[] getUsageOutput(final String command) {
 		if (command.equalsIgnoreCase("add")) {
 			return new String[]{
-			                    "You must specify a server to add in the format: [@]<server>[:port] [password]",
-			                    "Prefixing the servername with @ signifies an SSL connection"
+			                    "You must specify something to add to the perform"
 			                   };
 		} else if (command.equalsIgnoreCase("edit")) {
 			return new String[]{
-			                    "You must specify a position number to edit, and a server to add in the format: <number> [@]<server>[:port] [password]",
-			                    "Prefixing the servername with @ signifies an SSL connection"
+			                    "You must specify a position number to edit, and something to use in the perform"
 			                   };
 		} else if (command.equalsIgnoreCase("ins")) {
 			return new String[]{
-			                    "You must specify a position to insert this item, and a server to add in the format: <number> [@]<server>[:port] [password]",
-			                    "Prefixing the servername with @ signifies an SSL connection"
+			                    "You must specify a position to insert this item, and something to use in the perform"
 			                   };
 		} else {
 			return new String[]{""};
@@ -98,7 +99,27 @@ public class ServerListCommand extends AbstractListEditCommand {
 	 */
 	@Override
 	public String getAddUsageSyntax() {
-		return "[@]<Server>[:Port] [password]";
+		return "<perform item>";
+	}
+	
+	/**
+	 * Get the output to give for /dfbnc <command> on its own.
+	 * Returning null gives default output.
+	 *
+	 * @param command Command to get output for
+	 * @return The output to give
+	 */
+	@Override
+	public String[] getHelpOutput(final String command) {
+		if (command.equalsIgnoreCase("perform")) {
+			return new String[]{
+			                    "DFBnc provides 3 types of perform.",
+			                    "    * On Connect (cperform) - When the BNC Connects to the IRC Server, with or without the user connected",
+			                    "    * On First Attach (aperform) - When the first user connects to the bnc whilst connected to a server",
+			                    "    * On Last Detach (dperform) - When the last user disconnects from the bnc whilst connected to a server (Also after cperform if no user is connected)"
+			                   };
+		}
+		return null;
 	}
 	
 	/**
@@ -118,7 +139,7 @@ public class ServerListCommand extends AbstractListEditCommand {
 	 */
 	@Override
 	public String[] handles() {
-		return new String[]{"serverlist", "sl"};
+		return new String[]{"perform", "cperform", "dperform", "aperform"};
 	}
 	
 	/**
@@ -126,7 +147,7 @@ public class ServerListCommand extends AbstractListEditCommand {
 	 *
 	 * @param manager CommandManager that is in charge of this Command
 	 */
-	public ServerListCommand (final CommandManager manager) { super(manager); }
+	public PerformCommand (final CommandManager manager) { super(manager); }
 	
 	/**
 	 * Get a description of what this command does
@@ -137,13 +158,21 @@ public class ServerListCommand extends AbstractListEditCommand {
 	 */
 	@Override
 	public String getDescription(final String command) {
-		return "This command lets you manipulate the irc server list";
+		if (command.equalsIgnoreCase("cperform")) {
+			return "This command lets you manipulate the onConnect Perform";
+		} else if (command.equalsIgnoreCase("dperform")) {
+			return "This command lets you manipulate the onLastDetach Perform";
+		} else if (command.equalsIgnoreCase("aperform")) {
+			return "This command lets you manipulate the onFirstAttach Perform";
+		} else {
+			return "This command gives you information on the types of Perform DFBnc provides";
+		}
 	}
 	
 	/**
-	 * Get SVN ServerList information.
+	 * Get SVN information.
 	 *
-	 * @return SVN ServerList String
+	 * @return SVN String
 	 */
 	public static String getSvnInfo () { return "$Id: Process001.java 1508 2007-06-11 20:08:12Z ShaneMcC $"; }	
 }

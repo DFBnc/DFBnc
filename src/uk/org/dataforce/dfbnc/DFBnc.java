@@ -133,6 +133,17 @@ public class DFBnc {
 			}
 		}
 		Logger.info("Running!");
+		if (Config.getBoolOption("debugging", "autocreate", false)) {
+			Logger.warning("/-----------------------------------------------------\\");
+			Logger.warning("|                       WARNING                       |");
+			Logger.warning("|-----------------------------------------------------|");
+			Logger.warning("| AutoCreate mode is enabled!                         |");
+			Logger.warning("|                                                     |");
+			Logger.warning("| This mode makes the BNC automatiaclly create new    |");
+			Logger.warning("| accounts for unknown users and should not be used   |");
+			Logger.warning("| in a non-test environment.                          |");
+			Logger.warning("`-----------------------------------------------------'");
+		}
 	}
 	
 	/**
@@ -219,6 +230,7 @@ public class DFBnc {
 		cli.add(new BooleanParam('s', "silent", "Disable all output"));
 		cli.add(new BooleanParam((char)0, "convert", "Convert old (delphi) style config file to new style"));
 		cli.add(new StringParam('c', "config", "Alternative config file to use"));
+		cli.add(new BooleanParam((char)0, "enableDebugOptions", "Enable debugging. config settings"));
 		cli.setHelp(cli.getParam("-help"));
 	}
 	

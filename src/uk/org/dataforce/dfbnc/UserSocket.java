@@ -335,10 +335,14 @@ public class UserSocket extends ConnectedSocket {
 		}
 		
 		if (realname != null && password != null && nickname != null) {
-			if (Account.count() == 0) {
+			if (Account.count() == 0 || (Config.getBoolOption("debugging", "autocreate", false) && !Account.exists(username))) {
 				Account acc = Account.createAccount(username, password);
-				acc.setAdmin(true);
-				sendBotMessage("You are the first user of this bnc, and have been made admin");
+				if (Account.count() == 0) {
+					acc.setAdmin(true);
+					sendBotMessage("You are the first user of this bnc, and have been made admin");
+				} else {
+					sendBotMessage("The given account does not exist, so an account has been created for you.");
+				}
 				Config.saveAll(DFBnc.getConfigFileName());
 			}
 			if (Account.checkPassword(username, password)) {

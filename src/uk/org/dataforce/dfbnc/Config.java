@@ -25,6 +25,7 @@ package uk.org.dataforce.dfbnc;
 
 import uk.org.dataforce.logger.Logger;
 import uk.org.dataforce.util.TypedProperties;
+import uk.org.dataforce.cliparser.CLIParser;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -106,6 +107,16 @@ public class Config {
 	}
 	
 	/**
+	 * Check if debugging options are disabled.
+	 *
+	 * @return true if debugging options are disabled (and the given domain is debugging)
+	 *         this makes get* options return the fallback when a debugging option is requested
+	 */
+	private static boolean checkDebugging(final String domain) {
+		return (domain.equalsIgnoreCase("debugging") && CLIParser.getCLIParser().getParamNumber("-enableDebugOptions") < 1);
+	}
+	
+	/**
 	 * Get an option from the config
 	 *
 	 * @param domain Domain for option
@@ -114,7 +125,11 @@ public class Config {
 	 * @return the requested option, or the fallback value if not defined
 	 */
 	public static String getOption(final String domain, final String key, final String fallback) {
-		return config.getProperty(domain.toLowerCase()+"."+key.toLowerCase(), fallback);
+		if (checkDebugging(domain)) {
+			return fallback;
+		} else {
+			return config.getProperty(domain.toLowerCase()+"."+key.toLowerCase(), fallback);
+		}
 	}
 	
 	/**
@@ -136,7 +151,11 @@ public class Config {
 	 * @return True if the option exists, else false
 	 */
 	public static boolean hasOption(final String domain, final String key) {
-		return config.hasProperty(domain.toLowerCase()+"."+key.toLowerCase());
+		if (checkDebugging(domain)) {
+			return false;
+		} else {
+			return config.hasProperty(domain.toLowerCase()+"."+key.toLowerCase());
+		}
 	}
 	
 	/**
@@ -148,7 +167,11 @@ public class Config {
  	 * @return the requested option, or the fallback value if not defined
 	 */
 	public static boolean getBoolOption(final String domain, final String key, final boolean fallback) {
-		return config.getBoolProperty(domain.toLowerCase()+"."+key.toLowerCase(), fallback);
+		if (checkDebugging(domain)) {
+			return fallback;
+		} else {
+			return config.getBoolProperty(domain.toLowerCase()+"."+key.toLowerCase(), fallback);
+		}
 	}
 	
 	/**
@@ -171,7 +194,11 @@ public class Config {
 	 * @return the requested option, or the fallback value if not defined
 	 */
 	public static int getIntOption(final String domain, final String key, final int fallback) {
-		return config.getIntProperty(domain.toLowerCase()+"."+key.toLowerCase(), fallback);
+		if (checkDebugging(domain)) {
+			return fallback;
+		} else {
+			return config.getIntProperty(domain.toLowerCase()+"."+key.toLowerCase(), fallback);
+		}
 	}
 	
 	/**

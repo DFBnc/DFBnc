@@ -54,13 +54,9 @@ public class ShowCommandsCommand extends Command {
 		for (String commandName : commands.keySet()) {
 			final Command command = commands.get(commandName);
 			if (command.isAdminOnly()) {
-				// adminCommands.add(commandName);
-				// adminCommands.add("        - "+command.getDescription());
-				adminCommands.add(String.format("%20s - %s", commandName, command.getDescription()));
+				adminCommands.add(String.format("%20s - %s", commandName, command.getDescription(commandName)));
 			} else {
-				// user.sendBotMessage(commandName);
-				// user.sendBotMessage("        - "+command.getDescription());
-				user.sendBotMessage(String.format("%20s - %s", commandName, command.getDescription()));
+				user.sendBotMessage(String.format("%20s - %s", commandName, command.getDescription(commandName)));
 			}
 		}
 		
@@ -89,10 +85,12 @@ public class ShowCommandsCommand extends Command {
 	/**
 	 * Get a description of what this command does
 	 *
+	 * @param command The command to describe (incase one Command does multiple
+	 *                things under different names)
 	 * @return A description of what this command does
 	 */
 	@Override
-	public String getDescription() {
+	public String getDescription(final String command) {
 		return "This command shows what commands are available to you";
 	}
 	

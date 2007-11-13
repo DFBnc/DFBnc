@@ -75,10 +75,12 @@ public class ConnectCommand extends Command {
 	/**
 	 * Get a description of what this command does
 	 *
+	 * @param command The command to describe (incase one Command does multiple
+	 *                things under different names)
 	 * @return A description of what this command does
 	 */
 	@Override
-	public String getDescription() {
+	public String getDescription(final String command) {
 		return "This command lets you connect to an IRC Server if not already connected";
 	}
 	
