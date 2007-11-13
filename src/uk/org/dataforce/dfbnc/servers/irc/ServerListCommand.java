@@ -23,80 +23,90 @@
  */
 package uk.org.dataforce.dfbnc.servers.irc;
 
-import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.UserSocket;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This file represents the 'ServerList' command
  */
-public class ServerListCommand extends Command {
+public class ServerListCommand extends AbstractListEditCommand {
 	/**
-	 * Handle a ServerList command.
+	 * Get the name of the property to store the list in.
 	 *
-	 * @param user the UserSocket that performed this command
-	 * @param params Params for command (param 0 is the command name)
+	 * @param command The command passed as param[0]
+	 * @return The name of the property to store the list in.
 	 */
 	@Override
-	public void handle(final UserSocket user, final String[] params) {
-		user.sendBotMessage("----------------");
-		if (params.length > 1) {
-			List<String> serverList = new ArrayList<String>();
-			serverList = user.getAccount().getProperties().getListProperty("irc.serverlist", serverList);
-			if (params[1].equalsIgnoreCase("list")) {
-				if (serverList.size() > 0) {
-					user.sendBotMessage("You currently have the following servers in your list:");
-					for (int i = 0; i < serverList.size(); ++i) {
-						user.sendBotMessage(String.format("    %2d: %s", i, serverList.get(i)));
-					}
-				} else {
-					user.sendBotMessage("Your server list is currently empty.");
-				}
-			} else if (params[1].equalsIgnoreCase("add")) {
-				if (params.length > 2) {
-					StringBuilder allInput = new StringBuilder("");
-					for (int i = 2 ; i < params.length; ++i) { allInput.append(params[i]+" "); }
-					String[] input = IRCServerType.parseServerString(allInput.toString());
-					serverList.add(input[3]);
-					user.sendBotMessage("Server ("+input[3]+") has been added to your serverList");
-				} else {
-					user.sendBotMessage("You must specify a server to add in the format: [@]<server>[:port] [password]");
-					user.sendBotMessage("Prefixing the servername with @ signifies an SSL connection");
-				}
-			} else if (params[1].equalsIgnoreCase("del")) {
-				if (params.length > 2) {
-					try {
-						final int position = Integer.parseInt(params[2]);
-						if (position < serverList.size()) {
-							final String serverName = serverList.get(position);
-							serverList.remove(position);
-							user.sendBotMessage("Server number "+position+" ("+serverName+") has been removed from your server list.");
-						} else {
-							user.sendBotMessage("There is no server with the number "+position+" in your server list");
-							user.sendBotMessage("Use /dfbnc "+params[0]+" list to view your server list");
-						}
-					} catch (NumberFormatException nfe) {
-						user.sendBotMessage("You must specify a server number to delete");
-					}
-				} else {
-					user.sendBotMessage("You must specify a server number to delete");
-				}
-			} else if (params[1].equalsIgnoreCase("clear")) {
-				serverList.clear();
-				user.sendBotMessage("Your server list has been cleared.");
-			}
-			user.getAccount().getProperties().setListProperty("irc.serverlist", serverList);
+	public String getPropertyName(final String command) { return "irc.serverlist"; };
+	
+	/**
+	 * Get the name of the list.
+	 * This is used in various outputs from the command.
+	 *
+	 * @return The name of the list
+	 */
+	@Override
+	public String getListName() { return "Server list"; }
+	
+	/**
+	 * Check an item.
+	 * This should return a ListOption for the given input.
+	 *
+	 * @param input The input to validate
+	 * @return ListOption for this parameter.
+	 */
+	@Override
+	public ListOption checkItem(final String input) {
+		String[] inputBits = IRCServerType.parseServerString(input);
+		return new ListOption(true, inputBits[3], null);
+	}
+	
+	/**
+	 * Get the output to give for an "add", "edit" or "ins" request without sufficient parameters
+	 *
+	 * @param command Command to get usage info for (add, edit, ins)
+	 * @return The output to give
+	 */
+	@Override
+	public String[] getUsageOutput(final String command) {
+		if (command.equalsIgnoreCase("add")) {
+			return new String[]{
+			                    "You must specify a server to add in the format: [@]<server>[:port] [password]",
+			                    "Prefixing the servername with @ signifies an SSL connection"
+			                   };
+		} else if (command.equalsIgnoreCase("edit")) {
+			return new String[]{
+			                    "You must specify a position number to edit, and a server to add in the format: <number> [@]<server>[:port] [password]",
+			                    "Prefixing the servername with @ signifies an SSL connection"
+			                   };
+		} else if (command.equalsIgnoreCase("ins")) {
+			return new String[]{
+			                    "You must specify a position to insert this item, and a server to add in the format: <number> [@]<server>[:port] [password]",
+			                    "Prefixing the servername with @ signifies an SSL connection"
+			                   };
 		} else {
-			user.sendBotMessage("This command can be used to modify your irc serverlist using the following params:");
-			user.sendBotMessage("  /dfbnc "+params[0]+" list");
-			user.sendBotMessage("  /dfbnc "+params[0]+" add [@]<Server>[:Port] [password]");
-			user.sendBotMessage("  /dfbnc "+params[0]+" del <number>");
-			user.sendBotMessage("  /dfbnc "+params[0]+" clear");
+			return new String[]{""};
 		}
 	}
+	
+	/**
+	 * Get the output to give for the help command for the syntax for add
+	 *
+	 * @return The output to give for an "add" request without sufficient parameters
+	 */
+	@Override
+	public String getAddUsageSyntax() {
+		return "[@]<Server>[:Port] [password]";
+	}
+	
+	/**
+	 * Can this list be added to?
+	 * (This also disables edit and insert)
+	 *
+	 * @return If this list can be added to.
+	 */
+	@Override
+	public boolean canAdd() { return true; }
 	
 	/**
 	 * What does this Command handle.
