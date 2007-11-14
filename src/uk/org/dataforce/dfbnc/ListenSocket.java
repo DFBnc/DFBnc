@@ -157,6 +157,7 @@ public class ListenSocket implements Runnable {
 					try {
 						SocketChannel sChannel = selChannel.accept();
 						if (sChannel != null) {
+							Logger.info("Accepting new socket.");
 							UserSocket userSocket = new UserSocket(sChannel, isSSL);
 							userSocket.socketOpened();
 						}

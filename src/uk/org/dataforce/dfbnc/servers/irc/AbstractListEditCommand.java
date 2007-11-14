@@ -189,7 +189,7 @@ public abstract class AbstractListEditCommand extends Command {
 					}
 					StringBuilder allInput = new StringBuilder("");
 					for (int i = numParams ; i < params.length; ++i) { allInput.append(params[i]+" "); }
-					ListOption listOption = checkItem(params[0], allInput.toString());
+					ListOption listOption = checkItem(params[0], allInput.toString().trim());
 					if (listOption.isValid()) {
 						if (params[1].equalsIgnoreCase("add")) {
 							myList.add(listOption.getParam());

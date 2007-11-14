@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.channels.ByteChannel;
 
+import uk.org.dataforce.logger.Logger;
 /**
  * This defines a basic SocketWrapper 
  */
@@ -64,11 +65,17 @@ public abstract class SocketWrapper {
 	 * @param line Line to send
 	 */
 	public final void sendLine(final String line) {
+		if (outBuffer == null) { Logger.error("Null outBuffer -> "+line); return; }
+		if (mySocketChannel == null) { Logger.error("Null mySocketChannel -> "+line); return; }
+		if (myOwner == null) { Logger.error("Null myOwner -> "+line); return; }
+		
 		synchronized (outBuffer) {
 			outBuffer.append(line+"\r\n");
 			if (!writeRegistered) {
 				SelectionKey key = mySocketChannel.keyFor(myOwner.getSelector());
+				if (key == null) { Logger.error("Null key -> "+line); return; }
 				key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_CONNECT | SelectionKey.OP_WRITE);
+				myOwner.getSelector().wakeup();
 				writeRegistered = true;
 			}
 		}
@@ -187,8 +194,10 @@ public abstract class SocketWrapper {
 				buffer.clear();
 				numBytesRead = read(buffer);
 				if (numBytesRead == -1) {
-					sChannel.close();
-					myOwner.socketClosed(true);
+					SelectionKey key = mySocketChannel.keyFor(myOwner.getSelector());
+					key.interestOps(0);
+					myOwner.close();
+					Logger.info("Socket got closed.");
 				} else {
 					buffer.flip();
 					CharBuffer charBuffer = Charset.forName("us-ascii").newDecoder().decode(buffer);

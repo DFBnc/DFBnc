@@ -95,6 +95,7 @@ public class ConnectedSocketSelector implements Runnable {
 	public void registerSocket(final SocketChannel channel, final ConnectedSocket socket) throws ClosedChannelException {
 		synchronized (knownSockets) {
 			if (!knownSockets.containsKey(channel)) {
+				selector.wakeup();
 				channel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_CONNECT);
 				knownSockets.put(channel, socket);
 			}

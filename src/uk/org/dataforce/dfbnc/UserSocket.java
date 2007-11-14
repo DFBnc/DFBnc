@@ -410,8 +410,9 @@ public class UserSocket extends ConnectedSocket {
 				return;
 			}
 		} else if (line[0].equals("DFBNC") && line.length > 1) {
-			String[] bits = new String[line.length-1];
-			System.arraycopy(line, 1, bits, 0, line.length-1);
+			String[] lineBits = normalLine.split(" ");
+			String[] bits = new String[lineBits.length-1];
+			System.arraycopy(lineBits, 1, bits, 0, lineBits.length-1);
 			handleBotCommand(bits);
 			return;
 		}

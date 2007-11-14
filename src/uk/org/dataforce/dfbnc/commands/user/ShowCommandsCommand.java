@@ -54,9 +54,9 @@ public class ShowCommandsCommand extends Command {
 		for (String commandName : commands.keySet()) {
 			final Command command = commands.get(commandName);
 			if (command.isAdminOnly()) {
-				adminCommands.add(String.format("%20s - %s", commandName, command.getDescription(commandName)));
+				adminCommands.add(String.format("%-20s - %s", commandName, command.getDescription(commandName)));
 			} else {
-				user.sendBotMessage(String.format("%20s - %s", commandName, command.getDescription(commandName)));
+				user.sendBotMessage(String.format("%-20s - %s", commandName, command.getDescription(commandName)));
 			}
 		}
 		

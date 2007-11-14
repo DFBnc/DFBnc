@@ -31,8 +31,9 @@ import uk.org.dataforce.dfbnc.UnableToConnectException;
 import uk.org.dataforce.dfbnc.UserSocketWatcher;
 import com.dmdirc.parser.IRCParser;
 import com.dmdirc.parser.ClientInfo;
-import com.dmdirc.parser.ChannelInfo;
 import com.dmdirc.parser.ChannelClientInfo;
+import com.dmdirc.parser.ChannelInfo;
+import com.dmdirc.parser.ChannelListModeItem;
 import com.dmdirc.parser.MyInfo;
 import com.dmdirc.parser.ServerInfo;
 import com.dmdirc.parser.callbacks.interfaces.IDataIn;
@@ -60,6 +61,8 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	private boolean hasPost005 = false;
 	/** Have we recieved a MOTDEnd callback? */
 	private boolean hasMOTDEnd = false;
+	/** Have we hacked in our own 005? (Shows support for LISTMODE) */
+	private boolean hacked005 = false;
 	/** This stores the 002-005 lines which are sent to users who connect after we recieve them  */
 	private List<String> connectionLines = new ArrayList<String>();
 	
@@ -75,6 +78,9 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	
 	/**
 	 * Called when data is recieved on the user socket.
+	 * This intercepts topic/mode/names requests and handles them itself where possible
+	 * unless the -f parameter is passed (ie /mode -f #channel)
+	 * This is horrible code.
 	 *
 	 * @param user The socket that the data arrived on
 	 * @param data Data that was recieved
@@ -82,7 +88,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	@Override
 	public void dataRecieved(final UserSocket user, final String data, final String[] line) {
 		StringBuilder outData = new StringBuilder();
-		if (line[0].equalsIgnoreCase("topic") || line[0].equalsIgnoreCase("names") || line[0].equalsIgnoreCase("mode")) {
+		if (line[0].equalsIgnoreCase("topic") || line[0].equalsIgnoreCase("names") || line[0].equalsIgnoreCase("mode") || line[0].equalsIgnoreCase("listmode")) {
 			if (handleCommandProxy(user, line, outData)) {
 				for (String channelName : line[1].split(",")) {
 					ClientInfo client = myParser.getClientInfo(channelName);
@@ -90,24 +96,80 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 					if (channel != null || line[0].equalsIgnoreCase("mode")) {
 						if (line[0].equalsIgnoreCase("topic")) {
 							sendTopic(user, channel);
-						} else if (line[0].equalsIgnoreCase("topic")) {
+						} else if (line[0].equalsIgnoreCase("names")) {
 							sendNames(user, channel);
-						} else if (line[0].equalsIgnoreCase("mode")) {
+						} else if (line[0].equalsIgnoreCase("mode") || line[0].equalsIgnoreCase("listmode")) {
 							if (channel != null) {
-								user.sendIRCLine(324, myParser.getMyNickname()+" "+channel, channel.getModeStr(), false);
-								if (channel.getCreateTime() > 0) {
-									user.sendIRCLine(329, myParser.getMyNickname()+" "+channel, ""+channel.getCreateTime(), false);
+								boolean isListmode = line[0].equalsIgnoreCase("listmode");
+								if (line.length == 3) {
+									for (int i = 0; i < line[2].length(); ++i) {
+										char modechar = line[2].charAt(i);
+										ArrayList<ChannelListModeItem> modeList = channel.getListModeParam(modechar);
+										if (modeList != null) {
+											int itemNumber = 0;
+											String listName = "";
+											// This covers most list items, if its not listed here it
+											// gets forwarded to the server.
+											if (modechar == 'b') { itemNumber = 367; listName = "Channel Ban List"; }
+											else if (modechar == 'd') { itemNumber = 367; listName = "Channel Ban List"; }
+											else if (modechar == 'q') { itemNumber = 367; listName = "Channel Ban List"; }
+											else if (modechar == 'e') { itemNumber = 348; listName = "Channel Exception List"; }
+											else if (modechar == 'I') { itemNumber = 346; listName = "Channel Invite List"; }
+											else if (modechar == 'R') { itemNumber = 344; listName = "Channel Reop List"; }
+											else {
+												if (outData.length() == 0) { outData.append(line[0].toUpperCase()+" "+channelName+" "); }
+												outData.append(line[2].charAt(i));
+												continue;
+											}
+											String prefix = "";
+											String thisIRCD = myParser.getIRCD(true).toLowerCase();
+											if ((thisIRCD.equals("hyperion") || thisIRCD.equals("dancer")) && modechar == 'q') { prefix = "%"; }
+											if (isListmode) {
+												prefix = modechar+" "+prefix;
+												itemNumber = 997;
+												listName = "Channel List Modes";
+											}
+											for (ChannelListModeItem item : modeList) {
+												user.sendIRCLine(itemNumber, myParser.getMyNickname()+" "+channel, prefix+item.getItem()+" "+item.getOwner()+" "+item.getTime(), false);
+											}
+											if (!isListmode && (modechar == 'b' || modechar == 'q')) {
+												// If we are emulating a hyperian ircd, we need to send these together, unless we are using listmode.
+												if (thisIRCD.equals("hyperion") || thisIRCD.equals("dancer")) {
+													ArrayList<ChannelListModeItem> newmodeList;
+													if (modechar == 'b') { newmodeList = channel.getListModeParam('q'); }
+													else { newmodeList = channel.getListModeParam('b'); }
+													
+													// This actually applies to the listmode being q, but the requested mode was b, so we check that
+													if ((thisIRCD.equals("hyperion") || thisIRCD.equals("dancer")) && modechar == 'b') { prefix = "%"; }
+													for (ChannelListModeItem item : modeList) {
+														user.sendIRCLine(itemNumber, myParser.getMyNickname()+" "+channel, prefix+item.getItem()+" "+item.getOwner()+" "+item.getTime(), false);
+													}
+												}
+											}
+ 											user.sendIRCLine(itemNumber+1, myParser.getMyNickname()+" "+channel, "End of "+listName+" (Cached)");
+										} else {
+											if (outData.length() == 0) { outData.append(line[0].toUpperCase()+" "+channelName+" "); }
+											outData.append(line[2].charAt(i));
+										}
+									}
+								} else {
+									user.sendIRCLine(324, myParser.getMyNickname()+" "+channel, channel.getModeStr(), false);
+									if (channel.getCreateTime() > 0) {
+										user.sendIRCLine(329, myParser.getMyNickname()+" "+channel, ""+channel.getCreateTime(), false);
+									}
 								}
 							} else if (client == myParser.getMyself()) {
 								user.sendIRCLine(221, myParser.getMyNickname(), client.getUserModeStr(), false);
 							} else {
-								if (outData.length() == 0) { outData.append(line[0].toUpperCase()); }
-								outData.append(" "+channelName);
+								if (outData.length() == 0) { outData.append(line[0].toUpperCase()+" "); }
+								else { outData.append(","); }
+								outData.append(channelName);
 							}
 						}
 					} else {
-						if (outData.length() == 0) { outData.append(line[0].toUpperCase()); }
-						outData.append(" "+channelName);
+						if (outData.length() == 0) { outData.append(line[0].toUpperCase()+" "); }
+						else { outData.append(","); }
+						outData.append(channelName);
 					}
 				}
 			}
@@ -119,7 +181,6 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 		if (outData.length() == 0) {
 			myParser.sendLine(data);
 		} else {
-			System.out.println("Sending: "+outData.toString());
 			myParser.sendLine(outData.toString());
 		}
 	}
@@ -154,6 +215,11 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 			// if /topic #foo
 			} else if (line.length == 2) {
 				return true;
+			// ie /mode #channel b
+			} else if (line.length == 3) {
+				if (line[0].equalsIgnoreCase("mode") || line[0].equalsIgnoreCase("listmode")) {
+					return true;
+				}
 			}
 		}
 		return false;
@@ -225,6 +291,18 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	@Override
 	public void onMOTDEnd(IRCParser tParser, boolean noMOTD, String sData) {
 		hasMOTDEnd = true;
+		List<String> myList = new ArrayList<String>();
+		myList = myAccount.getProperties().getListProperty("irc.perform.connect", myList);
+		for (String line : myList) {
+			myParser.sendLine(filterPerformLine(line));
+		}
+		if (myAccount.getUserSockets().size()  == 0) {
+			myList = new ArrayList<String>();
+			myList = myAccount.getProperties().getListProperty("irc.perform.lastdetach", myList);
+			for (String line : myList) {
+				myParser.sendLine(filterPerformLine(line));
+			}
+		}
 	}
 	
 	/**
@@ -238,6 +316,17 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	@Override
 	public void onNumeric(IRCParser tParser, int numeric, String[] token) {
 		if (numeric > 1 && numeric < 6) {
+			if (numeric == 5 && !hacked005) {
+				// Add our own 005.
+				// * Show support for advanced LISTMODE (http://shane.dmdirc.com/listmodes.php)
+				// * Show that this is a BNC Connection
+				final String my005 = ":"+getServerName()+" 005 "+myParser.getMyNickname()+" LISTMODE=997 BNC=DFBNC :are supported by this server";
+				for (UserSocket socket : myAccount.getUserSockets()) {
+					socket.sendLine(my005);
+				}
+				connectionLines.add(my005);
+				hacked005 = true;
+			}
 			connectionLines.add(tParser.getLastLine());
 		}
 	}
@@ -283,13 +372,21 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 				// Rejoin channels
 				for (ChannelInfo channel : myParser.getChannels()) {
 					user.sendLine(":%s JOIN %s", me, channel);
-					user.sendIRCLine(324, myParser.getMyNickname()+" "+channel, channel.getModeStr(), false);
-					if (channel.getCreateTime() > 0) {
-						user.sendIRCLine(329, myParser.getMyNickname()+" "+channel, ""+channel.getCreateTime(), false);
-					}
+// Clients request these automatically.
+//					user.sendIRCLine(324, myParser.getMyNickname()+" "+channel, channel.getModeStr(), false);
+//					if (channel.getCreateTime() > 0) {
+//						user.sendIRCLine(329, myParser.getMyNickname()+" "+channel, ""+channel.getCreateTime(), false);
+//					}
 					
 					sendTopic(user, channel);
 					sendNames(user, channel);
+				}
+			}
+			if (myAccount.getUserSockets().size() == 1) {
+				List<String> myList = new ArrayList<String>();
+				myList = myAccount.getProperties().getListProperty("irc.perform.firstattach", myList);
+				for (String line : myList) {
+					myParser.sendLine(filterPerformLine(line));
 				}
 			}
 		}
@@ -340,6 +437,26 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	 */
 	@Override
 	public void userDisconnected(final UserSocket user) {
+		if (myParser.isReady()) {
+			if (myAccount.getUserSockets().size() == 0) {
+				List<String> myList = new ArrayList<String>();
+				myList = myAccount.getProperties().getListProperty("irc.perform.lastdetach", myList);
+				for (String line : myList) {
+					myParser.sendLine(filterPerformLine(line));
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Filter a perform line and return the line after substitutions have occured
+	 *
+	 * @return Processed line
+	 */
+	public String filterPerformLine(final String input) {
+		String result = input;
+		result = result.replaceAll("$me", myParser.getMyNickname());
+		return result;
 	}
 	
 	/**

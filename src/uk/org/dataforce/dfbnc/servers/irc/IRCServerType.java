@@ -45,6 +45,7 @@ public class IRCServerType extends ServerType {
 		myCommandManager.addCommand(new ServerListCommand(myCommandManager));
 		myCommandManager.addCommand(new IRCSetCommand(myCommandManager));
 		myCommandManager.addCommand(new ConnectCommand(myCommandManager));
+		myCommandManager.addCommand(new PerformCommand(myCommandManager));
 	}
 	
 	/**
