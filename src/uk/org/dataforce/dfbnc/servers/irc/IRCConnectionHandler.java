@@ -349,7 +349,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 				if (line.length == 3 || line.length == 4) {
 					outData.append(line[0]+" "+line[2]);
 					if (line.length == 4) {
-						outData.append(line[3]);
+						outData.append(" "+line[3]);
 					}
 					ChannelInfo channel = myParser.getChannelInfo(line[2]);
 					if (line[0].equalsIgnoreCase("topic")) {
