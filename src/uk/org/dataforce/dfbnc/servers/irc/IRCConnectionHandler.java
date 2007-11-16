@@ -46,11 +46,74 @@ import com.dmdirc.parser.callbacks.CallbackNotFoundException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
- * This file represents an IRCConnectionHandler
+ * This file represents an IRCConnectionHandler.
+ *
+ * It handles parser callbacks, and proxies data between users and the server.
+ * It also handles the performs.
  */
 public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatcher, IDataIn, IServerReady, IPost005, INumeric, IMOTDEnd {
+	/**
+	 * This stores a line that is being requeued.
+	 */
+	private class RequeueLine {
+		/** What user reqeusted this line? */
+		final UserSocket user;
+		/** The line */
+		final String line;
+		/** How many times has this line been requeued before? */
+		final int times;
+		
+		/**
+		 * Create a new RequeueLine
+		 *
+		 * @param user What user reqeusted this line?
+		 * @param line The line
+		 * @param times How many times has this line been requeued before?
+		 *
+		 */
+		public RequeueLine(final UserSocket user, final String line, final int times) {
+			this.user = user;
+			this.line = line;
+			this.times = times;
+		}
+		
+		/**
+		 * Resend this line through the processor.
+		 *
+		 * @param connectionHandler the IRCConnectionHandler that this line should be reprocessed in.
+		 */
+		public void reprocess(final IRCConnectionHandler connectionHandler) {
+			if (user.isOpen()) {
+				connectionHandler.processDataRecieved(user, line, IRCParser.tokeniseLine(line), times+1);
+			}
+		}
+	}
+	
+	/**
+	 * This takes items from the requeue list, and requeues them.
+	 */
+	private class RequeueTimerTask extends TimerTask {
+		/** The IRCConnectionHandler that owns this task */
+		final IRCConnectionHandler connectionHandler;
+		
+		/** Create a new RequeueTimerTask */
+		public RequeueTimerTask (final IRCConnectionHandler connectionHandler) {
+			this.connectionHandler = connectionHandler;
+		}
+		
+		/** Actually do stuff */
+		public void run() {
+			List<RequeueLine> list = connectionHandler.getRequeueList();
+			for (RequeueLine line : list) {
+				line.reprocess(connectionHandler);
+			}
+		}
+	}
+	
 	/** Account that this IRCConnectionHandler is for */
 	private final Account myAccount;
 	/** IRCParser we are using. */
@@ -65,6 +128,10 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	private boolean hacked005 = false;
 	/** This stores the 002-005 lines which are sent to users who connect after we recieve them  */
 	private List<String> connectionLines = new ArrayList<String>();
+	/** This stores lines that need to be processed at a later date. */
+	private volatile List<RequeueLine> requeueList = new ArrayList<RequeueLine>();
+	/** This timer handles reprocessing of items in the requeueList */
+	private Timer requeueTimer = new Timer("requeueTimer");
 	
 	/**
 	 * Shutdown this ConnectionHandler
@@ -80,13 +147,29 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	 * Called when data is recieved on the user socket.
 	 * This intercepts topic/mode/names requests and handles them itself where possible
 	 * unless the -f parameter is passed (ie /mode -f #channel)
-	 * This is horrible code.
+	 * This is horrible code really, but it works.
 	 *
 	 * @param user The socket that the data arrived on
 	 * @param data Data that was recieved
+	 * @param line IRC Tokenised version of the data
 	 */
 	@Override
 	public void dataRecieved(final UserSocket user, final String data, final String[] line) {
+		processDataRecieved(user, data, line, 0);
+	}
+	
+	/**
+	 * This is called to process data that is recieved on the user socket.
+	 * This intercepts topic/mode/names requests and handles them itself where possible
+	 * unless the -f parameter is passed (ie /mode -f #channel)
+	 * This is horrible code really, but it works.
+	 *
+	 * @param user The socket that the data arrived on
+	 * @param data Data that was recieved
+	 * @param line IRC Tokenised version of the data
+	 * @param times Number of times this line has been sent through the processor (used by requeue)
+	 */
+	public void processDataRecieved(final UserSocket user, final String data, final String[] line, final int times) {
 		StringBuilder outData = new StringBuilder();
 		if (line[0].equalsIgnoreCase("topic") || line[0].equalsIgnoreCase("names") || line[0].equalsIgnoreCase("mode") || line[0].equalsIgnoreCase("listmode")) {
 			if (handleCommandProxy(user, line, outData)) {
@@ -101,13 +184,24 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 						} else if (line[0].equalsIgnoreCase("mode") || line[0].equalsIgnoreCase("listmode")) {
 							if (channel != null) {
 								boolean isListmode = line[0].equalsIgnoreCase("listmode");
+								int itemNumber = 0;
+								String listName = "";
 								if (line.length == 3) {
+									// If we can't actually answer this, requeue it to process later.
+									// This makes the assumption that the callback will actually be fired,
+									// which it may not be. Thus we only requeue the line if it hasn't
+									// been through here more than 3 times. (This allows 20-30
+									// seconds for a reply to our onJoin request for list modes)
+									if (!channel.hasGotListModes() && times < 3) {
+										synchronized (requeueList) {
+											requeueList.add(new RequeueLine(user, String.format("%s %s %s", line[0], channelName, line[2]), times));
+										}
+										continue;
+									}
 									for (int i = 0; i < line[2].length(); ++i) {
 										char modechar = line[2].charAt(i);
 										ArrayList<ChannelListModeItem> modeList = channel.getListModeParam(modechar);
 										if (modeList != null) {
-											int itemNumber = 0;
-											String listName = "";
 											// This covers most list items, if its not listed here it
 											// gets forwarded to the server.
 											if (modechar == 'b') { itemNumber = 367; listName = "Channel Ban List"; }
@@ -146,11 +240,16 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 													}
 												}
 											}
- 											user.sendIRCLine(itemNumber+1, myParser.getMyNickname()+" "+channel, "End of "+listName+" (Cached)");
+											if (!isListmode) {
+	 											user.sendIRCLine(itemNumber+1, myParser.getMyNickname()+" "+channel, "End of "+listName+" (Cached)");
+	 										}
 										} else {
 											if (outData.length() == 0) { outData.append(line[0].toUpperCase()+" "+channelName+" "); }
 											outData.append(line[2].charAt(i));
 										}
+									}
+									if (isListmode) {
+										user.sendIRCLine(itemNumber+1, myParser.getMyNickname()+" "+channel, "End of "+listName+" (Cached)");
 									}
 								} else {
 									user.sendIRCLine(324, myParser.getMyNickname()+" "+channel, channel.getModeStr(), false);
@@ -183,6 +282,22 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 		} else {
 			myParser.sendLine(outData.toString());
 		}
+	}
+	
+	/**
+	 * Get the requeueList.
+	 * This is used by the requeueTimer, it returns a clone of the requeueList,
+	 * and then empties the requeueList.
+	 *
+	 * @return Clone of the requeueList
+	 */
+	protected List<RequeueLine> getRequeueList() {
+		List<RequeueLine> result;
+		synchronized (requeueList) {
+			result = new ArrayList<RequeueLine>(requeueList);
+			requeueList.clear();
+		}
+		return result;
 	}
 	
 	/**
@@ -468,6 +583,9 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	 */
 	public IRCConnectionHandler(final UserSocket user, final int serverNumber) throws UnableToConnectException {
 		this(user, user.getAccount(), serverNumber);
+		// Reprocess queued items every 10 seconds.
+		// Delay of 30 seconds to allow for initial connection.
+		requeueTimer.scheduleAtFixedRate(new RequeueTimerTask(this), 30000, 10000);
 	}
 	
 	/**

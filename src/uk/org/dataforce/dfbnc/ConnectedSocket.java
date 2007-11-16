@@ -50,7 +50,8 @@ public abstract class ConnectedSocket implements Runnable {
 	protected final SocketWrapper mySocketWrapper;
 	/** String to identify socket by */
 	private String socketID = "ConnectedSocket";
-	
+	/** Has this socket been closed? */
+	private boolean isClosed = false;
 	/** Are we an SSL Socket? */
 	protected final boolean isSSL;
 
@@ -99,7 +100,9 @@ public abstract class ConnectedSocket implements Runnable {
 	 * Used to close this socket.
 	 */
 	public final void close() {
+		if (isClosed) { return; }
 		Logger.info("Connected Socket closing ("+socketID+")");
+		isClosed = true;
 
 		if (!isSingleThread()) {
 			// Kill the thread
@@ -116,6 +119,15 @@ public abstract class ConnectedSocket implements Runnable {
 			mySocketWrapper.close();
 		} catch (IOException e) { }
 		this.socketClosed(false);
+	}
+	
+	/**
+	 * Is this socket still open?
+	 *
+	 * @return True if this socket has not been closed yet.
+	 */
+	public boolean isOpen() {
+		return !isClosed;
 	}
 	
 	/**
