@@ -209,8 +209,12 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 										}
 										continue;
 									}
+									// Make sure we don't send the same thing twice. A list is probably overkill for this, but meh
+									List<Character> alreadySent = new ArrayList<Character>();
 									for (int i = 0; i < line[2].length(); ++i) {
 										char modechar = line[2].charAt(i);
+										if (alreadySent.contains(modechar)) { continue; }
+										else { alreadySent.add(modechar); }
 										ArrayList<ChannelListModeItem> modeList = channel.getListModeParam(modechar);
 										if (modeList != null) {
 											// This covers most list items, if its not listed here it
@@ -244,12 +248,12 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 												// If we are emulating a hyperian ircd, we need to send these together, unless we are using listmode.
 												if (thisIRCD.equals("hyperion") || thisIRCD.equals("dancer")) {
 													ArrayList<ChannelListModeItem> newmodeList;
-													if (modechar == 'b') { newmodeList = channel.getListModeParam('q'); }
-													else { newmodeList = channel.getListModeParam('b'); }
+													if (modechar == 'b') { newmodeList = channel.getListModeParam('q'); alreadySent.add('q'); }
+													else { newmodeList = channel.getListModeParam('b'); alreadySent.add('b'); }
 													
 													// This actually applies to the listmode being q, but the requested mode was b, so we check that
-													if ((thisIRCD.equals("hyperion") || thisIRCD.equals("dancer")) && modechar == 'b') { prefix = "%"; }
-													for (ChannelListModeItem item : modeList) {
+													if (modechar == 'b') { prefix = "%"; } else { prefix = ""; }
+													for (ChannelListModeItem item : newmodeList) {
 														user.sendIRCLine(itemNumber, myParser.getMyNickname()+" "+channel, prefix+item.getItem()+" "+item.getOwner()+" "+item.getTime(), false);
 													}
 												}
@@ -338,12 +342,15 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	public boolean handleCommandProxy(final UserSocket user, final String[] line, final StringBuilder outData) {
 		// If line length is 2 or 3
 		// ie (/topic #foo or /topic -f #foo or /topic #foo bar)
-		if (line.length == 2 || line.length == 3) {
+		if (line.length == 2 || line.length == 3 || line.length == 4) {
 			// if (/topic -f)
 			if (line[1].equalsIgnoreCase("-f")) {
 				// if (/topic -f #foo)
-				if (line.length == 3) {
+				if (line.length == 3 || line.length == 4) {
 					outData.append(line[0]+" "+line[2]);
+					if (line.length == 4) {
+						outData.append(line[3]);
+					}
 					ChannelInfo channel = myParser.getChannelInfo(line[2]);
 					if (line[0].equalsIgnoreCase("topic")) {
 						allowLine(channel, "331");
@@ -354,8 +361,30 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 						allowLine(channel, "366");
 					} else if(line[0].equalsIgnoreCase("mode")) {
 						if (channel != null) {
-							allowLine(channel, "324");
-							allowLine(channel, "329");
+							if (line.length == 4) {
+								for (int i = 0; i < line[3].length(); ++i) {
+									char modechar = line[3].charAt(i);
+									ArrayList<ChannelListModeItem> modeList = channel.getListModeParam(modechar);
+									if (modeList != null) {
+										if (modechar == 'b' || modechar == 'd' || modechar == 'q') {
+											allowLine(channel, "367");
+											allowLine(channel, "368");
+										} else if (modechar == 'e') {
+											allowLine(channel, "348");
+											allowLine(channel, "349");
+										} else if (modechar == 'I') {
+											allowLine(channel, "346");
+											allowLine(channel, "347");
+										} else if (modechar == 'R') {
+											allowLine(channel, "344");
+											allowLine(channel, "345");
+										}
+									}
+								}
+							} else {
+								allowLine(channel, "324");
+								allowLine(channel, "329");
+							}
 						} else {
 							allowLine(channel, "221");
 						}
@@ -794,8 +823,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	public IRCConnectionHandler(final UserSocket user, final int serverNumber) throws UnableToConnectException {
 		this(user, user.getAccount(), serverNumber);
 		// Reprocess queued items every 5 seconds.
-		// Delay of 30 seconds to allow for initial connection.
-		requeueTimer.scheduleAtFixedRate(new RequeueTimerTask(this), 30000, 5000);
+		requeueTimer.scheduleAtFixedRate(new RequeueTimerTask(this), 0, 5000);
 		// Allow the initial usermode line through to the user
 		allowLine(null, "221");
 	}
