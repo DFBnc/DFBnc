@@ -30,11 +30,11 @@ import uk.org.dataforce.dfbnc.UnableToConnectException;
 
 
 /**
- * This file represents the 'Connect' command
+ * This file represents the '[re|dis|]connect'  commands
  */
 public class ConnectCommand extends Command {
 	/**
-	 * Handle an Connect command.
+	 * Handle a Connect command.
 	 *
 	 * @param user the UserSocket that performed this command
 	 * @param params Params for command (param 0 is the command name)
@@ -42,6 +42,25 @@ public class ConnectCommand extends Command {
 	@Override
 	public void handle(final UserSocket user, final String[] params) {
 		user.sendBotMessage("----------------");
+		if (!params[0].equalsIgnoreCase("connect")) {
+			user.sendBotMessage("Disconnecting...");
+			if (user.getAccount().getConnectionHandler() == null) {
+				user.sendBotMessage("Not connected!");
+			} else {
+				String reason = "BNC Disconnecting";
+				if (params.length > 1) {
+					StringBuilder sb = new StringBuilder();
+					for (int i = 1; i < params.length; ++i) { sb.append(params[i]+" "); }
+					reason = sb.toString().trim();
+				} else if (params[0].equalsIgnoreCase("reconnect")) {
+					reason = "Reconnecting";
+				}
+				user.getAccount().getConnectionHandler().shutdown(reason);
+				user.getAccount().setConnectionHandler(null);
+			}
+			if (!params[0].equalsIgnoreCase("reconnect")) { return; }
+		}
+		
 		if (user.getAccount().getConnectionHandler() == null) {
 			user.sendBotMessage("Connecting...");
 			try {
@@ -62,7 +81,7 @@ public class ConnectCommand extends Command {
 	 */
 	@Override
 	public String[] handles() {
-		return new String[]{"connect"};
+		return new String[]{"connect", "reconnect", "disconnect", "quit"};
 	}
 	
 	/**
@@ -70,7 +89,7 @@ public class ConnectCommand extends Command {
 	 *
 	 * @param manager CommandManager that is in charge of this Command
 	 */
-	public ConnectCommand (final CommandManager manager) { super(manager);	}
+	public ConnectCommand (final CommandManager manager) { super(manager); }
 	
 	/**
 	 * Get a description of what this command does
@@ -81,7 +100,13 @@ public class ConnectCommand extends Command {
 	 */
 	@Override
 	public String getDescription(final String command) {
-		return "This command lets you connect to an IRC Server if not already connected";
+		if (command.equalsIgnoreCase("reconnect")) {
+			return "This command lets you disconnect the current session, then reconnect";
+		} else if (command.equalsIgnoreCase("disconnect") || command.equalsIgnoreCase("quit")) {
+			return "This command lets you disconnect the current session";
+		} else {
+			return "This command lets you connect to an IRC Server if not already connected";
+		}
 	}
 	
 	/**
