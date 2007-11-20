@@ -120,7 +120,12 @@ public class IRCServerType extends ServerType {
 		// Set port
 		if (hostBits.length > 1) {
 			try {
-				final int portNum = Integer.parseInt(hostBits[1]);
+				final int portNum;
+				if (hostBits[1].charAt(0) == '+') {
+					portNum = Integer.parseInt(hostBits[1].substring(1));
+				} else {
+					portNum = Integer.parseInt(hostBits[1]);
+				}
 				if (portNum > 0 && portNum <= 65535) {
 					result[1] = hostBits[1];
 				}

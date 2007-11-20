@@ -73,18 +73,18 @@ public class ServerListCommand extends AbstractListEditCommand {
 	public String[] getUsageOutput(final String command) {
 		if (command.equalsIgnoreCase("add")) {
 			return new String[]{
-			                    "You must specify a server to add in the format: [@]<server>[:port] [password]",
-			                    "Prefixing the servername with @ signifies an SSL connection"
+			                    "You must specify a server to add in the format: <server>[:port] [password]",
+			                    "Prefixing the port with + signifies an SSL connection"
 			                   };
 		} else if (command.equalsIgnoreCase("edit")) {
 			return new String[]{
-			                    "You must specify a position number to edit, and a server to add in the format: <number> [@]<server>[:port] [password]",
-			                    "Prefixing the servername with @ signifies an SSL connection"
+			                    "You must specify a position number to edit, and a server to add in the format: <number> <server>[:[+]port] [password]",
+			                    "Prefixing the port with + signifies an SSL connection"
 			                   };
 		} else if (command.equalsIgnoreCase("ins")) {
 			return new String[]{
-			                    "You must specify a position to insert this item, and a server to add in the format: <number> [@]<server>[:port] [password]",
-			                    "Prefixing the servername with @ signifies an SSL connection"
+			                    "You must specify a position to insert this item, and a server to add in the format: <number> <server>[:[+]port] [password]",
+			                    "Prefixing the port with + signifies an SSL connection"
 			                   };
 		} else {
 			return new String[]{""};
@@ -98,7 +98,7 @@ public class ServerListCommand extends AbstractListEditCommand {
 	 */
 	@Override
 	public String getAddUsageSyntax() {
-		return "[@]<Server>[:Port] [password]";
+		return "<Server>[:[+]Port] [password]";
 	}
 	
 	/**

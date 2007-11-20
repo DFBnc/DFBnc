@@ -56,7 +56,15 @@ public class ListenSocket implements Runnable {
 		final String bits[] = listenhost.split(":");
 		if (bits.length > 1) {
 			try {
-				setupSocket(bits[0], Integer.parseInt(bits[1]));
+				boolean ssl = false;
+				final int portNum;
+				if (bits[1].charAt(0) == '+') {
+					portNum = Integer.parseInt(bits[1].substring(1));
+					ssl = true;
+				} else {
+					portNum = Integer.parseInt(bits[1]);
+				}
+				setupSocket(bits[0], portNum, ssl);
 			} catch (NumberFormatException nfe) {
 				throw new IOException(bits[1]+" is not a valid port");
 			}
@@ -74,7 +82,19 @@ public class ListenSocket implements Runnable {
 	 * @throws IOException if there is problems with the sockets.
 	 */
 	public ListenSocket(final String host, final int port) throws IOException {
-		setupSocket(host, port);
+		setupSocket(host, port, false);
+	}
+	
+	/**
+	 * Create a new ListenSocket.
+	 *
+	 * @param host Hostname to listen on
+	 * @param port Hostname to listen on
+	 * @param ssl True/false for ssl
+	 * @throws IOException if there is problems with the sockets.
+	 */
+	public ListenSocket(final String host, final int port, final boolean ssl) throws IOException {
+		setupSocket(host, port, ssl);
 	}
 	
 	/**
@@ -82,29 +102,26 @@ public class ListenSocket implements Runnable {
 	 *
 	 * @param host Hostname to listen on
 	 * @param port Hostname to listen on
+	 * @param ssl True/false for ssl
 	 * @throws IOException if there is problems with the sockets.
 	 */
-	private void setupSocket(final String host, final int port) throws IOException {
-		String listenhost;
-		if (host.charAt(0) == '@') {
-			listenhost = host.substring(1);
-			isSSL = true;
-			// Check that SSL settings are correct.
-			// If this throws any exceptions, we have a problem and shouldn't open
-			// the socket.
+	private void setupSocket(final String host, final int port, final boolean ssl) throws IOException {
+		// Check that SSL settings are correct.
+		// If this throws any exceptions, we have a problem and shouldn't open
+		// the socket.
+		isSSL = ssl;
+		if (ssl) {
 			try { SecureSocket.getSSLContext(); }
 			catch (Exception e) {
 				Logger.error("Failed to open SSL Socket '"+host+":"+port+"'");
 				Logger.error("Reason: "+e.getMessage());
 			}
-		} else {
-			listenhost = host;
-			isSSL = false;
+			throw new IOException("Unable to use SSL");
 		}
 		selector = Selector.open();
 		
 		ssChannel.configureBlocking(false);
-		ssChannel.socket().bind(new InetSocketAddress(listenhost, port));
+		ssChannel.socket().bind(new InetSocketAddress(host, port));
 		ssChannel.register(selector, SelectionKey.OP_ACCEPT);
 		myThread.setName("[ListenSocket "+host+":"+port+"]");
 		myThread.start();

@@ -143,7 +143,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	 */
 	@Override
 	public void shutdown(final String reason) {
-		myParser.disconnect(reason);
+		myParser.quit(reason);
 	}
 	
 	/**
@@ -856,11 +856,14 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 		ServerInfo server;
 		try {
 			boolean isSSL = false;
-			if (serverInfo[0].charAt(0) == '@') {
-				serverInfo[0] = serverInfo[0].substring(1);
+			final int portNum;
+			if (serverInfo[1].charAt(0) == '+') {
+				portNum = Integer.parseInt(serverInfo[1].substring(1));
 				isSSL = true;
+			} else {
+				portNum = Integer.parseInt(serverInfo[1]);
 			}
-			server = new ServerInfo(serverInfo[0], Integer.parseInt(serverInfo[1]), serverInfo[2]);
+			server = new ServerInfo(serverInfo[0], portNum, serverInfo[2]);
 			server.setSSL(isSSL);
 		} catch (NumberFormatException nfe) {
 			throw new UnableToConnectException("Invalid Port");
