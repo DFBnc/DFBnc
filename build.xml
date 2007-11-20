@@ -74,7 +74,7 @@
 		</copy>
 	</target>
 	
-	<target name="test" depends="clean, compile, compile-test">
+	<target name="test" depends="compile, compile-test">
 		<junit showoutput="true" fork="true" failureproperty="tests.failed" errorproperty="tests.failed">
 			<batchtest todir="${test.results.dir}">
 				<fileset dir="${test.src.dir}" includes="${test.includes}"/>
