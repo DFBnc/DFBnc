@@ -70,7 +70,7 @@ public abstract class SocketWrapper {
 		if (myOwner == null) { Logger.error("Null myOwner -> "+line); return; }
 		if (!mySocketChannel.isConnected()) {
 			Logger.error("Trying to write to Disconnected SocketChannel -> "+line);
-			myOwner.close(false);
+			myOwner.close();
 			return;
 		}
 		
@@ -239,7 +239,7 @@ public abstract class SocketWrapper {
 			try {
 				write(buf);
 			} catch (IOException e) {
-				myOwner.close(false);
+				myOwner.close();
 			}
 		}
 	}
