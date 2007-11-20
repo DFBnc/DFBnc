@@ -32,7 +32,7 @@ import java.util.HashMap;
 import java.io.IOException;
 
 
-import uk.org.dataforce.logger.Logger;
+import uk.org.dataforce.libs.logger.Logger;
 
 /**
  * This is responsible for handling the selector for all Sockets when in

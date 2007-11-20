@@ -23,11 +23,11 @@
  */
 package uk.org.dataforce.dfbnc;
 
-import uk.org.dataforce.logger.Logger;
-import uk.org.dataforce.logger.LogLevel;
-import uk.org.dataforce.cliparser.CLIParser;
-import uk.org.dataforce.cliparser.BooleanParam;
-import uk.org.dataforce.cliparser.StringParam;
+import uk.org.dataforce.libs.logger.Logger;
+import uk.org.dataforce.libs.logger.LogLevel;
+import uk.org.dataforce.libs.cliparser.CLIParser;
+import uk.org.dataforce.libs.cliparser.BooleanParam;
+import uk.org.dataforce.libs.cliparser.StringParam;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 // import uk.org.dataforce.dfbnc.commands.admin.*;
 import uk.org.dataforce.dfbnc.commands.user.*;

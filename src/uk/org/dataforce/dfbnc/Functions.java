@@ -23,7 +23,7 @@
  */
 package uk.org.dataforce.dfbnc;
 
-import uk.org.dataforce.util.MD5;
+import uk.org.dataforce.libs.util.MD5;
 
 /**
  * This file stores various useful functions

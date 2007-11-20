@@ -23,9 +23,9 @@
  */
 package uk.org.dataforce.dfbnc;
 
-import uk.org.dataforce.logger.Logger;
-import uk.org.dataforce.util.TypedProperties;
-import uk.org.dataforce.cliparser.CLIParser;
+import uk.org.dataforce.libs.logger.Logger;
+import uk.org.dataforce.libs.util.TypedProperties;
+import uk.org.dataforce.libs.cliparser.CLIParser;
 
 import java.io.File;
 import java.io.FileInputStream;

@@ -24,7 +24,7 @@
 package uk.org.dataforce.dfbnc.servers;
 
 import uk.org.dataforce.dfbnc.servers.irc.IRCServerType;
-import uk.org.dataforce.logger.Logger;
+import uk.org.dataforce.libs.logger.Logger;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Enumeration;

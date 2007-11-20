@@ -23,8 +23,8 @@
  */
 package uk.org.dataforce.dfbnc;
 
-import uk.org.dataforce.util.TypedProperties;
-import uk.org.dataforce.logger.Logger;
+import uk.org.dataforce.libs.util.TypedProperties;
+import uk.org.dataforce.libs.logger.Logger;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.servers.ServerType;
 import uk.org.dataforce.dfbnc.servers.ServerTypeNotFound;

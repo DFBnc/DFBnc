@@ -23,7 +23,7 @@
  */
 package uk.org.dataforce.dfbnc;
 
-import uk.org.dataforce.logger.Logger;
+import uk.org.dataforce.libs.logger.Logger;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.ServerSocketChannel;

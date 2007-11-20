@@ -30,7 +30,7 @@ import java.util.Iterator;
 import java.io.IOException;
 
 
-import uk.org.dataforce.logger.Logger;
+import uk.org.dataforce.libs.logger.Logger;
 
 /**
  * This is responsible for taking incomming data, and separating it

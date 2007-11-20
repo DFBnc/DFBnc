@@ -33,7 +33,7 @@ import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.channels.ByteChannel;
 
-import uk.org.dataforce.logger.Logger;
+import uk.org.dataforce.libs.logger.Logger;
 /**
  * This defines a basic SocketWrapper 
  */
