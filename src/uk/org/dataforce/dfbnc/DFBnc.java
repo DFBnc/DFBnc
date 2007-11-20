@@ -65,6 +65,9 @@ public class DFBnc {
 	/** The arraylist of listenSockets */
 	private static ArrayList<ListenSocket> listenSockets = new ArrayList<ListenSocket>();
 
+	/** The time that the BNC was started at */
+	private static Long startTime = System.currentTimeMillis();
+
 	/**
 	 * Run the application.
 	 * Parses CLI Arguments, loads config file, and sets up the listen sockets.
@@ -144,6 +147,15 @@ public class DFBnc {
 			Logger.warning("| in a non-test environment.                          |");
 			Logger.warning("`-----------------------------------------------------'");
 		}
+	}
+	
+	/**
+	 * Get the start time
+	 *
+	 * @return the start time.
+	 */
+	public static long getStartTime() {
+		return startTime;
 	}
 	
 	/**

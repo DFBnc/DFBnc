@@ -418,23 +418,41 @@ public class UserSocket extends ConnectedSocket {
 		// The bnc accepts commands as either:
 		// /msg -BNC This is a command
 		// or /DFBNC This is a command (not there is no : used to separate arguments anywhere)
-		if (line[0].equals("PRIVMSG") && line.length > 2) {
+		if (line[0].equalsIgnoreCase("PRIVMSG") && line.length > 2) {
 			if (line[1].equalsIgnoreCase(Functions.getBotName())) {
 				handleBotCommand(line[2].split(" "));
 				return;
 			}
-		} else if (line[0].equals("DFBNC") && line.length > 1) {
+		} else if (line[0].equalsIgnoreCase("DFBNC") && line.length > 1) {
 			String[] lineBits = normalLine.split(" ");
 			String[] bits = new String[lineBits.length-1];
 			System.arraycopy(lineBits, 1, bits, 0, lineBits.length-1);
 			handleBotCommand(bits);
 			return;
+		} else if (line[0].equalsIgnoreCase("PING")) {
+			if (line.length > 1) {
+				sendLine(":%s PONG $1%s %s", Functions.getServerName(myAccount), line[1]);
+			} else {
+				sendLine(":%s PONG $1%s %s", Functions.getServerName(myAccount), System.currentTimeMillis());
+			}
+		} else if (line[0].equalsIgnoreCase("WHOIS")) {
+			if (line[1].equalsIgnoreCase(Functions.getBotName())) {
+				sendIRCLine(Consts.RPL_WHOISUSER, nickname+" "+Functions.getBotName()+" bot "+Functions.getServerName(myAccount)+" *", "DFBnc Pseudo Client");
+				sendIRCLine(Consts.RPL_WHOISSERVER, nickname+" "+Functions.getBotName()+" DFBNC.Server", "DFBnc Pseudo Server");
+				sendIRCLine(Consts.RPL_WHOISIDLE, nickname+" "+Functions.getBotName()+" 0 "+(DFBnc.getStartTime()/1000), "seconds idle, signon time");
+				sendIRCLine(Consts.RPL_ENDOFWHOIS, nickname+" "+Functions.getBotName(), "End of /WHOIS list");
+				return;
+			}
 		}
+		
+		
 		
 		// We don't handle this ourselves, send it to the ConnectionHandler
 		ConnectionHandler myConnectionHandler = myAccount.getConnectionHandler();
 		if (myConnectionHandler != null) {
 			myConnectionHandler.dataRecieved(this, normalLine, line);
+		} else {
+			sendIRCLine(Consts.ERR_UNKNOWNCOMMAND, line[0], "Unknown command");
 		}
 	}
 	

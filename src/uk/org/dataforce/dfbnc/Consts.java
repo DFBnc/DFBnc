@@ -35,9 +35,17 @@ public final class Consts {
 	public final static int RPL_ISUPPORT = 5;
 
 	// Errors
+	public final static int ERR_UNKNOWNCOMMAND = 421;
 	public final static int ERR_NOTREGISTERED = 451;
 	public final static int ERR_NEEDMOREPARAMS = 461;
 	public final static int ERR_PASSWDMISMATCH = 464;
+	
+	
+	// Whois
+	public final static int RPL_WHOISUSER = 311;
+	public final static int RPL_WHOISSERVER = 312;
+	public final static int RPL_WHOISIDLE = 317;
+	public final static int RPL_ENDOFWHOIS = 318;
 
 	/**
 	 * Prevent Creation of Consts object
