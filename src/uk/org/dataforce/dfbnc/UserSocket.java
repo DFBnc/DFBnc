@@ -182,6 +182,20 @@ public class UserSocket extends ConnectedSocket {
 	public String getRealname() { return realname; }
 	
 	/**
+	 * Get the nickname for this socket
+	 *
+	 * @return nickname for this socket
+	 */
+	public String getNickname() { return nickname; }
+	
+	/**
+	 * Set the nickname for this socket
+	 *
+	 * @return nickname for this socket
+	 */
+	public void setNickname(String newValue) { nickname = newValue; }
+	
+	/**
 	 * Send a message to the user from the bnc bot in printf format.
 	 *
 	 * @param data The format string
@@ -337,7 +351,7 @@ public class UserSocket extends ConnectedSocket {
 		if (realname != null && password != null && nickname != null) {
 			if (Account.count() == 0 || (Config.getBoolOption("debugging", "autocreate", false) && !Account.exists(username))) {
 				Account acc = Account.createAccount(username, password);
-				if (Account.count() == 0) {
+				if (Account.count() == 1) {
 					acc.setAdmin(true);
 					sendBotMessage("You are the first user of this bnc, and have been made admin");
 				} else {

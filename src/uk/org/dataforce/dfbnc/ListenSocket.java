@@ -110,22 +110,25 @@ public class ListenSocket implements Runnable {
 		// If this throws any exceptions, we have a problem and shouldn't open
 		// the socket.
 		isSSL = ssl;
+		String portString = Integer.toString(port);
+		if (ssl) { portString = "+"+portString; }
+		
 		if (ssl) {
 			try { SecureSocket.getSSLContext(); }
 			catch (Exception e) {
-				Logger.error("Failed to open SSL Socket '"+host+":"+port+"'");
+				Logger.error("Failed to open SSL Socket '"+host+":"+portString+"'");
 				Logger.error("Reason: "+e.getMessage());
+				throw new IOException("Unable to use SSL");
 			}
-			throw new IOException("Unable to use SSL");
 		}
 		selector = Selector.open();
 		
 		ssChannel.configureBlocking(false);
 		ssChannel.socket().bind(new InetSocketAddress(host, port));
 		ssChannel.register(selector, SelectionKey.OP_ACCEPT);
-		myThread.setName("[ListenSocket "+host+":"+port+"]");
+		myThread.setName("[ListenSocket "+host+":"+portString+"]");
 		myThread.start();
-		Logger.info("Listen Socket Opened: "+host+":"+port);
+		Logger.info("Listen Socket Opened: "+host+":"+portString);
 	}
 		
 	/**

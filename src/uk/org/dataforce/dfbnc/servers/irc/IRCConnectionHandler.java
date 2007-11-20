@@ -38,6 +38,7 @@ import com.dmdirc.parser.MyInfo;
 import com.dmdirc.parser.ServerInfo;
 import com.dmdirc.parser.callbacks.interfaces.IDataIn;
 import com.dmdirc.parser.callbacks.interfaces.IServerReady;
+import com.dmdirc.parser.callbacks.interfaces.INickChanged;
 import com.dmdirc.parser.callbacks.interfaces.INumeric;
 import com.dmdirc.parser.callbacks.interfaces.IPost005;
 import com.dmdirc.parser.callbacks.interfaces.IMOTDEnd;
@@ -56,7 +57,7 @@ import java.util.TimerTask;
  * It handles parser callbacks, and proxies data between users and the server.
  * It also handles the performs.
  */
-public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatcher, IDataIn, IServerReady, IPost005, INumeric, IMOTDEnd, IChannelSelfJoin {
+public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatcher, IDataIn, INickChanged, IServerReady, IPost005, INumeric, IMOTDEnd, IChannelSelfJoin {
 	/**
 	 * This stores a line that is being requeued.
 	 */
@@ -429,6 +430,23 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	}
 	
 	/**
+	 * Called when we or another user change nickname.
+	 * This is called after the nickname change has been done internally
+	 * 
+	 * @param tParser Reference to the parser object that made the callback.
+	 * @param cClient Client changing nickname
+	 * @param sOldNick Nickname before change
+	 * @see com.dmdirc.parser.ProcessNick#callNickChanged
+	 */
+	public void onNickChanged(IRCParser tParser, ClientInfo cClient, String sOldNick) {
+		if (cClient == tParser.getMyself()) {
+			for (UserSocket socket : myAccount.getUserSockets()) {
+				socket.setNickname(tParser.getMyNickname());
+			}
+		}
+	}
+	
+	/**
 	 * Set a line type that we want to forward to the user.
 	 * By default certain messages from the server are not forwarded to the user,
 	 * this allows the command proxy to specify a token we want to allow for a 1
@@ -623,6 +641,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	public void onServerReady(IRCParser tParser) {
 		for (UserSocket socket : myAccount.getUserSockets()) {
 			socket.setPost001(true);
+			socket.setNickname(tParser.getMyNickname());
 		}
 	}
 	
@@ -877,6 +896,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 			myParser.getCallbackManager().addCallback("OnNumeric", this);
 			myParser.getCallbackManager().addCallback("OnMOTDEnd", this);
 			myParser.getCallbackManager().addCallback("OnChannelSelfJoin", this);
+			myParser.getCallbackManager().addCallback("OnNickChanged", this);
 		} catch (CallbackNotFoundException cnfe) {
 			throw new UnableToConnectException("Unable to register callbacks");
 		}
