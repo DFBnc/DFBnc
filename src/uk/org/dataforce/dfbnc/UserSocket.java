@@ -431,9 +431,9 @@ public class UserSocket extends ConnectedSocket {
 			return;
 		} else if (line[0].equalsIgnoreCase("PING")) {
 			if (line.length > 1) {
-				sendLine(":%s PONG $1%s %s", Functions.getServerName(myAccount), line[1]);
+				sendLine(":%s PONG %1$s %s", Functions.getServerName(myAccount), line[1]);
 			} else {
-				sendLine(":%s PONG $1%s %s", Functions.getServerName(myAccount), System.currentTimeMillis());
+				sendLine(":%s PONG %1$s %s", Functions.getServerName(myAccount), System.currentTimeMillis());
 			}
 		} else if (line[0].equalsIgnoreCase("WHOIS")) {
 			if (line[1].equalsIgnoreCase(Functions.getBotName())) {
