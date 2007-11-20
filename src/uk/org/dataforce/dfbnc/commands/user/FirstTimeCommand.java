@@ -62,12 +62,12 @@ public class FirstTimeCommand extends Command {
 			user.sendBotMessage("Some commands are only available when the corresponding servertype is in use, and as such will not be displayed if not available.");
 			user.sendBotMessage("----");
 			user.sendBotMessage("The first thing you will want to do is setup a server connection type, this can be done using:");
-			user.sendBotMessage("    /dfbnc [servertype|st] settype <type>");
+			user.sendBotMessage("    /dfbnc <servertype|st> settype <type>");
 			user.sendBotMessage("The available types can be found out by omiting the <type> parameter.");
 			user.sendBotMessage("Each account can only use one servertype at a time, however changing the servertype will not remove the settings associated with the old type");
 			user.sendBotMessage("----");
 			user.sendBotMessage("Once you have set the servertype the command:");
-			user.sendBotMessage("    /dfbnc [servertype|st] help");
+			user.sendBotMessage("    /dfbnc <servertype|st> help");
 			user.sendBotMessage("Will give you more specific information about the servertype currently in use.");
 			user.sendBotMessage("----");
 			user.sendBotMessage("Once you have your servertype setup correctly, you can use");
