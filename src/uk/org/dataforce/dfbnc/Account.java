@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.Random;
 
 /**
  * Functions related to Accounts
@@ -118,14 +119,45 @@ public final class Account implements UserSocketWatcher {
 	 *
 	 * @param username Username to check
 	 * @param password Password to check
-	 * @return true/false depending on successful match
+	 * @return The account created, or null if the account could not be created
 	 */
 	protected static Account createAccount(final String username, final String password) {
 		// Update total count.
-		Account acc = new Account(username);
-		acc.setPassword(password);
-		Config.setIntOption("users", "count", accounts.size());
-		return acc;
+		synchronized (accounts) {
+			if (!exists(username)) {
+				Account acc = new Account(username);
+				acc.setPassword(password);
+				Config.setIntOption("users", "count", accounts.size());
+				return acc;
+			} else {
+				return null;
+			}
+		}
+	}
+	
+	/**
+	 * Create a random password 8 characters in length.
+	 *
+	 * @return Random Password
+	 */
+	public static String makePassword() {
+		return makePassword(8);
+	}
+	
+	/**
+	 * Create a random password X characters in length.
+	 *
+	 * @param length Length to make password
+	 * @return Random Password
+	 */
+	public static String makePassword(final int length) {
+		final static String validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!£$%^&*()_-+={}[]@~'#<>?/.,\|\"";
+		final StringBuffer password = new StringBuffer();
+		final Random r = new Random();
+		for (int i = 0; i < length; i++) {
+			password.append(validChars.charAt(r.nextInt(validChars.length())));
+		}
+		return password.toString();
 	}
 	
 	/**

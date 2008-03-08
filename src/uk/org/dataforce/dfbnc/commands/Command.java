@@ -57,6 +57,18 @@ public abstract class Command {
 	public abstract String[] handles();
 	
 	/**
+	 * Get detailed help for this command.
+	 *
+	 * @param params Parameters the user wants help with.
+	 *               params[0] will be the command name.
+	 * @return String[] with the lines to send to the user as the help, or null
+	 *         if no detailed help is available.
+	 */
+	public String[] getHelp(final String[] params) {
+		return null;
+	}
+	
+	/**
 	 * Get the name for this Command.
 	 * @return the name of this Command
 	 */

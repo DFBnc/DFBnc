@@ -47,27 +47,40 @@ public class ShowCommandsCommand extends Command {
 		// displayed at the end after the normal-user commands.
 		ArrayList<String> adminCommands = new ArrayList<String>();
 	
-		user.sendBotMessage("----------------");
-		user.sendBotMessage("The following commands are available to you:");
-		CommandManager cmdmgr = user.getAccount().getCommandManager();
-		SortedMap<String, Command> commands = new TreeMap<String, Command>(cmdmgr.getAllCommands());
-		for (String commandName : commands.keySet()) {
-			final Command command = commands.get(commandName);
-			if (command.isAdminOnly()) {
-				adminCommands.add(String.format("%-20s - %s", commandName, command.getDescription(commandName)));
-			} else {
-				user.sendBotMessage(String.format("%-20s - %s", commandName, command.getDescription(commandName)));
+		final String commandsType = (params.length > 0) ? param[0] : "";
+	
+		if (commandsType.equals("") || commandsType.equalsIgnoreCase("all") || commandsType.equalsIgnoreCase("user")) {
+			user.sendBotMessage("----------------");
+			user.sendBotMessage("The following commands are available to you:");
+			CommandManager cmdmgr = user.getAccount().getCommandManager();
+			SortedMap<String, Command> commands = new TreeMap<String, Command>(cmdmgr.getAllCommands());
+			for (String commandName : commands.keySet()) {
+				final Command command = commands.get(commandName);
+				if (command.isAdminOnly()) {
+					adminCommands.add(String.format("%-20s - %s", commandName, command.getDescription(commandName)));
+				} else {
+					user.sendBotMessage(String.format("%-20s - %s", commandName, command.getDescription(commandName)));
+				}
 			}
 		}
 		
-		if (user.getAccount().isAdmin()) {
-			if (adminCommands.size() > 0) {
-				user.sendBotMessage("");
-				user.sendBotMessage("----------------");
-				user.sendBotMessage("The following admin-only commands are also available to you:");
-				for (String output : adminCommands) {
-					user.sendBotMessage(output);
+		if (commandsType.equals("") || commandsType.equalsIgnoreCase("all") || commandsType.equalsIgnoreCase("admin")) {
+			if (user.getAccount().isAdmin()) {
+				if (adminCommands.size() > 0) {
+					user.sendBotMessage("");
+					user.sendBotMessage("----------------");
+					if (commandsType.equalsIgnoreCase("admin")) {
+						user.sendBotMessage("The following admin-only commands are available to you:");
+					} else {
+						user.sendBotMessage("The following admin-only commands are also available to you:");
+					}
+					for (String output : adminCommands) {
+						user.sendBotMessage(output);
+					}
 				}
+			} else if (commandsType.equalsIgnoreCase("admin")) {
+				user.sendBotMessage("----------------");
+				user.sendBotMessage("Admin commands are not available to you.");
 			}
 		}
 	}

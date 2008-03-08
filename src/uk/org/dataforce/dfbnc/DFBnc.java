@@ -29,7 +29,7 @@ import uk.org.dataforce.libs.cliparser.CLIParser;
 import uk.org.dataforce.libs.cliparser.BooleanParam;
 import uk.org.dataforce.libs.cliparser.StringParam;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
-// import uk.org.dataforce.dfbnc.commands.admin.*;
+import uk.org.dataforce.dfbnc.commands.admin.*;
 import uk.org.dataforce.dfbnc.commands.user.*;
 import uk.org.dataforce.dfbnc.servers.ServerTypeManager;
 
@@ -106,6 +106,7 @@ public class DFBnc {
 		userCommandManager.addCommand(new ShowCommandsCommand(userCommandManager));
 		
 		Logger.info("Setting up Admin Command Manager");
+		adminCommandManager.addCommand(new AddUserCommand(adminCommandManager));
 		
 		Logger.info("Setting up ServerType Manager");
 		myServerTypeManager.init();
