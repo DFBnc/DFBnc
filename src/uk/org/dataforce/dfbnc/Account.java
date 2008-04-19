@@ -76,7 +76,7 @@ public final class Account implements UserSocketWatcher {
 	 *
 	 * @return total number of known accounts
 	 */
-	protected static int count() {
+	public static int count() {
 		return accounts.size();
 	}
 	
@@ -87,7 +87,7 @@ public final class Account implements UserSocketWatcher {
 	 * @param password Password to check
 	 * @return true/false depending on successful match
 	 */
-	protected static boolean checkPassword(final String username, final String password) {
+	public static boolean checkPassword(final String username, final String password) {
 		if (Account.exists(username)) {
 			return Account.get(username).checkPassword(password);
 		} else {
@@ -111,7 +111,7 @@ public final class Account implements UserSocketWatcher {
 	 * @param username Username to check
 	 * @return Account object for given username, or null if it doesn't exist
 	 */
-	protected static Account get(final String username) {
+	public static Account get(final String username) {
 		return accounts.get(username.replace('.', '_').toLowerCase());
 	}
 	
@@ -164,7 +164,7 @@ public final class Account implements UserSocketWatcher {
 	/**
 	 * Load all the accounts from the config
 	 */
-	protected static void loadAccounts() {
+	public static void loadAccounts() {
 		final Enumeration values = Config.getProperties().propertyNames();
 		while (values.hasMoreElements()) {
 			final String name = ((String)values.nextElement()).toLowerCase();
@@ -182,7 +182,7 @@ public final class Account implements UserSocketWatcher {
 	/**
 	 * Save all the accounts to the config
 	 */
-	protected static void saveAccounts() {
+	public static void saveAccounts() {
 		for (Account acc : accounts.values()) {
 			Logger.debug("Saving account: "+acc.getName());
 			acc.save();
@@ -192,7 +192,7 @@ public final class Account implements UserSocketWatcher {
 	/**
 	 * Shutdown all accounts.
 	 */
-	protected static void shutdown() {
+	public static void shutdown() {
 		for (Account acc : accounts.values()) {
 			ServerType st = acc.getServerType();
 			if (st != null) {
@@ -345,7 +345,7 @@ public final class Account implements UserSocketWatcher {
 	/**
 	 * Save the account settings for this account to the config file
 	 */
-	protected void save() {
+	public void save() {
 		final String configName = "user_"+myName.replace('.', '_');
 		
 		// Store settings in main config
@@ -406,14 +406,14 @@ public final class Account implements UserSocketWatcher {
 	 *
 	 * @param deleteCode The New DeleteCode for this account
 	 */
-	public String setDeleteCode(final String deleteCode) {
+	public void setDeleteCode(final String deleteCode) {
 		this.deleteCode = deleteCode;
 	}
 	
 	/**
 	 * Delete this account
 	 */
-	protected void delete() {
+	public void delete() {
 		accounts.remove(myName);
 		Config.setIntOption("users", "count", accounts.size());
 		for (UserSocket socket : myUserSockets) {

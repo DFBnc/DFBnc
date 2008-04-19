@@ -55,7 +55,7 @@ public class SuspendCommand extends Command {
 					user.sendBotMessage("The Account '%s' is already suspended (%s).", account, acc.getSuspendReason());
 				} else {
 					final StringBuilder reason = new StringBuilder();
-					for (i = 2; i < params.length; i++) { reason.append(params[i]); }
+					for (int i = 2; i < params.length; i++) { reason.append(params[i]); }
 					user.sendBotMessage("Suspending Account '%s'..", account);
 					acc.setSuspended(true, reason.toString());
 					user.sendBotMessage("Account suspended with reason: %s", acc.getSuspendReason());

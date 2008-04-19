@@ -147,7 +147,7 @@ public class IRCSetCommand extends Command {
 						return;
 					}
 				} else if (paramType == ParamType.BOOL) {
-					if (newValue.equalsIgnoreCase("true") || newValue.equalsIgnoreCase("yes") || newValue.equalsIgnoreCase("on") || newStatus.equalsIgnoreCase("1")) {
+					if (newValue.equalsIgnoreCase("true") || newValue.equalsIgnoreCase("yes") || newValue.equalsIgnoreCase("on") || newValue.equalsIgnoreCase("1")) {
 						user.getAccount().getProperties().setBoolProperty("irc."+params[1], true);
 						newValue = "True";
 					} else {
