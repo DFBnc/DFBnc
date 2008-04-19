@@ -889,6 +889,11 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 		}
 		
 		myParser = new IRCParser(me, server);
+        
+        if (myAccount.getProperties().hasProperty("bindip")) {
+            myParser.setBindIP(myAccount.getProperties().getProperty("bindip"));
+        }
+        
 		try {
 			myParser.getCallbackManager().addCallback("OnDataIn", this);
 			myParser.getCallbackManager().addCallback("OnServerReady", this);
