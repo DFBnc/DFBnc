@@ -21,7 +21,7 @@
  *
  * SVN: $Id$
  */
-package uk.org.dataforce.dfbnc.servers.irc;
+package uk.org.dataforce.dfbnc.commands;
 
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;

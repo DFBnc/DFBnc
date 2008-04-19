@@ -99,7 +99,7 @@ public final class Account implements UserSocketWatcher {
 	 * @param username Username to check
 	 * @return true/false depending on if the account exists or not
 	 */
-	protected static boolean exists(final String username) {
+	public static boolean exists(final String username) {
 		return accounts.containsKey(username.replace('.', '_').toLowerCase());
 	}
 	
@@ -121,7 +121,7 @@ public final class Account implements UserSocketWatcher {
 	 * @param password Password to check
 	 * @return The account created, or null if the account could not be created
 	 */
-	protected static Account createAccount(final String username, final String password) {
+	public static Account createAccount(final String username, final String password) {
 		// Update total count.
 		synchronized (accounts) {
 			if (!exists(username)) {
@@ -151,7 +151,7 @@ public final class Account implements UserSocketWatcher {
 	 * @return Random Password
 	 */
 	public static String makePassword(final int length) {
-		final static String validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!£$%^&*()_-+={}[]@~'#<>?/.,\|\"";
+		final String validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!£$%^&*()_-+={}[]@~'#<>?/.,\\|\"";
 		final StringBuffer password = new StringBuffer();
 		final Random r = new Random();
 		for (int i = 0; i < length; i++) {

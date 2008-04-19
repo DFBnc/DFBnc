@@ -216,7 +216,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 										char modechar = line[2].charAt(i);
 										if (alreadySent.contains(modechar)) { continue; }
 										else { alreadySent.add(modechar); }
-										ArrayList<ChannelListModeItem> modeList = channel.getListModeParam(modechar);
+										final List<ChannelListModeItem> modeList = channel.getListModeParam(modechar);
 										if (modeList != null) {
 											// This covers most list items, if its not listed here it
 											// gets forwarded to the server.
@@ -248,7 +248,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 											if (!isListmode && (modechar == 'b' || modechar == 'q')) {
 												// If we are emulating a hyperian ircd, we need to send these together, unless we are using listmode.
 												if (thisIRCD.equals("hyperion") || thisIRCD.equals("dancer")) {
-													ArrayList<ChannelListModeItem> newmodeList;
+													List<ChannelListModeItem> newmodeList;
 													if (modechar == 'b') { newmodeList = channel.getListModeParam('q'); alreadySent.add('q'); }
 													else { newmodeList = channel.getListModeParam('b'); alreadySent.add('b'); }
 													
@@ -365,7 +365,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 							if (line.length == 4) {
 								for (int i = 0; i < line[3].length(); ++i) {
 									char modechar = line[3].charAt(i);
-									ArrayList<ChannelListModeItem> modeList = channel.getListModeParam(modechar);
+									List<ChannelListModeItem> modeList = channel.getListModeParam(modechar);
 									if (modeList != null) {
 										if (modechar == 'b' || modechar == 'd' || modechar == 'q') {
 											allowLine(channel, "367");
