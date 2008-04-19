@@ -94,7 +94,7 @@ public class HelpCommand extends Command {
 	 *
 	 * @param manager CommandManager that is in charge of this Command
 	 */
-	public ShowCommandsCommand (final CommandManager manager) { super(manager); }
+	public HelpCommand (final CommandManager manager) { super(manager); }
 	
 	/**
 	 * Get SVN Version information.

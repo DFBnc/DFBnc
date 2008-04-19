@@ -87,7 +87,7 @@ public class SetAdminCommand extends Command {
 	 *
 	 * @param manager CommandManager that is in charge of this Command
 	 */
-	public AddUserCommand (final CommandManager manager) { super(manager); }
+	public SetAdminCommand (final CommandManager manager) { super(manager); }
 	
 	/**
 	 * Get a description of what this command does
