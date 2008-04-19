@@ -147,7 +147,7 @@ public class IRCSetCommand extends Command {
 						return;
 					}
 				} else if (paramType == ParamType.BOOL) {
-					if (newValue.equalsIgnoreCase("true") || newValue.equalsIgnoreCase("yes") || newValue.equalsIgnoreCase("on")) {
+					if (newValue.equalsIgnoreCase("true") || newValue.equalsIgnoreCase("yes") || newValue.equalsIgnoreCase("on") || newStatus.equalsIgnoreCase("1")) {
 						user.getAccount().getProperties().setBoolProperty("irc."+params[1], true);
 						newValue = "True";
 					} else {
@@ -199,6 +199,8 @@ public class IRCSetCommand extends Command {
 		validParams.put("altnickname", new ParamInfo("Alternative nickname to use if nickname is taken", ParamType.WORD));
 		validParams.put("realname", new ParamInfo("Realname to use on IRC", ParamType.STRING));
 		validParams.put("username", new ParamInfo("Username to use on IRC", ParamType.WORD));
+		
+		validParams.put("bindip", new ParamInfo("IP Address to bind to for new connections", ParamType.WORD));
 	}
 	
 	/**

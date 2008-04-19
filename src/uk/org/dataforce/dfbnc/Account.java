@@ -57,6 +57,8 @@ public final class Account implements UserSocketWatcher {
 	private boolean isAdmin;
 	/** Propeties file with all the relevent settings for this account */
 	private TypedProperties accountOptions = new TypedProperties();
+	/** Deletecode for this account. This is not saved between sessions */
+	private String deleteCode = "";
 	/** CommandManager for this account */
 	private CommandManager myCommandManager = new CommandManager();
 	/** ConnectionHandler for this account */
@@ -122,7 +124,6 @@ public final class Account implements UserSocketWatcher {
 	 * @return The account created, or null if the account could not be created
 	 */
 	public static Account createAccount(final String username, final String password) {
-		// Update total count.
 		synchronized (accounts) {
 			if (!exists(username)) {
 				Account acc = new Account(username);
@@ -392,6 +393,78 @@ public final class Account implements UserSocketWatcher {
 	}
 	
 	/**
+	 * Get the DeleteCode for this account
+	 *
+	 * @return The DeleteCode for this account
+	 */
+	public String getDeleteCode() {
+		return deleteCode;
+	}
+	
+	/**
+	 * Set the Delete Code for this account
+	 *
+	 * @param deleteCode The New DeleteCode for this account
+	 */
+	public String setDeleteCode(final String deleteCode) {
+		this.deleteCode = deleteCode;
+	}
+	
+	/**
+	 * Delete this account
+	 */
+	protected void delete() {
+		accounts.remove(myName);
+		Config.setIntOption("users", "count", accounts.size());
+		for (UserSocket socket : myUserSockets) {
+			socket.sendLine(":%s NOTICE :Connection terminating (Account Deleted)", Functions.getServerName(socket.getAccount()));
+			socket.close();
+		}
+		myConnectionHandler.shutdown("Account Deleted");
+	}
+	
+	/**
+	 * Change the suspended setting for this account
+	 *
+	 * @param value true/false for new value of isSuspended
+	 */
+	public void setSuspended(final boolean value, final String reason) {
+		accountOptions.setBoolProperty("suspended", value);
+		if (value) {
+			final String suspendReason = (reason != null && !reason.isEmpty()) ? reason : "No reason specified";
+			accountOptions.setProperty("suspendReason", suspendReason);
+			
+			for (UserSocket socket : myUserSockets) {
+				socket.sendLine(":%s NOTICE :Connection terminating - Account Suspended (%s)", Functions.getServerName(socket.getAccount()), suspendReason);
+				socket.close();
+			}
+			myConnectionHandler.shutdown("Account Suspended");
+		}
+	}
+
+	/**
+	 * Is the account suspended?
+	 *
+	 * @return Is the account suspended?
+	 */
+	public boolean isSuspended() {
+		return accountOptions.getBoolProperty("suspended", false);
+	}
+	
+	/**
+	 * Why is the account suspended?
+	 *
+	 * @return Reason why the account is suspended
+	 */
+	public String getSuspendReason() {
+		if (isSuspended()) {
+			return accountOptions.getProperty("suspendReason");
+		} else {
+			return "";
+		}
+	}
+	
+	/**
 	 * Change the admin setting for this account
 	 *
 	 * @param value true/false for new value of isAdmin
@@ -409,9 +482,9 @@ public final class Account implements UserSocketWatcher {
 	}
 
 	/**
-	 * Return the value of isAdmin.
+	 * Is the account an admin
 	 *
-	 * @return the value of isAdmin
+	 * @return Is the account an admin?
 	 */
 	public boolean isAdmin() {
 		return accountOptions.getBoolProperty("admin", false);

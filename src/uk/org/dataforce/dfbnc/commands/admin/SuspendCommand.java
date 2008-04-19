@@ -30,11 +30,11 @@ import uk.org.dataforce.dfbnc.DFBnc;
 import uk.org.dataforce.dfbnc.Account;
 
 /**
- * This file represents the 'AddUser' command
+ * This file represents the 'Suspend' command
  */
-public class AddUserCommand extends Command {
+public class SuspendCommand extends Command {
 	/**
-	 * Handle an AddUser command.
+	 * Handle an Suspend command.
 	 *
 	 * @param user the UserSocket that performed this command
 	 * @param params Params for command (param 0 is the command name)
@@ -42,18 +42,23 @@ public class AddUserCommand extends Command {
 	@Override
 	public void handle(final UserSocket user, final String[] params) {
 		if (params.length == 1) {
-			user.sendBotMessage("You need to specify a username to add.");
+			user.sendBotMessage("You need to specify a username to suspend.");
 		} else {
 			final String account = params[1];
-			if (Account.exists(account)) {
-				user.sendBotMessage("An account with the name '%s' already exists.", account);
+			if (!Account.exists(account)) {
+				user.sendBotMessage("No account with the name '%s' exists.", account);
 			} else {
-				user.sendBotMessage("Creating account '%s'...", account);
-				final String password = Account.makePassword();
-				if (Account.createAccount(account, password) != null) {
-					user.sendBotMessage("Account created. Password has been set to '%s'", password);
+				final Account acc = Account.get(account);
+				if (acc == user.getAccount()) {
+					user.sendBotMessage("You can't suspend yourself.");
+				} else if (acc.isSuspended()) {
+					user.sendBotMessage("The Account '%s' is already suspended (%s).", account, acc.getSuspendReason());
 				} else {
-					user.sendBotMessage("There was an error creating the account.");
+					final StringBuilder reason = new StringBuilder();
+					for (i = 2; i < params.length; i++) { reason.append(params[i]); }
+					user.sendBotMessage("Suspending Account '%s'..", account);
+					acc.setSuspended(true, reason.toString());
+					user.sendBotMessage("Account suspended with reason: %s", acc.getSuspendReason());
 				}
 			}
 		}
@@ -66,7 +71,7 @@ public class AddUserCommand extends Command {
 	 */
 	@Override
 	public String[] handles() {
-		return new String[]{"adduser"};
+		return new String[]{"suspend"};
 	}
 	
 	/**
@@ -85,7 +90,7 @@ public class AddUserCommand extends Command {
 	 */
 	@Override
 	public String getDescription(final String command) {
-		return "This command will let you add a user to the BNC";
+		return "This command will let you suspend a user on the BNC";
 	}
 	
 	/**

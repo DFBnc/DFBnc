@@ -890,10 +890,6 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 		
 		myParser = new IRCParser(me, server);
         
-        if (myAccount.getProperties().hasProperty("bindip")) {
-            myParser.setBindIP(myAccount.getProperties().getProperty("bindip"));
-        }
-        
 		try {
 			myParser.getCallbackManager().addCallback("OnDataIn", this);
 			myParser.getCallbackManager().addCallback("OnServerReady", this);
@@ -907,6 +903,12 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 		}
 		
 		if (user != null) { user.sendBotMessage("Using server: "+serverInfo[3]); }
+		
+		final String bindIP = myAccount.getProperties().getProperty("irc.bindip", "");
+		if (!bindIP.isEmpty()) {
+			myParser.setBindIP(bindIP);
+			user.sendBotMessage("Trying to bind to: "+bindIP);
+		}
 		
 		controlThread = new Thread(myParser);
 		controlThread.start();

@@ -30,11 +30,11 @@ import uk.org.dataforce.dfbnc.DFBnc;
 import uk.org.dataforce.dfbnc.Account;
 
 /**
- * This file represents the 'AddUser' command
+ * This file represents the 'DelUser' command
  */
-public class AddUserCommand extends Command {
+public class DelUserCommand extends Command {
 	/**
-	 * Handle an AddUser command.
+	 * Handle a DelUser command.
 	 *
 	 * @param user the UserSocket that performed this command
 	 * @param params Params for command (param 0 is the command name)
@@ -42,19 +42,24 @@ public class AddUserCommand extends Command {
 	@Override
 	public void handle(final UserSocket user, final String[] params) {
 		if (params.length == 1) {
-			user.sendBotMessage("You need to specify a username to add.");
+			user.sendBotMessage("You need to specify a username to delete.");
 		} else {
 			final String account = params[1];
 			if (Account.exists(account)) {
-				user.sendBotMessage("An account with the name '%s' already exists.", account);
-			} else {
-				user.sendBotMessage("Creating account '%s'...", account);
-				final String password = Account.makePassword();
-				if (Account.createAccount(account, password) != null) {
-					user.sendBotMessage("Account created. Password has been set to '%s'", password);
+				if (params.length == 2) {
+					final String deleteCode = Account.makePassword(15);
+					Account.get(account).setDeleteCode(deleteCode);
+					user.sendBotMessage("Deleting an account will remove all settings for the account.");
+					user.sendBotMessage("Are you sure you want to continue?");
+					user.sendBotMessage("To continue please enter /dfbnc -BNC %s %s %s", params[0], account, deleteCode);
+				} else if (!params[2].equals(Account.get(account).getDeleteCode())) {
+					user.sendBotMessage("Invalid Delete code specified.");
 				} else {
-					user.sendBotMessage("There was an error creating the account.");
+					user.sendBotMessage("Deleting account '%s'", account);
+					Account.get(account).delete();
 				}
+			} else {
+				user.sendBotMessage("An account with the name '%s' does not exist.", account);
 			}
 		}
 	}
@@ -66,7 +71,7 @@ public class AddUserCommand extends Command {
 	 */
 	@Override
 	public String[] handles() {
-		return new String[]{"adduser"};
+		return new String[]{"deluser"};
 	}
 	
 	/**
@@ -74,7 +79,7 @@ public class AddUserCommand extends Command {
 	 *
 	 * @param manager CommandManager that is in charge of this Command
 	 */
-	public AddUserCommand (final CommandManager manager) { super(manager); }
+	public DelUserCommand (final CommandManager manager) { super(manager); }
 	
 	/**
 	 * Get a description of what this command does
@@ -85,7 +90,7 @@ public class AddUserCommand extends Command {
 	 */
 	@Override
 	public String getDescription(final String command) {
-		return "This command will let you add a user to the BNC";
+		return "This command will let you delete a user from the BNC";
 	}
 	
 	/**

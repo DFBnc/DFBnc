@@ -21,41 +21,49 @@
  *
  * SVN: $Id$
  */
-package uk.org.dataforce.dfbnc.commands.admin;
+package uk.org.dataforce.dfbnc.commands.user;
 
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.UserSocket;
-import uk.org.dataforce.dfbnc.DFBnc;
-import uk.org.dataforce.dfbnc.Account;
+
+import java.util.TreeMap;
+import java.util.SortedMap;
+import java.util.ArrayList;
 
 /**
- * This file represents the 'AddUser' command
+ * This file represents the 'Help' command
  */
-public class AddUserCommand extends Command {
+public class HelpCommand extends Command {
 	/**
-	 * Handle an AddUser command.
+	 * Handle a Help command.
 	 *
 	 * @param user the UserSocket that performed this command
 	 * @param params Params for command (param 0 is the command name)
 	 */
 	@Override
 	public void handle(final UserSocket user, final String[] params) {
-		if (params.length == 1) {
-			user.sendBotMessage("You need to specify a username to add.");
-		} else {
-			final String account = params[1];
-			if (Account.exists(account)) {
-				user.sendBotMessage("An account with the name '%s' already exists.", account);
-			} else {
-				user.sendBotMessage("Creating account '%s'...", account);
-				final String password = Account.makePassword();
-				if (Account.createAccount(account, password) != null) {
-					user.sendBotMessage("Account created. Password has been set to '%s'", password);
-				} else {
-					user.sendBotMessage("There was an error creating the account.");
+	
+		final String command = (params.length > 0) ? param[0] : "";
+	
+		if (command.equals("")) {
+			if (user.getAccount() != null) {
+				try {
+					final Command cmd = user.getAccount().getCommandManager().getCommand(param[0]);
+					final String[] help = cmd.getHelp(params);
+					if (help != null) {
+						for (String line : help) {
+							user.sendBotMessage(line);
+						}
+					} else {
+						user.sendBotMessage("The command '%s' has no detailed help available.", param[0]);
+					}
+				} catch (CommandNotFoundException e) {
+					user.sendBotMessage("The command '%s' does not exist.", param[0]);
 				}
 			}
+		} else {
+			user.sendBotMessage("You need to specify a command to get help for");
 		}
 	}
 	
@@ -66,15 +74,8 @@ public class AddUserCommand extends Command {
 	 */
 	@Override
 	public String[] handles() {
-		return new String[]{"adduser"};
+		return new String[]{"help"};
 	}
-	
-	/**
-	 * Create a new instance of the Command Object
-	 *
-	 * @param manager CommandManager that is in charge of this Command
-	 */
-	public AddUserCommand (final CommandManager manager) { super(manager); }
 	
 	/**
 	 * Get a description of what this command does
@@ -85,8 +86,15 @@ public class AddUserCommand extends Command {
 	 */
 	@Override
 	public String getDescription(final String command) {
-		return "This command will let you add a user to the BNC";
+		return "This command shows more detailed help for commands";
 	}
+	
+	/**
+	 * Create a new instance of the Command Object
+	 *
+	 * @param manager CommandManager that is in charge of this Command
+	 */
+	public ShowCommandsCommand (final CommandManager manager) { super(manager); }
 	
 	/**
 	 * Get SVN Version information.

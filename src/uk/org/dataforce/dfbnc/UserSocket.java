@@ -361,19 +361,26 @@ public class UserSocket extends ConnectedSocket {
 			}
 			if (Account.checkPassword(username, password)) {
 				myAccount = Account.get(username);
-				sendBotMessage("You are now logged in");
-				if (myAccount.isAdmin()) {
-					sendBotMessage("This is an Admin account");
-				}
-				// Run the firsttime command if this is the first time the account has been used
-				if (myAccount.isFirst()) {
-					handleBotCommand(new String[]{"firsttime"});
+				if (myAccount.isSuspended()) {
+					sendBotMessage("This account has been suspended.");
+					sendBotMessage("Reason: "+myAccount.getSuspendReason());
+					myAccount = null;
+					close();
+				} else {
+					sendBotMessage("You are now logged in");
 					if (myAccount.isAdmin()) {
-						sendBotMessage("");
-						handleBotCommand(new String[]{"firsttime", "admin"});
+						sendBotMessage("This is an Admin account");
 					}
+					// Run the firsttime command if this is the first time the account has been used
+					if (myAccount.isFirst()) {
+						handleBotCommand(new String[]{"firsttime"});
+						if (myAccount.isAdmin()) {
+							sendBotMessage("");
+							handleBotCommand(new String[]{"firsttime", "admin"});
+						}
+					}
+					myAccount.userConnected(this);
 				}
-				myAccount.userConnected(this);
 			} else {
 				sendIRCLine(Consts.ERR_PASSWDMISMATCH, line[0], "Password incorrect, or account not found");
 				close();

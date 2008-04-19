@@ -30,11 +30,11 @@ import uk.org.dataforce.dfbnc.DFBnc;
 import uk.org.dataforce.dfbnc.Account;
 
 /**
- * This file represents the 'AddUser' command
+ * This file represents the 'Unsuspend' command
  */
-public class AddUserCommand extends Command {
+public class UnsuspendCommand extends Command {
 	/**
-	 * Handle an AddUser command.
+	 * Handle an Unsuspend command.
 	 *
 	 * @param user the UserSocket that performed this command
 	 * @param params Params for command (param 0 is the command name)
@@ -42,18 +42,19 @@ public class AddUserCommand extends Command {
 	@Override
 	public void handle(final UserSocket user, final String[] params) {
 		if (params.length == 1) {
-			user.sendBotMessage("You need to specify a username to add.");
+			user.sendBotMessage("You need to specify a username to unsuspend.");
 		} else {
 			final String account = params[1];
-			if (Account.exists(account)) {
-				user.sendBotMessage("An account with the name '%s' already exists.", account);
+			if (!Account.exists(account)) {
+				user.sendBotMessage("No account with the name '%s' exists.", account);
 			} else {
-				user.sendBotMessage("Creating account '%s'...", account);
-				final String password = Account.makePassword();
-				if (Account.createAccount(account, password) != null) {
-					user.sendBotMessage("Account created. Password has been set to '%s'", password);
+				final Account acc = Account.get(account);
+				if (!acc.isSuspended()) {
+					user.sendBotMessage("The Account '%s' is not suspended.", account);
 				} else {
-					user.sendBotMessage("There was an error creating the account.");
+					user.sendBotMessage("Unsuspending Account '%s'..", account);
+					acc.setSuspended(false, null);
+					user.sendBotMessage("Account unsuspended.");
 				}
 			}
 		}
@@ -66,7 +67,7 @@ public class AddUserCommand extends Command {
 	 */
 	@Override
 	public String[] handles() {
-		return new String[]{"adduser"};
+		return new String[]{"unsuspend"};
 	}
 	
 	/**
@@ -85,7 +86,7 @@ public class AddUserCommand extends Command {
 	 */
 	@Override
 	public String getDescription(final String command) {
-		return "This command will let you add a user to the BNC";
+		return "This command will let you unsuspend a user on the BNC";
 	}
 	
 	/**

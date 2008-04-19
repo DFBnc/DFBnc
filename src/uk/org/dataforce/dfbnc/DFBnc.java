@@ -99,14 +99,18 @@ public class DFBnc {
 		Logger.info("Loading Config..");
 		Config.loadConfig(configFile);
 		
-		Logger.info("Setting up User Command Manager");
+		Logger.info("Setting up Default User Command Manager");
 		userCommandManager.addCommand(new VersionCommand(userCommandManager));
 		userCommandManager.addCommand(new FirstTimeCommand(userCommandManager));
 		userCommandManager.addCommand(new ServerTypeCommand(userCommandManager));
 		userCommandManager.addCommand(new ShowCommandsCommand(userCommandManager));
 		
-		Logger.info("Setting up Admin Command Manager");
+		Logger.info("Setting up Default Admin Command Manager");
 		adminCommandManager.addCommand(new AddUserCommand(adminCommandManager));
+		adminCommandManager.addCommand(new DelUserCommand(adminCommandManager));
+		adminCommandManager.addCommand(new SuspendCommand(adminCommandManager));
+		adminCommandManager.addCommand(new UnsuspendCommand(adminCommandManager));
+		adminCommandManager.addCommand(new SetAdminCommand(adminCommandManager));
 		
 		Logger.info("Setting up ServerType Manager");
 		myServerTypeManager.init();
@@ -169,9 +173,9 @@ public class DFBnc {
 		Logger.info("Closing Listen Sockets");
 		for (int i = 0; i < listenSockets.size() ; ++i) {
 			final ListenSocket ls = listenSockets.get(i);
-			//ls.close();
+			ls.close();
 		}
-		//listenSockets.clear();
+		listenSockets.clear();
 		
 		Logger.info("Closing User Sockets");
 		UserSocket.closeAll("BNC Shutdown");
