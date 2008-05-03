@@ -200,7 +200,10 @@ public abstract class SocketWrapper {
 				numBytesRead = read(buffer);
 				if (numBytesRead == -1) {
 					SelectionKey key = mySocketChannel.keyFor(myOwner.getSelector());
-					key.interestOps(0);
+					if (selKey.isValid()) {
+						key.interestOps(0);
+						selKey.cancel();
+					}
 					myOwner.close();
 					Logger.info("Socket got closed.");
 				} else {
