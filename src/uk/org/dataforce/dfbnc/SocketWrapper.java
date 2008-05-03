@@ -205,7 +205,7 @@ public abstract class SocketWrapper {
 					Logger.info("Socket got closed.");
 				} else {
 					buffer.flip();
-					CharBuffer charBuffer = Charset.forName("us-ascii").newDecoder().decode(buffer);
+					CharBuffer charBuffer = Charset.forName("UTF-8").newDecoder().decode(buffer);
 					char c;
 					for (int i = 0; i < charBuffer.limit(); ++i) {
 						c = charBuffer.get();
