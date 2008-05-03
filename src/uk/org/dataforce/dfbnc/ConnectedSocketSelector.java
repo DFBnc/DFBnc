@@ -21,6 +21,7 @@
  *
  * SVN: $Id$
  */
+
 package uk.org.dataforce.dfbnc;
 
 import java.nio.channels.SocketChannel;
@@ -31,21 +32,20 @@ import java.util.Iterator;
 import java.util.HashMap;
 import java.io.IOException;
 
-
-import uk.org.dataforce.libs.logger.Logger;
-
 /**
  * This is responsible for handling the selector for all Sockets when in
  * single-thread mode.
  * This is not used at all in multi-thread mode.
  */
 public class ConnectedSocketSelector implements Runnable {
-	/** Used to monitor the sockets. */
+
+    /** Used to monitor the sockets. */
 	private Selector selector = null;
 	/** Thread to run the selector under */	
 	private Thread myThread = new Thread(this);
 	/** Hashmap containing known sockets */
-	private HashMap<SocketChannel, ConnectedSocket> knownSockets = new HashMap<SocketChannel, ConnectedSocket>();
+	private HashMap<SocketChannel, ConnectedSocket> knownSockets
+            = new HashMap<SocketChannel, ConnectedSocket>();
 	/** Instance of ConnectedSocketSelector in use */
 	private static ConnectedSocketSelector myConnectedSocketSelector = null;
 	
@@ -128,7 +128,7 @@ public class ConnectedSocketSelector implements Runnable {
 						Thread.sleep(100);
 					} catch (InterruptedException ie) { }
 				}
-			} catch (Exception e) {
+			} catch (IOException e) {
 				break;
 			}
 			
@@ -145,7 +145,7 @@ public class ConnectedSocketSelector implements Runnable {
 							cSocket.getSocketWrapper().processSelectionKey(selKey);
 						}
 					}
-				} catch (Exception e) {
+				} catch (IOException e) {
 					selKey.cancel();
 					break;
 				}
