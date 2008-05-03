@@ -25,7 +25,7 @@ package uk.org.dataforce.dfbnc.commands.user;
 
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
-import uk.org.dataforce.dfbnc.commands.CommandNotFound;
+import uk.org.dataforce.dfbnc.commands.CommandNotFoundException;
 import uk.org.dataforce.dfbnc.UserSocket;
 
 import java.util.TreeMap;
@@ -45,9 +45,9 @@ public class HelpCommand extends Command {
 	@Override
 	public void handle(final UserSocket user, final String[] params) {
 	
-		final String command = (params.length > 0) ? params[0] : "";
+		final String command = (params.length > 1) ? params[1] : "";
 	
-		if (command.equals("")) {
+		if (!command.equals("")) {
 			if (user.getAccount() != null) {
 				try {
 					final Command cmd = user.getAccount().getCommandManager().getCommand(params[0]);
@@ -57,10 +57,10 @@ public class HelpCommand extends Command {
 							user.sendBotMessage(line);
 						}
 					} else {
-						user.sendBotMessage("The command '%s' has no detailed help available.", params[0]);
+						user.sendBotMessage("The command '%s' has no detailed help available.", params[1]);
 					}
-				} catch (CommandNotFound e) {
-					user.sendBotMessage("The command '%s' does not exist.", params[0]);
+				} catch (CommandNotFoundException e) {
+					user.sendBotMessage("The command '%s' does not exist.", params[1]);
 				}
 			}
 		} else {

@@ -24,7 +24,7 @@
 package uk.org.dataforce.dfbnc;
 
 import uk.org.dataforce.libs.logger.Logger;
-import uk.org.dataforce.dfbnc.commands.CommandNotFound;
+import uk.org.dataforce.dfbnc.commands.CommandNotFoundException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.io.IOException;
@@ -325,7 +325,7 @@ public class UserSocket extends ConnectedSocket {
 			if (nickname != null && password == null) {
 				sendBotMessage("Please enter your password.");
 				sendBotMessage("This can be done using either: ");
-				sendBotMessage("    /QUOTE PASS [<username>:]<password");
+				sendBotMessage("    /QUOTE PASS [<username>:]<password>");
 				sendBotMessage("    /RAW PASS [<username>:]<password>");
 			}
 		} else if (line[0].equals("NICK")) {
@@ -474,7 +474,7 @@ public class UserSocket extends ConnectedSocket {
 			if (myAccount != null) {
 				myAccount.getCommandManager().handle(this, bits);
 			}
-		} catch (CommandNotFound c) {
+		} catch (CommandNotFoundException c) {
 			sendBotMessage("Unknown command '%s' Please try 'ShowCommands'", bits[0]);
 		} catch (Exception e) {
 			sendBotMessage("Exception with command '%s': %s", bits[0], e.getMessage());

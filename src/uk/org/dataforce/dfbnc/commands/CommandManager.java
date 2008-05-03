@@ -218,9 +218,9 @@ public final class CommandManager {
 	 *
 	 * @param name Name to look for
 	 * @return Command for the given name.
-	 * @throws CommandNotFound If the requested command doesn't exist in this or any sub managers
+	 * @throws CommandNotFoundException If the requested command doesn't exist in this or any sub managers
 	 */
-	public Command getCommand(final String name) throws CommandNotFound {
+	public Command getCommand(final String name) throws CommandNotFoundException {
 		return getCommand(name, 0);
 	}
 	
@@ -230,9 +230,9 @@ public final class CommandManager {
 	 * @param name Name to look for
 	 * @param nesting Amount of previous calls.
 	 * @return Command for the given name.
-	 * @throws CommandNotFound If the requested command doesn't exist in this or any sub managers
+	 * @throws CommandNotFoundException If the requested command doesn't exist in this or any sub managers
 	 */
-	protected Command getCommand(final String name, final int nesting) throws CommandNotFound {
+	protected Command getCommand(final String name, final int nesting) throws CommandNotFoundException {
 		if (knownCommands.containsKey(name.toLowerCase())) {
 			return knownCommands.get(name.toLowerCase());
 		} else {
@@ -240,11 +240,11 @@ public final class CommandManager {
 				for (CommandManager manager : subManagers) {
 					try {
 						return manager.getCommand(name, (nesting+1));
-					} catch (CommandNotFound cnf) { /* Ignore, it might be in other managers */ }
+					} catch (CommandNotFoundException cnf) { /* Ignore, it might be in other managers */ }
 				}
 			}
 			// Command was not found in any manager.
-			throw new CommandNotFound("No command is known by "+name);
+			throw new CommandNotFoundException("No command is known by "+name);
 		}
 	}
 	
@@ -253,18 +253,18 @@ public final class CommandManager {
 	 *
 	 * @param user UserSocket that issued the command
 	 * @param params Params for command (param0 is the command name)
-	 * @throws CommandNotFound exception if no commands exists to handle the line
+	 * @throws CommandNotFoundException exception if no commands exists to handle the line
 	 */
-	public void handle(final UserSocket user, final String[] params) throws CommandNotFound {
+	public void handle(final UserSocket user, final String[] params) throws CommandNotFoundException {
 		Command commandHandler = null;
 		try {
 			commandHandler = getCommand(params[0]);
 			if (commandHandler.isAdminOnly() && !user.getAccount().isAdmin()) {
-				throw new CommandNotFound("No command is known by "+params[0]);
+				throw new CommandNotFoundException("No command is known by "+params[0]);
 			} else {
 				commandHandler.handle(user, params);
 			}
-		} catch (CommandNotFound p) {
+		} catch (CommandNotFoundException p) {
 			throw p;
 		} catch (Exception e) {
 //			StringBuilder line = new StringBuilder();

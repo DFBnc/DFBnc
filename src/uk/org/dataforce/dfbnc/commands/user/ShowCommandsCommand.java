@@ -47,8 +47,8 @@ public class ShowCommandsCommand extends Command {
 		// displayed at the end after the normal-user commands.
 		ArrayList<String> adminCommands = new ArrayList<String>();
 	
-		final String commandsType = (params.length > 0) ? params[0] : "";
-	
+		final String commandsType = (params.length > 1) ? params[1] : "";
+
 		if (commandsType.equals("") || commandsType.equalsIgnoreCase("all") || commandsType.equalsIgnoreCase("user")) {
 			user.sendBotMessage("----------------");
 			user.sendBotMessage("The following commands are available to you:");
