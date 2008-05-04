@@ -563,7 +563,9 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 					return;
 				}
 			}
-			ChannelInfo channel = myParser.getChannelInfo(bits[3]);
+			// Don't forward pongs from the server
+			if (bits[1].equals("PONG") || bits[0].equals("PONG")) { return; }
+			final ChannelInfo channel = (bits.length > 3) ? myParser.getChannelInfo(bits[3]) : null;
 			switch (numeric) {
 				case 324: // Channel Modes
 				case 367: // Ban List

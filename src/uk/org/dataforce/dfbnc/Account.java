@@ -196,10 +196,10 @@ public final class Account implements UserSocketWatcher {
 		for (Account acc : accounts.values()) {
 			ServerType st = acc.getServerType();
 			if (st != null) {
-				st.close(acc, "BNC Shuting Down");
+				st.close(acc, "BNC Shutting Down");
 			}
 			if (acc.getConnectionHandler() != null) {
-				acc.getConnectionHandler().shutdown("BNC Shuting Down");
+				acc.getConnectionHandler().shutdown("BNC Shutting Down");
 			}
 		}
 	}

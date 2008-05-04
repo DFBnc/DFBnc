@@ -204,8 +204,9 @@ public abstract class SocketWrapper {
 						key.interestOps(0);
 						selKey.cancel();
 					}
-					myOwner.close();
 					Logger.info("Socket got closed.");
+					myOwner.close();
+					break;
 				} else {
 					buffer.flip();
 					CharBuffer charBuffer = Charset.forName("UTF-8").newDecoder().decode(buffer);
@@ -242,6 +243,7 @@ public abstract class SocketWrapper {
 			try {
 				write(buf);
 			} catch (IOException e) {
+				Logger.info("Socket has been closed.");
 				myOwner.close();
 			}
 		}
