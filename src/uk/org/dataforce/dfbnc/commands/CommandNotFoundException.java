@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
- * SVN: $Id: CommandNotFound.java 1320 2007-05-21 09:53:01Z ShaneMcC $
+ * SVN: $Id: CommandNotFoundException.java 1320 2007-05-21 09:53:01Z ShaneMcC $
  */
 
 package uk.org.dataforce.dfbnc.commands;
@@ -30,7 +30,7 @@ package uk.org.dataforce.dfbnc.commands;
  * @author Shane Mc Cormack
  * @version $Id: ProcessorNotFound.java 1320 2007-05-21 09:53:01Z ShaneMcC $
  */
-public class CommandNotFound extends Exception {
+public class CommandNotFoundException extends Exception {
 	/**
 	 * A version number for this class.
 	 * It should be changed whenever the class structure is changed (or anything
@@ -40,11 +40,11 @@ public class CommandNotFound extends Exception {
 	private static final long serialVersionUID = 1;
 	
 	/**
-	 * Create a new CommandNotFound Exception.
+	 * Create a new CommandNotFoundException Exception.
 	 *
 	 * @param message Reason for exception
 	 */
-	public CommandNotFound(String message) { super(message); }
+	public CommandNotFoundException(String message) { super(message); }
 	
 	/**
 	 * Get SVN Version information.
