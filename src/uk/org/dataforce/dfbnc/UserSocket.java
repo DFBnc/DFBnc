@@ -233,6 +233,19 @@ public class UserSocket extends ConnectedSocket {
 	public void setPost001(final boolean newValue) { post001 = newValue; }
 	
 	/**
+	 * Send a given raw line to all sockets
+	 *
+	 * @param line Line to send
+	 * @param ignoreThis Don't send the line to this socket if true
+	 */
+	public void sendAll(final String line, final boolean ignoreThis) {
+		for (UserSocket socket : this.getAccount().getUserSockets()) {
+			if (ignoreThis && socket == this) { continue; }
+			socket.sendLine(line);
+		}
+	}
+	
+	/**
 	 * Send a message to the user from the bnc bot in printf format.
 	 *
 	 * @param type the Type of message to send
@@ -425,10 +438,15 @@ public class UserSocket extends ConnectedSocket {
 		// The bnc accepts commands as either:
 		// /msg -BNC This is a command
 		// or /DFBNC This is a command (not there is no : used to separate arguments anywhere)
-		if (line[0].equalsIgnoreCase("PRIVMSG") && line.length > 2) {
+		if ((line[0].equalsIgnoreCase("PRIVMSG") || line[0].equalsIgnoreCase("NOTICE")) && line.length > 2) {
 			if (line[1].equalsIgnoreCase(Functions.getBotName())) {
 				handleBotCommand(line[2].split(" "));
 				return;
+			} else {
+				final String myHost = this.getAccount().getConnectionHandler().getMyHost();
+				if (myHost != null) {
+					sendAll(String.format("%s %s", myHost, normalLine), true);
+				}
 			}
 		} else if (line[0].equalsIgnoreCase("DFBNC") && line.length > 1) {
 			String[] lineBits = normalLine.split(" ");

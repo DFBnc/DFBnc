@@ -148,6 +148,21 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	}
 	
 	/**
+	 * Get the users host on this connection
+	 *
+	 * @return The users host on this connect
+	 */
+	public String getMyHost() {
+		if (myParser != null && myParser.getMyself() != null) {
+			return myParser.getMyself().toString();
+		} else if (myParser != null) {
+			return String.format("%s!@", myParser.getMyNickname());
+		} else {
+			return null;
+		}
+	}
+	
+	/**
 	 * Called when data is recieved on the user socket.
 	 * This intercepts topic/mode/names requests and handles them itself where possible
 	 * unless the -f parameter is passed (ie /mode -f #channel)

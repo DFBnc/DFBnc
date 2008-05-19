@@ -35,6 +35,13 @@ public interface ConnectionHandler {
 	public void shutdown(final String reason);
 	
 	/**
+	 * Get the users host on this connection
+	 *
+	 * @return The users host on this connect
+	 */
+	public String getMyHost();
+	
+	/**
 	 * Called when data is recieved on the user socket.
 	 *
 	 * @param user The socket that the data arrived on
