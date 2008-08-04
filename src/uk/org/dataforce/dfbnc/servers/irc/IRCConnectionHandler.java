@@ -196,6 +196,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 				for (String channelName : line[1].split(",")) {
 					if (resetOutData) {
 						if (outData.length() > 0) {
+							System.out.println("Sending old outData: "+outData.toString());
 							myParser.sendLine(outData.toString());
 							outData = new StringBuilder();
 						}
@@ -320,8 +321,10 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 		}
 		
 		if (outData.length() == 0) {
+			System.out.println("Sending: "+data);
 			myParser.sendLine(data);
 		} else {
+			System.out.println("Sending: "+outData.toString());
 			myParser.sendLine(outData.toString());
 		}
 	}
@@ -356,73 +359,98 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 	 * @return true if we should handle this command, else false.
 	 */
 	public boolean handleCommandProxy(final UserSocket user, final String[] line, final StringBuilder outData) {
-		// If line length is 2 or 3
-		// ie (/topic #foo or /topic -f #foo or /topic #foo bar)
-		if (line.length == 2 || line.length == 3 || line.length == 4) {
-			// if (/topic -f)
-			if (line[1].equalsIgnoreCase("-f")) {
-				// if (/topic -f #foo)
-				if (line.length == 3 || line.length == 4) {
-					outData.append(line[0]+" "+line[2]);
-					if (line.length == 4) {
-						outData.append(" "+line[3]);
-					}
-					ChannelInfo channel = myParser.getChannelInfo(line[2]);
-					if (line[0].equalsIgnoreCase("topic")) {
-						allowLine(channel, "331");
-						allowLine(channel, "332");
-						allowLine(channel, "333");
-					} else if(line[0].equalsIgnoreCase("names")) {
-						allowLine(channel, "353");
-						allowLine(channel, "366");
-					} else if(line[0].equalsIgnoreCase("mode")) {
-						if (channel != null) {
-							if (line.length == 4) {
-								for (int i = 0; i < line[3].length(); ++i) {
-									char modechar = line[3].charAt(i);
-									List<ChannelListModeItem> modeList = channel.getListModeParam(modechar);
-									if (modeList != null) {
-										if (modechar == 'b' || modechar == 'd' || modechar == 'q') {
-											allowLine(channel, "367");
-											allowLine(channel, "368");
-										} else if (modechar == 'e') {
-											allowLine(channel, "348");
-											allowLine(channel, "349");
-										} else if (modechar == 'I') {
-											allowLine(channel, "346");
-											allowLine(channel, "347");
-										} else if (modechar == 'R') {
-											allowLine(channel, "344");
-											allowLine(channel, "345");
-										}
+		// if (/topic -f)
+		if (line.length == 0) {
+			user.sendIRCLine(Consts.ERR_NEEDMOREPARAMS, line[0], "Not enough parameters");
+			return false;
+		}
+		
+		System.out.println("Length: "+line.length);
+		for (String bit : line) {
+			System.out.println("Line: "+bit);
+		}
+		
+		if (line[1].equalsIgnoreCase("-f")) {
+			// if (/topic -f #foo)
+			if (line.length == 3 || line.length == 4) {
+				outData.append(line[0]);
+				outData.append(" ");
+				outData.append(line[2]);
+				if (line.length == 4) {
+					outData.append(line[0].equalsIgnoreCase("topic") ? " :" : " ");
+					outData.append(line[3]);
+				}
+				ChannelInfo channel = myParser.getChannelInfo(line[2]);
+				if (line[0].equalsIgnoreCase("topic")) {
+					allowLine(channel, "331");
+					allowLine(channel, "332");
+					allowLine(channel, "333");
+				} else if(line[0].equalsIgnoreCase("names")) {
+					allowLine(channel, "353");
+					allowLine(channel, "366");
+				} else if(line[0].equalsIgnoreCase("mode")) {
+					if (channel != null) {
+						if (line.length == 4) {
+							for (int i = 0; i < line[3].length(); ++i) {
+								char modechar = line[3].charAt(i);
+								List<ChannelListModeItem> modeList = channel.getListModeParam(modechar);
+								if (modeList != null) {
+									if (modechar == 'b' || modechar == 'd' || modechar == 'q') {
+										allowLine(channel, "367");
+										allowLine(channel, "368");
+									} else if (modechar == 'e') {
+										allowLine(channel, "348");
+										allowLine(channel, "349");
+									} else if (modechar == 'I') {
+										allowLine(channel, "346");
+										allowLine(channel, "347");
+									} else if (modechar == 'R') {
+										allowLine(channel, "344");
+										allowLine(channel, "345");
 									}
 								}
-							} else {
-								allowLine(channel, "324");
-								allowLine(channel, "329");
 							}
 						} else {
-							allowLine(channel, "221");
+							allowLine(channel, "324");
+							allowLine(channel, "329");
 						}
-					} else if(line[0].equalsIgnoreCase("listmode")) {
-						if (myParser.get005().containsKey("LISTMODE")) {
-							allowLine(channel, myParser.get005().get("LISTMODE"));
-							allowLine(channel, myParser.get005().get("LISTMODEEND"));
-						}
+					} else {
+						allowLine(channel, "221");
 					}
-					return false;
+				} else if(line[0].equalsIgnoreCase("listmode")) {
+					if (myParser.get005().containsKey("LISTMODE")) {
+						allowLine(channel, myParser.get005().get("LISTMODE"));
+						allowLine(channel, myParser.get005().get("LISTMODEEND"));
+					}
+				}
+				return false;
+			} else {
+				if (line.length < 3) {
+					user.sendIRCLine(Consts.ERR_NEEDMOREPARAMS, line[0], "Not enough parameters");
 				} else {
-					user.sendIRCLine(Consts.ERR_NEEDMOREPARAMS, line[0], "Not enough parameters-");
-					return false;
+					// Send line directly to server (without the -f param)
+					outData.append(line[0]);
+					for (int i = 2; i < line.length; i++) {
+						outData.append(" ");
+						outData.append(line[i]);
+					}
 				}
-			// if /topic #foo
-			} else if (line.length == 2) {
+				return false;
+			}
+		// if /topic #foo
+		} else if (line.length == 2) {
+			return true;
+		// ie /mode #channel b
+		} else if (line.length == 3) {
+			if (line[0].equalsIgnoreCase("mode") || line[0].equalsIgnoreCase("listmode")) {
+				System.out.println("Handle!");
 				return true;
-			// ie /mode #channel b
-			} else if (line.length == 3) {
-				if (line[0].equalsIgnoreCase("mode") || line[0].equalsIgnoreCase("listmode")) {
-					return true;
-				}
+			} else if (line[0].equalsIgnoreCase("topic")) {
+				outData.append(line[0]);
+				outData.append(" ");
+				outData.append(line[1]);
+				outData.append(" :");
+				outData.append(line[2]);
 			}
 		}
 		
