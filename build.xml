@@ -24,6 +24,7 @@
 	<property name="javac.classpath" value=""/>
 	<property name="javac.compilerargs" value="-Xlint:all"/>
 	<property name="javac.deprecation" value="true"/>
+	<property name="javac.debug" value="true">
 	<property name="javac.source" value="1.6"/>
 	<property name="javac.target" value="1.6"/>
 	<property name="test.src.dir" value="test"/>
@@ -62,7 +63,7 @@
 	  Testing
 	  -->
 	<target name="compile-test" depends="init" description="Compile Project Tests">
-		<javac srcdir="${test.src.dir}" destdir="${test.build.classes.dir}" deprecation="true" includeantruntime="false">
+		<javac srcdir="${test.src.dir}" destdir="${test.build.classes.dir}" deprecation="${javac.deprecation}" includeantruntime="false" debug="${javac.debug}">
 			<classpath>
 				<path path="${test.classpath}"/>
 			</classpath>
@@ -104,7 +105,7 @@
 	  Compile
 	  -->
 	<target name="compile" depends="init" description="Compile Project">
-		<javac srcdir="${src.dir}" destdir="${build.classes.dir}" deprecation="true" source="${javac.source}" target="${javac.target}" includeantruntime="false">
+		<javac srcdir="${src.dir}" destdir="${build.classes.dir}" deprecation="${javac.deprecation}" source="${javac.source}" target="${javac.target}" includeantruntime="false" debug="${javac.debug}">
 			<classpath>
 				<path path="${javac.classpath}"/>
 			</classpath>
