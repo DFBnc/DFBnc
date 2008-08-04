@@ -452,6 +452,12 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 				outData.append(" :");
 				outData.append(line[2]);
 			}
+		} else {
+			outData.append(line[0]);
+			for (int i = 1; i < line.length; i++) {
+				outData.append(" ");
+				outData.append(line[i]);
+			}
 		}
 		
 		return false;
