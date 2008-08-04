@@ -24,7 +24,7 @@
 	<property name="javac.classpath" value=""/>
 	<property name="javac.compilerargs" value="-Xlint:all"/>
 	<property name="javac.deprecation" value="true"/>
-	<property name="javac.debug" value="true">
+	<property name="javac.debug" value="true"/>
 	<property name="javac.source" value="1.6"/>
 	<property name="javac.target" value="1.6"/>
 	<property name="test.src.dir" value="test"/>
