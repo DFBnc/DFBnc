@@ -196,7 +196,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 				for (String channelName : line[1].split(",")) {
 					if (resetOutData) {
 						if (outData.length() > 0) {
-							System.out.println("Sending old outData: "+outData.toString());
+//							System.out.println("Sending old outData: "+outData.toString());
 							myParser.sendLine(outData.toString());
 							outData = new StringBuilder();
 						}
@@ -321,10 +321,10 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 		}
 		
 		if (outData.length() == 0) {
-			System.out.println("Sending: "+data);
+//			System.out.println("Sending: "+data);
 			myParser.sendLine(data);
 		} else {
-			System.out.println("Sending: "+outData.toString());
+//			System.out.println("Sending: "+outData.toString());
 			myParser.sendLine(outData.toString());
 		}
 	}
@@ -365,10 +365,10 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 			return false;
 		}
 		
-		System.out.println("Length: "+line.length);
-		for (String bit : line) {
-			System.out.println("Line: "+bit);
-		}
+//		System.out.println("Length: "+line.length);
+//		for (String bit : line) {
+//			System.out.println("Line: "+bit);
+//		}
 		
 		if (line[1].equalsIgnoreCase("-f")) {
 			// if (/topic -f #foo)
@@ -443,7 +443,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 		// ie /mode #channel b
 		} else if (line.length == 3) {
 			if (line[0].equalsIgnoreCase("mode") || line[0].equalsIgnoreCase("listmode")) {
-				System.out.println("Handle!");
+//				System.out.println("Handle!");
 				return true;
 			} else if (line[0].equalsIgnoreCase("topic")) {
 				outData.append(line[0]);
