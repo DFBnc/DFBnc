@@ -29,7 +29,7 @@ import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.io.IOException;
 import java.util.HashMap;
-import com.dmdirc.parser.IRCParser;
+import com.dmdirc.parser.irc.IRCParser;
 import java.util.ArrayList;
 import java.util.List;
 
