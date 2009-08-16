@@ -95,7 +95,7 @@ public class DFBnc {
 			Logger.setLevel(LogLevel.DEBUG);
 		}
 		
-		if (cli.getParamNumber("-config") > 0) { configFile = cli.getParam("-type").getStringValue(); }
+		if (cli.getParamNumber("-config") > 0) { configFile = cli.getParam("-config").getStringValue(); }
 		Logger.info("Loading Config..");
 		Config.loadConfig(configFile);
 		
