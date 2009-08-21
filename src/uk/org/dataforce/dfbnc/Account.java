@@ -42,7 +42,7 @@ public final class Account implements UserSocketWatcher {
 	// Static Variables
 	//----------------------------------------------------------------------------
 	/** List of loaded Accounts */
-	private static HashMap<String, Account> accounts = new HashMap<String, Account>();
+	private static final HashMap<String, Account> accounts = new HashMap<String, Account>();
 	/** Salt used when generating passwords */
 	private static final String salt = "a5S5l1N4u4O2y9Z4l6W7t1A9b9L8a1X5a7F4s5E8";
 	/** Are passwords case sensitive? */
@@ -426,7 +426,8 @@ public final class Account implements UserSocketWatcher {
 	/**
 	 * Change the suspended setting for this account
 	 *
-	 * @param value true/false for new value of isSuspended
+         * @param value true/false for new value of isSuspended
+         * @param reason Reason for account suspension
 	 */
 	public void setSuspended(final boolean value, final String reason) {
 		accountOptions.setBoolProperty("suspended", value);
