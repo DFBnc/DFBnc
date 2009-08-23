@@ -1,8 +1,4 @@
-
-
-# /src/
-/src/DFBnc.conf
-
-# /src/com/dmdirc/
-
-# /src/uk/org/dataforce/
+DFBnc.conf
+nbproject/private
+dist
+build
