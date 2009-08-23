@@ -8,7 +8,9 @@
                 <root id="src.dir" name="Main Source"/>
                 <root id="src.src.dir" name="IRCParser Source"/>
             </source-roots>
-            <test-roots/>
+            <test-roots>
+                <root id="test.test.dir"/>
+            </test-roots>
         </data>
     </configuration>
 </project>
