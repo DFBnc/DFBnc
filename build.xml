@@ -20,7 +20,8 @@
 	<property name="build.dir" value="build"/>
 	<property name="build.classes.dir" value="${build.dir}/classes"/>
 	<property name="build.classes.excludes" value="**/*.java,**/*.sh"/>
-	<property name="src.dir" value="src"/>
+	<property name="main.src.dir" value="src"/>
+	<property name="parser.src.dir" value="modules/parser/src" />
 	<property name="javac.classpath" value=""/>
 	<property name="javac.compilerargs" value="-Xlint:all"/>
 	<property name="javac.deprecation" value="true"/>
@@ -42,13 +43,27 @@
 	<!--
 	  Initialisation
 	  -->
-	<target name="init" description="Initialisation">
+	<target name="init" depends="submodules" description="Initialisation">
 		<mkdir dir="${build.classes.dir}"/>
 		<mkdir dir="${test.build.classes.dir}"/>
 		<mkdir dir="${test.results.dir}"/>
 		<mkdir dir="${test.reports}"/>
 		<mkdir dir="${javadoc.dir}"/>
 		<mkdir dir="${dist.dir}"/>
+	</target>
+	
+	<!--
+	  Make sure submodules are up to date.
+	  -->
+	<target name="submodules">
+		<exec executable="git">
+			<arg value="submodule"/>
+			<arg value="init"/>
+		</exec>
+		<exec executable="git">
+			<arg value="submodule"/>
+			<arg value="update"/>
+		</exec>
 	</target>
 	
 	<!--
@@ -105,7 +120,7 @@
 	  Compile
 	  -->
 	<target name="compile" depends="init" description="Compile Project">
-		<javac srcdir="${src.dir}" destdir="${build.classes.dir}" deprecation="${javac.deprecation}" source="${javac.source}" target="${javac.target}" includeantruntime="false" debug="${javac.debug}">
+		<javac srcdir="${main.src.dir}:${parser.src.dir}" destdir="${build.classes.dir}" deprecation="${javac.deprecation}" source="${javac.source}" target="${javac.target}" includeantruntime="false" debug="${javac.debug}">
 			<classpath>
 				<path path="${javac.classpath}"/>
 			</classpath>
@@ -113,7 +128,8 @@
 		</javac>
 		
 		<copy todir="${build.classes.dir}">
-			<fileset dir="${src.dir}" excludes="${build.classes.excludes}"/>
+			<fileset dir="${main.src.dir}" excludes="${build.classes.excludes}"/>
+			<fileset dir="${parser.src.dir}" excludes="${build.classes.excludes}"/>
 		</copy>
 	</target>
 	
@@ -148,10 +164,13 @@
 				<path path="${javac.classpath}"/>
 			</classpath>
 			<sourcepath>
-				<pathelement location="${src.dir}"/>
+				<pathelement location="${main.src.dir}"/>
+				<pathelement location="${parser.src.dir}"/>
 			</sourcepath>
-			<packageset dir="${src.dir}" includes="*/**"/>
-			<fileset dir="${src.dir}" includes="*.java"/>
+			<packageset dir="${main.src.dir}" includes="*/**"/>
+			<fileset dir="${main.src.dir}" includes="*.java"/>
+			<packageset dir="${parser.src.dir}" includes="*/**"/>
+			<fileset dir="${parser.src.dir}" includes="*.java"/>
 		</javadoc>
 	</target>
 	
