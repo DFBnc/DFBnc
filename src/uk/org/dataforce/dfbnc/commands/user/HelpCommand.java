@@ -36,71 +36,71 @@ import java.util.ArrayList;
  * This file represents the 'Help' command
  */
 public class HelpCommand extends Command {
-	/**
-	 * Handle a Help command.
-	 *
-	 * @param user the UserSocket that performed this command
-	 * @param params Params for command (param 0 is the command name)
-	 */
-	@Override
-	public void handle(final UserSocket user, final String[] params) {
-	
-		final String command = (params.length > 1) ? params[1] : "";
-	
-		if (!command.equals("")) {
-			if (user.getAccount() != null) {
-				try {
-					final Command cmd = user.getAccount().getCommandManager().getCommand(params[0]);
-					final String[] help = cmd.getHelp(params);
-					if (help != null) {
-						for (String line : help) {
-							user.sendBotMessage(line);
-						}
-					} else {
-						user.sendBotMessage("The command '%s' has no detailed help available.", params[1]);
-					}
-				} catch (CommandNotFoundException e) {
-					user.sendBotMessage("The command '%s' does not exist.", params[1]);
-				}
-			}
-		} else {
-			user.sendBotMessage("You need to specify a command to get help for");
-		}
-	}
-	
-	/**
-	 * What does this Command handle.
-	 *
-	 * @return String[] with the names of the tokens we handle.
-	 */
-	@Override
-	public String[] handles() {
-		return new String[]{"help"};
-	}
-	
-	/**
-	 * Get a description of what this command does
-	 *
-	 * @param command The command to describe (incase one Command does multiple
-	 *                things under different names)
-	 * @return A description of what this command does
-	 */
-	@Override
-	public String getDescription(final String command) {
-		return "This command shows more detailed help for commands";
-	}
-	
-	/**
-	 * Create a new instance of the Command Object
-	 *
-	 * @param manager CommandManager that is in charge of this Command
-	 */
-	public HelpCommand (final CommandManager manager) { super(manager); }
-	
-	/**
-	 * Get SVN Version information.
-	 *
-	 * @return SVN Version String
-	 */
-	public static String getSvnInfo () { return "$Id: Process001.java 1508 2007-06-11 20:08:12Z ShaneMcC $"; }	
+    /**
+     * Handle a Help command.
+     *
+     * @param user the UserSocket that performed this command
+     * @param params Params for command (param 0 is the command name)
+     */
+    @Override
+    public void handle(final UserSocket user, final String[] params) {
+    
+        final String command = (params.length > 1) ? params[1] : "";
+    
+        if (!command.equals("")) {
+            if (user.getAccount() != null) {
+                try {
+                    final Command cmd = user.getAccount().getCommandManager().getCommand(params[0]);
+                    final String[] help = cmd.getHelp(params);
+                    if (help != null) {
+                        for (String line : help) {
+                            user.sendBotMessage(line);
+                        }
+                    } else {
+                        user.sendBotMessage("The command '%s' has no detailed help available.", params[1]);
+                    }
+                } catch (CommandNotFoundException e) {
+                    user.sendBotMessage("The command '%s' does not exist.", params[1]);
+                }
+            }
+        } else {
+            user.sendBotMessage("You need to specify a command to get help for, try 'showcommands' to see all the commands");
+        }
+    }
+    
+    /**
+     * What does this Command handle.
+     *
+     * @return String[] with the names of the tokens we handle.
+     */
+    @Override
+    public String[] handles() {
+        return new String[]{"help"};
+    }
+    
+    /**
+     * Get a description of what this command does
+     *
+     * @param command The command to describe (incase one Command does multiple
+     *                things under different names)
+     * @return A description of what this command does
+     */
+    @Override
+    public String getDescription(final String command) {
+        return "This command shows more detailed help for commands";
+    }
+    
+    /**
+     * Create a new instance of the Command Object
+     *
+     * @param manager CommandManager that is in charge of this Command
+     */
+    public HelpCommand (final CommandManager manager) { super(manager); }
+    
+    /**
+     * Get SVN Version information.
+     *
+     * @return SVN Version String
+     */
+    public static String getSvnInfo () { return "$Id: Process001.java 1508 2007-06-11 20:08:12Z ShaneMcC $"; }    
 }

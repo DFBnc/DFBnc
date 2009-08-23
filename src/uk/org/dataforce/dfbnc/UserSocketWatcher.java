@@ -27,19 +27,19 @@ package uk.org.dataforce.dfbnc;
  * This file represents a file that wants to know about changes with UserSockets
  */
 public interface UserSocketWatcher {
-	/**
-	 * Called when a new UserSocket is opened on an account that this class is
-	 * linked to.
-	 *
-	 * @param user UserSocket for user
-	 */
-	public void userConnected(final UserSocket user);
-	
-	/**
-	 * Called when a UserSocket is closed on an account that this class is
-	 * linked to.
-	 *
-	 * @param user UserSocket for user
-	 */
-	public void userDisconnected(final UserSocket user);
+    /**
+     * Called when a new UserSocket is opened on an account that this class is
+     * linked to.
+     *
+     * @param user UserSocket for user
+     */
+    public void userConnected(final UserSocket user);
+    
+    /**
+     * Called when a UserSocket is closed on an account that this class is
+     * linked to.
+     *
+     * @param user UserSocket for user
+     */
+    public void userDisconnected(final UserSocket user);
 }

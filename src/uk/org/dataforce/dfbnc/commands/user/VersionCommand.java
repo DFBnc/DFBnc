@@ -32,50 +32,50 @@ import uk.org.dataforce.dfbnc.DFBnc;
  * This file represents the 'version' command
  */
 public class VersionCommand extends Command {
-	/**
-	 * Handle a version command.
-	 *
-	 * @param user the UserSocket that performed this command
-	 * @param params Params for command (param 0 is the command name)
-	 */
-	@Override
-	public void handle(final UserSocket user, final String[] params) {
-		user.sendBotMessage("This is %s", DFBnc.VERSION);
-	}
-	
-	/**
-	 * What does this Command handle.
-	 *
-	 * @return String[] with the names of the tokens we handle.
-	 */
-	@Override
-	public String[] handles() {
-		return new String[]{"version"};
-	}
-	
-	/**
-	 * Create a new instance of the Command Object
-	 *
-	 * @param manager CommandManager that is in charge of this Command
-	 */
-	public VersionCommand (final CommandManager manager) { super(manager); }
-	
-	/**
-	 * Get a description of what this command does
-	 *
-	 * @param command The command to describe (incase one Command does multiple
-	 *                things under different names)
-	 * @return A description of what this command does
-	 */
-	@Override
-	public String getDescription(final String command) {
-		return "This command tells you what version of dfbnc you are running";
-	}
-	
-	/**
-	 * Get SVN Version information.
-	 *
-	 * @return SVN Version String
-	 */
-	public static String getSvnInfo () { return "$Id: Process001.java 1508 2007-06-11 20:08:12Z ShaneMcC $"; }	
+    /**
+     * Handle a version command.
+     *
+     * @param user the UserSocket that performed this command
+     * @param params Params for command (param 0 is the command name)
+     */
+    @Override
+    public void handle(final UserSocket user, final String[] params) {
+        user.sendBotMessage("This is %s", DFBnc.VERSION);
+    }
+    
+    /**
+     * What does this Command handle.
+     *
+     * @return String[] with the names of the tokens we handle.
+     */
+    @Override
+    public String[] handles() {
+        return new String[]{"version"};
+    }
+    
+    /**
+     * Create a new instance of the Command Object
+     *
+     * @param manager CommandManager that is in charge of this Command
+     */
+    public VersionCommand (final CommandManager manager) { super(manager); }
+    
+    /**
+     * Get a description of what this command does
+     *
+     * @param command The command to describe (incase one Command does multiple
+     *                things under different names)
+     * @return A description of what this command does
+     */
+    @Override
+    public String getDescription(final String command) {
+        return "This command tells you what version of dfbnc you are running";
+    }
+    
+    /**
+     * Get SVN Version information.
+     *
+     * @return SVN Version String
+     */
+    public static String getSvnInfo () { return "$Id: Process001.java 1508 2007-06-11 20:08:12Z ShaneMcC $"; }    
 }

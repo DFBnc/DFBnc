@@ -27,20 +27,20 @@ package uk.org.dataforce.dfbnc;
  * This file represents an UnableToConnectException
  */
 public class UnableToConnectException extends Exception {
-	/**
-	 * A version number for this class.
-	 * It should be changed whenever the class structure is changed (or anything
-	 * else that would prevent serialized objects being unserialized with the new 
-	 * class).
-	 */
-	private static final long serialVersionUID = 200711091;
-	
-	/**
-	 * Create a new UnableToConnectException
-	 *
-	 * @param message Message for exception
-	 */
-	public UnableToConnectException (final String message) {
-		super(message);
-	}
+    /**
+     * A version number for this class.
+     * It should be changed whenever the class structure is changed (or anything
+     * else that would prevent serialized objects being unserialized with the new 
+     * class).
+     */
+    private static final long serialVersionUID = 200711091;
+    
+    /**
+     * Create a new UnableToConnectException
+     *
+     * @param message Message for exception
+     */
+    public UnableToConnectException (final String message) {
+        super(message);
+    }
 }

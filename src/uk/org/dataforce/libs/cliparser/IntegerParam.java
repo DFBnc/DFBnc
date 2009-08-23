@@ -28,52 +28,52 @@ package uk.org.dataforce.libs.cliparser;
  * Command Line argument type.
  */
 public class IntegerParam extends CLIParam {
-	/** The value of this param. */
-	private int myValue = 0;
-	
-	/**
-	 * Create a new IntegerParam.
-	 *
-	 * @param chr Single Character flag for this param.
-	 * @param str String flag for this param.
-	 * @param desc Description of this flag.
-	 */
-	public IntegerParam(final char chr, final String str, final String desc) {
-		super(chr, str, desc);
-	}
-	
-	/**
-	 * Set the value of this param to the value given by a string.
-	 *
-	 * @param value String taken from command line to use as value.
-	 * @return true if value was valid, else false.
-	 */
-	@Override
-	public boolean setValue(final String value) {
-		try {
-			myValue = Integer.parseInt(value);
-			return true;
-		} catch (NumberFormatException nfe) {
-			return false;
-		}
-	}
-	
-	/**
-	 * Get the value of this param.
-	 *
-	 * @return Value of this parameter
-	 */
-	public int getValue() {
-		return myValue;
-	}
-	
-	/**
-	 * Return the value of this param as a string.
-	 *
-	 * @return The value of this param as a string.
-	 */
-	@Override
-	public String getStringValue() {
-		return ""+getValue();
-	}
+    /** The value of this param. */
+    private int myValue = 0;
+    
+    /**
+     * Create a new IntegerParam.
+     *
+     * @param chr Single Character flag for this param.
+     * @param str String flag for this param.
+     * @param desc Description of this flag.
+     */
+    public IntegerParam(final char chr, final String str, final String desc) {
+        super(chr, str, desc);
+    }
+    
+    /**
+     * Set the value of this param to the value given by a string.
+     *
+     * @param value String taken from command line to use as value.
+     * @return true if value was valid, else false.
+     */
+    @Override
+    public boolean setValue(final String value) {
+        try {
+            myValue = Integer.parseInt(value);
+            return true;
+        } catch (NumberFormatException nfe) {
+            return false;
+        }
+    }
+    
+    /**
+     * Get the value of this param.
+     *
+     * @return Value of this parameter
+     */
+    public int getValue() {
+        return myValue;
+    }
+    
+    /**
+     * Return the value of this param as a string.
+     *
+     * @return The value of this param as a string.
+     */
+    @Override
+    public String getStringValue() {
+        return ""+getValue();
+    }
 }

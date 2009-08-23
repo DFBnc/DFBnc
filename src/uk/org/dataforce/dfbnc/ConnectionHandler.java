@@ -27,34 +27,34 @@ package uk.org.dataforce.dfbnc;
  * This file represents a ConnectionHandler
  */
 public interface ConnectionHandler {
-	/**
-	 * Shutdown this ConnectionHandler
-	 *
-	 * @param reason Reason for the Shutdown
-	 */
-	public void shutdown(final String reason);
-	
-	/**
-	 * Get the users host on this connection
-	 *
-	 * @return The users host on this connect
-	 */
-	public String getMyHost();
-	
-	/**
-	 * Called when data is recieved on the user socket.
-	 *
-	 * @param user The socket that the data arrived on
-	 * @param data Un-tokenised version of the Data that was recieved
-	 * @param line IRC-Tokenised version of the Data that was recieved
-	 */
-	public void dataRecieved(final UserSocket user, final String data, final String[] line);
-	
-	/**
-	 * Servername to use in sendIRCLine and Bot SNOTICEs as an alternative to
-	 * Functions.getServerName() or null if no change.
-	 *
-	 * @return servername to use.
-	 */
-	public String getServerName();
+    /**
+     * Shutdown this ConnectionHandler
+     *
+     * @param reason Reason for the Shutdown
+     */
+    public void shutdown(final String reason);
+    
+    /**
+     * Get the users host on this connection
+     *
+     * @return The users host on this connect
+     */
+    public String getMyHost();
+    
+    /**
+     * Called when data is recieved on the user socket.
+     *
+     * @param user The socket that the data arrived on
+     * @param data Un-tokenised version of the Data that was recieved
+     * @param line IRC-Tokenised version of the Data that was recieved
+     */
+    public void dataRecieved(final UserSocket user, final String data, final String[] line);
+    
+    /**
+     * Servername to use in sendIRCLine and Bot SNOTICEs as an alternative to
+     * Functions.getServerName() or null if no change.
+     *
+     * @return servername to use.
+     */
+    public String getServerName();
 }

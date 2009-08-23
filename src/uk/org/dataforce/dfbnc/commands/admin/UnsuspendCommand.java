@@ -33,66 +33,66 @@ import uk.org.dataforce.dfbnc.Account;
  * This file represents the 'Unsuspend' command
  */
 public class UnsuspendCommand extends Command {
-	/**
-	 * Handle an Unsuspend command.
-	 *
-	 * @param user the UserSocket that performed this command
-	 * @param params Params for command (param 0 is the command name)
-	 */
-	@Override
-	public void handle(final UserSocket user, final String[] params) {
-		if (params.length == 1) {
-			user.sendBotMessage("You need to specify a username to unsuspend.");
-		} else {
-			final String account = params[1];
-			if (!Account.exists(account)) {
-				user.sendBotMessage("No account with the name '%s' exists.", account);
-			} else {
-				final Account acc = Account.get(account);
-				if (!acc.isSuspended()) {
-					user.sendBotMessage("The Account '%s' is not suspended.", account);
-				} else {
-					user.sendBotMessage("Unsuspending Account '%s'..", account);
-					acc.setSuspended(false, null);
-					user.sendBotMessage("Account unsuspended.");
-				}
-			}
-		}
-	}
-	
-	/**
-	 * What does this Command handle.
-	 *
-	 * @return String[] with the names of the tokens we handle.
-	 */
-	@Override
-	public String[] handles() {
-		return new String[]{"unsuspend"};
-	}
-	
-	/**
-	 * Create a new instance of the Command Object
-	 *
-	 * @param manager CommandManager that is in charge of this Command
-	 */
-	public UnsuspendCommand (final CommandManager manager) { super(manager); }
-	
-	/**
-	 * Get a description of what this command does
-	 *
-	 * @param command The command to describe (incase one Command does multiple
-	 *                things under different names)
-	 * @return A description of what this command does
-	 */
-	@Override
-	public String getDescription(final String command) {
-		return "This command will let you unsuspend a user on the BNC";
-	}
-	
-	/**
-	 * Get SVN Version information.
-	 *
-	 * @return SVN Version String
-	 */
-	public static String getSvnInfo () { return "$Id: Process001.java 1508 2007-06-11 20:08:12Z ShaneMcC $"; }	
+    /**
+     * Handle an Unsuspend command.
+     *
+     * @param user the UserSocket that performed this command
+     * @param params Params for command (param 0 is the command name)
+     */
+    @Override
+    public void handle(final UserSocket user, final String[] params) {
+        if (params.length == 1) {
+            user.sendBotMessage("You need to specify a username to unsuspend.");
+        } else {
+            final String account = params[1];
+            if (!Account.exists(account)) {
+                user.sendBotMessage("No account with the name '%s' exists.", account);
+            } else {
+                final Account acc = Account.get(account);
+                if (!acc.isSuspended()) {
+                    user.sendBotMessage("The Account '%s' is not suspended.", account);
+                } else {
+                    user.sendBotMessage("Unsuspending Account '%s'..", account);
+                    acc.setSuspended(false, null);
+                    user.sendBotMessage("Account unsuspended.");
+                }
+            }
+        }
+    }
+    
+    /**
+     * What does this Command handle.
+     *
+     * @return String[] with the names of the tokens we handle.
+     */
+    @Override
+    public String[] handles() {
+        return new String[]{"unsuspend"};
+    }
+    
+    /**
+     * Create a new instance of the Command Object
+     *
+     * @param manager CommandManager that is in charge of this Command
+     */
+    public UnsuspendCommand (final CommandManager manager) { super(manager); }
+    
+    /**
+     * Get a description of what this command does
+     *
+     * @param command The command to describe (incase one Command does multiple
+     *                things under different names)
+     * @return A description of what this command does
+     */
+    @Override
+    public String getDescription(final String command) {
+        return "This command will let you unsuspend a user on the BNC";
+    }
+    
+    /**
+     * Get SVN Version information.
+     *
+     * @return SVN Version String
+     */
+    public static String getSvnInfo () { return "$Id: Process001.java 1508 2007-06-11 20:08:12Z ShaneMcC $"; }    
 }

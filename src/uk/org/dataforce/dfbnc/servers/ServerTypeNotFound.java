@@ -31,25 +31,25 @@ package uk.org.dataforce.dfbnc.servers;
  * @version $Id: ProcessorNotFound.java 1320 2007-05-21 09:53:01Z ShaneMcC $
  */
 public class ServerTypeNotFound extends Exception {
-	/**
-	 * A version number for this class.
-	 * It should be changed whenever the class structure is changed (or anything
-	 * else that would prevent serialized objects being unserialized with the new
-	 * class).
-	 */
-	private static final long serialVersionUID = 1;
-	
-	/**
-	 * Create a new ServerTypeNotFound Exception.
-	 *
-	 * @param message Reason for exception
-	 */
-	public ServerTypeNotFound(String message) { super(message); }
-	
-	/**
-	 * Get SVN Version information.
-	 *
-	 * @return SVN Version String
-	 */
-	public static String getSvnInfo () { return "$Id: ServerTypeNotFound.java 1320 2007-05-21 09:53:01Z ShaneMcC $"; }	
+    /**
+     * A version number for this class.
+     * It should be changed whenever the class structure is changed (or anything
+     * else that would prevent serialized objects being unserialized with the new
+     * class).
+     */
+    private static final long serialVersionUID = 1;
+    
+    /**
+     * Create a new ServerTypeNotFound Exception.
+     *
+     * @param message Reason for exception
+     */
+    public ServerTypeNotFound(String message) { super(message); }
+    
+    /**
+     * Get SVN Version information.
+     *
+     * @return SVN Version String
+     */
+    public static String getSvnInfo () { return "$Id: ServerTypeNotFound.java 1320 2007-05-21 09:53:01Z ShaneMcC $"; }    
 }

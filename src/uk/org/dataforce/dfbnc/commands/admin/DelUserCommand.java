@@ -33,70 +33,70 @@ import uk.org.dataforce.dfbnc.Account;
  * This file represents the 'DelUser' command
  */
 public class DelUserCommand extends Command {
-	/**
-	 * Handle a DelUser command.
-	 *
-	 * @param user the UserSocket that performed this command
-	 * @param params Params for command (param 0 is the command name)
-	 */
-	@Override
-	public void handle(final UserSocket user, final String[] params) {
-		if (params.length == 1) {
-			user.sendBotMessage("You need to specify a username to delete.");
-		} else {
-			final String account = params[1];
-			if (Account.exists(account)) {
-				if (params.length == 2) {
-					final String deleteCode = Account.makePassword(15);
-					Account.get(account).setDeleteCode(deleteCode);
-					user.sendBotMessage("Deleting an account will remove all settings for the account.");
-					user.sendBotMessage("Are you sure you want to continue?");
-					user.sendBotMessage("To continue please enter /dfbnc -BNC %s %s %s", params[0], account, deleteCode);
-				} else if (!params[2].equals(Account.get(account).getDeleteCode())) {
-					user.sendBotMessage("Invalid Delete code specified.");
-				} else {
-					user.sendBotMessage("Deleting account '%s'", account);
-					Account.get(account).delete();
-				}
-			} else {
-				user.sendBotMessage("An account with the name '%s' does not exist.", account);
-			}
-		}
-	}
-	
-	/**
-	 * What does this Command handle.
-	 *
-	 * @return String[] with the names of the tokens we handle.
-	 */
-	@Override
-	public String[] handles() {
-		return new String[]{"deluser"};
-	}
-	
-	/**
-	 * Create a new instance of the Command Object
-	 *
-	 * @param manager CommandManager that is in charge of this Command
-	 */
-	public DelUserCommand (final CommandManager manager) { super(manager); }
-	
-	/**
-	 * Get a description of what this command does
-	 *
-	 * @param command The command to describe (incase one Command does multiple
-	 *                things under different names)
-	 * @return A description of what this command does
-	 */
-	@Override
-	public String getDescription(final String command) {
-		return "This command will let you delete a user from the BNC";
-	}
-	
-	/**
-	 * Get SVN Version information.
-	 *
-	 * @return SVN Version String
-	 */
-	public static String getSvnInfo () { return "$Id: Process001.java 1508 2007-06-11 20:08:12Z ShaneMcC $"; }	
+    /**
+     * Handle a DelUser command.
+     *
+     * @param user the UserSocket that performed this command
+     * @param params Params for command (param 0 is the command name)
+     */
+    @Override
+    public void handle(final UserSocket user, final String[] params) {
+        if (params.length == 1) {
+            user.sendBotMessage("You need to specify a username to delete.");
+        } else {
+            final String account = params[1];
+            if (Account.exists(account)) {
+                if (params.length == 2) {
+                    final String deleteCode = Account.makePassword(15);
+                    Account.get(account).setDeleteCode(deleteCode);
+                    user.sendBotMessage("Deleting an account will remove all settings for the account.");
+                    user.sendBotMessage("Are you sure you want to continue?");
+                    user.sendBotMessage("To continue please enter /dfbnc -BNC %s %s %s", params[0], account, deleteCode);
+                } else if (!params[2].equals(Account.get(account).getDeleteCode())) {
+                    user.sendBotMessage("Invalid Delete code specified.");
+                } else {
+                    user.sendBotMessage("Deleting account '%s'", account);
+                    Account.get(account).delete();
+                }
+            } else {
+                user.sendBotMessage("An account with the name '%s' does not exist.", account);
+            }
+        }
+    }
+    
+    /**
+     * What does this Command handle.
+     *
+     * @return String[] with the names of the tokens we handle.
+     */
+    @Override
+    public String[] handles() {
+        return new String[]{"deluser"};
+    }
+    
+    /**
+     * Create a new instance of the Command Object
+     *
+     * @param manager CommandManager that is in charge of this Command
+     */
+    public DelUserCommand (final CommandManager manager) { super(manager); }
+    
+    /**
+     * Get a description of what this command does
+     *
+     * @param command The command to describe (incase one Command does multiple
+     *                things under different names)
+     * @return A description of what this command does
+     */
+    @Override
+    public String getDescription(final String command) {
+        return "This command will let you delete a user from the BNC";
+    }
+    
+    /**
+     * Get SVN Version information.
+     *
+     * @return SVN Version String
+     */
+    public static String getSvnInfo () { return "$Id: Process001.java 1508 2007-06-11 20:08:12Z ShaneMcC $"; }    
 }

@@ -29,18 +29,18 @@ import uk.org.dataforce.dfbnc.DFBnc;
  * Shutdown hook.
  */
 public class ShutdownHook extends Thread {
-	/** The DFBnc instance that this ShutdownHook is for. */
-	private final DFBnc myBnc;
-	
-	/** Create the Shutdown Hook */
-	public ShutdownHook(final DFBnc bnc) {
-		myBnc = bnc;
-	}
-	
-	/**
-	 * What todo when shutting down
-	 */
-	public void run() {
-		myBnc.shutdown();
-	}
+    /** The DFBnc instance that this ShutdownHook is for. */
+    private final DFBnc myBnc;
+    
+    /** Create the Shutdown Hook */
+    public ShutdownHook(final DFBnc bnc) {
+        myBnc = bnc;
+    }
+    
+    /**
+     * What todo when shutting down
+     */
+    public void run() {
+        myBnc.shutdown();
+    }
 }

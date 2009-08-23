@@ -33,86 +33,86 @@ import uk.org.dataforce.dfbnc.UnableToConnectException;
  * This file represents the '[re|dis|]connect'  commands
  */
 public class ConnectCommand extends Command {
-	/**
-	 * Handle a Connect command.
-	 *
-	 * @param user the UserSocket that performed this command
-	 * @param params Params for command (param 0 is the command name)
-	 */
-	@Override
-	public void handle(final UserSocket user, final String[] params) {
-		user.sendBotMessage("----------------");
-		if (!params[0].equalsIgnoreCase("connect")) {
-			user.sendBotMessage("Disconnecting...");
-			if (user.getAccount().getConnectionHandler() == null) {
-				user.sendBotMessage("Not connected!");
-			} else {
-				String reason = "BNC Disconnecting";
-				if (params.length > 1) {
-					StringBuilder sb = new StringBuilder();
-					for (int i = 1; i < params.length; ++i) { sb.append(params[i]+" "); }
-					reason = sb.toString().trim();
-				} else if (params[0].equalsIgnoreCase("reconnect")) {
-					reason = "Reconnecting";
-				}
-				user.getAccount().getConnectionHandler().shutdown(reason);
-				user.getAccount().setConnectionHandler(null);
-			}
-			if (!params[0].equalsIgnoreCase("reconnect")) { return; }
-		}
-		
-		if (user.getAccount().getConnectionHandler() == null) {
-			user.sendBotMessage("Connecting...");
-			try {
-				IRCConnectionHandler handler = new IRCConnectionHandler(user, -1);
-				user.getAccount().setConnectionHandler(handler);
-			} catch (UnableToConnectException utce) {
-				user.sendBotMessage("There was an error connecting: "+utce.getMessage());
-			}
-		} else {
-			user.sendBotMessage("Already connected.");
-		}
-	}
-	
-	/**
-	 * What does this Command handle.
-	 *
-	 * @return String[] with the names of the tokens we handle.
-	 */
-	@Override
-	public String[] handles() {
-		return new String[]{"connect", "reconnect", "disconnect", "quit"};
-	}
-	
-	/**
-	 * Create a new instance of the Command Object
-	 *
-	 * @param manager CommandManager that is in charge of this Command
-	 */
-	public ConnectCommand (final CommandManager manager) { super(manager); }
-	
-	/**
-	 * Get a description of what this command does
-	 *
-	 * @param command The command to describe (incase one Command does multiple
-	 *                things under different names)
-	 * @return A description of what this command does
-	 */
-	@Override
-	public String getDescription(final String command) {
-		if (command.equalsIgnoreCase("reconnect")) {
-			return "This command lets you disconnect the current session, then reconnect";
-		} else if (command.equalsIgnoreCase("disconnect") || command.equalsIgnoreCase("quit")) {
-			return "This command lets you disconnect the current session";
-		} else {
-			return "This command lets you connect to an IRC Server if not already connected";
-		}
-	}
-	
-	/**
-	 * Get SVN information.
-	 *
-	 * @return SVN Info String
-	 */
-	public static String getSvnInfo () { return "$Id: Process001.java 1508 2007-06-11 20:08:12Z ShaneMcC $"; }	
+    /**
+     * Handle a Connect command.
+     *
+     * @param user the UserSocket that performed this command
+     * @param params Params for command (param 0 is the command name)
+     */
+    @Override
+    public void handle(final UserSocket user, final String[] params) {
+        user.sendBotMessage("----------------");
+        if (!params[0].equalsIgnoreCase("connect")) {
+            user.sendBotMessage("Disconnecting...");
+            if (user.getAccount().getConnectionHandler() == null) {
+                user.sendBotMessage("Not connected!");
+            } else {
+                String reason = "BNC Disconnecting";
+                if (params.length > 1) {
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 1; i < params.length; ++i) { sb.append(params[i]+" "); }
+                    reason = sb.toString().trim();
+                } else if (params[0].equalsIgnoreCase("reconnect")) {
+                    reason = "Reconnecting";
+                }
+                user.getAccount().getConnectionHandler().shutdown(reason);
+                user.getAccount().setConnectionHandler(null);
+            }
+            if (!params[0].equalsIgnoreCase("reconnect")) { return; }
+        }
+        
+        if (user.getAccount().getConnectionHandler() == null) {
+            user.sendBotMessage("Connecting...");
+            try {
+                IRCConnectionHandler handler = new IRCConnectionHandler(user, -1);
+                user.getAccount().setConnectionHandler(handler);
+            } catch (UnableToConnectException utce) {
+                user.sendBotMessage("There was an error connecting: "+utce.getMessage());
+            }
+        } else {
+            user.sendBotMessage("Already connected.");
+        }
+    }
+    
+    /**
+     * What does this Command handle.
+     *
+     * @return String[] with the names of the tokens we handle.
+     */
+    @Override
+    public String[] handles() {
+        return new String[]{"connect", "reconnect", "disconnect", "*quit"};
+    }
+    
+    /**
+     * Create a new instance of the Command Object
+     *
+     * @param manager CommandManager that is in charge of this Command
+     */
+    public ConnectCommand (final CommandManager manager) { super(manager); }
+    
+    /**
+     * Get a description of what this command does
+     *
+     * @param command The command to describe (incase one Command does multiple
+     *                things under different names)
+     * @return A description of what this command does
+     */
+    @Override
+    public String getDescription(final String command) {
+        if (command.equalsIgnoreCase("reconnect")) {
+            return "This command lets you disconnect the current session, then reconnect";
+        } else if (command.equalsIgnoreCase("disconnect") || command.equalsIgnoreCase("quit")) {
+            return "This command lets you disconnect the current session";
+        } else {
+            return "This command lets you connect to an IRC Server if not already connected";
+        }
+    }
+    
+    /**
+     * Get SVN information.
+     *
+     * @return SVN Info String
+     */
+    public static String getSvnInfo () { return "$Id: Process001.java 1508 2007-06-11 20:08:12Z ShaneMcC $"; }    
 }

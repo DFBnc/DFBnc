@@ -37,155 +37,155 @@ import java.io.IOException;
  * This handles and redirects all incomming connections to UserSockets
  */
 public class ListenSocket implements Runnable {
-	/** Used to monitor the socket. */
-	private Selector selector = null;
-	/** My ServerSocketChannel. */
-	private ServerSocketChannel ssChannel = ServerSocketChannel.open();
-	/** Thread to run the listen socket under */	
-	private volatile Thread myThread = new Thread(this);
-	/** Is this an ssl listen socket */
-	private boolean isSSL;
+    /** Used to monitor the socket. */
+    private Selector selector = null;
+    /** My ServerSocketChannel. */
+    private ServerSocketChannel ssChannel = ServerSocketChannel.open();
+    /** Thread to run the listen socket under */    
+    private volatile Thread myThread = new Thread(this);
+    /** Is this an ssl listen socket */
+    private boolean isSSL;
 
-	/**
-	 * Create a new ListenSocket.
-	 *
-	 * @param listenhost Host/port to listen on (in format host:port)
-	 * @throws IOException if there is problems with the sockets.
-	 */
-	public ListenSocket(final String listenhost) throws IOException {
-		final String bits[] = listenhost.split(":");
-		if (bits.length > 1) {
-			try {
-				boolean ssl = false;
-				final int portNum;
-				if (bits[1].charAt(0) == '+') {
-					portNum = Integer.parseInt(bits[1].substring(1));
-					ssl = true;
-				} else {
-					portNum = Integer.parseInt(bits[1]);
-				}
-				setupSocket(bits[0], portNum, ssl);
-			} catch (NumberFormatException nfe) {
-				throw new IOException(bits[1]+" is not a valid port");
-			}
-		} else {
-			throw new IOException(listenhost+" is not a valid listenhost");
-		}
-	}
-	
-	
-	/**
-	 * Create a new ListenSocket.
-	 *
-	 * @param host Hostname to listen on
-	 * @param port Hostname to listen on
-	 * @throws IOException if there is problems with the sockets.
-	 */
-	public ListenSocket(final String host, final int port) throws IOException {
-		setupSocket(host, port, false);
-	}
-	
-	/**
-	 * Create a new ListenSocket.
-	 *
-	 * @param host Hostname to listen on
-	 * @param port Hostname to listen on
-	 * @param ssl True/false for ssl
-	 * @throws IOException if there is problems with the sockets.
-	 */
-	public ListenSocket(final String host, final int port, final boolean ssl) throws IOException {
-		setupSocket(host, port, ssl);
-	}
-	
-	/**
-	 * Setup the ListenSocket.
-	 *
-	 * @param host Hostname to listen on
-	 * @param port Hostname to listen on
-	 * @param ssl True/false for ssl
-	 * @throws IOException if there is problems with the sockets.
-	 */
-	private void setupSocket(final String host, final int port, final boolean ssl) throws IOException {
-		// Check that SSL settings are correct.
-		// If this throws any exceptions, we have a problem and shouldn't open
-		// the socket.
-		isSSL = ssl;
-		String portString = Integer.toString(port);
-		if (ssl) { portString = "+"+portString; }
-		
-		if (ssl) {
-			try { SecureSocket.getSSLContext(); }
-			catch (Exception e) {
-				Logger.error("Failed to open SSL Socket '"+host+":"+portString+"'");
-				Logger.error("Reason: "+e.getMessage());
-				throw new IOException("Unable to use SSL");
-			}
-		}
-		selector = Selector.open();
-		
-		ssChannel.configureBlocking(false);
-		ssChannel.socket().bind(new InetSocketAddress(host, port));
-		ssChannel.register(selector, SelectionKey.OP_ACCEPT);
-		myThread.setName("[ListenSocket "+host+":"+portString+"]");
-		myThread.start();
-		Logger.info("Listen Socket Opened: "+host+":"+portString);
-	}
-		
-	/**
-	 * Close the socket
-	 */
-	public synchronized void close() {
-		Logger.info("Listen Socket closing ("+myThread.getName()+")");
+    /**
+     * Create a new ListenSocket.
+     *
+     * @param listenhost Host/port to listen on (in format host:port)
+     * @throws IOException if there is problems with the sockets.
+     */
+    public ListenSocket(final String listenhost) throws IOException {
+        final String bits[] = listenhost.split(":");
+        if (bits.length > 1) {
+            try {
+                boolean ssl = false;
+                final int portNum;
+                if (bits[1].charAt(0) == '+') {
+                    portNum = Integer.parseInt(bits[1].substring(1));
+                    ssl = true;
+                } else {
+                    portNum = Integer.parseInt(bits[1]);
+                }
+                setupSocket(bits[0], portNum, ssl);
+            } catch (NumberFormatException nfe) {
+                throw new IOException(bits[1]+" is not a valid port");
+            }
+        } else {
+            throw new IOException(listenhost+" is not a valid listenhost");
+        }
+    }
+    
+    
+    /**
+     * Create a new ListenSocket.
+     *
+     * @param host Hostname to listen on
+     * @param port Hostname to listen on
+     * @throws IOException if there is problems with the sockets.
+     */
+    public ListenSocket(final String host, final int port) throws IOException {
+        setupSocket(host, port, false);
+    }
+    
+    /**
+     * Create a new ListenSocket.
+     *
+     * @param host Hostname to listen on
+     * @param port Hostname to listen on
+     * @param ssl True/false for ssl
+     * @throws IOException if there is problems with the sockets.
+     */
+    public ListenSocket(final String host, final int port, final boolean ssl) throws IOException {
+        setupSocket(host, port, ssl);
+    }
+    
+    /**
+     * Setup the ListenSocket.
+     *
+     * @param host Hostname to listen on
+     * @param port Hostname to listen on
+     * @param ssl True/false for ssl
+     * @throws IOException if there is problems with the sockets.
+     */
+    private void setupSocket(final String host, final int port, final boolean ssl) throws IOException {
+        // Check that SSL settings are correct.
+        // If this throws any exceptions, we have a problem and shouldn't open
+        // the socket.
+        isSSL = ssl;
+        String portString = Integer.toString(port);
+        if (ssl) { portString = "+"+portString; }
+        
+        if (ssl) {
+            try { SecureSocket.getSSLContext(); }
+            catch (Exception e) {
+                Logger.error("Failed to open SSL Socket '"+host+":"+portString+"'");
+                Logger.error("Reason: "+e.getMessage());
+                throw new IOException("Unable to use SSL");
+            }
+        }
+        selector = Selector.open();
+        
+        ssChannel.configureBlocking(false);
+        ssChannel.socket().bind(new InetSocketAddress(host, port));
+        ssChannel.register(selector, SelectionKey.OP_ACCEPT);
+        myThread.setName("[ListenSocket "+host+":"+portString+"]");
+        myThread.start();
+        Logger.info("Listen Socket Opened: "+host+":"+portString);
+    }
+        
+    /**
+     * Close the socket
+     */
+    public synchronized void close() {
+        Logger.info("Listen Socket closing ("+myThread.getName()+")");
 
-		// Kill the thread
-		Thread tmp = myThread;
-		myThread = null;
-		if (tmp != null) { tmp.interrupt(); }
-		
-		// Close the actual socket
-		try {
-			ssChannel.socket().close();
-		} catch (IOException e) { }
-	}
-		
-	/**
-	 * Used to actually do stuff!
-	 */
-	@Override
-	public void run() {
-		while (myThread == Thread.currentThread()) {
-			try {
-				int res = selector.select();
-				if (res == 0) {
-					try {
-						Thread.sleep(100);
-					} catch (InterruptedException ie) { }
-				}
-			} catch (IOException e) {
-				break;
-			}
+        // Kill the thread
+        Thread tmp = myThread;
+        myThread = null;
+        if (tmp != null) { tmp.interrupt(); }
+        
+        // Close the actual socket
+        try {
+            ssChannel.socket().close();
+        } catch (IOException e) { }
+    }
+        
+    /**
+     * Used to actually do stuff!
+     */
+    @Override
+    public void run() {
+        while (myThread == Thread.currentThread()) {
+            try {
+                int res = selector.select();
+                if (res == 0) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException ie) { }
+                }
+            } catch (IOException e) {
+                break;
+            }
 
-			Iterator it = selector.selectedKeys().iterator();
-			
-			while (it.hasNext()) {
-				SelectionKey selKey = (SelectionKey)it.next();
-				it.remove();
+            Iterator it = selector.selectedKeys().iterator();
+            
+            while (it.hasNext()) {
+                SelectionKey selKey = (SelectionKey)it.next();
+                it.remove();
 
-				if (selKey.isAcceptable()) {
-					ServerSocketChannel selChannel = (ServerSocketChannel)selKey.channel();
-					
-					try {
-						SocketChannel sChannel = selChannel.accept();
-						if (sChannel != null) {
-							Logger.info("Accepting new socket.");
-							UserSocket userSocket = new UserSocket(sChannel, isSSL);
-							userSocket.socketOpened();
-						}
-					} catch (IOException e) {
-						Logger.error("Unable to open UserSocket: "+e.getMessage());
-					}
-				}
-			}
-		}
-	}
+                if (selKey.isAcceptable()) {
+                    ServerSocketChannel selChannel = (ServerSocketChannel)selKey.channel();
+                    
+                    try {
+                        SocketChannel sChannel = selChannel.accept();
+                        if (sChannel != null) {
+                            Logger.info("Accepting new socket.");
+                            UserSocket userSocket = new UserSocket(sChannel, isSSL);
+                            userSocket.socketOpened();
+                        }
+                    } catch (IOException e) {
+                        Logger.error("Unable to open UserSocket: "+e.getMessage());
+                    }
+                }
+            }
+        }
+    }
 }

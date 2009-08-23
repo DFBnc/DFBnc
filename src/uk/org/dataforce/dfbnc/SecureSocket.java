@@ -44,76 +44,76 @@ import java.security.cert.CertificateException;
  * This defines a Secure (ssl) Socket.
  */
 public class SecureSocket extends SocketWrapper {
-	/** SSLEngine used for this socket */
-	private final SSLEngine sslEngine;
-	/** SSLContext in use by ssl sockets */
-	private static SSLContext sslContext = null;
-	
-	
-	/**
-	 * Get (and create if needed) a copy of the SSLContext we are using.
-	 *
-	 * @return SSLContext to use for new SSLEngines
-	 * @throws IllegalArgumentException If there is a problem with the config settings related to ssl
-	 * @throws KeyStoreException If there is a problem with the keystore
-	 * @throws FileNotFoundException If the keystore does not exist
-	 * @throws NoSuchAlgorithmException If there is a problem getting the right algorithm for the SSLContext
-	 * @throws KeyManagementException If there is a problem with the keystore
-	 * @throws UnrecoverableKeyException  If there is a problem with the key in the keystore
-	 * @throws IOException If there is a problem opening the keystore
-	 * @throws CertificateException If there is a problem with the keystore
-	 */
-	public static synchronized SSLContext getSSLContext() throws IllegalArgumentException, KeyStoreException, FileNotFoundException, NoSuchAlgorithmException, KeyManagementException, UnrecoverableKeyException, IOException, CertificateException {
-		if (sslContext == null) {
-			String storePassword =  Config.getOption("ssl", "storepass", "");
-			String keyPassword =  Config.getOption("ssl", "keypass", "");
-			String keyStore =  Config.getOption("ssl", "keystore", "");
-			
-			if (keyStore.isEmpty()) { throw new IllegalArgumentException("No keystore sepcified in config ('ssl.keystore')"); }
-			else if (keyPassword.isEmpty()) { throw new IllegalArgumentException("No key password sepcified in config ('ssl.keypass')"); }
-			else if (storePassword.isEmpty()) { throw new IllegalArgumentException("No keystore password sepcified in config ('ssl.storepass')"); }
-			
-			File keyFile = new File(keyStore);
-			if (!keyFile.exists()) { throw new FileNotFoundException("Keystore '"+keyStore+"' does not exist."); }
-			
-			// Load the keystore
-			KeyStore ks = KeyStore.getInstance("JKS");
-			ks.load(new FileInputStream(keyFile), storePassword.toCharArray());
-			
-			// Load the keymanager
-			KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-			kmf.init(ks, keyPassword.toCharArray());
-			
-			// Load the TrustManager
-			TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
-			tmf.init(ks);
-			
-			// Create an SSLContext
-			sslContext = SSLContext.getInstance("TLS");
-			sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), new SecureRandom());
-		}
+    /** SSLEngine used for this socket */
+    private final SSLEngine sslEngine;
+    /** SSLContext in use by ssl sockets */
+    private static SSLContext sslContext = null;
+    
+    
+    /**
+     * Get (and create if needed) a copy of the SSLContext we are using.
+     *
+     * @return SSLContext to use for new SSLEngines
+     * @throws IllegalArgumentException If there is a problem with the config settings related to ssl
+     * @throws KeyStoreException If there is a problem with the keystore
+     * @throws FileNotFoundException If the keystore does not exist
+     * @throws NoSuchAlgorithmException If there is a problem getting the right algorithm for the SSLContext
+     * @throws KeyManagementException If there is a problem with the keystore
+     * @throws UnrecoverableKeyException  If there is a problem with the key in the keystore
+     * @throws IOException If there is a problem opening the keystore
+     * @throws CertificateException If there is a problem with the keystore
+     */
+    public static synchronized SSLContext getSSLContext() throws IllegalArgumentException, KeyStoreException, FileNotFoundException, NoSuchAlgorithmException, KeyManagementException, UnrecoverableKeyException, IOException, CertificateException {
+        if (sslContext == null) {
+            String storePassword =  Config.getOption("ssl", "storepass", "");
+            String keyPassword =  Config.getOption("ssl", "keypass", "");
+            String keyStore =  Config.getOption("ssl", "keystore", "");
+            
+            if (keyStore.isEmpty()) { throw new IllegalArgumentException("No keystore sepcified in config ('ssl.keystore')"); }
+            else if (keyPassword.isEmpty()) { throw new IllegalArgumentException("No key password sepcified in config ('ssl.keypass')"); }
+            else if (storePassword.isEmpty()) { throw new IllegalArgumentException("No keystore password sepcified in config ('ssl.storepass')"); }
+            
+            File keyFile = new File(keyStore);
+            if (!keyFile.exists()) { throw new FileNotFoundException("Keystore '"+keyStore+"' does not exist."); }
+            
+            // Load the keystore
+            KeyStore ks = KeyStore.getInstance("JKS");
+            ks.load(new FileInputStream(keyFile), storePassword.toCharArray());
+            
+            // Load the keymanager
+            KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+            kmf.init(ks, keyPassword.toCharArray());
+            
+            // Load the TrustManager
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+            tmf.init(ks);
+            
+            // Create an SSLContext
+            sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), new SecureRandom());
+        }
 
-		return sslContext;
-	}
-	
-	/**
-	 * Create a new SecureSocket
-	 *
-	 * @param channel Channel to Wrap.
-	 * @param owner ConnectedSocket that owns this.
-	 * @throws IOException If there is a problem creating and setting up the socket
-	 */
-	public SecureSocket (final SocketChannel channel, final ConnectedSocket owner) throws IOException {
-		super(channel, owner);
-		
-		try {
-			sslEngine = getSSLContext().createSSLEngine();
-			sslEngine.setUseClientMode(false);
-			sslEngine.beginHandshake();
-		
-			myByteChannel = new SSLByteChannel(channel, sslEngine);
-		} catch (Exception e) {
-			throw new IOException("Error setting up SSL Socket: "+e.getMessage(), e);
-		}
-	}
+        return sslContext;
+    }
+    
+    /**
+     * Create a new SecureSocket
+     *
+     * @param channel Channel to Wrap.
+     * @param owner ConnectedSocket that owns this.
+     * @throws IOException If there is a problem creating and setting up the socket
+     */
+    public SecureSocket (final SocketChannel channel, final ConnectedSocket owner) throws IOException {
+        super(channel, owner);
+        
+        try {
+            sslEngine = getSSLContext().createSSLEngine();
+            sslEngine.setUseClientMode(false);
+            sslEngine.beginHandshake();
+        
+            myByteChannel = new SSLByteChannel(channel, sslEngine);
+        } catch (Exception e) {
+            throw new IOException("Error setting up SSL Socket: "+e.getMessage(), e);
+        }
+    }
 }

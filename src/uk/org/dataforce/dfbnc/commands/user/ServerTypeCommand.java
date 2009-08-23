@@ -28,102 +28,103 @@ import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.UserSocket;
 import uk.org.dataforce.dfbnc.DFBnc;
 import uk.org.dataforce.dfbnc.servers.ServerType;
+import uk.org.dataforce.dfbnc.servers.ServerTypeNotFound;
 
 /**
  * This file represents the 'ServerType' command
  */
 public class ServerTypeCommand extends Command {
-	/**
-	 * Handle a ServerType command.
-	 *
-	 * @param user the UserSocket that performed this command
-	 * @param params Params for command (param 0 is the command name)
-	 */
-	@Override
-	public void handle(final UserSocket user, final String[] params) {
-		if (params.length > 1 && params[1].equalsIgnoreCase("settype")) {
-			user.sendBotMessage("----------------");
-			if (params.length > 2) {
-				final ServerType currentType = user.getAccount().getServerType();
-				if (params[2].equalsIgnoreCase("none")) {
-					user.getAccount().getProperties().setProperty("servertype", "");
-					user.sendBotMessage("You now have no servertype.");
-					if (currentType != null) { currentType.deactivate(user.getAccount()); }
-				} else {
-					try {
-						ServerType serverType = DFBnc.getServerTypeManager().getServerType(params[2]);
-						if (currentType != null) { currentType.deactivate(user.getAccount()); }
-						serverType.activate(user.getAccount());
-						user.getAccount().getProperties().setProperty("servertype", params[2].toLowerCase());
-						user.sendBotMessage("Your ServerType is now "+params[2].toLowerCase()+".");
-					} catch (Exception e) {
-						user.sendBotMessage("Sorry, "+params[2]+" is not a valid ServerType");
-					}
-				}
-			} else {
-				user.sendBotMessage("Available Types:");
-				for (String server : DFBnc.getServerTypeManager().getServerTypeNames()) {
-					try {
-						ServerType serverType = DFBnc.getServerTypeManager().getServerType(server);
-						user.sendBotMessage("    "+server+" - "+serverType.getDescription());
-					} catch (Exception e) { /* Should never happen */}
-				}
-			}
-		} else if (params.length > 1 && params[1].equalsIgnoreCase("help")) {
-			user.sendBotMessage("----------------");
-			user.sendBotMessage("This command allows you to set the servertype for this account.");
-			final String currentType = user.getAccount().getProperties().getProperty("servertype", "");
-			if (currentType.equals("")) {
-				user.sendBotMessage("You currently do not have a servertype selected.");
-			} else {
-				String info = "";
-				final ServerType st = user.getAccount().getServerType();
-				if (st == null) {
-					info = " (Currently not available)";
-				}
-				user.sendBotMessage("Your current servertype is: "+currentType+info);
-			}
-			user.sendBotMessage("");
-			user.sendBotMessage("You can set your type using the command: /dfbnc "+params[0]+" settype <type>");
-			user.sendBotMessage("A list of available types can be seen by ommiting the <type> param");
-		} else {
-			user.sendBotMessage("For usage information use /dfbnc "+params[0]+" help");
-		}
-	}
-	
-	/**
-	 * What does this Command handle.
-	 *
-	 * @return String[] with the names of the tokens we handle.
-	 */
-	@Override
-	public String[] handles() {
-		return new String[]{"servertype", "st"};
-	}
-	
-	/**
-	 * Create a new instance of the Command Object
-	 *
-	 * @param manager CommandManager that is in charge of this Command
-	 */
-	public ServerTypeCommand (final CommandManager manager) { super(manager); }
-	
-	/**
-	 * Get a description of what this command does
-	 *
-	 * @param command The command to describe (incase one Command does multiple
-	 *                things under different names)
-	 * @return A description of what this command does
-	 */
-	@Override
-	public String getDescription(final String command) {
-		return "This command changes your ServerType";
-	}
-	
-	/**
-	 * Get SVN Version information.
-	 *
-	 * @return SVN Version String
-	 */
-	public static String getSvnInfo () { return "$Id: Process001.java 1508 2007-06-11 20:08:12Z ShaneMcC $"; }	
+    /**
+     * Handle a ServerType command.
+     *
+     * @param user the UserSocket that performed this command
+     * @param params Params for command (param 0 is the command name)
+     */
+    @Override
+    public void handle(final UserSocket user, final String[] params) {
+        if (params.length > 1 && params[1].equalsIgnoreCase("settype")) {
+            user.sendBotMessage("----------------");
+            if (params.length > 2) {
+                final ServerType currentType = user.getAccount().getServerType();
+                if (params[2].equalsIgnoreCase("none")) {
+                    user.getAccount().getProperties().setProperty("servertype", "");
+                    user.sendBotMessage("You now have no servertype.");
+                    if (currentType != null) { currentType.deactivate(user.getAccount()); }
+                } else {
+                    try {
+                        ServerType serverType = DFBnc.getServerTypeManager().getServerType(params[2]);
+                        if (currentType != null) { currentType.deactivate(user.getAccount()); }
+                        serverType.activate(user.getAccount());
+                        user.getAccount().getProperties().setProperty("servertype", params[2].toLowerCase());
+                        user.sendBotMessage("Your ServerType is now "+params[2].toLowerCase()+".");
+                    } catch (ServerTypeNotFound e) {
+                        user.sendBotMessage("Sorry, "+e);
+                    }
+                }
+            } else {
+                user.sendBotMessage("Available Types:");
+                for (String server : DFBnc.getServerTypeManager().getServerTypeNames()) {
+                    try {
+                        ServerType serverType = DFBnc.getServerTypeManager().getServerType(server);
+                        user.sendBotMessage("    "+server+" - "+serverType.getDescription());
+                    } catch (Exception e) { /* Should never happen */}
+                }
+            }
+        } else if (params.length > 1 && params[1].equalsIgnoreCase("help")) {
+            user.sendBotMessage("----------------");
+            user.sendBotMessage("This command allows you to set the servertype for this account.");
+            final String currentType = user.getAccount().getProperties().getProperty("servertype", "");
+            if (currentType.equals("")) {
+                user.sendBotMessage("You currently do not have a servertype selected.");
+            } else {
+                String info = "";
+                final ServerType st = user.getAccount().getServerType();
+                if (st == null) {
+                    info = " (Currently not available)";
+                }
+                user.sendBotMessage("Your current servertype is: "+currentType+info);
+            }
+            user.sendBotMessage("");
+            user.sendBotMessage("You can set your type using the command: /dfbnc "+params[0]+" settype <type>");
+            user.sendBotMessage("A list of available types can be seen by ommiting the <type> param");
+        } else {
+            user.sendBotMessage("For usage information use /dfbnc "+params[0]+" help");
+        }
+    }
+    
+    /**
+     * What does this Command handle.
+     *
+     * @return String[] with the names of the tokens we handle.
+     */
+    @Override
+    public String[] handles() {
+        return new String[]{"servertype", "*st"};
+    }
+    
+    /**
+     * Create a new instance of the Command Object
+     *
+     * @param manager CommandManager that is in charge of this Command
+     */
+    public ServerTypeCommand (final CommandManager manager) { super(manager); }
+    
+    /**
+     * Get a description of what this command does
+     *
+     * @param command The command to describe (incase one Command does multiple
+     *                things under different names)
+     * @return A description of what this command does
+     */
+    @Override
+    public String getDescription(final String command) {
+        return "This command changes your ServerType";
+    }
+    
+    /**
+     * Get SVN Version information.
+     *
+     * @return SVN Version String
+     */
+    public static String getSvnInfo () { return "$Id: Process001.java 1508 2007-06-11 20:08:12Z ShaneMcC $"; }    
 }

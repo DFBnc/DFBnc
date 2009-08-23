@@ -33,65 +33,65 @@ import uk.org.dataforce.dfbnc.Account;
  * This file represents the 'AddUser' command
  */
 public class AddUserCommand extends Command {
-	/**
-	 * Handle an AddUser command.
-	 *
-	 * @param user the UserSocket that performed this command
-	 * @param params Params for command (param 0 is the command name)
-	 */
-	@Override
-	public void handle(final UserSocket user, final String[] params) {
-		if (params.length == 1) {
-			user.sendBotMessage("You need to specify a username to add.");
-		} else {
-			final String account = params[1];
-			if (Account.exists(account)) {
-				user.sendBotMessage("An account with the name '%s' already exists.", account);
-			} else {
-				user.sendBotMessage("Creating account '%s'...", account);
-				final String password = Account.makePassword();
-				if (Account.createAccount(account, password) != null) {
-					user.sendBotMessage("Account created. Password has been set to '%s'", password);
-				} else {
-					user.sendBotMessage("There was an error creating the account.");
-				}
-			}
-		}
-	}
-	
-	/**
-	 * What does this Command handle.
-	 *
-	 * @return String[] with the names of the tokens we handle.
-	 */
-	@Override
-	public String[] handles() {
-		return new String[]{"adduser"};
-	}
-	
-	/**
-	 * Create a new instance of the Command Object
-	 *
-	 * @param manager CommandManager that is in charge of this Command
-	 */
-	public AddUserCommand (final CommandManager manager) { super(manager); }
-	
-	/**
-	 * Get a description of what this command does
-	 *
-	 * @param command The command to describe (incase one Command does multiple
-	 *                things under different names)
-	 * @return A description of what this command does
-	 */
-	@Override
-	public String getDescription(final String command) {
-		return "This command will let you add a user to the BNC";
-	}
-	
-	/**
-	 * Get SVN Version information.
-	 *
-	 * @return SVN Version String
-	 */
-	public static String getSvnInfo () { return "$Id: Process001.java 1508 2007-06-11 20:08:12Z ShaneMcC $"; }	
+    /**
+     * Handle an AddUser command.
+     *
+     * @param user the UserSocket that performed this command
+     * @param params Params for command (param 0 is the command name)
+     */
+    @Override
+    public void handle(final UserSocket user, final String[] params) {
+        if (params.length == 1) {
+            user.sendBotMessage("You need to specify a username to add.");
+        } else {
+            final String account = params[1];
+            if (Account.exists(account)) {
+                user.sendBotMessage("An account with the name '%s' already exists.", account);
+            } else {
+                user.sendBotMessage("Creating account '%s'...", account);
+                final String password = Account.makePassword();
+                if (Account.createAccount(account, password) != null) {
+                    user.sendBotMessage("Account created. Password has been set to '%s'", password);
+                } else {
+                    user.sendBotMessage("There was an error creating the account.");
+                }
+            }
+        }
+    }
+    
+    /**
+     * What does this Command handle.
+     *
+     * @return String[] with the names of the tokens we handle.
+     */
+    @Override
+    public String[] handles() {
+        return new String[]{"adduser"};
+    }
+    
+    /**
+     * Create a new instance of the Command Object
+     *
+     * @param manager CommandManager that is in charge of this Command
+     */
+    public AddUserCommand (final CommandManager manager) { super(manager); }
+    
+    /**
+     * Get a description of what this command does
+     *
+     * @param command The command to describe (incase one Command does multiple
+     *                things under different names)
+     * @return A description of what this command does
+     */
+    @Override
+    public String getDescription(final String command) {
+        return "This command will let you add a user to the BNC";
+    }
+    
+    /**
+     * Get SVN Version information.
+     *
+     * @return SVN Version String
+     */
+    public static String getSvnInfo () { return "$Id: Process001.java 1508 2007-06-11 20:08:12Z ShaneMcC $"; }    
 }
