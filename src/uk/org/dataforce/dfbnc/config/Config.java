@@ -118,7 +118,7 @@ public class Config {
      */
     public String getOption(final String domain, final String key,
             final String fallback) {
-        final String value = config.getKeyDomain("domain").get(key);
+        final String value = config.getKeyDomain(domain).get(key);
         if (value == null) {
             return fallback;
         } else {
