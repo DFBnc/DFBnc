@@ -24,8 +24,8 @@
 package uk.org.dataforce.dfbnc.servers;
 
 import uk.org.dataforce.dfbnc.Account;
-import uk.org.dataforce.dfbnc.UserSocket;
-import uk.org.dataforce.dfbnc.UserSocketWatcher;
+import uk.org.dataforce.dfbnc.sockets.UserSocket;
+import uk.org.dataforce.dfbnc.sockets.UserSocketWatcher;
 
 /**
  * This file represents a ServerType

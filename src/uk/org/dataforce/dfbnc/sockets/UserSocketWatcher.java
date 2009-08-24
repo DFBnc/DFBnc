@@ -21,26 +21,25 @@
  *
  * SVN: $Id$
  */
-package uk.org.dataforce.dfbnc;
+package uk.org.dataforce.dfbnc.sockets;
 
 /**
- * This file represents an UnableToConnectException
+ * This file represents a file that wants to know about changes with UserSockets
  */
-public class UnableToConnectException extends Exception {
+public interface UserSocketWatcher {
     /**
-     * A version number for this class.
-     * It should be changed whenever the class structure is changed (or anything
-     * else that would prevent serialized objects being unserialized with the new 
-     * class).
+     * Called when a new UserSocket is opened on an account that this class is
+     * linked to.
+     *
+     * @param user UserSocket for user
      */
-    private static final long serialVersionUID = 200711091;
+    public void userConnected(final UserSocket user);
     
     /**
-     * Create a new UnableToConnectException
+     * Called when a UserSocket is closed on an account that this class is
+     * linked to.
      *
-     * @param message Message for exception
+     * @param user UserSocket for user
      */
-    public UnableToConnectException (final String message) {
-        super(message);
-    }
+    public void userDisconnected(final UserSocket user);
 }

@@ -22,7 +22,7 @@
  * SVN: $Id$
  */
 
-package uk.org.dataforce.dfbnc;
+package uk.org.dataforce.dfbnc.sockets;
 
 import java.nio.channels.SocketChannel;
 import java.nio.channels.Selector;

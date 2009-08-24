@@ -21,24 +21,26 @@
  *
  * SVN: $Id$
  */
-package uk.org.dataforce.dfbnc;
-
-import java.nio.channels.SocketChannel;
-import java.io.IOException;
+package uk.org.dataforce.dfbnc.sockets;
 
 /**
- * This defines a Plain (non-ssl) Socket.
- * SocketWrapper handles everything for this.
+ * This file represents an UnableToConnectException
  */
-public class PlainSocket extends SocketWrapper {
+public class UnableToConnectException extends Exception {
     /**
-     * Create a new PlainSocket
-     *
-     * @param channel Channel to Wrap.
-     * @param owner ConnectedSocket that owns this.
-     * @throws IOException If there is a problem creating the socket
+     * A version number for this class.
+     * It should be changed whenever the class structure is changed (or anything
+     * else that would prevent serialized objects being unserialized with the new 
+     * class).
      */
-    public PlainSocket (final SocketChannel channel, final ConnectedSocket owner) throws IOException {
-        super(channel, owner);
+    private static final long serialVersionUID = 200711091;
+    
+    /**
+     * Create a new UnableToConnectException
+     *
+     * @param message Message for exception
+     */
+    public UnableToConnectException (final String message) {
+        super(message);
     }
 }

@@ -21,7 +21,7 @@
  *
  * SVN: $Id$
  */
-package uk.org.dataforce.dfbnc;
+package uk.org.dataforce.dfbnc.sockets;
 
 import uk.org.dataforce.libs.logger.Logger;
 import java.net.InetSocketAddress;

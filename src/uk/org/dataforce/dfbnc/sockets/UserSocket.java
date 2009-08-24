@@ -21,8 +21,9 @@
  *
  * SVN: $Id$
  */
-package uk.org.dataforce.dfbnc;
+package uk.org.dataforce.dfbnc.sockets;
 
+import uk.org.dataforce.dfbnc.*;
 import com.dmdirc.util.InvalidConfigFileException;
 import uk.org.dataforce.libs.logger.Logger;
 import uk.org.dataforce.dfbnc.commands.CommandNotFoundException;

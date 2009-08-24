@@ -24,7 +24,7 @@
 package uk.org.dataforce.dfbnc.commands;
 
 import uk.org.dataforce.libs.logger.Logger;
-import uk.org.dataforce.dfbnc.UserSocket;
+import uk.org.dataforce.dfbnc.sockets.UserSocket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

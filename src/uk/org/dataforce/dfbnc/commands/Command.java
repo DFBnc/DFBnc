@@ -23,7 +23,7 @@
  */
 package uk.org.dataforce.dfbnc.commands;
 
-import uk.org.dataforce.dfbnc.UserSocket;
+import uk.org.dataforce.dfbnc.sockets.UserSocket;
 
 /**
  * This file represents a command

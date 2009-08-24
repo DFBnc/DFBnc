@@ -23,6 +23,8 @@
  */
 package uk.org.dataforce.dfbnc;
 
+import uk.org.dataforce.dfbnc.sockets.UserSocket;
+
 /**
  * This file represents a ConnectionHandler
  */

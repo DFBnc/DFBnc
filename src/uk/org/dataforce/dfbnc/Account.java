@@ -24,6 +24,8 @@
 
 package uk.org.dataforce.dfbnc;
 
+import uk.org.dataforce.dfbnc.sockets.UserSocketWatcher;
+import uk.org.dataforce.dfbnc.sockets.UserSocket;
 import com.dmdirc.util.InvalidConfigFileException;
 import java.io.File;
 import java.io.IOException;

@@ -25,7 +25,7 @@ package uk.org.dataforce.dfbnc.commands;
 
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
-import uk.org.dataforce.dfbnc.UserSocket;
+import uk.org.dataforce.dfbnc.sockets.UserSocket;
 
 import java.util.ArrayList;
 import java.util.List;

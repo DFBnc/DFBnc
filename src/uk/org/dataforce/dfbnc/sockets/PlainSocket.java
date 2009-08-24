@@ -21,25 +21,24 @@
  *
  * SVN: $Id$
  */
-package uk.org.dataforce.dfbnc;
+package uk.org.dataforce.dfbnc.sockets;
+
+import java.nio.channels.SocketChannel;
+import java.io.IOException;
 
 /**
- * This file represents a file that wants to know about changes with UserSockets
+ * This defines a Plain (non-ssl) Socket.
+ * SocketWrapper handles everything for this.
  */
-public interface UserSocketWatcher {
+public class PlainSocket extends SocketWrapper {
     /**
-     * Called when a new UserSocket is opened on an account that this class is
-     * linked to.
+     * Create a new PlainSocket
      *
-     * @param user UserSocket for user
+     * @param channel Channel to Wrap.
+     * @param owner ConnectedSocket that owns this.
+     * @throws IOException If there is a problem creating the socket
      */
-    public void userConnected(final UserSocket user);
-    
-    /**
-     * Called when a UserSocket is closed on an account that this class is
-     * linked to.
-     *
-     * @param user UserSocket for user
-     */
-    public void userDisconnected(final UserSocket user);
+    public PlainSocket (final SocketChannel channel, final ConnectedSocket owner) throws IOException {
+        super(channel, owner);
+    }
 }
