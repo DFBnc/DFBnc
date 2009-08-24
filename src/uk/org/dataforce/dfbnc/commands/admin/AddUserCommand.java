@@ -23,11 +23,13 @@
  */
 package uk.org.dataforce.dfbnc.commands.admin;
 
+import com.dmdirc.util.InvalidConfigFileException;
+import java.io.IOException;
+import uk.org.dataforce.dfbnc.Account;
+import uk.org.dataforce.dfbnc.AccountManager;
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.UserSocket;
-import uk.org.dataforce.dfbnc.DFBnc;
-import uk.org.dataforce.dfbnc.Account;
 
 /**
  * This file represents the 'AddUser' command
@@ -45,12 +47,19 @@ public class AddUserCommand extends Command {
             user.sendBotMessage("You need to specify a username to add.");
         } else {
             final String account = params[1];
-            if (Account.exists(account)) {
+            if (AccountManager.exists(account)) {
                 user.sendBotMessage("An account with the name '%s' already exists.", account);
             } else {
                 user.sendBotMessage("Creating account '%s'...", account);
-                final String password = Account.makePassword();
-                if (Account.createAccount(account, password) != null) {
+                final String password = AccountManager.makePassword();
+                Account acc = null;
+                try {
+                    acc =
+                            AccountManager.createAccount(account, password);
+                } catch (InvalidConfigFileException ex) {
+                } catch (IOException ex) {
+                }
+                if (acc != null) {
                     user.sendBotMessage("Account created. Password has been set to '%s'", password);
                 } else {
                     user.sendBotMessage("There was an error creating the account.");

@@ -104,7 +104,7 @@ public class IRCSetCommand extends Command {
         
         if (params.length > 1 && validParams.containsKey(params[1].toLowerCase())) {
             // Get the current value
-            final String currentValue = user.getAccount().getProperties().getProperty("irc."+params[1], "");
+            final String currentValue = user.getAccount().getConfig().getOption("irc", params[1], "");
             // And the type of this param
             final ParamType paramType = validParams.get(params[1].toLowerCase()).getType();
             // Check if user wants to change it
@@ -127,7 +127,7 @@ public class IRCSetCommand extends Command {
                             user.sendBotMessage("Sorry, '"+newValue+"' is not a valid value for '"+params[1]+"'");
                             return;
                         } else {
-                            user.getAccount().getProperties().setIntProperty("irc."+params[1], newValueInt);
+                            user.getAccount().getConfig().setIntOption("irc.", params[1], newValueInt);
                         }
                     } catch (NumberFormatException nfe) {
                         user.sendBotMessage("Sorry, '"+newValue+"' is not a valid value for '"+params[1]+"'");
@@ -140,7 +140,7 @@ public class IRCSetCommand extends Command {
                             user.sendBotMessage("Sorry, '"+newValue+"' is not a valid value for '"+params[1]+"'");
                             return;
                         } else {
-                            user.getAccount().getProperties().setFloatProperty("irc."+params[1], newValueFloat);
+                            user.getAccount().getConfig().setFloatOption("irc.", params[1], newValueFloat);
                         }
                     } catch (NumberFormatException nfe) {
                         user.sendBotMessage("Sorry, '"+newValue+"' is not a valid value for '"+params[1]+"'");
@@ -148,14 +148,14 @@ public class IRCSetCommand extends Command {
                     }
                 } else if (paramType == ParamType.BOOL) {
                     if (newValue.equalsIgnoreCase("true") || newValue.equalsIgnoreCase("yes") || newValue.equalsIgnoreCase("on") || newValue.equalsIgnoreCase("1")) {
-                        user.getAccount().getProperties().setBoolProperty("irc."+params[1], true);
+                        user.getAccount().getConfig().setBoolOption("irc.", params[1], true);
                         newValue = "True";
                     } else {
-                        user.getAccount().getProperties().setBoolProperty("irc."+params[1], false);
+                        user.getAccount().getConfig().setBoolOption("irc.", params[1], false);
                         newValue = "False";
                     }
                 } else {
-                    user.getAccount().getProperties().setProperty("irc."+params[1], newValue);
+                    user.getAccount().getConfig().setOption("irc.", params[1], newValue);
                 }
                 
                 // And let the user know.
@@ -168,7 +168,7 @@ public class IRCSetCommand extends Command {
             user.sendBotMessage("Valid settings are:");
             for (String param : validParams.keySet()) {
                 String description = validParams.get(param).getDescription();
-                String value = user.getAccount().getProperties().getProperty("irc."+param, "");
+                String value = user.getAccount().getConfig().getOption("irc", param, "");
                 user.sendBotMessage(String.format("  %15s - %s [Current: %s]", param, description, value));
             }
             user.sendBotMessage("Syntax: /dfbnc "+params[0]+" <param> [value]");

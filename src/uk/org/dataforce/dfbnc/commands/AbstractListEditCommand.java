@@ -162,7 +162,7 @@ public abstract class AbstractListEditCommand extends Command {
                 return;
             }
             List<String> myList = new ArrayList<String>();
-            myList = user.getAccount().getProperties().getListProperty(getPropertyName(params[0]), myList);
+            myList = user.getAccount().getConfig().getListOption("user", getPropertyName(params[0]), myList);
             if (params[1].equalsIgnoreCase("list")) {
                 if (myList.size() > 0) {
                     user.sendBotMessage("You currently have the following items in your "+getListName(params[0])+":");
@@ -234,7 +234,7 @@ public abstract class AbstractListEditCommand extends Command {
                 myList.clear();
                 user.sendBotMessage("Your "+getListName(params[0])+" has been cleared.");
             }
-            user.getAccount().getProperties().setListProperty(getPropertyName(params[0]), myList);
+            user.getAccount().getConfig().setListOption("user", getPropertyName(params[0]), myList);
         } else {
             String[] output = getHelpOutput(params[0]);
             if (output != null) {

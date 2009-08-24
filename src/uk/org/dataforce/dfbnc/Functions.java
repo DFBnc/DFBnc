@@ -54,7 +54,7 @@ public final class Functions {
                 }
             }
         }
-        return Config.getOption("general", "ServerName", "DFBnc.Server");
+        return DFBnc.getBNC().getConfig().getOption("general", "ServerName", "DFBnc.Server");
     }
     
     /**
@@ -92,7 +92,7 @@ public final class Functions {
      * @return Bot name that the BNC Uses
      */
     public static String getBotName() {
-        return Config.getOption("general", "BotName", "-BNC");
+        return DFBnc.getBNC().getConfig().getOption("general", "BotName", "-BNC");
     }
 
     /**

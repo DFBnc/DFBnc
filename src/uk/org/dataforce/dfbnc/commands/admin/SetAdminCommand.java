@@ -26,8 +26,8 @@ package uk.org.dataforce.dfbnc.commands.admin;
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.UserSocket;
-import uk.org.dataforce.dfbnc.DFBnc;
 import uk.org.dataforce.dfbnc.Account;
+import uk.org.dataforce.dfbnc.AccountManager;
 
 /**
  * This file represents the 'SetAdmin' command
@@ -45,10 +45,10 @@ public class SetAdminCommand extends Command {
             user.sendBotMessage("You need to specify a username to chagne the admin status of.");
         } else {
             final String account = params[1];
-            if (!Account.exists(account)) {
+            if (!AccountManager.exists(account)) {
                 user.sendBotMessage("No account with the name '%s' exists.", account);
             } else {
-                final Account acc = Account.get(account);
+                final Account acc = AccountManager.get(account);
                 if (acc == user.getAccount()) {
                     user.sendBotMessage("You can't change your own status");
                 } else {

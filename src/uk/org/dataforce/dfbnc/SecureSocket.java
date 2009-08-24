@@ -65,9 +65,9 @@ public class SecureSocket extends SocketWrapper {
      */
     public static synchronized SSLContext getSSLContext() throws IllegalArgumentException, KeyStoreException, FileNotFoundException, NoSuchAlgorithmException, KeyManagementException, UnrecoverableKeyException, IOException, CertificateException {
         if (sslContext == null) {
-            String storePassword =  Config.getOption("ssl", "storepass", "");
-            String keyPassword =  Config.getOption("ssl", "keypass", "");
-            String keyStore =  Config.getOption("ssl", "keystore", "");
+            String storePassword =  DFBnc.getBNC().getConfig().getOption("ssl", "storepass", "");
+            String keyPassword =  DFBnc.getBNC().getConfig().getOption("ssl", "keypass", "");
+            String keyStore =  DFBnc.getBNC().getConfig().getOption("ssl", "keystore", "");
             
             if (keyStore.isEmpty()) { throw new IllegalArgumentException("No keystore sepcified in config ('ssl.keystore')"); }
             else if (keyPassword.isEmpty()) { throw new IllegalArgumentException("No key password sepcified in config ('ssl.keypass')"); }

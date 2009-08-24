@@ -23,19 +23,21 @@
  */
 package uk.org.dataforce.dfbnc;
 
-import uk.org.dataforce.libs.logger.Logger;
-import uk.org.dataforce.libs.logger.LogLevel;
-import uk.org.dataforce.libs.cliparser.CLIParser;
-import uk.org.dataforce.libs.cliparser.BooleanParam;
-import uk.org.dataforce.libs.cliparser.StringParam;
-import uk.org.dataforce.dfbnc.commands.CommandManager;
-import uk.org.dataforce.dfbnc.commands.admin.*;
-import uk.org.dataforce.dfbnc.commands.user.*;
-import uk.org.dataforce.dfbnc.servers.ServerTypeManager;
-
+import com.dmdirc.util.InvalidConfigFileException;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import uk.org.dataforce.dfbnc.commands.CommandManager;
+import uk.org.dataforce.dfbnc.commands.admin.*;
+import uk.org.dataforce.dfbnc.commands.user.*;
+import uk.org.dataforce.dfbnc.config.Config;
+import uk.org.dataforce.dfbnc.servers.ServerTypeManager;
+import uk.org.dataforce.libs.cliparser.BooleanParam;
+import uk.org.dataforce.libs.cliparser.CLIParser;
+import uk.org.dataforce.libs.cliparser.StringParam;
+import uk.org.dataforce.libs.logger.LogLevel;
+import uk.org.dataforce.libs.logger.Logger;
 
 /**
  * Main BNC Class.
@@ -49,6 +51,9 @@ public class DFBnc {
     
     /** The CLIParser */
     private static CLIParser cli = CLIParser.getCLIParser();
+
+    /** The config file name */
+    private static String configDirectory = "DFBnc";
     
     /** The config file name */
     private static String configFile = "DFBnc.conf";
@@ -67,6 +72,9 @@ public class DFBnc {
 
     /** The time that the BNC was started at */
     private static Long startTime = System.currentTimeMillis();
+
+    /** Global config. */
+    private Config config;
 
     /**
      * Run the application.
@@ -97,7 +105,15 @@ public class DFBnc {
         
         if (cli.getParamNumber("-config") > 0) { configFile = cli.getParam("-config").getStringValue(); }
         Logger.info("Loading Config..");
-        Config.loadConfig(configFile);
+        try {
+            config = createDefaultConfig();
+        } catch (IOException ex) {
+            Logger.error("Error loading config (" + ex.getMessage() + "). Exiting");
+            System.exit(0);
+        } catch (InvalidConfigFileException ex) {
+            Logger.error("Error loading config (" + ex.getMessage() + "). Exiting");
+            System.exit(0);
+        }
         
         Logger.info("Setting up Default User Command Manager");
         userCommandManager.addCommand(new VersionCommand(userCommandManager));
@@ -118,7 +134,7 @@ public class DFBnc {
         myServerTypeManager.init();
         
         Logger.info("Loading Accounts..");
-        Account.loadAccounts();
+        AccountManager.loadAccounts();
         
         Logger.info("Adding shutdown hook");
         Runtime.getRuntime().addShutdownHook(new ShutdownHook(this));
@@ -128,7 +144,7 @@ public class DFBnc {
         List<String> defaulthosts = new ArrayList<String>();
         defaulthosts.add("0.0.0.0:33262");
         defaulthosts.add("0.0.0.0:+33263");
-        List<String> listenhosts = Config.getProperties().getListProperty("general.listenhost", defaulthosts);
+        List<String> listenhosts = config.getListOption("general", "listenhost", defaulthosts);
         
         for (String listenhost : listenhosts) {
             try {
@@ -143,7 +159,7 @@ public class DFBnc {
             }
         }
         Logger.info("Running!");
-        if (Config.getBoolOption("debugging", "autocreate", false)) {
+        if (config.getBoolOption("debugging", "autocreate", false)) {
             Logger.warning("/-----------------------------------------------------\\");
             Logger.warning("|                       WARNING                       |");
             Logger.warning("|-----------------------------------------------------|");
@@ -183,13 +199,21 @@ public class DFBnc {
         UserSocket.closeAll("BNC Shutdown");
         
         Logger.info("Saving Accounts");
-        Account.shutdown();
-        Account.saveAccounts();
+        AccountManager.shutdown();
+        AccountManager.saveAccounts();
         
         Logger.info("Saving config to '"+configFile+"'");
-        Config.saveConfig(configFile);
+        config.save();
     }
-    
+
+    /**
+     * Get the name of the configfile
+     *
+     * @return The name of the configfile
+     */
+    public static String getConfigDirName() {
+        return configDirectory;
+    }
     
     /**
      * Get the name of the configfile
@@ -260,6 +284,44 @@ public class DFBnc {
      */
     public static DFBnc getBNC() {
         return me;
+    }
+
+    /**
+     * Get the default settings.
+     *
+     * @return Defaults config settings
+     *
+     * @throws IOException If an error occurred loading the config
+     * @throws InvalidConfigFileException If the config was invalid
+     */
+    public static Config createDefaultConfig() throws IOException,
+            InvalidConfigFileException {
+        final File directory = new File(configDirectory);
+        final File file = new File(directory, configFile);
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+        final Config defaults = new Config(file);
+        if (!defaults.hasOption("general", "bindhost")) {
+            defaults.setOption("general", "bindhost", "0.0.0.0");
+        }
+        if (!defaults.hasOption("general", "bindport")) {
+            defaults.setOption("general", "bindport", "33262");
+        }
+        if (!defaults.hasOption("general", "serverName")) {
+            defaults.setOption("general", "serverName", "DFBnc.Server");
+        }
+
+        return defaults;
+    }
+
+    /**
+     * Returns the global config.
+     *
+     * @return Global config
+     */
+    public Config getConfig() {
+        return config;
     }
 
     /**

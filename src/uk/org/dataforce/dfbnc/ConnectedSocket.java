@@ -93,7 +93,7 @@ public abstract class ConnectedSocket implements Runnable {
      *         or true if the option is undefined.
      */
     public final boolean isSingleThread() {
-        return !Config.getBoolOption("general", "socket.multithread", false);
+        return !DFBnc.getBNC().getConfig().getBoolOption("general", "socket.multithread", false);
     }
         
     /**

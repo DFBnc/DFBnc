@@ -23,6 +23,7 @@
  */
 package uk.org.dataforce.dfbnc;
 
+import com.dmdirc.util.InvalidConfigFileException;
 import uk.org.dataforce.libs.logger.Logger;
 import uk.org.dataforce.dfbnc.commands.CommandNotFoundException;
 import java.net.InetSocketAddress;
@@ -362,18 +363,24 @@ public class UserSocket extends ConnectedSocket {
         }
         
         if (realname != null && password != null && nickname != null) {
-            if (Account.count() == 0 || (Config.getBoolOption("debugging", "autocreate", false) && !Account.exists(username))) {
-                Account acc = Account.createAccount(username, password);
-                if (Account.count() == 1) {
-                    acc.setAdmin(true);
-                    sendBotMessage("You are the first user of this bnc, and have been made admin");
-                } else {
-                    sendBotMessage("The given account does not exist, so an account has been created for you.");
+            if (AccountManager.count() == 0 || (DFBnc.getBNC().getConfig().getBoolOption("debugging", "autocreate", false) && !AccountManager.exists(username))) {
+                Account acc;
+                try {
+                    acc = AccountManager.createAccount(username, password);
+                    if (AccountManager.count() == 1) {
+                        acc.setAdmin(true);
+                        sendBotMessage("You are the first user of this bnc, and have been made admin");
+                    } else {
+                        sendBotMessage("The given account does not exist, so an account has been created for you.");
+                    }
+                    AccountManager.saveAccounts();
+                    DFBnc.getBNC().getConfig().save();
+                } catch (InvalidConfigFileException ex) {
+                } catch (IOException ex) {
                 }
-                Config.saveAll(DFBnc.getConfigFileName());
             }
-            if (Account.checkPassword(username, password)) {
-                myAccount = Account.get(username);
+            if (AccountManager.checkPassword(username, password)) {
+                myAccount = AccountManager.get(username);
                 if (myAccount.isSuspended()) {
                     sendBotMessage("This account has been suspended.");
                     sendBotMessage("Reason: "+myAccount.getSuspendReason());

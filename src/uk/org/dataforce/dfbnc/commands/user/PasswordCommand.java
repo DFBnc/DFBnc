@@ -24,6 +24,7 @@
 package uk.org.dataforce.dfbnc.commands.user;
 
 import uk.org.dataforce.dfbnc.Account;
+import uk.org.dataforce.dfbnc.AccountManager;
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.UserSocket;
@@ -69,8 +70,8 @@ public class PasswordCommand extends Command {
     }
 
     private Account getAccount(final String username) {
-        if (Account.exists(username)) {
-            return Account.get(username);
+        if (AccountManager.exists(username)) {
+            return AccountManager.get(username);
         } else {
             return null;
         }

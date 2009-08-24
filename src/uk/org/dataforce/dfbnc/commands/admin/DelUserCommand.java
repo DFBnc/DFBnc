@@ -26,8 +26,7 @@ package uk.org.dataforce.dfbnc.commands.admin;
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.UserSocket;
-import uk.org.dataforce.dfbnc.DFBnc;
-import uk.org.dataforce.dfbnc.Account;
+import uk.org.dataforce.dfbnc.AccountManager;
 
 /**
  * This file represents the 'DelUser' command
@@ -45,18 +44,18 @@ public class DelUserCommand extends Command {
             user.sendBotMessage("You need to specify a username to delete.");
         } else {
             final String account = params[1];
-            if (Account.exists(account)) {
+            if (AccountManager.exists(account)) {
                 if (params.length == 2) {
-                    final String deleteCode = Account.makePassword(15);
-                    Account.get(account).setDeleteCode(deleteCode);
+                    final String deleteCode = AccountManager.makePassword(15);
+                    AccountManager.get(account).setDeleteCode(deleteCode);
                     user.sendBotMessage("Deleting an account will remove all settings for the account.");
                     user.sendBotMessage("Are you sure you want to continue?");
                     user.sendBotMessage("To continue please enter /dfbnc -BNC %s %s %s", params[0], account, deleteCode);
-                } else if (!params[2].equals(Account.get(account).getDeleteCode())) {
+                } else if (!params[2].equals(AccountManager.get(account).getDeleteCode())) {
                     user.sendBotMessage("Invalid Delete code specified.");
                 } else {
                     user.sendBotMessage("Deleting account '%s'", account);
-                    Account.get(account).delete();
+                    AccountManager.get(account).delete();
                 }
             } else {
                 user.sendBotMessage("An account with the name '%s' does not exist.", account);

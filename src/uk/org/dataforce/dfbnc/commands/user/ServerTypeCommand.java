@@ -47,7 +47,7 @@ public class ServerTypeCommand extends Command {
             if (params.length > 2) {
                 final ServerType currentType = user.getAccount().getServerType();
                 if (params[2].equalsIgnoreCase("none")) {
-                    user.getAccount().getProperties().setProperty("servertype", "");
+                    user.getAccount().getConfig().setOption("server", "servertype", "");
                     user.sendBotMessage("You now have no servertype.");
                     if (currentType != null) { currentType.deactivate(user.getAccount()); }
                 } else {
@@ -55,7 +55,7 @@ public class ServerTypeCommand extends Command {
                         ServerType serverType = DFBnc.getServerTypeManager().getServerType(params[2]);
                         if (currentType != null) { currentType.deactivate(user.getAccount()); }
                         serverType.activate(user.getAccount());
-                        user.getAccount().getProperties().setProperty("servertype", params[2].toLowerCase());
+                        user.getAccount().getConfig().setOption("server", "servertype", params[2].toLowerCase());
                         user.sendBotMessage("Your ServerType is now "+params[2].toLowerCase()+".");
                     } catch (ServerTypeNotFound e) {
                         user.sendBotMessage("Sorry, "+e);
@@ -73,7 +73,7 @@ public class ServerTypeCommand extends Command {
         } else if (params.length > 1 && params[1].equalsIgnoreCase("help")) {
             user.sendBotMessage("----------------");
             user.sendBotMessage("This command allows you to set the servertype for this account.");
-            final String currentType = user.getAccount().getProperties().getProperty("servertype", "");
+            final String currentType = user.getAccount().getConfig().getOption("server", "servertype", "");
             if (currentType.equals("")) {
                 user.sendBotMessage("You currently do not have a servertype selected.");
             } else {

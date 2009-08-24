@@ -112,6 +112,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         }
         
         /** Actually do stuff */
+        @Override
         public void run() {
             List<RequeueLine> list = connectionHandler.getRequeueList();
             for (RequeueLine line : list) {
@@ -156,6 +157,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
      *
      * @return The users host on this connect
      */
+    @Override
     public String getMyHost() {
         if (myParser != null && myParser.getLocalClient() != null) {
             return myParser.getLocalClient().toString();
@@ -340,7 +342,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
      *
      * @return Clone of the requeueList
      */
-    protected List<RequeueLine> getRequeueList() {
+    private List<RequeueLine> getRequeueList() {
         List<RequeueLine> result;
         synchronized (requeueList) {
             result = new ArrayList<RequeueLine>(requeueList);
@@ -491,6 +493,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
      * @param sOldNick Nickname before change
      * @see com.dmdirc.parser.ProcessNick#callNickChanged
      */
+    @Override
     public void onNickChanged(final Parser tParser, final ClientInfo cClient, final String sOldNick) {
         if (cClient == tParser.getLocalClient()) {
             for (UserSocket socket : myAccount.getUserSockets()) {
@@ -583,6 +586,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
      * @param cChannel Channel Object
      * @see com.dmdirc.parser.ProcessJoin#callChannelSelfJoin
      */
+    @Override
     public void onChannelSelfJoin(final Parser tParser, final ChannelInfo cChannel) {
         // Allow Names Through
         allowLine(cChannel, "353");
@@ -725,13 +729,13 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     public void onMOTDEnd(final Parser tParser, final boolean noMOTD, final String sData) {
         hasMOTDEnd = true;
         List<String> myList = new ArrayList<String>();
-        myList = myAccount.getProperties().getListProperty("irc.perform.connect", myList);
+        myList = myAccount.getConfig().getListOption("irc", "perform.connect", myList);
         for (String line : myList) {
             myParser.sendRawMessage(filterPerformLine(line));
         }
         if (myAccount.getUserSockets().size()  == 0) {
             myList = new ArrayList<String>();
-            myList = myAccount.getProperties().getListProperty("irc.perform.lastdetach", myList);
+            myList = myAccount.getConfig().getListOption("irc", "perform.lastdetach", myList);
             for (String line : myList) {
                 myParser.sendRawMessage(filterPerformLine(line));
             }
@@ -812,7 +816,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
             }
             if (myAccount.getUserSockets().size() == 1) {
                 List<String> myList = new ArrayList<String>();
-                myList = myAccount.getProperties().getListProperty("irc.perform.firstattach", myList);
+                myList = myAccount.getConfig().getListOption("irc", "perform.firstattach", myList);
                 for (String line : myList) {
                     myParser.sendRawMessage(filterPerformLine(line));
                 }
@@ -868,7 +872,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         if (((IRCParser)myParser).isReady()) {
             if (myAccount.getUserSockets().size() == 0) {
                 List<String> myList = new ArrayList<String>();
-                myList = myAccount.getProperties().getListProperty("irc.perform.lastdetach", myList);
+                myList = myAccount.getConfig().getListOption("irc", "perform.lastdetach", myList);
                 for (String line : myList) {
                     myParser.sendRawMessage(filterPerformLine(line));
                 }
@@ -878,6 +882,8 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     
     /**
      * Filter a perform line and return the line after substitutions have occured
+     *
+     * @param input Line to filter
      *
      * @return Processed line
      */
@@ -913,13 +919,13 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     public IRCConnectionHandler(final UserSocket user, final Account acc, final int serverNum) throws UnableToConnectException {
         myAccount = acc;
         MyInfo me = new MyInfo();
-        me.setNickname(myAccount.getProperties().getProperty("irc.nickname", myAccount.getName()));
-        me.setAltNickname(myAccount.getProperties().getProperty("irc.altnickname", "_"+myAccount.getName()));
-        me.setRealname(myAccount.getProperties().getProperty("irc.realname", myAccount.getName()));
-        me.setUsername(myAccount.getProperties().getProperty("irc.username", myAccount.getName()));
+        me.setNickname(myAccount.getConfig().getOption("irc", "nickname", myAccount.getName()));
+        me.setAltNickname(myAccount.getConfig().getOption("irc", "altnickname", "_"+myAccount.getName()));
+        me.setRealname(myAccount.getConfig().getOption("irc", "realname", myAccount.getName()));
+        me.setUsername(myAccount.getConfig().getOption("irc", "username", myAccount.getName()));
         
         List<String> serverList = new ArrayList<String>();
-        serverList = user.getAccount().getProperties().getListProperty("irc.serverlist", serverList);
+        serverList = user.getAccount().getConfig().getListOption("irc", "serverlist", serverList);
         if (serverList.size() == 0) { throw new UnableToConnectException("No servers found"); }
         
         int serverNumber = serverNum;
@@ -959,7 +965,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         
         if (user != null) { user.sendBotMessage("Using server: "+serverInfo[3]); }
         
-        final String bindIP = myAccount.getProperties().getProperty("irc.bindip", "");
+        final String bindIP = myAccount.getConfig().getOption("irc", "bindip", "");
         if (!bindIP.isEmpty()) {
             myParser.setBindIP(bindIP);
             user.sendBotMessage("Trying to bind to: "+bindIP);

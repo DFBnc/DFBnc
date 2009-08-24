@@ -66,17 +66,17 @@ public class IRCServerType extends ServerType {
     @Override
     public void activate(final Account account) {
         account.getCommandManager().addSubCommandManager(myCommandManager);
-        String nickname = account.getProperties().getProperty("irc.nickname", "");
-        String altnickname = account.getProperties().getProperty("irc.altnickname", "");
-        String username = account.getProperties().getProperty("irc.username", "");
+        String nickname = account.getConfig().getOption("irc", "nickname", "");
+        String altnickname = account.getConfig().getOption("irc", "altnickname", "");
+        String username = account.getConfig().getOption("irc", "username", "");
         if (nickname.isEmpty()) {
-            account.getProperties().setProperty("irc.nickname", account.getName());
+            account.getConfig().getOption("irc", "nickname", account.getName());
         }
         if (altnickname.isEmpty()) {
-            account.getProperties().setProperty("irc.altnickname", "_"+account.getName());
+            account.getConfig().getOption("irc", "altnickname", "_"+account.getName());
         }
         if (username.isEmpty()) {
-            account.getProperties().setProperty("irc.username", account.getName());
+            account.getConfig().getOption("irc", "username", account.getName());
         }
     }
     
