@@ -32,7 +32,6 @@ import uk.org.dataforce.dfbnc.servers.ServerType;
 import uk.org.dataforce.dfbnc.servers.ServerTypeNotFound;
 import java.util.List;
 import java.util.ArrayList;
-import uk.org.dataforce.dfbnc.config.Config;
 
 /**
  * Functions related to Accounts
