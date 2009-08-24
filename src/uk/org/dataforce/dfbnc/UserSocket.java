@@ -364,9 +364,7 @@ public class UserSocket extends ConnectedSocket {
         
         if (realname != null && password != null && nickname != null) {
             if (AccountManager.count() == 0 || (DFBnc.getBNC().getConfig().getBoolOption("debugging", "autocreate", false) && !AccountManager.exists(username))) {
-                Account acc;
-                try {
-                    acc = AccountManager.createAccount(username, password);
+                Account acc = AccountManager.createAccount(username, password);
                     if (AccountManager.count() == 1) {
                         acc.setAdmin(true);
                         sendBotMessage("You are the first user of this bnc, and have been made admin");
@@ -375,9 +373,6 @@ public class UserSocket extends ConnectedSocket {
                     }
                     AccountManager.saveAccounts();
                     DFBnc.getBNC().getConfig().save();
-                } catch (InvalidConfigFileException ex) {
-                } catch (IOException ex) {
-                }
             }
             if (AccountManager.checkPassword(username, password)) {
                 myAccount = AccountManager.get(username);

@@ -52,13 +52,7 @@ public class AddUserCommand extends Command {
             } else {
                 user.sendBotMessage("Creating account '%s'...", account);
                 final String password = AccountManager.makePassword();
-                Account acc = null;
-                try {
-                    acc =
-                            AccountManager.createAccount(account, password);
-                } catch (InvalidConfigFileException ex) {
-                } catch (IOException ex) {
-                }
+                Account acc = AccountManager.createAccount(account, password);
                 if (acc != null) {
                     user.sendBotMessage("Account created. Password has been set to '%s'", password);
                 } else {

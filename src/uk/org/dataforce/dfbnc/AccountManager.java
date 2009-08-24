@@ -97,21 +97,22 @@ public class AccountManager {
      * @param password Password to check
      *
      * @return The account created, or null if the account could not be created
-     *
-     * @throws InvalidConfigFileException Error reading existing config
-     * @throws IOException Error reading existing config
      */
     public static Account createAccount(final String username,
-            final String password) throws InvalidConfigFileException,
-            IOException {
+            final String password) {
         synchronized (accounts) {
+            Account acc = null;
             if (!exists(username)) {
-                Account acc = new Account(username);
-                acc.setPassword(password);
-                return acc;
-            } else {
-                return null;
+                try {
+                    acc = new Account(username);
+                } catch (IOException ex) {
+                } catch (InvalidConfigFileException ex) {
+                }
+                if (acc != null) {
+                    acc.setPassword(password);
+                }
             }
+            return acc;
         }
     }
 
