@@ -100,16 +100,20 @@ public class AccountManager {
      */
     public static Account createAccount(final String username,
             final String password) {
+        final String accountName = username.replace('.', '_').toLowerCase();
         synchronized (accounts) {
             Account acc = null;
-            if (!exists(username)) {
+            if (!exists(accountName)) {
                 try {
-                    acc = new Account(username);
+                    acc = new Account(accountName);
                 } catch (IOException ex) {
+                    Logger.error("Error creating account: " + ex.getMessage());
                 } catch (InvalidConfigFileException ex) {
+                    Logger.error("Error creating account: " + ex.getMessage());
                 }
                 if (acc != null) {
                     acc.setPassword(password);
+                    accounts.put(username, acc);
                 }
             }
             return acc;
