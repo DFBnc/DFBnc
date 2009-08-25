@@ -153,7 +153,8 @@ public class AccountManager {
         final File directory = new File(DFBnc.getConfigDirName());
         for (File file : directory.listFiles()) {
             try {
-                new Account(file.getName());
+                Account acc = new Account(file.getName());
+                accounts.put(acc.getName(), acc);
             } catch (IOException ex) {
                 Logger.error("Unable to load account: " + file.getName() + "(" +
                         ex.getMessage() + ")");

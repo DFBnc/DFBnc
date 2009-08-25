@@ -22,8 +22,6 @@
 
 package uk.org.dataforce.dfbnc.config;
 
-import uk.org.dataforce.dfbnc.config.ConfigFile;
-import uk.org.dataforce.dfbnc.config.InvalidConfigFileException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
