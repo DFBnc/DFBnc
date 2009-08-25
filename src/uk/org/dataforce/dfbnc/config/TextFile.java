@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package com.dmdirc.util;
+package uk.org.dataforce.dfbnc.config;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

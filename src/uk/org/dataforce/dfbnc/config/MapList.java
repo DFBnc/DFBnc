@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package com.dmdirc.util;
+package uk.org.dataforce.dfbnc.config;
 
 import java.util.ArrayList;
 import java.util.Collection;

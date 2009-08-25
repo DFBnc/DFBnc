@@ -26,7 +26,7 @@ package uk.org.dataforce.dfbnc.commands.user;
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
-import uk.org.dataforce.dfbnc.Functions;
+import uk.org.dataforce.libs.util.Util;
 
 /**
  * This file represents the 'FirstTime' command
@@ -79,8 +79,8 @@ public class FirstTimeCommand extends Command {
             user.sendBotMessage("----");
             user.sendBotMessage("You may view this again at anytime by issuing: /dfbnc firsttime");
             user.sendBotMessage("----");
-            user.sendBotMessage("In all cases /dfbnc can be substituted for /msg "+Functions.getBotName()+". Example:");
-            user.sendBotMessage("    /msg "+Functions.getBotName()+" ShowCommands");
+            user.sendBotMessage("In all cases /dfbnc can be substituted for /msg "+Util.getBotName()+". Example:");
+            user.sendBotMessage("    /msg "+Util.getBotName()+" ShowCommands");
             user.sendBotMessage(" will do the same as:");
             user.sendBotMessage("    /dfbnc ShowCommands");
         }

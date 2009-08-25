@@ -23,7 +23,7 @@
 
 package uk.org.dataforce.dfbnc;
 
-import com.dmdirc.util.InvalidConfigFileException;
+import uk.org.dataforce.dfbnc.config.InvalidConfigFileException;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;

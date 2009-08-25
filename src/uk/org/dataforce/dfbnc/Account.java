@@ -24,9 +24,11 @@
 
 package uk.org.dataforce.dfbnc;
 
+import uk.org.dataforce.dfbnc.config.Config;
+import uk.org.dataforce.libs.util.Util;
 import uk.org.dataforce.dfbnc.sockets.UserSocketWatcher;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
-import com.dmdirc.util.InvalidConfigFileException;
+import uk.org.dataforce.dfbnc.config.InvalidConfigFileException;
 import java.io.File;
 import java.io.IOException;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
@@ -218,7 +220,7 @@ public final class Account implements UserSocketWatcher {
         }
         hashedPassword.append(salt);
 
-        return Functions.md5(hashedPassword.toString()).equals(config.getOption(
+        return Util.md5(hashedPassword.toString()).equals(config.getOption(
                 "user", "password", "..."));
     }
 
@@ -236,7 +238,7 @@ public final class Account implements UserSocketWatcher {
         }
         hashedPassword.append(salt);
 
-        config.setOption("user", "password", Functions.md5(hashedPassword.
+        config.setOption("user", "password", Util.md5(hashedPassword.
                 toString()));
         config.save();
     }
@@ -266,7 +268,7 @@ public final class Account implements UserSocketWatcher {
         for (UserSocket socket : myUserSockets) {
             socket.sendLine(
                     ":%s NOTICE :Connection terminating (Account Deleted)",
-                    Functions.getServerName(socket.getAccount()));
+                    Util.getServerName(socket.getAccount()));
             socket.close();
         }
         myConnectionHandler.shutdown("Account Deleted");
@@ -288,7 +290,7 @@ public final class Account implements UserSocketWatcher {
             for (UserSocket socket : myUserSockets) {
                 socket.sendLine(
                         ":%s NOTICE :Connection terminating - Account Suspended (%s)",
-                        Functions.getServerName(socket.getAccount()),
+                        Util.getServerName(socket.getAccount()),
                         suspendReason);
                 socket.close();
             }

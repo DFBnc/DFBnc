@@ -21,14 +21,15 @@
  *
  * SVN: $Id$
  */
-package uk.org.dataforce.dfbnc;
+package uk.org.dataforce.libs.util;
 
+import uk.org.dataforce.dfbnc.*;
 import uk.org.dataforce.libs.util.MD5;
 
 /**
  * This file stores various useful functions
  */
-public final class Functions {
+public final class Util {
     /**
      * Get the md5 hash of a string.
      *
@@ -98,5 +99,5 @@ public final class Functions {
     /**
      * Prevent Creation of Functions Object
      */
-    private Functions() {    }
+    private Util() {    }
 }

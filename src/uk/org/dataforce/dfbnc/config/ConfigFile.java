@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package com.dmdirc.util;
+package uk.org.dataforce.dfbnc.config;
 
 import java.io.File;
 import java.io.FileNotFoundException;

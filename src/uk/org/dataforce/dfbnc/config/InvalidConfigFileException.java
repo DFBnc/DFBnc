@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package com.dmdirc.util;
+package uk.org.dataforce.dfbnc.config;
 
 /**
  * Thrown to indicate that a config file is invalid.

@@ -20,10 +20,10 @@
  * SOFTWARE.
  */
 
-package uk.org.dataforce.dfbnc;
+package uk.org.dataforce.dfbnc.config;
 
-import com.dmdirc.util.ConfigFile;
-import com.dmdirc.util.InvalidConfigFileException;
+import uk.org.dataforce.dfbnc.config.ConfigFile;
+import uk.org.dataforce.dfbnc.config.InvalidConfigFileException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
