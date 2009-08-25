@@ -23,8 +23,8 @@
  */
 package uk.org.dataforce.libs.util;
 
-import uk.org.dataforce.dfbnc.*;
-import uk.org.dataforce.libs.util.MD5;
+import uk.org.dataforce.dfbnc.Account;
+import uk.org.dataforce.dfbnc.DFBnc;
 
 /**
  * This file stores various useful functions
