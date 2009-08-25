@@ -126,10 +126,12 @@ public abstract class SocketWrapper {
      * @throws IOException If there is a problem closing either of the ByteChannels
      */
     public void close() throws IOException {
-        if (myByteChannel != null && myByteChannel != mySocketChannel) {
+        if (myByteChannel != null) {
             myByteChannel.close();
         }
-        mySocketChannel.close();
+        if (mySocketChannel.isOpen()) {
+            mySocketChannel.close();
+        }
     }
     
     /**
