@@ -302,7 +302,9 @@ public class DFBnc {
         final File directory = new File(configDirectory);
         final File file = new File(directory, configFile);
         if (!directory.exists()) {
-            directory.mkdirs();
+            if (!directory.mkdirs()) {
+                throw new IOException("Unable to create config directory.");
+            }
         }
         final Config defaults = new Config(file);
         if (!defaults.hasOption("general", "bindhost")) {

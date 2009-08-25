@@ -33,6 +33,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import uk.org.dataforce.libs.logger.Logger;
 
 /**
  * Allows reading and writing to a plain text file via a list of lines.
@@ -191,6 +192,8 @@ public class TextFile {
                     "opened with an InputStream");
         }
 
-        file.delete();
+        if (!file.delete()) {
+            Logger.error("Unable to delete file");
+        }
     }
 }

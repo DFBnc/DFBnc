@@ -100,7 +100,9 @@ public class Config {
      */
     private void init() throws IOException, InvalidConfigFileException {
         if (!config.getFile().exists()) {
-            config.getFile().createNewFile();
+            if (!config.getFile().createNewFile()) {
+                throw new IOException("Unable to create config file.");
+            }
         }
         config.read();
         config.setAutomake(true);
