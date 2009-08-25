@@ -963,7 +963,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
             throw new UnableToConnectException("Unable to register callbacks");
         }
         
-        if (user != null) { user.sendBotMessage("Using server: "+serverInfo[3]); }
+        user.sendBotMessage("Using server: "+serverInfo[3]);
         
         final String bindIP = myAccount.getConfig().getOption("irc", "bindip", "");
         if (!bindIP.isEmpty()) {
