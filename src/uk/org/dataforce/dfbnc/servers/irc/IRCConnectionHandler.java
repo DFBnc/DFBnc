@@ -421,7 +421,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
                             allowLine(channel, "329");
                         }
                     } else {
-                        allowLine(channel, "221");
+                        allowLine(null, "221");
                     }
                 } else if(line[0].equalsIgnoreCase("listmode")) {
                     if (((IRCParser)myParser).get005().containsKey("LISTMODE")) {
