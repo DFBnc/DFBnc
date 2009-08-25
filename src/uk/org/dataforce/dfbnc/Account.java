@@ -77,7 +77,9 @@ public final class Account implements UserSocketWatcher {
 
         final File confDir = new File(DFBnc.getConfigDirName(), username);
         if (!confDir.exists()) {
-            confDir.mkdirs();
+            if (!confDir.mkdirs()) {
+                throw new IOException("Unable to create config directory.");
+            }
         }
         config = new Config(new File(confDir, username + ".conf"));
 
