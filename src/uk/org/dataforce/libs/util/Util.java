@@ -23,6 +23,9 @@
  */
 package uk.org.dataforce.libs.util;
 
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import uk.org.dataforce.dfbnc.Account;
 import uk.org.dataforce.dfbnc.DFBnc;
@@ -38,7 +41,7 @@ public final class Util {
      * @return md5 hash of given string
      */
     public static String md5(final String string) {
-        return MD5.string(string);
+        return md5HashString(string);
     }
     
     /**
@@ -95,6 +98,22 @@ public final class Util {
      */
     public static String getBotName() {
         return DFBnc.getBNC().getConfig().getOption("general", "BotName", "-BNC");
+    }
+
+    /**
+     * Get the md5 hash of a string.
+     *
+     * @param string String to hash
+     * @return md5 hash of given string
+     */
+    public static String md5HashString(final String string) {
+        try {
+            final MessageDigest m = MessageDigest.getInstance("MD5");
+            m.update(string.getBytes(), 0, string.length());
+            return new BigInteger(1, m.digest()).toString(16);
+        } catch (NoSuchAlgorithmException e) {
+            return "";
+        }
     }
 
     /**

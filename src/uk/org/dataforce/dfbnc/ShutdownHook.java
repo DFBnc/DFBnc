@@ -23,8 +23,6 @@
  */
 package uk.org.dataforce.dfbnc;
 
-import uk.org.dataforce.dfbnc.DFBnc;
-
 /**
  * Shutdown hook.
  */
@@ -32,7 +30,11 @@ public class ShutdownHook extends Thread {
     /** The DFBnc instance that this ShutdownHook is for. */
     private final DFBnc myBnc;
     
-    /** Create the Shutdown Hook */
+    /**
+     * Create the Shutdown Hook
+     *
+     * @param bnc DFBnc instance
+     */
     public ShutdownHook(final DFBnc bnc) {
         myBnc = bnc;
     }
@@ -40,6 +42,7 @@ public class ShutdownHook extends Thread {
     /**
      * What todo when shutting down
      */
+    @Override
     public void run() {
         myBnc.shutdown();
     }

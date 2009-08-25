@@ -1,6 +1,6 @@
 /*
  * 
- * Copyright (c) 2006-2008 Chris Smith, Shane Mc Cormack, Gregory Holmes
+ * Copyright (c) 2006-2009 Shane Mc Cormack, Gregory Holmes
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,7 @@ import uk.org.dataforce.dfbnc.servers.ServerType;
 import uk.org.dataforce.libs.logger.Logger;
 
 /**
- *
+ * Manages the list of accounts.
  */
 public class AccountManager {
 

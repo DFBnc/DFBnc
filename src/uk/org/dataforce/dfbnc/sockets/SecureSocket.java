@@ -23,7 +23,6 @@
  */
 package uk.org.dataforce.dfbnc.sockets;
 
-import uk.org.dataforce.dfbnc.*;
 import java.nio.channels.SocketChannel;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -40,6 +39,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.KeyManagementException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import uk.org.dataforce.dfbnc.DFBnc;
 
 /**
  * This defines a Secure (ssl) Socket.

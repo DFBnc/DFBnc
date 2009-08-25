@@ -28,9 +28,6 @@ import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.commands.CommandNotFoundException;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
 
-import java.util.TreeMap;
-import java.util.SortedMap;
-import java.util.ArrayList;
 
 /**
  * This file represents the 'Help' command

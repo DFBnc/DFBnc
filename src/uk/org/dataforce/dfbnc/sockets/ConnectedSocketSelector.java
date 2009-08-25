@@ -44,7 +44,7 @@ public class ConnectedSocketSelector implements Runnable {
     /** Thread to run the selector under */    
     private Thread myThread = new Thread(this);
     /** Hashmap containing known sockets */
-    private HashMap<SocketChannel, ConnectedSocket> knownSockets
+    private final HashMap<SocketChannel, ConnectedSocket> knownSockets
             = new HashMap<SocketChannel, ConnectedSocket>();
     /** Instance of ConnectedSocketSelector in use */
     private static ConnectedSocketSelector myConnectedSocketSelector = null;

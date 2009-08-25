@@ -23,8 +23,6 @@
  */
 package uk.org.dataforce.dfbnc.commands.admin;
 
-import uk.org.dataforce.dfbnc.config.InvalidConfigFileException;
-import java.io.IOException;
 import uk.org.dataforce.dfbnc.Account;
 import uk.org.dataforce.dfbnc.AccountManager;
 import uk.org.dataforce.dfbnc.commands.Command;

@@ -24,8 +24,6 @@
 package uk.org.dataforce.dfbnc.sockets;
 
 import uk.org.dataforce.libs.util.Util;
-import uk.org.dataforce.dfbnc.*;
-import uk.org.dataforce.dfbnc.config.InvalidConfigFileException;
 import uk.org.dataforce.libs.logger.Logger;
 import uk.org.dataforce.dfbnc.commands.CommandNotFoundException;
 import java.net.InetSocketAddress;
@@ -35,13 +33,18 @@ import java.util.HashMap;
 import com.dmdirc.parser.irc.IRCParser;
 import java.util.ArrayList;
 import java.util.List;
+import uk.org.dataforce.dfbnc.Account;
+import uk.org.dataforce.dfbnc.AccountManager;
+import uk.org.dataforce.dfbnc.ConnectionHandler;
+import uk.org.dataforce.dfbnc.Consts;
+import uk.org.dataforce.dfbnc.DFBnc;
 
 /**
  * This socket handles actual clients connected to the bnc.
  */
 public class UserSocket extends ConnectedSocket {
     /** Known sockets are referenced in this HashMap. */
-    private static HashMap<String,UserSocket> knownSockets = new HashMap<String,UserSocket>();
+    private final static HashMap<String,UserSocket> knownSockets = new HashMap<String,UserSocket>();
     
     /** This sockets ID in the HashMap. */
     private final String myID;
@@ -194,7 +197,7 @@ public class UserSocket extends ConnectedSocket {
     /**
      * Set the nickname for this socket
      *
-     * @return nickname for this socket
+     * @param newValue New nickname
      */
     public void setNickname(String newValue) { nickname = newValue; }
     

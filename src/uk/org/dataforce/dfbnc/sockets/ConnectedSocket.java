@@ -23,14 +23,12 @@
  */
 package uk.org.dataforce.dfbnc.sockets;
 
-import uk.org.dataforce.dfbnc.*;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.Selector;
 import java.nio.channels.SelectionKey;
 import java.util.Iterator;
 import java.io.IOException;
-
-
+import uk.org.dataforce.dfbnc.DFBnc;
 import uk.org.dataforce.libs.logger.Logger;
 
 /**

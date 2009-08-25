@@ -43,7 +43,7 @@ public abstract class SocketWrapper {
     /** Used to process outgoing data. */
     private StringBuilder lineBuffer = new StringBuilder();
     /** Lines to be sent to the user go into this buffer. */
-    protected StringBuffer outBuffer = new StringBuffer();
+    protected final StringBuffer outBuffer = new StringBuffer();
 
     /** The ConnectedSocket that owns this Wrapper */
     protected ConnectedSocket myOwner;
@@ -232,7 +232,7 @@ public abstract class SocketWrapper {
             synchronized (outBuffer) {
                 if (outBuffer.length() > 0) {
                     buf = ByteBuffer.wrap(outBuffer.toString().getBytes());
-                    outBuffer = new StringBuffer();
+                    outBuffer.setLength(0);
                 } else {
                     SelectionKey key = mySocketChannel.keyFor(myOwner.getSelector());
                     key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_CONNECT);

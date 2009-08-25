@@ -23,10 +23,6 @@
  */
 package uk.org.dataforce.dfbnc.sockets;
 
-/*
-import java.nio.BufferOverflowException;
-*/
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
