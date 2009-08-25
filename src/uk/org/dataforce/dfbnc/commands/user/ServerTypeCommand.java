@@ -29,6 +29,7 @@ import uk.org.dataforce.dfbnc.sockets.UserSocket;
 import uk.org.dataforce.dfbnc.DFBnc;
 import uk.org.dataforce.dfbnc.servers.ServerType;
 import uk.org.dataforce.dfbnc.servers.ServerTypeNotFound;
+import uk.org.dataforce.libs.logger.Logger;
 
 /**
  * This file represents the 'ServerType' command
@@ -67,7 +68,9 @@ public class ServerTypeCommand extends Command {
                     try {
                         ServerType serverType = DFBnc.getServerTypeManager().getServerType(server);
                         user.sendBotMessage("    "+server+" - "+serverType.getDescription());
-                    } catch (Exception e) { /* Should never happen */}
+                    } catch (ServerTypeNotFound e) {
+                        Logger.error("Unknown server type: " + e.getMessage());
+                    }
                 }
             }
         } else if (params.length > 1 && params[1].equalsIgnoreCase("help")) {
