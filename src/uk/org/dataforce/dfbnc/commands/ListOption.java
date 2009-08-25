@@ -46,7 +46,11 @@ public class ListOption {
         super();
         this.isValid = isValid;
         this.param = param;
-        this.output = output;
+        if (output == null) {
+            this.output = null;
+        } else {
+            this.output = output.clone();
+        }
     }
 
     /**
@@ -73,6 +77,10 @@ public class ListOption {
      * @return value of output
      */
     public String[] getOutput() {
-        return output;
+        if (output == null) {
+            return null;
+        } else {
+            return output.clone();
+        }
     }
 }
