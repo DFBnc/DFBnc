@@ -25,7 +25,7 @@ package uk.org.dataforce.dfbnc.servers.irc;
 
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.commands.AbstractListEditCommand;
-import uk.org.dataforce.dfbnc.sockets.UserSocket;
+import uk.org.dataforce.dfbnc.commands.ListOption;
 
 /**
  * This file represents the 'ServerList' command

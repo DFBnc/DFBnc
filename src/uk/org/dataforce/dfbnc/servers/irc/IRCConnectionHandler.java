@@ -128,7 +128,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     /** Thread used to store IRCParser */
     private final Thread controlThread;
     /** Have we recieved a post005 callback? */
-    private boolean hasPost005 = false;
+    //private boolean hasPost005 = false;
     /** Have we recieved a MOTDEnd callback? */
     private boolean hasMOTDEnd = false;
     /** Have we hacked in our own 005? (Shows support for LISTMODE) */
@@ -712,7 +712,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
      */
     @Override
     public void onPost005(final Parser tParser) {
-        hasPost005 = true;
+        //hasPost005 = true;
         // We no longer need this callback, so lets remove it
         myParser.getCallbackManager().delCallback(NumericListener.class, this);
     }

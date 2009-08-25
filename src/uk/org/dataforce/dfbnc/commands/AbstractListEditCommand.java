@@ -23,8 +23,6 @@
  */
 package uk.org.dataforce.dfbnc.commands;
 
-import uk.org.dataforce.dfbnc.commands.Command;
-import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
 
 import java.util.ArrayList;
@@ -34,53 +32,6 @@ import java.util.List;
  * This file represents a listedit command.
  */
 public abstract class AbstractListEditCommand extends Command {
-    /**
-     * This is used by checkItem to validate an item.
-     */
-    protected class ListOption {
-        /** Is the item valid? */
-        private final boolean isValid;
-        
-        /** How the item should be stored in the list */
-        private final String param;
-        
-        /** Output to give if param is invalid */
-        private final String[] output;
-        
-        /**
-         * Create a new ListOption
-         *
-         * @param isValid Is this param valid
-         * @param param Parsed param value.
-         * @param output Output to give if param is invalid.
-         */
-        public ListOption (final boolean isValid, final String param, final String[] output) {
-            this.isValid = isValid;
-            this.param = param;
-            this.output = output;
-        }
-        
-        /**
-         * Get the value of isValid
-         *
-         * @return value of isValid
-         */
-         public boolean isValid() { return isValid; }
-         
-        /**
-         * Get the value of param
-         *
-         * @return value of param
-         */
-         public String getParam() { return param; }
-         
-        /**
-         * Get the value of output
-         *
-         * @return value of output
-         */
-         public String[] getOutput() { return output; }
-    }
      
     /**
      * Get the name of the property to store the list in.
