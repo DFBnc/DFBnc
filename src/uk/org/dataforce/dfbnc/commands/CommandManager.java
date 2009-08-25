@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * DFBNC Command Manager.
@@ -112,9 +113,9 @@ public final class CommandManager {
         // Now all our submanagers commands
         for (CommandManager subManager : subManagers) {
             Map<String, Command> subResult = subManager.getAllCommands();
-            for (String commandName : subResult.keySet()) {
-                if (!result.containsKey(commandName)) {
-                    result.put(commandName, subResult.get(commandName));
+            for (Entry<String, Command> entry : subResult.entrySet()) {
+                if (!result.containsKey(entry.getKey())) {
+                    result.put(entry.getKey(), entry.getValue());
                 }
             }
         }

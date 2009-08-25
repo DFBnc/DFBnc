@@ -30,6 +30,7 @@ import uk.org.dataforce.dfbnc.sockets.UserSocket;
 import java.util.TreeMap;
 import java.util.SortedMap;
 import java.util.ArrayList;
+import java.util.Map.Entry;
 
 /**
  * This file represents the 'ShowCommands' command
@@ -54,13 +55,13 @@ public class ShowCommandsCommand extends Command {
             user.sendBotMessage("The following commands are available to you:");
             CommandManager cmdmgr = user.getAccount().getCommandManager();
             SortedMap<String, Command> commands = new TreeMap<String, Command>(cmdmgr.getAllCommands());
-            for (String commandName : commands.keySet()) {
-                                if (commandName.charAt(0) == '*') { continue; }
-                final Command command = commands.get(commandName);
+            for (Entry<String, Command> entry : commands.entrySet()) {
+                                if (entry.getKey().charAt(0) == '*') { continue; }
+                final Command command = entry.getValue();
                 if (command.isAdminOnly()) {
-                    adminCommands.add(String.format("%-20s - %s", commandName, command.getDescription(commandName)));
+                    adminCommands.add(String.format("%-20s - %s", entry.getKey(), command.getDescription(entry.getKey())));
                 } else {
-                    user.sendBotMessage(String.format("%-20s - %s", commandName, command.getDescription(commandName)));
+                    user.sendBotMessage(String.format("%-20s - %s", entry.getKey(), command.getDescription(entry.getKey())));
                 }
             }
         }
