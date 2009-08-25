@@ -216,9 +216,7 @@ public abstract class SocketWrapper {
                     for (int i = 0; i < charBuffer.limit(); ++i) {
                         c = charBuffer.get();
                         if (c == '\n') {
-                            try {
-                                myOwner.processLine(lineBuffer.toString());
-                            } catch (Exception e) { }
+                            myOwner.processLine(lineBuffer.toString());
                             lineBuffer = new StringBuilder();
                         } else if (c != '\r') {
                             lineBuffer.append(c);

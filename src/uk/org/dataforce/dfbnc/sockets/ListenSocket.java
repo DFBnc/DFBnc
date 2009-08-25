@@ -145,7 +145,9 @@ public class ListenSocket implements Runnable {
         // Close the actual socket
         try {
             ssChannel.socket().close();
-        } catch (IOException e) { }
+        } catch (IOException e) {
+            Logger.error("Unable to close socket.: " + e.getMessage());
+        }
     }
         
     /**
