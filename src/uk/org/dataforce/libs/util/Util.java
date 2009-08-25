@@ -23,6 +23,7 @@
  */
 package uk.org.dataforce.libs.util;
 
+import java.util.Arrays;
 import uk.org.dataforce.dfbnc.Account;
 import uk.org.dataforce.dfbnc.DFBnc;
 
@@ -84,7 +85,7 @@ public final class Util {
             if (result.length() > 0) { result.append(joiner); }
             result.append(input[i]);
         }
-        return input.toString();
+        return Arrays.toString(input);
     }
     
     /**
