@@ -83,7 +83,7 @@ public final class Account implements UserSocketWatcher {
 
         // Enable global commands.
         myCommandManager.addSubCommandManager(DFBnc.getUserCommandManager());
-        if (isAdmin) {
+        if (isAdmin()) {
             myCommandManager.addSubCommandManager(DFBnc.getAdminCommandManager());
         }
 
