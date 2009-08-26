@@ -31,13 +31,14 @@ import java.nio.channels.ClosedChannelException;
 import java.util.Iterator;
 import java.util.HashMap;
 import java.io.IOException;
+import uk.org.dataforce.libs.logger.Logger;
 
 /**
  * This is responsible for handling the selector for all Sockets when in
  * single-thread mode.
  * This is not used at all in multi-thread mode.
  */
-public class ConnectedSocketSelector implements Runnable {
+public final class ConnectedSocketSelector implements Runnable {
 
     /** Used to monitor the sockets. */
     private Selector selector = null;
@@ -69,7 +70,7 @@ public class ConnectedSocketSelector implements Runnable {
             try {
                 myConnectedSocketSelector = new ConnectedSocketSelector();
             } catch (IOException e) {
-                
+                Logger.error("Error opening socket selector.");
             }
         }
         return myConnectedSocketSelector;

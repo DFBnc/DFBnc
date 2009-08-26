@@ -25,7 +25,6 @@ package uk.org.dataforce.dfbnc.servers.irc;
 
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.commands.AbstractListEditCommand;
-import uk.org.dataforce.dfbnc.sockets.UserSocket;
 
 /**
  * This file represents the Perform-related commands
@@ -48,6 +47,15 @@ public class PerformCommand extends AbstractListEditCommand {
         }
         return "";
     };
+
+    /**
+     * Get the name of the domain to store the list in.
+     *
+     * @param command The command passed as param[0]
+     * @return The name of the domain to store the list in.
+     */
+    @Override
+    public String getDomainName(final String command) { return "irc"; };
     
     /**
      * Get the name of the list.

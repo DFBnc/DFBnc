@@ -42,6 +42,14 @@ public abstract class AbstractListEditCommand extends Command {
     public abstract String getPropertyName(final String command);
 
     /**
+     * Get the name of the domain to store the list in.
+     *
+     * @param command The command passed as param[0]
+     * @return The name of the domain to store the list in.
+     */
+    public abstract String getDomainName(final String command);
+
+    /**
      * Get the name of the list.
      * This is used in various outputs from the command.
      *
@@ -115,7 +123,7 @@ public abstract class AbstractListEditCommand extends Command {
                 return;
             }
             List<String> myList = new ArrayList<String>();
-            myList = user.getAccount().getConfig().getListOption("user", getPropertyName(params[0]), myList);
+            myList = user.getAccount().getConfig().getListOption(getDomainName(params[0]), getPropertyName(params[0]), myList);
             if (params[1].equalsIgnoreCase("list")) {
                 if (myList.size() > 0) {
                     user.sendBotMessage("You currently have the following items in your " + getListName(params[0]) + ":");
@@ -191,7 +199,7 @@ public abstract class AbstractListEditCommand extends Command {
                 myList.clear();
                 user.sendBotMessage("Your " + getListName(params[0]) + " has been cleared.");
             }
-            user.getAccount().getConfig().setListOption("user", getPropertyName(params[0]), myList);
+            user.getAccount().getConfig().setListOption(getDomainName(params[0]), getPropertyName(params[0]), myList);
         } else {
             String[] output = getHelpOutput(params[0]);
             if (output != null) {
