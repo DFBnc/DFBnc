@@ -40,6 +40,7 @@ public class SaveCommand extends Command {
      */
     @Override
     public void handle(final UserSocket user, final String[] params) {
+        user.sendBotMessage("Saving config files...");
         user.getAccount().getConfig().save();
     }
 

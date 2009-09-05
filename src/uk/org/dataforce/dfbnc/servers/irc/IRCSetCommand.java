@@ -86,7 +86,7 @@ public class IRCSetCommand extends Command {
                                     "'");
                             return;
                         } else {
-                            user.getAccount().getConfig().setIntOption("irc.",
+                            user.getAccount().getConfig().setIntOption("irc",
                                     params[1], newValueInt);
                         }
                     } catch (NumberFormatException nfe) {
@@ -107,7 +107,7 @@ public class IRCSetCommand extends Command {
                                     "'");
                             return;
                         } else {
-                            user.getAccount().getConfig().setFloatOption("irc.",
+                            user.getAccount().getConfig().setFloatOption("irc",
                                     params[1], newValueFloat);
                         }
                     } catch (NumberFormatException nfe) {
@@ -120,16 +120,16 @@ public class IRCSetCommand extends Command {
                             equalsIgnoreCase("yes") ||
                             newValue.equalsIgnoreCase("on") || newValue.
                             equalsIgnoreCase("1")) {
-                        user.getAccount().getConfig().setBoolOption("irc.",
+                        user.getAccount().getConfig().setBoolOption("irc",
                                 params[1], true);
                         newValue = "True";
                     } else {
-                        user.getAccount().getConfig().setBoolOption("irc.",
+                        user.getAccount().getConfig().setBoolOption("irc",
                                 params[1], false);
                         newValue = "False";
                     }
                 } else {
-                    user.getAccount().getConfig().setOption("irc.", params[1],
+                    user.getAccount().getConfig().setOption("irc", params[1],
                             newValue);
                 }
 

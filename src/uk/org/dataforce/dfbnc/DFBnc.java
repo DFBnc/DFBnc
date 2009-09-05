@@ -105,12 +105,13 @@ public class DFBnc {
             Logger.setLevel(LogLevel.DEBUG);
         }
         
-        if (cli.getParamNumber("-config") > 0) { configFile = cli.getParam("-config").getStringValue(); }
+        if (cli.getParamNumber("-config") > 0) { configDirectory = cli.getParam("-config").getStringValue(); }
         Logger.info("Loading Config..");
         try {
             config = createDefaultConfig();
         } catch (IOException ex) {
-            Logger.error("Error loading config (" + ex.getMessage() + "). Exiting");
+            Logger.error("Error loading config: + " + configDirectory +
+                    " (" + ex.getMessage() + "). Exiting");
             System.exit(0);
         } catch (InvalidConfigFileException ex) {
             Logger.error("Error loading config (" + ex.getMessage() + "). Exiting");
@@ -275,7 +276,7 @@ public class DFBnc {
         cli.add(new BooleanParam('d', "debug", "Enable extra debugging. (Use twice for more)"));
         cli.add(new BooleanParam('s', "silent", "Disable all output"));
         cli.add(new BooleanParam((char)0, "convert", "Convert old (delphi) style config file to new style"));
-        cli.add(new StringParam('c', "config", "Alternative config file to use"));
+        cli.add(new StringParam('c', "config", "Alternative config directory to use"));
         cli.add(new BooleanParam((char)0, "enableDebugOptions", "Enable debugging. config settings"));
         cli.setHelp(cli.getParam("-help"));
     }
