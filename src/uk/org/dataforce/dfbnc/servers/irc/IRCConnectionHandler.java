@@ -83,7 +83,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /** This stores tokens not related to a channel that we want to temporarily allow to come via onDataIn */
     private List<String> allowTokens = new ArrayList<String>();
     /** This stores lines that need to be processed at a later date. */
-    private volatile List<RequeueLine> requeueList =
+    private final List<RequeueLine> requeueList =
             new ArrayList<RequeueLine>();
     /** This timer handles reprocessing of items in the requeueList */
     private Timer requeueTimer = new Timer("requeueTimer");
@@ -649,25 +649,21 @@ public class IRCConnectionHandler implements ConnectionHandler,
     public void onDataIn(final Parser tParser, final String sData) {
         boolean forwardLine = true;
         final String[] bits = IRCParser.tokeniseLine(sData);
+        // Don't forward pings or pongs from the server
+        if (bits[1].equals("PONG") || bits[0].equals("PONG") || bits[1].equals("PING") || bits[0].equals("PING")) {
+            return;
+        }
         try {
             final int numeric = Integer.parseInt(bits[1]);
-            final boolean supportLISTMODE = ((IRCParser) myParser).get005().
-                    containsKey("LISTMODE");
+            final boolean supportLISTMODE = ((IRCParser) myParser).get005().containsKey("LISTMODE");
             if (supportLISTMODE) {
-                if (bits[1].equals(((IRCParser) myParser).get005().get(
-                        "LISTMODE"))) {
+                if (bits[1].equals(((IRCParser) myParser).get005().get("LISTMODE"))) {
                     return;
-                } else if (bits[1].equals(((IRCParser) myParser).get005().
-                        get("LISTMODEEND"))) {
+                } else if (bits[1].equals(((IRCParser) myParser).get005().get("LISTMODEEND"))) {
                     return;
                 }
             }
-            // Don't forward pongs from the server
-            if (bits[1].equals("PONG") || bits[0].equals("PONG")) {
-                return;
-            }
-            final ChannelInfo channel = (bits.length > 3) ? myParser.getChannel(
-                    bits[3]) : null;
+            final ChannelInfo channel = (bits.length > 3) ? myParser.getChannel(bits[3]) : null;
             switch (numeric) {
                 case 324: // Channel Modes
                 case 367: // Ban List
@@ -727,8 +723,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                     }
                     break;
             }
-        } catch (NumberFormatException nfe) {
-        }
+        } catch (NumberFormatException nfe) { }
 
         if (forwardLine) {
             for (UserSocket socket : myAccount.getUserSockets()) {

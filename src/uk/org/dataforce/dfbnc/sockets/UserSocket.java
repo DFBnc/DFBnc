@@ -463,10 +463,13 @@ public class UserSocket extends ConnectedSocket {
             return;
         } else if (line[0].equalsIgnoreCase("PING")) {
             if (line.length > 1) {
-                sendLine(":%s PONG %1$s %s", Util.getServerName(myAccount), line[1]);
+                sendLine(":%s PONG %1$s :%s", Util.getServerName(myAccount), line[1]);
             } else {
-                sendLine(":%s PONG %1$s %s", Util.getServerName(myAccount), System.currentTimeMillis());
+                sendLine(":%s PONG %1$s :%s", Util.getServerName(myAccount), System.currentTimeMillis());
             }
+            return;
+        } else if (line[0].equalsIgnoreCase("PONG")) {
+            return;
         } else if (line[0].equalsIgnoreCase("WHOIS")) {
             if (line[1].equalsIgnoreCase(Util.getBotName())) {
                 sendIRCLine(Consts.RPL_WHOISUSER, nickname+" "+Util.getBotName()+" bot "+Util.getServerName(myAccount)+" *", "DFBnc Pseudo Client");
