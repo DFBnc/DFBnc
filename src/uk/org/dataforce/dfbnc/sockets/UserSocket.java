@@ -450,7 +450,7 @@ public class UserSocket extends ConnectedSocket {
                 handleBotCommand(line[2].split(" "));
                 return;
             } else {
-                final String myHost = this.getAccount().getConnectionHandler().getMyHost();
+                final String myHost = (this.getAccount().getConnectionHandler() != null) ? this.getAccount().getConnectionHandler().getMyHost() : this.getNickname()+"!user@host" ;
                 if (myHost != null) {
                     sendAll(String.format("%s %s", myHost, normalLine), true);
                 }
