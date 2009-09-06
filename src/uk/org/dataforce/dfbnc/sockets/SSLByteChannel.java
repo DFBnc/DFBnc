@@ -191,8 +191,15 @@ public class SSLByteChannel implements ByteChannel {
      */
     private SSLEngineResult unwrap() throws IOException, SSLException {
         // Read in as much data as we can
-        while (myChannel.read(inNetData) > 0) { }
-        
+        int count = 0;
+        do {
+            count = myChannel.read(inNetData);
+            // Don't use 100% cpu when processing...
+            try { Thread.sleep(100); } catch (final InterruptedException ie) { /* Who cares. */ }
+        } while (count > 0);
+       
+        if (count < 0) { throw new ClosedChannelException(); }
+
         // Unwrap it into the buffer
         inNetData.flip();
         SSLEngineResult ser = myEngine.unwrap(inNetData, inAppData); 

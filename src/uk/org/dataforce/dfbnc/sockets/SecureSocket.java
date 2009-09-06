@@ -50,7 +50,6 @@ public class SecureSocket extends SocketWrapper {
     /** SSLContext in use by ssl sockets */
     private static SSLContext sslContext = null;
     
-    
     /**
      * Get (and create if needed) a copy of the SSLContext we are using.
      *

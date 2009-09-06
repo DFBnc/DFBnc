@@ -79,12 +79,17 @@ public class DFBnc {
     private Config config;
 
     /**
-     * Run the application.
+     * Create the BNC.
+     */
+    private DFBnc() { }
+
+    /**
+     * Init the application.
      * Parses CLI Arguments, loads config file, and sets up the listen sockets.
      *
      * @param args CLI Arguments passed to application
      */
-    private DFBnc(String[] args) {
+    private void init(final String[] args) {
         Logger.setLevel(LogLevel.INFO);
         Logger.info("Starting DFBnc..");
         setupCLIParser();
@@ -335,5 +340,8 @@ public class DFBnc {
      *
      * @param args CLI Arguments passed to application
      */
-    public static void main(String[] args) { me = new DFBnc(args); }
+    public static void main(String[] args) {
+        me = new DFBnc();
+        me.init(args);
+    }
 }
