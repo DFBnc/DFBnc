@@ -152,15 +152,17 @@ public class AccountManager {
     public static void loadAccounts() {
         final File directory = new File(DFBnc.getConfigDirName());
         for (File file : directory.listFiles()) {
-            try {
-                Account acc = new Account(file.getName());
-                accounts.put(acc.getName(), acc);
-            } catch (IOException ex) {
-                Logger.error("Unable to load account: " + file.getName() + "(" +
-                        ex.getMessage() + ")");
-            } catch (InvalidConfigFileException ex) {
-                Logger.error("Unable to load account: " + file.getName() + "(" +
-                        ex.getMessage() + ")");
+            if (!DFBnc.getConfigFileName().equals(file.getName())) {
+              try {
+                 Account acc = new Account(file.getName());
+                 accounts.put(acc.getName(), acc);
+             } catch (IOException ex) {
+                     Logger.error("Unable to load account: " + file.getName() + "(" +
+                         ex.getMessage() + ")");
+             } catch (InvalidConfigFileException ex) {
+                    Logger.error("Unable to load account: " + file.getName() + "(" +
+                           ex.getMessage() + ")");
+                }
             }
         }
     }
