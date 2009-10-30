@@ -313,11 +313,11 @@ public class DFBnc {
             }
         }
         final Config defaults = new Config(file);
-        if (!defaults.hasOption("general", "bindhost")) {
-            defaults.setOption("general", "bindhost", "0.0.0.0");
-        }
-        if (!defaults.hasOption("general", "bindport")) {
-            defaults.setOption("general", "bindport", "33262");
+        if (!defaults.hasOption("general", "listenhost")) {
+            final List<String> defaultListenHosts = new ArrayList<String>();
+            defaultListenHosts.add("0.0.0.0:33262");
+            defaultListenHosts.add("0.0.0.0:+33263");
+            defaults.setListOption("general", "listenhost", defaultListenHosts);
         }
         if (!defaults.hasOption("general", "serverName")) {
             defaults.setOption("general", "serverName", "DFBnc.Server");
