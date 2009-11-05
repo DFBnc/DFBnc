@@ -126,6 +126,24 @@ public abstract class SocketWrapper {
      * @throws IOException If there is a problem closing either of the ByteChannels
      */
     public void close() throws IOException {
+        // Write any waiting data.
+        // This has the potential to cause some kind of breakage that I can't
+        // actualy remember right now related to writing at teh wrong time.
+        // I don't think it matters because we are closing anyway and it only
+        // affects the broken socket, but here be potenially bad breaking code
+        // and this should be the first port of call for any break-on-close
+        // related bugs!
+        synchronized (outBuffer) {
+            if (outBuffer.length() > 0) {
+                ByteBuffer buf = ByteBuffer.wrap(outBuffer.toString().getBytes());
+                outBuffer.setLength(0);
+                try {
+                    write(buf);
+                } catch (IOException e) { }
+            }
+        }
+        
+        // Acceptable quality code below!
         if (myByteChannel != null) {
             myByteChannel.close();
         }

@@ -219,7 +219,7 @@ public class DFBnc {
         Logger.info("Saving config to '"+configFile+"'");
         config.save();
         shutdownHook.inactivate();
-        System.exit(1);
+        System.exit(0);
     }
 
     /**
