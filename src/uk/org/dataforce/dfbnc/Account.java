@@ -36,6 +36,7 @@ import uk.org.dataforce.dfbnc.servers.ServerType;
 import uk.org.dataforce.dfbnc.servers.ServerTypeNotFound;
 import java.util.List;
 import java.util.ArrayList;
+import uk.org.dataforce.libs.logger.Logger;
 
 /**
  * Functions related to Accounts
@@ -43,8 +44,7 @@ import java.util.ArrayList;
 public final class Account implements UserSocketWatcher {
 
     /** Salt used when generating passwords */
-    private static final String salt =
-            "a5S5l1N4u4O2y9Z4l6W7t1A9b9L8a1X5a7F4s5E8";
+    private static final String salt = "a5S5l1N4u4O2y9Z4l6W7t1A9b9L8a1X5a7F4s5E8";
     /** Are passwords case sensitive? */
     private static final boolean caseSensitivePasswords = false;
     /** This account name */
@@ -104,14 +104,14 @@ public final class Account implements UserSocketWatcher {
     @Override
     public void userConnected(final UserSocket user) {
         myUserSockets.add(user);
-        if (myConnectionHandler != null &&
-                myConnectionHandler instanceof UserSocketWatcher) {
+        if (myConnectionHandler != null && myConnectionHandler instanceof UserSocketWatcher) {
+            Logger.debug2("Handle userConnected: "+myConnectionHandler+" -> "+user);
             ((UserSocketWatcher) myConnectionHandler).userConnected(user);
+            Logger.debug2("Handled userConnected");
         }
         for (UserSocket socket : myUserSockets) {
             if (user != socket) {
-                socket.sendBotMessage("Another client has connected (" + user.
-                        getIP() + ")");
+                socket.sendBotMessage("Another client has connected (" + user.getIP() + ")");
             }
         }
     }
@@ -131,8 +131,7 @@ public final class Account implements UserSocketWatcher {
         }
         for (UserSocket socket : myUserSockets) {
             if (user != socket) {
-                socket.sendBotMessage("Client has Disconnected (" + user.getIP() +
-                        ")");
+                socket.sendBotMessage("Client has Disconnected (" + user.getIP() + ")");
             }
         }
     }
@@ -222,8 +221,7 @@ public final class Account implements UserSocketWatcher {
         }
         hashedPassword.append(salt);
 
-        return Util.md5(hashedPassword.toString()).equals(config.getOption(
-                "user", "password", "..."));
+        return Util.md5(hashedPassword.toString()).equals(config.getOption("user", "password", "..."));
     }
 
     /**
@@ -240,8 +238,7 @@ public final class Account implements UserSocketWatcher {
         }
         hashedPassword.append(salt);
 
-        config.setOption("user", "password", Util.md5(hashedPassword.
-                toString()));
+        config.setOption("user", "password", Util.md5(hashedPassword.toString()));
         config.save();
     }
 
@@ -268,9 +265,7 @@ public final class Account implements UserSocketWatcher {
      */
     public void delete() {
         for (UserSocket socket : myUserSockets) {
-            socket.sendLine(
-                    ":%s NOTICE :Connection terminating (Account Deleted)",
-                    Util.getServerName(socket.getAccount()));
+            socket.sendLine(":%s NOTICE :Connection terminating (Account Deleted)", Util.getServerName(socket.getAccount()));
             socket.close();
         }
         myConnectionHandler.shutdown("Account Deleted");
@@ -285,15 +280,11 @@ public final class Account implements UserSocketWatcher {
     public void setSuspended(final boolean value, final String reason) {
         config.setBoolOption("user", "suspended", value);
         if (value) {
-            final String suspendReason = (reason != null && !reason.isEmpty()) ? reason
-                    : "No reason specified";
+            final String suspendReason = (reason != null && !reason.isEmpty()) ? reason : "No reason specified";
             config.setOption("user", "suspendReason", suspendReason);
 
             for (UserSocket socket : myUserSockets) {
-                socket.sendLine(
-                        ":%s NOTICE :Connection terminating - Account Suspended (%s)",
-                        Util.getServerName(socket.getAccount()),
-                        suspendReason);
+                socket.sendLine(":%s NOTICE :Connection terminating - Account Suspended (%s)", Util.getServerName(socket.getAccount()), suspendReason);
                 socket.close();
             }
             myConnectionHandler.shutdown("Account Suspended");
@@ -331,11 +322,9 @@ public final class Account implements UserSocketWatcher {
         if (value != isAdmin) {
             // Change command manager to reflect new setting
             if (value) {
-                myCommandManager.addSubCommandManager(DFBnc.
-                        getAdminCommandManager());
+                myCommandManager.addSubCommandManager(DFBnc.getAdminCommandManager());
             } else {
-                myCommandManager.delSubCommandManager(DFBnc.
-                        getAdminCommandManager());
+                myCommandManager.delSubCommandManager(DFBnc.getAdminCommandManager());
             }
         }
         config.setBoolOption("user", "admin", value);

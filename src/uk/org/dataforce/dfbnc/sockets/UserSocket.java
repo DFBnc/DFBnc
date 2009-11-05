@@ -399,7 +399,9 @@ public class UserSocket extends ConnectedSocket {
                             handleBotCommand(new String[]{"firsttime", "admin"});
                         }
                     }
+                    Logger.debug2("processNonAuthenticated - User Connected");
                     myAccount.userConnected(this);
+                    Logger.debug2("userConnected finished");
                 }
             } else {
                 sendIRCLine(Consts.ERR_PASSWDMISMATCH, line[0], "Password incorrect, or account not found");

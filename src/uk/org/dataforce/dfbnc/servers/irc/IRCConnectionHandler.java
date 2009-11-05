@@ -54,6 +54,7 @@ import java.util.Collection;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+import uk.org.dataforce.libs.logger.Logger;
 
 /**
  * This file represents an IRCConnectionHandler.
@@ -723,7 +724,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
                     }
                     break;
             }
-        } catch (NumberFormatException nfe) { }
+        } catch (NumberFormatException nfe) {
+        }
 
         if (forwardLine) {
             for (UserSocket socket : myAccount.getUserSockets()) {
@@ -823,23 +825,20 @@ public class IRCConnectionHandler implements ConnectionHandler,
      */
     @Override
     public void userConnected(final UserSocket user) {
+        Logger.debug2("IRC userConnected: Check for 001: "+((IRCParser) myParser).isReady());
         // If the parser has processed a 001, we need to send our own
         if (((IRCParser) myParser).isReady()) {
-            user.sendIRCLine(1, myParser.getLocalClient().getNickname(), "Welcome to the Internet Relay Network, " + myParser.getLocalClient().
-                    getNickname());
+            Logger.debug2("Has 001");
+            user.sendIRCLine(1, myParser.getLocalClient().getNickname(), "Welcome to the Internet Relay Network, " + myParser.getLocalClient().getNickname());
             // Now send any of the 002-005 lines that we have
             for (String line : connectionLines) {
                 user.sendLine(line);
             }
             // Now, if the parser has recieved an end of MOTD Line, we should send our own MOTD and User Host info
             if (hasMOTDEnd) {
-                user.sendIRCLine(375, myParser.getLocalClient().getNickname(),
-                        "- " + myParser.getServerName() +
-                        " Message of the Day -");
-                user.sendIRCLine(372, myParser.getLocalClient().getNickname(),
-                        "You are connected to an IRC Server, please type /MOTD to get the server's MOTD.");
-                user.sendIRCLine(376, myParser.getLocalClient().getNickname(),
-                        "End of /MOTD command.");
+                user.sendIRCLine(375, myParser.getLocalClient().getNickname(), "- " + myParser.getServerName() + " Message of the Day -");
+                user.sendIRCLine(372, myParser.getLocalClient().getNickname(), "You are connected to an IRC Server, please type /MOTD to get the server's MOTD.");
+                user.sendIRCLine(376, myParser.getLocalClient().getNickname(), "End of /MOTD command.");
 
                 // Now send 302 to let the client know its userhost
                 // also send a 306 if the user is away so that the client can update itself
@@ -850,19 +849,15 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 }
                 str302.append("=");
                 if (((IRCClientInfo) me).getAwayState()) {
-                    user.sendIRCLine(306,
-                            myParser.getLocalClient().getNickname(),
-                            "You have been marked as being away");
+                    user.sendIRCLine(306, myParser.getLocalClient().getNickname(), "You have been marked as being away");
                     str302.append("-");
                 } else {
                     str302.append("+");
                 }
                 str302.append(me.getUsername() + "@" + me.getHostname());
-                user.sendIRCLine(302, myParser.getLocalClient().getNickname(),
-                        str302.toString());
+                user.sendIRCLine(302, myParser.getLocalClient().getNickname(), str302.toString());
                 // Now send the usermode info
-                user.sendIRCLine(221, myParser.getLocalClient().getNickname(),
-                        ((IRCClientInfo) me).getModes(), false);
+                user.sendIRCLine(221, myParser.getLocalClient().getNickname(), ((IRCClientInfo) me).getModes(), false);
 
                 // Rejoin channels
                 for (ChannelInfo channel : myParser.getChannels()) {
@@ -874,13 +869,13 @@ public class IRCConnectionHandler implements ConnectionHandler,
             }
             if (myAccount.getUserSockets().size() == 1) {
                 List<String> myList = new ArrayList<String>();
-                myList = myAccount.getConfig().getListOption("irc",
-                        "perform.firstattach", myList);
+                myList = myAccount.getConfig().getListOption("irc", "perform.firstattach", myList);
                 for (String line : myList) {
                     myParser.sendRawMessage(filterPerformLine(line));
                 }
             }
         }
+        Logger.debug2("end irc user connected.");
     }
 
     /**
@@ -891,17 +886,10 @@ public class IRCConnectionHandler implements ConnectionHandler,
      */
     public void sendTopic(final UserSocket user, final ChannelInfo channel) {
         if (!channel.getTopic().isEmpty()) {
-            user.sendIRCLine(332,
-                    myParser.getLocalClient().getNickname() + " " + channel,
-                    channel.getTopic());
-            user.sendIRCLine(333,
-                    myParser.getLocalClient().getNickname() + " " + channel,
-                    channel.getTopicSetter() + " " + channel.getTopicTime(),
-                    false);
+            user.sendIRCLine(332, myParser.getLocalClient().getNickname() + " " + channel, channel.getTopic());
+            user.sendIRCLine(333, myParser.getLocalClient().getNickname() + " " + channel, channel.getTopicSetter() + " " + channel.getTopicTime(), false);
         } else {
-            user.sendIRCLine(331,
-                    myParser.getLocalClient().getNickname() + " " + channel,
-                    "No topic is set.");
+            user.sendIRCLine(331, myParser.getLocalClient().getNickname() + " " + channel, "No topic is set.");
         }
     }
 
@@ -912,24 +900,19 @@ public class IRCConnectionHandler implements ConnectionHandler,
      * @param channel Channel to send reply for
      */
     public void sendNames(final UserSocket user, final ChannelInfo channel) {
-        final int maxLength = 500 -
-                (":" + getServerName() + " 353 " + myParser.getLocalClient().
-                getNickname() + " = " + channel + " :").length();
+        final int maxLength = 500 - (":" + getServerName() + " 353 " + myParser.getLocalClient(). getNickname() + " = " + channel + " :").length();
         StringBuilder names = new StringBuilder();
         for (ChannelClientInfo cci : channel.getChannelClients()) {
             if (cci.toString().length() > (maxLength - names.length())) {
-                user.sendIRCLine(353, myParser.getLocalClient().getNickname() +
-                        " = " + channel, names.toString().trim());
+                user.sendIRCLine(353, myParser.getLocalClient().getNickname() + " = " + channel, names.toString().trim());
                 names = new StringBuilder();
             }
             names.append(cci.toString()).append(" ");
         }
         if (names.length() > 0) {
-            user.sendIRCLine(353, myParser.getLocalClient().getNickname() +
-                    " = " + channel, names.toString().trim());
+            user.sendIRCLine(353, myParser.getLocalClient().getNickname() + " = " + channel, names.toString().trim());
         }
-        user.sendIRCLine(366, myParser.getLocalClient().getNickname() + " " +
-                channel, "End of /NAMES list. (Cached)");
+        user.sendIRCLine(366, myParser.getLocalClient().getNickname() + " " + channel, "End of /NAMES list. (Cached)");
     }
 
     /**
@@ -943,8 +926,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         if (((IRCParser) myParser).isReady()) {
             if (myAccount.getUserSockets().size() == 0) {
                 List<String> myList = new ArrayList<String>();
-                myList = myAccount.getConfig().getListOption("irc",
-                        "perform.lastdetach", myList);
+                myList = myAccount.getConfig().getListOption("irc", "perform.lastdetach", myList);
                 for (String line : myList) {
                     myParser.sendRawMessage(filterPerformLine(line));
                 }
@@ -994,18 +976,13 @@ public class IRCConnectionHandler implements ConnectionHandler,
             final int serverNum) throws UnableToConnectException {
         myAccount = acc;
         MyInfo me = new MyInfo();
-        me.setNickname(myAccount.getConfig().getOption("irc", "nickname",
-                myAccount.getName()));
-        me.setAltNickname(myAccount.getConfig().getOption("irc", "altnickname",
-                "_" + myAccount.getName()));
-        me.setRealname(myAccount.getConfig().getOption("irc", "realname",
-                myAccount.getName()));
-        me.setUsername(myAccount.getConfig().getOption("irc", "username",
-                myAccount.getName()));
+        me.setNickname(myAccount.getConfig().getOption("irc", "nickname", myAccount.getName()));
+        me.setAltNickname(myAccount.getConfig().getOption("irc", "altnickname", "_" + myAccount.getName()));
+        me.setRealname(myAccount.getConfig().getOption("irc", "realname", myAccount.getName()));
+        me.setUsername(myAccount.getConfig().getOption("irc", "username", myAccount.getName()));
 
         List<String> serverList = new ArrayList<String>();
-        serverList = user.getAccount().getConfig().getListOption("irc",
-                "serverlist", serverList);
+        serverList = user.getAccount().getConfig().getListOption("irc", "serverlist", serverList);
         if (serverList.size() == 0) {
             throw new UnableToConnectException("No servers found");
         }
@@ -1036,18 +1013,12 @@ public class IRCConnectionHandler implements ConnectionHandler,
 
         try {
             myParser.getCallbackManager().addCallback(DataInListener.class, this);
-            myParser.getCallbackManager().addCallback(ServerReadyListener.class,
-                    this);
-            myParser.getCallbackManager().addCallback(Post005Listener.class,
-                    this);
-            myParser.getCallbackManager().addCallback(NumericListener.class,
-                    this);
-            myParser.getCallbackManager().addCallback(MotdEndListener.class,
-                    this);
-            myParser.getCallbackManager().addCallback(
-                    ChannelSelfJoinListener.class, this);
-            myParser.getCallbackManager().addCallback(NickChangeListener.class,
-                    this);
+            myParser.getCallbackManager().addCallback(ServerReadyListener.class, this);
+            myParser.getCallbackManager().addCallback(Post005Listener.class, this);
+            myParser.getCallbackManager().addCallback(NumericListener.class, this);
+            myParser.getCallbackManager().addCallback(MotdEndListener.class, this);
+            myParser.getCallbackManager().addCallback(ChannelSelfJoinListener.class, this);
+            myParser.getCallbackManager().addCallback(NickChangeListener.class, this);
         } catch (CallbackNotFoundException cnfe) {
             throw new UnableToConnectException("Unable to register callbacks");
         }
