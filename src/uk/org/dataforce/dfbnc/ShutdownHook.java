@@ -23,12 +23,16 @@
  */
 package uk.org.dataforce.dfbnc;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * Shutdown hook.
  */
 public class ShutdownHook extends Thread {
     /** The DFBnc instance that this ShutdownHook is for. */
     private final DFBnc myBnc;
+    /** Already shutting down? */
+    private final AtomicBoolean inactive;
     
     /**
      * Create the Shutdown Hook
@@ -37,6 +41,14 @@ public class ShutdownHook extends Thread {
      */
     public ShutdownHook(final DFBnc bnc) {
         myBnc = bnc;
+        inactive = new AtomicBoolean(false);
+    }
+
+    /**
+     * Inactivates this shutdown hook.
+     */
+    public void inactivate() {
+        inactive.set(true);
     }
     
     /**
@@ -44,6 +56,9 @@ public class ShutdownHook extends Thread {
      */
     @Override
     public void run() {
+        if (inactive.get()) {
+            return;
+        }
         myBnc.shutdown();
     }
 }

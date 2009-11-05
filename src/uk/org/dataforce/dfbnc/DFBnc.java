@@ -78,6 +78,9 @@ public class DFBnc {
     /** Global config. */
     private Config config;
 
+    /** Shutdown hook. */
+    private ShutdownHook shutdownHook;
+
     /**
      * Create the BNC.
      */
@@ -138,6 +141,7 @@ public class DFBnc {
         adminCommandManager.addCommand(new SuspendCommand(adminCommandManager));
         adminCommandManager.addCommand(new UnsuspendCommand(adminCommandManager));
         adminCommandManager.addCommand(new SetAdminCommand(adminCommandManager));
+        adminCommandManager.addCommand(new ShutdownCommand(adminCommandManager));
         
         Logger.info("Setting up ServerType Manager");
         myServerTypeManager.init();
@@ -146,7 +150,8 @@ public class DFBnc {
         AccountManager.loadAccounts();
         
         Logger.info("Adding shutdown hook");
-        Runtime.getRuntime().addShutdownHook(new ShutdownHook(this));
+        shutdownHook = new ShutdownHook(this);
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
         
         Logger.info("Opening Listen Sockets..");
         int count = 0;
@@ -206,13 +211,15 @@ public class DFBnc {
         
         Logger.info("Closing User Sockets");
         UserSocket.closeAll("BNC Shutdown");
-        
+            
         Logger.info("Saving Accounts");
         AccountManager.shutdown();
         AccountManager.saveAccounts();
         
         Logger.info("Saving config to '"+configFile+"'");
         config.save();
+        shutdownHook.inactivate();
+        System.exit(1);
     }
 
     /**

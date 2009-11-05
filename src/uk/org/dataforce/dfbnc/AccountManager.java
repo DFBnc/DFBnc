@@ -26,6 +26,8 @@ package uk.org.dataforce.dfbnc;
 import uk.org.dataforce.dfbnc.config.InvalidConfigFileException;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Random;
 import uk.org.dataforce.dfbnc.servers.ServerType;
@@ -42,6 +44,15 @@ public class AccountManager {
 
     /** Prevent instantiation of AccountManager. */
     private AccountManager() {
+    }
+
+    /** 
+     * Gets a collection of known accounts.
+     *
+     * @return Returns a collection of accounts
+     */
+    public static Collection<Account> getAccounts() {
+        return new ArrayList<Account>(accounts.values());
     }
 
     /**
