@@ -199,6 +199,14 @@ public class DFBnc {
      * Handle shutdown
      */
     public void shutdown() {
+        shutdown(false);
+    }
+
+    /**
+     * Handle shutdown
+     * @param shuttingDown are we already shutting down?
+     */
+    public void shutdown(boolean shuttingDown) {
         Logger.info("---------------------");
         Logger.info("Shuting down.");
         
@@ -219,7 +227,9 @@ public class DFBnc {
         Logger.info("Saving config to '"+configFile+"'");
         config.save();
         shutdownHook.inactivate();
-        System.exit(0);
+        if (!shuttingDown) {
+            System.exit(0);
+        }
     }
 
     /**
