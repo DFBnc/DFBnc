@@ -23,6 +23,8 @@
  */
 package uk.org.dataforce.dfbnc.commands.user;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.commands.CommandNotFoundException;
@@ -61,7 +63,12 @@ public class HelpCommand extends Command {
                 }
             }
         } else {
-            user.sendBotMessage("You need to specify a command to get help for, try 'showcommands' to see all the commands");
+            //try to execute showcommands, else tell user to do so
+            try {
+                user.getAccount().getCommandManager().getCommand("showcommands").handle(user, params);
+            } catch (CommandNotFoundException ex) {
+                user.sendBotMessage("You need to specify a command to get help for, try 'showcommands' to see all the commands");
+            }
         }
     }
     
