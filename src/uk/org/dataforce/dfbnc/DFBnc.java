@@ -142,6 +142,7 @@ public class DFBnc {
         adminCommandManager.addCommand(new UnsuspendCommand(adminCommandManager));
         adminCommandManager.addCommand(new SetAdminCommand(adminCommandManager));
         adminCommandManager.addCommand(new ShutdownCommand(adminCommandManager));
+        adminCommandManager.addCommand(new ListUsersCommand(adminCommandManager));
         
         Logger.info("Setting up ServerType Manager");
         myServerTypeManager.init();
