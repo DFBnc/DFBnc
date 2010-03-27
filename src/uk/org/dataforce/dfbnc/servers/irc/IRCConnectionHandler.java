@@ -46,6 +46,7 @@ import com.dmdirc.parser.interfaces.callbacks.Post005Listener;
 import com.dmdirc.parser.interfaces.callbacks.MotdEndListener;
 import com.dmdirc.parser.interfaces.callbacks.ChannelSelfJoinListener;
 import com.dmdirc.parser.common.CallbackNotFoundException;
+import com.dmdirc.parser.interfaces.callbacks.SocketCloseListener;
 
 import com.dmdirc.parser.irc.IRCClientInfo;
 import java.util.List;
@@ -65,7 +66,7 @@ import uk.org.dataforce.libs.logger.Logger;
 public class IRCConnectionHandler implements ConnectionHandler,
         UserSocketWatcher, DataInListener, NickChangeListener,
         ServerReadyListener, Post005Listener, NumericListener, MotdEndListener,
-        ChannelSelfJoinListener {
+        SocketCloseListener, ChannelSelfJoinListener {
 
     /** Account that this IRCConnectionHandler is for */
     private final Account myAccount;
@@ -817,6 +818,14 @@ public class IRCConnectionHandler implements ConnectionHandler,
         }
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public void onSocketClosed(final Parser tParser) {
+        for (UserSocket socket : myAccount.getUserSockets()) {
+            socket.close();
+        }
+    }
+
     /**
      * Called when a new UserSocket is opened on an account that this class is
      * linked to.
@@ -1019,6 +1028,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
             myParser.getCallbackManager().addCallback(MotdEndListener.class, this);
             myParser.getCallbackManager().addCallback(ChannelSelfJoinListener.class, this);
             myParser.getCallbackManager().addCallback(NickChangeListener.class, this);
+            myParser.getCallbackManager().addCallback(SocketCloseListener.class, this);
         } catch (CallbackNotFoundException cnfe) {
             throw new UnableToConnectException("Unable to register callbacks");
         }
@@ -1035,6 +1045,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         controlThread = new Thread(myParser);
         controlThread.start();
     }
+
 }
 
 /**
