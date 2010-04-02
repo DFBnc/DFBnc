@@ -78,7 +78,18 @@ public abstract class SocketWrapper {
             outBuffer.append(line+"\r\n");
             if (!writeRegistered) {
                 SelectionKey key = mySocketChannel.keyFor(myOwner.getSelector());
-                if (key == null) { Logger.error("Null key -> "+line); return; }
+
+                if (key == null) {
+                    Logger.error("Null key -> "+line);
+
+                    try {
+                        close();
+                    } catch (IOException ex) {
+                        Logger.error("Error closing: " + ex.getMessage());
+                    }
+                    return;
+                }
+
                 key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_CONNECT | SelectionKey.OP_WRITE);
                 myOwner.getSelector().wakeup();
                 writeRegistered = true;
