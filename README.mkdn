@@ -29,6 +29,7 @@ DFBnc makes use of files from other projects. Some are included as git
 submodules, some are just included in the repo.
 
 The projects used are:
+
   * [DMDirc](http://dmdirc.com/) (irc parser, some utilities)
   * [DF Libs](http://code.google.com/p/dflibs/) (cliparser and logger)
 
