@@ -24,8 +24,8 @@ the config-directory structure used by dfbnc-java.
 
 h2. External Files
 
-DFBnc makes use of files from other projects, which are automatically
-downloaded when using svn.
+DFBnc makes use of files from other projects. Some are included as git
+submodules, some are just included in the repo.
 
 The projects used are:
 # "DMDirc":http://dmdirc.com/ (irc parser, some utilities)
