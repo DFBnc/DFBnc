@@ -1,6 +1,7 @@
-h1. This project is for the *JAVA* version of DFBnc (Read below for delphi/pascal)
+# Note #########################################################################
+This project is for the *JAVA* version of DFBnc (Read below for delphi/pascal)
 
-h2. History
+# History ######################################################################
 
 DFBnc was originally an IRC Bouncer written in Delphi. It compiled on Linux
 (FreePascal) and windows (using both Delphi and FreePascal).
@@ -8,26 +9,26 @@ DFBnc was originally an IRC Bouncer written in Delphi. It compiled on Linux
 DFBNC Was originally licensed under the ZLIB License, unfortunately this version
 had a number of bugs in it, and is no longer available.
 
-h2. Now
+# Now ##########################################################################
 
 Due to issues with the code and random other things, the decision was taken to
 completely rewrite DFBnc (for the 2nd time), and rather than relying on external
 librarys (lsocket and wsocket) and having to test on 3 compilers and work
 around the various differences in compilers/platforms by hand it was decided to
-be rewriten in Java, with the rock-solid IRC Parser from [[http://www.dmdirc.com/ DMDirc]]
+be rewriten in Java, with the rock-solid IRC Parser from http://www.dmdirc.com/
 powering it.
 
-h2. Compatability
+# Compatability ################################################################
 
 Config files between the 2 versions are not compatible with each other, due to
 the config-directory structure used by dfbnc-java.
 
-h2. External Files
+# External Files ###############################################################
 
 DFBnc makes use of files from other projects. Some are included as git
 submodules, some are just included in the repo.
 
 The projects used are:
-# "DMDirc":http://dmdirc.com/ (irc parser, some utilities)
-# "DF Libs":http://code.google.com/p/dflibs/ (cliparser and logger)
+# [DMDirc](http://dmdirc.com/) (irc parser, some utilities)
+# [DF Libs](http://code.google.com/p/dflibs/) (cliparser and logger)
 
