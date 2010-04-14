@@ -847,7 +847,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 description = "Unknown error: " + exception.getMessage();
             }
         }
-        myAccount.handlerDisconnected(description);
+        myAccount.handlerDisconnected("Connection error: " + description);
     }
 
     /**

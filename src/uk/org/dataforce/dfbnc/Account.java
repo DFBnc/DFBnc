@@ -391,7 +391,7 @@ public final class Account implements UserSocketWatcher {
      */
     public void handlerDisconnected(final String reason) {
         for (UserSocket socket : getUserSockets()) {
-            socket.sendLine("Error :Error connecting: " + reason, false);
+            socket.sendLine("ERROR : " + reason, false);
             socket.close();
         }
         myConnectionHandler = null;
