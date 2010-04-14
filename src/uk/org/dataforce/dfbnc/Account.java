@@ -383,4 +383,17 @@ public final class Account implements UserSocketWatcher {
     public Config getConfig() {
         return config;
     }
+
+    /**
+     * Called when the IRC Connnection handler is disconnected.
+     *
+     * @param reason Reason for disconnection
+     */
+    public void handlerDisconnected(final String reason) {
+        for (UserSocket socket : getUserSockets()) {
+            socket.sendLine("Error :Error connecting: " + reason, false);
+            socket.close();
+        }
+        myConnectionHandler = null;
+    }
 }

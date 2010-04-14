@@ -23,6 +23,7 @@
  */
 package uk.org.dataforce.dfbnc.servers.irc;
 
+import com.dmdirc.parser.common.ParserError;
 import uk.org.dataforce.dfbnc.ConnectionHandler;
 import uk.org.dataforce.dfbnc.Account;
 import uk.org.dataforce.dfbnc.Consts;
@@ -46,6 +47,7 @@ import com.dmdirc.parser.interfaces.callbacks.Post005Listener;
 import com.dmdirc.parser.interfaces.callbacks.MotdEndListener;
 import com.dmdirc.parser.interfaces.callbacks.ChannelSelfJoinListener;
 import com.dmdirc.parser.common.CallbackNotFoundException;
+import com.dmdirc.parser.interfaces.callbacks.ConnectErrorListener;
 import com.dmdirc.parser.interfaces.callbacks.SocketCloseListener;
 
 import com.dmdirc.parser.irc.IRCClientInfo;
@@ -66,7 +68,7 @@ import uk.org.dataforce.libs.logger.Logger;
 public class IRCConnectionHandler implements ConnectionHandler,
         UserSocketWatcher, DataInListener, NickChangeListener,
         ServerReadyListener, Post005Listener, NumericListener, MotdEndListener,
-        SocketCloseListener, ChannelSelfJoinListener {
+        SocketCloseListener, ChannelSelfJoinListener, ConnectErrorListener {
 
     /** Account that this IRCConnectionHandler is for */
     private final Account myAccount;
@@ -821,9 +823,31 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /** {@inheritDoc} */
     @Override
     public void onSocketClosed(final Parser tParser) {
-        for (UserSocket socket : myAccount.getUserSockets()) {
-            socket.close();
+        myAccount.handlerDisconnected("Remote connection closed.");
+    }
+    
+    /** {@inheritDoc} */
+    @Override
+    public void onConnectError(final Parser tParser, final ParserError errorInfo) {
+        String description;
+        if (errorInfo.getException() == null) {
+            description = errorInfo.getData();
+        } else {
+            final Exception exception = errorInfo.getException();
+            if (exception instanceof java.net.UnknownHostException) {
+                description = "Unknown host (unable to resolve)";
+            } else if (exception instanceof java.net.NoRouteToHostException) {
+                description = "No route to host";
+            } else if (exception instanceof java.net.SocketTimeoutException) {
+                description = "Connection attempt timed out";
+            } else if (exception instanceof java.net.SocketException
+                    || exception instanceof javax.net.ssl.SSLException) {
+                description = exception.getMessage();
+            } else {
+                description = "Unknown error: " + exception.getMessage();
+            }
         }
+        myAccount.handlerDisconnected(description);
     }
 
     /**
@@ -1029,6 +1053,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
             myParser.getCallbackManager().addCallback(ChannelSelfJoinListener.class, this);
             myParser.getCallbackManager().addCallback(NickChangeListener.class, this);
             myParser.getCallbackManager().addCallback(SocketCloseListener.class, this);
+            myParser.getCallbackManager().addCallback(ConnectErrorListener.class, this);
         } catch (CallbackNotFoundException cnfe) {
             throw new UnableToConnectException("Unable to register callbacks");
         }
