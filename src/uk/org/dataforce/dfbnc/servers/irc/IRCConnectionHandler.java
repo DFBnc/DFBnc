@@ -23,22 +23,26 @@
  */
 package uk.org.dataforce.dfbnc.servers.irc;
 
-import com.dmdirc.parser.common.ParserError;
+import com.dmdirc.parser.common.AwayState;
 import uk.org.dataforce.dfbnc.ConnectionHandler;
 import uk.org.dataforce.dfbnc.Account;
 import uk.org.dataforce.dfbnc.Consts;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
 import uk.org.dataforce.dfbnc.sockets.UnableToConnectException;
 import uk.org.dataforce.dfbnc.sockets.UserSocketWatcher;
+
+import com.dmdirc.parser.common.CallbackNotFoundException;
+import com.dmdirc.parser.common.ChannelListModeItem;
+import com.dmdirc.parser.common.MyInfo;
+import com.dmdirc.parser.common.ParserError;
 import com.dmdirc.parser.irc.IRCParser;
 import com.dmdirc.parser.irc.IRCChannelInfo;
+import com.dmdirc.parser.irc.IRCClientInfo;
+import com.dmdirc.parser.irc.ServerInfo;
 import com.dmdirc.parser.interfaces.Parser;
 import com.dmdirc.parser.interfaces.ClientInfo;
 import com.dmdirc.parser.interfaces.ChannelClientInfo;
 import com.dmdirc.parser.interfaces.ChannelInfo;
-import com.dmdirc.parser.common.ChannelListModeItem;
-import com.dmdirc.parser.common.MyInfo;
-import com.dmdirc.parser.irc.ServerInfo;
 import com.dmdirc.parser.interfaces.callbacks.DataInListener;
 import com.dmdirc.parser.interfaces.callbacks.ServerReadyListener;
 import com.dmdirc.parser.interfaces.callbacks.NickChangeListener;
@@ -46,14 +50,13 @@ import com.dmdirc.parser.interfaces.callbacks.NumericListener;
 import com.dmdirc.parser.interfaces.callbacks.Post005Listener;
 import com.dmdirc.parser.interfaces.callbacks.MotdEndListener;
 import com.dmdirc.parser.interfaces.callbacks.ChannelSelfJoinListener;
-import com.dmdirc.parser.common.CallbackNotFoundException;
 import com.dmdirc.parser.interfaces.callbacks.ConnectErrorListener;
 import com.dmdirc.parser.interfaces.callbacks.SocketCloseListener;
 
-import com.dmdirc.parser.irc.IRCClientInfo;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -532,7 +535,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
      * @see com.dmdirc.parser.ProcessNick#callNickChanged
      */
     @Override
-    public void onNickChanged(final Parser tParser, final ClientInfo cClient,
+    public void onNickChanged(final Parser tParser, final Date date, final ClientInfo cClient,
             final String sOldNick) {
         if (cClient == tParser.getLocalClient()) {
             for (UserSocket socket : myAccount.getUserSockets()) {
@@ -629,7 +632,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
      * @see com.dmdirc.parser.ProcessJoin#callChannelSelfJoin
      */
     @Override
-    public void onChannelSelfJoin(final Parser tParser,
+    public void onChannelSelfJoin(final Parser tParser, final Date date,
             final ChannelInfo cChannel) {
         // Allow Names Through
         allowLine(cChannel, "353");
@@ -650,7 +653,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
      * @see com.dmdirc.parser.IRCParser#callDataIn
      */
     @Override
-    public void onDataIn(final Parser tParser, final String sData) {
+    public void onDataIn(final Parser tParser, final Date date, final String sData) {
         boolean forwardLine = true;
         final String[] bits = IRCParser.tokeniseLine(sData);
         // Don't forward pings or pongs from the server
@@ -744,7 +747,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
      * @see com.dmdirc.parser.Process001#callServerReady
      */
     @Override
-    public void onServerReady(final Parser tParser) {
+    public void onServerReady(final Parser tParser, final Date date) {
         for (UserSocket socket : myAccount.getUserSockets()) {
             socket.setPost001(true);
             socket.setNickname(tParser.getLocalClient().getNickname());
@@ -758,7 +761,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
      * @see com.dmdirc.parser.Process001#callPost005
      */
     @Override
-    public void onPost005(final Parser tParser) {
+    public void onPost005(final Parser tParser, final Date date) {
         //hasPost005 = true;
         // We no longer need this callback, so lets remove it
         myParser.getCallbackManager().delCallback(NumericListener.class, this);
@@ -773,7 +776,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
      * @see com.dmdirc.parser.ProcessMOTD#callMOTDEnd
      */
     @Override
-    public void onMOTDEnd(final Parser tParser, final boolean noMOTD,
+    public void onMOTDEnd(final Parser tParser, final Date date, final boolean noMOTD,
             final String sData) {
         hasMOTDEnd = true;
         List<String> myList = new ArrayList<String>();
@@ -801,7 +804,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
      * @see com.dmdirc.parser.ProcessingManager#callNumeric
      */
     @Override
-    public void onNumeric(final Parser tParser, final int numeric,
+    public void onNumeric(final Parser tParser, final Date date, final int numeric,
             final String[] token) {
         if (numeric > 1 && numeric < 6) {
             if (numeric == 5 && !hacked005) {
@@ -822,13 +825,13 @@ public class IRCConnectionHandler implements ConnectionHandler,
 
     /** {@inheritDoc} */
     @Override
-    public void onSocketClosed(final Parser tParser) {
+    public void onSocketClosed(final Parser tParser, final Date date) {
         myAccount.handlerDisconnected("Remote connection closed.");
     }
     
     /** {@inheritDoc} */
     @Override
-    public void onConnectError(final Parser tParser, final ParserError errorInfo) {
+    public void onConnectError(final Parser tParser, final Date date, final ParserError errorInfo) {
         String description;
         if (errorInfo.getException() == null) {
             description = errorInfo.getData();
@@ -881,7 +884,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                     str302.append("*");
                 }
                 str302.append("=");
-                if (((IRCClientInfo) me).getAwayState()) {
+                if (((IRCClientInfo) me).getAwayState() == AwayState.AWAY) {
                     user.sendIRCLine(306, myParser.getLocalClient().getNickname(), "You have been marked as being away");
                     str302.append("-");
                 } else {
