@@ -32,6 +32,7 @@ import java.nio.channels.SelectionKey;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.channels.ByteChannel;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import uk.org.dataforce.libs.logger.Logger;
 /**
@@ -56,7 +57,10 @@ public abstract class SocketWrapper {
     protected ByteChannel myByteChannel;
     
     /** Are we currently registered for write? */
-    protected boolean writeRegistered = false;
+    protected final AtomicBoolean writeRegistered = new AtomicBoolean(false);
+
+    /** Are we waiting to close? */
+    protected boolean isClosing = false;
     
     /**
      * Used to send a line of data to this socket.
@@ -73,30 +77,35 @@ public abstract class SocketWrapper {
             myOwner.close();
             return;
         }
+        synchronized(this) { if (isClosing) { return; } }
         
         synchronized (outBuffer) {
             outBuffer.append(line+"\r\n");
-            if (!writeRegistered) {
-                SelectionKey key = mySocketChannel.keyFor(myOwner.getSelector());
 
-                if (key == null) {
-                    Logger.error("Null key -> "+line);
+            synchronized(writeRegistered) {
+                if (!writeRegistered.get()) {
+                    final SelectionKey key = mySocketChannel.keyFor(myOwner.getSelector());
 
-                    try {
-                        close();
-                    } catch (IOException ex) {
-                        Logger.error("Error closing: " + ex.getMessage());
+                    if (key == null) {
+                        Logger.error("Null key -> "+line);
+
+                        try {
+                            close();
+                        } catch (IOException ex) {
+                            Logger.error("Error closing: " + ex.getMessage());
+                        }
+                        return;
                     }
-                    return;
-                }
 
-                key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_CONNECT | SelectionKey.OP_WRITE);
-                myOwner.getSelector().wakeup();
-                writeRegistered = true;
+                    key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_CONNECT | SelectionKey.OP_WRITE);
+                    myOwner.getSelector().wakeup();
+                    writeRegistered.set(true);
+                }
             }
         }
     }
     
+
     /**
      * Used to get the ByteChannel for read and write operations
      *
@@ -137,6 +146,8 @@ public abstract class SocketWrapper {
      * @throws IOException If there is a problem closing either of the ByteChannels
      */
     public void close() throws IOException {
+        synchronized(this) { isClosing = true; }
+
         // Write any waiting data.
         // This has the potential to cause some kind of breakage that I can't
         // actualy remember right now related to writing at teh wrong time.
@@ -153,8 +164,7 @@ public abstract class SocketWrapper {
                 } catch (IOException e) { }
             }
         }
-        
-        // Acceptable quality code below!
+
         if (myByteChannel != null) {
             myByteChannel.close();
         }
@@ -265,7 +275,7 @@ public abstract class SocketWrapper {
                 } else {
                     SelectionKey key = mySocketChannel.keyFor(myOwner.getSelector());
                     key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_CONNECT);
-                    writeRegistered = false;
+                    writeRegistered.set(false);
                     return;
                 }
             }

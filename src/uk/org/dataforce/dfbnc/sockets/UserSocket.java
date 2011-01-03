@@ -67,7 +67,14 @@ public class UserSocket extends ConnectedSocket {
     private String nickname = null;
     /** Given password */
     private String password = null;
-    
+    /** Password attempts */
+    private int passwordTries = 0;
+
+    /** Maximum password attempts.
+     * This should be changed to a config setting at some point.
+     */
+    private final int maxPasswordTries = 3;
+
     /** IP Address of this socket */
     private String myIP = "0.0.0.0";
     
@@ -404,8 +411,19 @@ public class UserSocket extends ConnectedSocket {
                     Logger.debug2("userConnected finished");
                 }
             } else {
-                sendIRCLine(Consts.ERR_PASSWDMISMATCH, line[0], "Password incorrect, or account not found");
-                close();
+                passwordTries++;
+                final StringBuffer message = new StringBuffer("Password incorrect, or account not found.");
+                message.append(" You have ");
+                message.append(maxPasswordTries - passwordTries);
+                message.append(" attempt(s) left.");
+                sendIRCLine(Consts.ERR_PASSWDMISMATCH, line[0], message.toString());
+                sendBotMessage(message.toString());
+                password = null;
+                if (passwordTries >= maxPasswordTries) {
+                    sendIRCLine(Consts.ERR_PASSWDMISMATCH, line[0], "Too many password attempts, closing socket.");
+                    sendBotMessage("Too many password attempts, closing socket.");
+                    close();
+                }
             }
         }
     }
