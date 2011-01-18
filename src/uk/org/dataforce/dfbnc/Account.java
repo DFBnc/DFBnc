@@ -24,19 +24,20 @@
 
 package uk.org.dataforce.dfbnc;
 
-import uk.org.dataforce.dfbnc.config.Config;
-import uk.org.dataforce.libs.util.Util;
-import uk.org.dataforce.dfbnc.sockets.UserSocketWatcher;
-import uk.org.dataforce.dfbnc.sockets.UserSocket;
-import uk.org.dataforce.dfbnc.config.InvalidConfigFileException;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 import uk.org.dataforce.dfbnc.commands.CommandManager;
+import uk.org.dataforce.dfbnc.config.Config;
+import uk.org.dataforce.dfbnc.config.InvalidConfigFileException;
 import uk.org.dataforce.dfbnc.servers.ServerType;
 import uk.org.dataforce.dfbnc.servers.ServerTypeNotFound;
-import java.util.List;
-import java.util.ArrayList;
+import uk.org.dataforce.dfbnc.sockets.UserSocket;
+import uk.org.dataforce.dfbnc.sockets.UserSocketWatcher;
 import uk.org.dataforce.libs.logger.Logger;
+import uk.org.dataforce.libs.util.Util;
 
 /**
  * Functions related to Accounts
@@ -58,7 +59,7 @@ public final class Account implements UserSocketWatcher {
     /** ConnectionHandler for this account */
     private ConnectionHandler myConnectionHandler = null;
     /** List of all sockets that are part of this account. */
-    private List<UserSocket> myUserSockets = new ArrayList<UserSocket>();
+    private List<UserSocket> myUserSockets = new CopyOnWriteArrayList<UserSocket>();
     /** Account config file. */
     private Config config;
 
