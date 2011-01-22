@@ -132,8 +132,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
      * @param line IRC Tokenised version of the data
      */
     @Override
-    public void dataRecieved(final UserSocket user, final String data,
-            final String[] line) {
+    public void dataRecieved(final UserSocket user, final String data, final String[] line) {
         processDataRecieved(user, data, line, 0);
     }
 
@@ -148,12 +147,10 @@ public class IRCConnectionHandler implements ConnectionHandler,
      * @param line IRC Tokenised version of the data
      * @param times Number of times this line has been sent through the processor (used by requeue)
      */
-    public void processDataRecieved(final UserSocket user, final String data,
-            final String[] line, final int times) {
+    public void processDataRecieved(final UserSocket user, final String data, final String[] line, final int times) {
         StringBuilder outData = new StringBuilder();
         boolean resetOutData = false;
-        if (line[0].equalsIgnoreCase("topic") || line[0].equalsIgnoreCase(
-                "names") || line[0].equalsIgnoreCase("mode") || line[0].equalsIgnoreCase("listmode")) {
+        if (line[0].equalsIgnoreCase("topic") || line[0].equalsIgnoreCase("names") || line[0].equalsIgnoreCase("mode") || line[0].equalsIgnoreCase("listmode")) {
             if (handleCommandProxy(user, line, outData)) {
                 for (String channelName : line[1].split(",")) {
                     if (resetOutData) {
@@ -174,8 +171,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                         } else if (line[0].equalsIgnoreCase("mode") ||
                                 line[0].equalsIgnoreCase("listmode")) {
                             if (channel != null) {
-                                boolean isListmode = line[0].equalsIgnoreCase(
-                                        "listmode");
+                                boolean isListmode = line[0].equalsIgnoreCase("listmode");
                                 int itemNumber = 0;
                                 String listName = "";
                                 if (line.length == 3) {
@@ -186,16 +182,12 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                     // seconds for a reply to our onJoin request for list modes)
                                     if (!((IRCChannelInfo) channel).hasGotListModes() && times < 6) {
                                         synchronized (requeueList) {
-                                            requeueList.add(new RequeueLine(user,
-                                                    String.format("%s %s %s",
-                                                    line[0], channelName,
-                                                    line[2]), times));
+                                            requeueList.add(new RequeueLine(user, String.format("%s %s %s", line[0], channelName, line[2]), times));
                                         }
                                         continue;
                                     }
                                     // Make sure we don't send the same thing twice. A list is probably overkill for this, but meh
-                                    List<Character> alreadySent =
-                                            new ArrayList<Character>();
+                                    List<Character> alreadySent = new ArrayList<Character>();
                                     for (int i = 0; i < line[2].length(); ++i) {
                                         char modechar = line[2].charAt(i);
                                         if (alreadySent.contains(modechar)) {
@@ -203,8 +195,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                         } else {
                                             alreadySent.add(modechar);
                                         }
-                                        final Collection<ChannelListModeItem> modeList =
-                                                channel.getListMode(modechar);
+                                        final Collection<ChannelListModeItem> modeList = channel.getListMode(modechar);
                                         if (modeList != null) {
                                             // This covers most list items, if its not listed here it
                                             // gets forwarded to the server.
@@ -219,8 +210,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                                 listName = "Channel Ban List";
                                             } else if (modechar == 'e') {
                                                 itemNumber = 348;
-                                                listName =
-                                                        "Channel Exception List";
+                                                listName = "Channel Exception List";
                                             } else if (modechar == 'I') {
                                                 itemNumber = 346;
                                                 listName = "Channel Invite List";
@@ -229,8 +219,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                                 listName = "Channel Reop List";
                                             } else {
                                                 if (outData.length() == 0) {
-                                                    outData.append(line[0].toUpperCase() + " " +
-                                                            channelName + " ");
+                                                    outData.append(line[0].toUpperCase() + " " + channelName + " ");
                                                 }
                                                 outData.append(line[2].charAt(i));
                                                 resetOutData = true;
@@ -239,11 +228,9 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                                 continue;
                                             }
                                             String prefix = "";
-                                            String thisIRCD = myParser.getServerSoftwareType().
-                                                    toLowerCase();
-                                            if ((thisIRCD.equals("hyperion") ||
-                                                    thisIRCD.equals("dancer")) &&
-                                                    modechar == 'q') {
+                                            String thisIRCD = myParser.getServerSoftwareType().toLowerCase();
+                                            // TODO: This should probably use the parser ServerTypes
+                                            if ((thisIRCD.equals("hyperion") || thisIRCD.equals("dancer")) && modechar == 'q') {
                                                 prefix = "%";
                                             }
                                             if (isListmode) {
@@ -251,11 +238,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                                 itemNumber = 997;
                                                 listName = "Channel List Modes";
                                             }
-                                            for (ChannelListModeItem item :
-                                                    modeList) {
-                                                user.sendIRCLine(itemNumber, myParser.getLocalClient().
-                                                        getNickname() + " " +
-                                                        channel, prefix + item.getItem() + " " + item.getOwner() + " " + item.getTime(), false);
+                                            for (ChannelListModeItem item : modeList) {
+                                                user.sendIRCLine(itemNumber, myParser.getLocalClient().getNickname() + " " + channel, prefix + item.getItem() + " " + item.getOwner() + " " + item.getTime(), false);
                                             }
                                             if (!isListmode &&
                                                     (modechar == 'b' ||
@@ -278,60 +262,40 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                                     } else {
                                                         prefix = "";
                                                     }
-                                                    for (ChannelListModeItem item :
-                                                            newmodeList) {
-                                                        user.sendIRCLine(
-                                                                itemNumber, myParser.getLocalClient().
-                                                                getNickname() +
-                                                                " " + channel,
-                                                                prefix + item.getItem() + " " +
-                                                                item.getOwner() +
-                                                                " " + item.getTime(), false);
+                                                    for (ChannelListModeItem item : newmodeList) {
+                                                        user.sendIRCLine(itemNumber, myParser.getLocalClient().getNickname() + " " + channel, prefix + item.getItem() + " " + item.getOwner() + " " + item.getTime(), false);
                                                     }
                                                 }
                                             }
                                             if (!isListmode) {
-                                                user.sendIRCLine(itemNumber + 1, myParser.getLocalClient().
-                                                        getNickname() + " " +
-                                                        channel, "End of " +
-                                                        listName + " (Cached)");
+                                                user.sendIRCLine(itemNumber + 1, myParser.getLocalClient().getNickname() + " " + channel, "End of " + listName + " (Cached)");
                                             }
                                         } else {
                                             if (outData.length() == 0) {
-                                                outData.append(line[0].toUpperCase() + " " +
-                                                        channelName + " ");
+                                                outData.append(line[0].toUpperCase() + " " + channelName + " ");
                                             }
                                             outData.append(line[2].charAt(i));
                                             resetOutData = true;
                                         }
                                     }
                                     if (isListmode) {
-                                        user.sendIRCLine(itemNumber + 1, myParser.getLocalClient().
-                                                getNickname() + " " + channel,
-                                                "End of " + listName +
-                                                " (Cached)");
+                                        user.sendIRCLine(itemNumber + 1, myParser.getLocalClient().getNickname() + " " + channel, "End of " + listName + " (Cached)");
                                     }
                                 } else {
                                     // This will only actually be 0 if we havn't recieved the initial
                                     // on-Join reply from the server.
                                     // In this case the actual 324 and the 329 from the server will get
                                     // through to the client
-                                    if (((IRCChannelInfo) channel).getCreateTime() >
-                                            0) {
-                                        user.sendIRCLine(324, myParser.getLocalClient().getNickname() +
-                                                " " + channel,
-                                                ((IRCChannelInfo) channel).getModes(), false);
-                                        user.sendIRCLine(329, myParser.getLocalClient().getNickname() +
-                                                " " + channel, "" +
-                                                ((IRCChannelInfo) channel).getCreateTime(), false);
+                                    if (((IRCChannelInfo) channel).getCreateTime() > 0) {
+                                        user.sendIRCLine(324, myParser.getLocalClient().getNickname() + " " + channel, ((IRCChannelInfo) channel).getModes(), false);
+                                        user.sendIRCLine(329, myParser.getLocalClient().getNickname() + " " + channel, "" + ((IRCChannelInfo) channel).getCreateTime(), false);
                                     } else {
                                         allowLine(channel, "324");
                                         allowLine(channel, "329");
                                     }
                                 }
                             } else if (client == myParser.getLocalClient()) {
-                                user.sendIRCLine(221, myParser.getLocalClient().
-                                        getNickname(), ((IRCClientInfo) client).getModes(), false);
+                                user.sendIRCLine(221, myParser.getLocalClient().getNickname(), ((IRCClientInfo) client).getModes(), false);
                             } else {
                                 if (outData.length() == 0) {
                                     outData.append(line[0].toUpperCase() + " ");
@@ -396,12 +360,10 @@ public class IRCConnectionHandler implements ConnectionHandler,
      *                send to the server. (If this is empty, nothing should be sent)
      * @return true if we should handle this command, else false.
      */
-    public boolean handleCommandProxy(final UserSocket user, final String[] line,
-            final StringBuilder outData) {
+    public boolean handleCommandProxy(final UserSocket user, final String[] line, final StringBuilder outData) {
         // if (/topic -f)
         if (line.length == 0) {
-            user.sendIRCLine(Consts.ERR_NEEDMOREPARAMS, line[0],
-                    "Not enough parameters");
+            user.sendIRCLine(Consts.ERR_NEEDMOREPARAMS, line[0], "Not enough parameters");
             return false;
         }
 
@@ -417,8 +379,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 outData.append(" ");
                 outData.append(line[2]);
                 if (line.length == 4) {
-                    outData.append(
-                            line[0].equalsIgnoreCase("topic") ? " :" : " ");
+                    outData.append(line[0].equalsIgnoreCase("topic") ? " :" : " ");
                     outData.append(line[3]);
                 }
                 ChannelInfo channel = myParser.getChannel(line[2]);
@@ -434,11 +395,9 @@ public class IRCConnectionHandler implements ConnectionHandler,
                         if (line.length == 4) {
                             for (int i = 0; i < line[3].length(); ++i) {
                                 char modechar = line[3].charAt(i);
-                                Collection<ChannelListModeItem> modeList =
-                                        channel.getListMode(modechar);
+                                Collection<ChannelListModeItem> modeList = channel.getListMode(modechar);
                                 if (modeList != null) {
-                                    if (modechar == 'b' || modechar == 'd' ||
-                                            modechar == 'q') {
+                                    if (modechar == 'b' || modechar == 'd' || modechar == 'q') {
                                         allowLine(channel, "367");
                                         allowLine(channel, "368");
                                     } else if (modechar == 'e') {
@@ -462,17 +421,14 @@ public class IRCConnectionHandler implements ConnectionHandler,
                     }
                 } else if (line[0].equalsIgnoreCase("listmode")) {
                     if (((IRCParser) myParser).get005().containsKey("LISTMODE")) {
-                        allowLine(channel, ((IRCParser) myParser).get005().get(
-                                "LISTMODE"));
-                        allowLine(channel, ((IRCParser) myParser).get005().get(
-                                "LISTMODEEND"));
+                        allowLine(channel, ((IRCParser) myParser).get005().get("LISTMODE"));
+                        allowLine(channel, ((IRCParser) myParser).get005().get("LISTMODEEND"));
                     }
                 }
                 return false;
             } else {
                 if (line.length < 3) {
-                    user.sendIRCLine(Consts.ERR_NEEDMOREPARAMS, line[0],
-                            "Not enough parameters");
+                    user.sendIRCLine(Consts.ERR_NEEDMOREPARAMS, line[0], "Not enough parameters");
                 } else {
                     // Send line directly to server (without the -f param)
                     outData.append(line[0]);
@@ -488,8 +444,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
             return true;
             // ie /mode #channel b
         } else if (line.length == 3) {
-            if (line[0].equalsIgnoreCase("mode") || line[0].equalsIgnoreCase(
-                    "listmode")) {
+            if (line[0].equalsIgnoreCase("mode") || line[0].equalsIgnoreCase("listmode")) {
 //                System.out.println("Handle!");
                 return true;
             } else if (line[0].equalsIgnoreCase("topic")) {
@@ -529,17 +484,16 @@ public class IRCConnectionHandler implements ConnectionHandler,
      * Called when we or another user change nickname.
      * This is called after the nickname change has been done internally
      * 
-     * @param tParser Reference to the parser object that made the callback.
-     * @param cClient Client changing nickname
-     * @param sOldNick Nickname before change
+     * @param parser Reference to the parser object that made the callback.
+     * @param client Client changing nickname
+     * @param oldNick Nickname before change
      * @see com.dmdirc.parser.ProcessNick#callNickChanged
      */
     @Override
-    public void onNickChanged(final Parser tParser, final Date date, final ClientInfo cClient,
-            final String sOldNick) {
-        if (cClient == tParser.getLocalClient()) {
+    public void onNickChanged(final Parser parser, final Date date, final ClientInfo client, final String oldNick) {
+        if (client == parser.getLocalClient()) {
             for (UserSocket socket : myAccount.getUserSockets()) {
-                socket.setNickname(tParser.getLocalClient().getNickname());
+                socket.setNickname(parser.getLocalClient().getNickname());
             }
         }
     }
@@ -557,8 +511,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
     private void allowLine(final ChannelInfo channel, final String token) {
         List<String> tokens;
         if (channel != null) {
-            tokens = (List<String>) ((IRCChannelInfo) channel).getMap().get(
-                    "AllowedTokens");
+            tokens = (List<String>) ((IRCChannelInfo) channel).getMap().get("AllowedTokens");
             if (tokens == null) {
                 tokens = new ArrayList<String>();
             }
@@ -585,8 +538,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
     private void disallowLine(final ChannelInfo channel, final String token) {
         List<String> tokens;
         if (channel != null) {
-            tokens = (List<String>) ((IRCChannelInfo) channel).getMap().get(
-                    "AllowedTokens");
+            tokens = (List<String>) ((IRCChannelInfo) channel).getMap().get("AllowedTokens");
             if (tokens == null) {
                 tokens = new ArrayList<String>();
             }
@@ -606,13 +558,13 @@ public class IRCConnectionHandler implements ConnectionHandler,
      *
      * @param channel Channel to check line allowance for (or null for the global list)
      * @param token token to check
+     * @return True if this line is allowed, else false
      */
     @SuppressWarnings("unchecked")
     private boolean checkAllowLine(final ChannelInfo channel, final String token) {
         List<String> tokens;
         if (channel != null) {
-            tokens = (List<String>) ((IRCChannelInfo) channel).getMap().get(
-                    "AllowedTokens");
+            tokens = (List<String>) ((IRCChannelInfo) channel).getMap().get("AllowedTokens");
             if (tokens == null) {
                 tokens = new ArrayList<String>();
             }
@@ -627,20 +579,19 @@ public class IRCConnectionHandler implements ConnectionHandler,
      * Called When we join a channel.
      * We are NOT added as a channelclient until after the names reply
      *
-     * @param tParser Reference to the parser object that made the callback.
-     * @param cChannel Channel Object
+     * @param parser Reference to the parser object that made the callback.
+     * @param channel Channel Object
      * @see com.dmdirc.parser.ProcessJoin#callChannelSelfJoin
      */
     @Override
-    public void onChannelSelfJoin(final Parser tParser, final Date date,
-            final ChannelInfo cChannel) {
+    public void onChannelSelfJoin(final Parser parser, final Date date, final ChannelInfo channel) {
         // Allow Names Through
-        allowLine(cChannel, "353");
-        allowLine(cChannel, "366");
+        allowLine(channel, "353");
+        allowLine(channel, "366");
         // Allow Topic Through
-        allowLine(cChannel, "331");
-        allowLine(cChannel, "332");
-        allowLine(cChannel, "333");
+        allowLine(channel, "331");
+        allowLine(channel, "332");
+        allowLine(channel, "333");
     }
 
     /**
@@ -648,14 +599,14 @@ public class IRCConnectionHandler implements ConnectionHandler,
      * We use this to choose what lines should or shouldn't be forwarded to the user.
      * We block everything that we proxy unless it was forwaded to the server.
      *
-     * @param tParser Reference to the parser object that made the callback.
-     * @param sData Incomming Line.
+     * @param parser Reference to the parser object that made the callback.
+     * @param data Incomming Line.
      * @see com.dmdirc.parser.IRCParser#callDataIn
      */
     @Override
-    public void onDataIn(final Parser tParser, final Date date, final String sData) {
+    public void onDataIn(final Parser parser, final Date date, final String data) {
         boolean forwardLine = true;
-        final String[] bits = IRCParser.tokeniseLine(sData);
+        final String[] bits = IRCParser.tokeniseLine(data);
         // Don't forward pings or pongs from the server
         if (bits[1].equals("PONG") || bits[0].equals("PONG") || bits[1].equals("PING") || bits[0].equals("PING")) {
             return;
@@ -735,7 +686,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
 
         if (forwardLine) {
             for (UserSocket socket : myAccount.getUserSockets()) {
-                socket.sendLine(sData);
+                socket.sendLine(data);
             }
         }
     }
@@ -743,25 +694,25 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /**
      * Called after 001.
      * 
-     * @param tParser Reference to the parser object that made the callback.
+     * @param parser Reference to the parser object that made the callback.
      * @see com.dmdirc.parser.Process001#callServerReady
      */
     @Override
-    public void onServerReady(final Parser tParser, final Date date) {
+    public void onServerReady(final Parser parser, final Date date) {
         for (UserSocket socket : myAccount.getUserSockets()) {
             socket.setPost001(true);
-            socket.setNickname(tParser.getLocalClient().getNickname());
+            socket.setNickname(parser.getLocalClient().getNickname());
         }
     }
 
     /**
      * Called after 005.
      * 
-     * @param tParser Reference to the parser object that made the callback.
+     * @param parser Reference to the parser object that made the callback.
      * @see com.dmdirc.parser.Process001#callPost005
      */
     @Override
-    public void onPost005(final Parser tParser, final Date date) {
+    public void onPost005(final Parser parser, final Date date) {
         //hasPost005 = true;
         // We no longer need this callback, so lets remove it
         myParser.getCallbackManager().delCallback(NumericListener.class, this);
@@ -770,25 +721,22 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /**
      * Called when "End of MOTD" or "No MOTD".
      *
-     * @param tParser Reference to the parser object that made the callback.
+     * @param parser Reference to the parser object that made the callback.
      * @param noMOTD Set to true if this was a "No MOTD Found" message rather than an "End of MOTD"
-     * @param sData The contents of the line (incase of language changes or so)
+     * @param data The contents of the line (incase of language changes or so)
      * @see com.dmdirc.parser.ProcessMOTD#callMOTDEnd
      */
     @Override
-    public void onMOTDEnd(final Parser tParser, final Date date, final boolean noMOTD,
-            final String sData) {
+    public void onMOTDEnd(final Parser parser, final Date date, final boolean noMOTD, final String data) {
         hasMOTDEnd = true;
         List<String> myList = new ArrayList<String>();
-        myList = myAccount.getConfig().getListOption("irc", "perform.connect",
-                myList);
+        myList = myAccount.getConfig().getListOption("irc", "perform.connect", myList);
         for (String line : myList) {
             myParser.sendRawMessage(filterPerformLine(line));
         }
         if (myAccount.getUserSockets().size() == 0) {
             myList = new ArrayList<String>();
-            myList = myAccount.getConfig().getListOption("irc",
-                    "perform.lastdetach", myList);
+            myList = myAccount.getConfig().getListOption("irc", "perform.lastdetach", myList);
             for (String line : myList) {
                 myParser.sendRawMessage(filterPerformLine(line));
             }
@@ -798,40 +746,38 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /**
      * Called on every incomming line with a numerical type.
      * 
-     * @param tParser Reference to the parser object that made the callback.
+     * @param parser Reference to the parser object that made the callback.
      * @param numeric What numeric is this for
      * @param token IRC Tokenised line
      * @see com.dmdirc.parser.ProcessingManager#callNumeric
      */
     @Override
-    public void onNumeric(final Parser tParser, final Date date, final int numeric,
-            final String[] token) {
+    public void onNumeric(final Parser parser, final Date date, final int numeric, final String[] token) {
         if (numeric > 1 && numeric < 6) {
             if (numeric == 5 && !hacked005) {
                 // Add our own 005.
                 // * Show support for advanced LISTMODE (http://shane.dmdirc.com/listmodes.php)
                 // * Show that this is a BNC Connection
-                final String my005 = ":" + getServerName() + " 005 " + myParser.getLocalClient().getNickname() +
-                        " LISTMODE=997 BNC=DFBNC :are supported by this server";
+                final String my005 = ":" + getServerName() + " 005 " + myParser.getLocalClient().getNickname() + " LISTMODE=997 BNC=DFBNC :are supported by this server";
                 for (UserSocket socket : myAccount.getUserSockets()) {
                     socket.sendLine(my005);
                 }
                 connectionLines.add(my005);
                 hacked005 = true;
             }
-            connectionLines.add(tParser.getLastLine());
+            connectionLines.add(parser.getLastLine());
         }
     }
 
     /** {@inheritDoc} */
     @Override
-    public void onSocketClosed(final Parser tParser, final Date date) {
+    public void onSocketClosed(final Parser parser, final Date date) {
         myAccount.handlerDisconnected("Remote connection closed.");
     }
     
     /** {@inheritDoc} */
     @Override
-    public void onConnectError(final Parser tParser, final Date date, final ParserError errorInfo) {
+    public void onConnectError(final Parser parser, final Date date, final ParserError errorInfo) {
         String description;
         if (errorInfo.getException() == null) {
             description = errorInfo.getData();
@@ -979,8 +925,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
      */
     public String filterPerformLine(final String input) {
         String result = input;
-        result = result.replaceAll("$me",
-                myParser.getLocalClient().getNickname());
+        result = result.replaceAll("$me", myParser.getLocalClient().getNickname());
         return result;
     }
 
@@ -991,8 +936,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
      * @param serverNumber Server number to use to connect, negative = random
      * @throws UnableToConnectException If there is a problem connecting to the server
      */
-    public IRCConnectionHandler(final UserSocket user, final int serverNumber)
-            throws UnableToConnectException {
+    public IRCConnectionHandler(final UserSocket user, final int serverNumber) throws UnableToConnectException {
         this(user, user.getAccount(), serverNumber);
         // Reprocess queued items every 5 seconds.
         requeueTimer.scheduleAtFixedRate(new RequeueTimerTask(this), 0, 5000);
@@ -1008,12 +952,11 @@ public class IRCConnectionHandler implements ConnectionHandler,
      * @param serverNum Server number to use to connect, negative = random
      * @throws UnableToConnectException If there is a problem connecting to the server
      */
-    public IRCConnectionHandler(final UserSocket user, final Account acc,
-            final int serverNum) throws UnableToConnectException {
+    public IRCConnectionHandler(final UserSocket user, final Account acc, final int serverNum) throws UnableToConnectException {
         myAccount = acc;
         MyInfo me = new MyInfo();
         me.setNickname(myAccount.getConfig().getOption("irc", "nickname", myAccount.getName()));
-        me.setAltNickname(myAccount.getConfig().getOption("irc", "altnickname", "_" + myAccount.getName()));
+        me.setAltNickname(myAccount.getConfig().getOption("irc", "altnickname", "_" + me.getNickname()));
         me.setRealname(myAccount.getConfig().getOption("irc", "realname", myAccount.getName()));
         me.setUsername(myAccount.getConfig().getOption("irc", "username", myAccount.getName()));
 
@@ -1027,8 +970,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         if (serverNumber >= serverList.size() || serverNumber < 0) {
             serverNumber = (new Random()).nextInt(serverList.size());
         }
-        String[] serverInfo = IRCServerType.parseServerString(serverList.get(
-                serverNumber));
+        String[] serverInfo = IRCServerType.parseServerString(serverList.get(serverNumber));
         ServerInfo server;
         try {
             boolean isSSL = false;
@@ -1063,8 +1005,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
 
         user.sendBotMessage("Using server: " + serverInfo[3]);
 
-        final String bindIP = myAccount.getConfig().getOption("irc", "bindip",
-                "");
+        final String bindIP = myAccount.getConfig().getOption("irc", "bindip", "");
         if (!bindIP.isEmpty()) {
             myParser.setBindIP(bindIP);
             user.sendBotMessage("Trying to bind to: " + bindIP);
