@@ -18,33 +18,25 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
- * SVN: $Id$
  */
+
 package uk.org.dataforce.dfbnc.sockets;
 
 import java.nio.channels.SocketChannel;
-import java.nio.channels.Selector;
-import java.nio.channels.SelectionKey;
-import java.util.Iterator;
 import java.io.IOException;
+import java.nio.channels.SelectionKey;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import uk.org.dataforce.dfbnc.DFBnc;
 import uk.org.dataforce.libs.logger.Logger;
 
 /**
- * This is responsible for taking incomming data, and separating it
+ * This is responsible for taking incoming data, and separating it
   * into "\n" separated lines.
-  *
-  * This can be run in 2 ways, multi-thread and single-thread.
-  * Multi-thread mode uses individual selectors for each socket
-  * Single-thread mode uses a single selector for all sockets.
-  * The mode in use is defined in the config, Single-Thread is the default 
  */
-public abstract class ConnectedSocket implements Runnable {
-    /** Used to monitor the socket. */
-    private Selector selector = null;
-    /** Thread to run the listen socket under */    
-    protected Thread myThread = new Thread(this);
+public abstract class ConnectedSocket {
+
     /** SocketWrapper, used to allow for SSL Sockets */
     protected final SocketWrapper mySocketWrapper;
     /** String to identify socket by */
@@ -53,48 +45,35 @@ public abstract class ConnectedSocket implements Runnable {
     private boolean isClosed = false;
     /** Are we an SSL Socket? */
     protected final boolean isSSL;
+    /** Lock for guarding read/writes to socket wrapper. Urgh. */
+    private ReadWriteLock socketWrapperLock = new ReentrantReadWriteLock();
 
     /**
      * Create a new ConnectedSocket.
      *
-     * @param sChannel Socket to control
+     * @param channel Socket to control
      * @param idstring Name to call this socket.
      * @param fromSSL Did this come from an SSL ListenSocket?
      * @throws IOException If there is a problem creating Socket
      */
-    protected ConnectedSocket(SocketChannel sChannel, String idstring, final boolean fromSSL) throws IOException {
+    protected ConnectedSocket(final SocketChannel channel, final String idstring, final boolean fromSSL) throws IOException {
+        socketWrapperLock.writeLock().lock();
+
         isSSL = fromSSL;
-        
-        sChannel.configureBlocking(false);
-        if (!isSingleThread()) {
-            selector = Selector.open();
-            sChannel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_CONNECT);
-        }
-        
+
+        channel.configureBlocking(false);
+
+        final SelectionKey key = ConnectedSocketSelector.getConnectedSocketSelector().registerSocket(channel, this);
+
         if (isSSL) {
-            mySocketWrapper = new SecureSocket(sChannel, this);
+            mySocketWrapper = new SecureSocket(channel, this, key);
         } else {
-            mySocketWrapper = new PlainSocket(sChannel, this);
+            mySocketWrapper = new PlainSocket(channel, this, key);
         }
-        
-        setSocketID(socketID);
-        if (isSingleThread()) {
-            ConnectedSocketSelector.getConnectedSocketSelector().registerSocket(sChannel, this);
-        } else {
-            myThread.start();
-        }
+
+        socketWrapperLock.writeLock().unlock();
     }
-        
-    /**
-     * Check if we are in single thread or multi thread mode.
-     *
-     * @return The negative of the value of config option general.socket.multithread,
-     *         or true if the option is undefined.
-     */
-    public final boolean isSingleThread() {
-        return !DFBnc.getBNC().getConfig().getBoolOption("general", "socket.multithread", false);
-    }
-        
+
     /**
      * Used to close this socket.
      */
@@ -103,23 +82,15 @@ public abstract class ConnectedSocket implements Runnable {
         Logger.info("Connected Socket closing ("+socketID+")");
         isClosed = true;
 
-        if (!isSingleThread()) {
-            // Kill the thread
-            Thread tmp = myThread;
-            myThread = null;
-            if (tmp != null) { tmp.interrupt(); }
-        }
-        
         // Close the actual socket
         try {
-            if (isSingleThread()) {
-                ConnectedSocketSelector.getConnectedSocketSelector().unregisterSocket(mySocketWrapper.getSocketChannel());
-            }
             mySocketWrapper.close();
-        } catch (IOException e) { }
+        } catch (IOException e) {
+        }
+
         this.socketClosed(false);
     }
-    
+
     /**
      * Is this socket still open?
      *
@@ -128,26 +99,30 @@ public abstract class ConnectedSocket implements Runnable {
     public boolean isOpen() {
         return !isClosed;
     }
-    
+
     /**
      * Get the SocketWrapper this socket uses
      *
      * @return The SocketWrapper this socket uses
      */
     public SocketWrapper getSocketWrapper() {
-        return mySocketWrapper;
+        try {
+            socketWrapperLock.readLock().lock();
+            return mySocketWrapper;
+        } finally {
+            socketWrapperLock.readLock().unlock();
+        }
     }
-    
+
     /**
      * Set this Sockets ID
      *
      * @param idstring New ID String for this socket
      */
-    public void setSocketID (final String idstring) {
+    public void setSocketID(final String idstring) {
         socketID = idstring;
-        myThread.setName(socketID);
     }
-    
+
     /**
      * Used to send a line of data to this socket, in printf format.
      *
@@ -157,7 +132,7 @@ public abstract class ConnectedSocket implements Runnable {
     public final void sendLine(final String data, final Object... args) {
         sendLine(String.format(data, args));
     }
-    
+
     /**
      * Used to send a line of data to this socket.
      * This adds to the buffer.
@@ -167,67 +142,19 @@ public abstract class ConnectedSocket implements Runnable {
     public final void sendLine(final String line) {
         mySocketWrapper.sendLine(line);
     }
-        
-    /**
-     * Used to actually do stuff.
-     */
-    @Override
-    public final void run() {
-        if (isSingleThread()) { return; }
-        
-        while (myThread == Thread.currentThread()) {
-            try {
-                int res = selector.select();
-                if (res == 0) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException ie) { }
-                }
-            } catch (IOException e) {
-                break;
-            }
-            
-            Iterator it = selector.selectedKeys().iterator();
-            
-            while (it.hasNext()) {
-                SelectionKey selKey = (SelectionKey)it.next();
-                it.remove();
 
-                try {
-                    mySocketWrapper.processSelectionKey(selKey);
-                } catch (IOException e) {
-                    selKey.cancel();
-                    break;
-                }
-            }
-        }
-    }
-        
-    /**
-     * Get the selector in use by this Socket
-     *
-     * @return The selector in use by this Socket
-     */
-    public Selector getSelector() {
-        if (isSingleThread()) {
-            return ConnectedSocketSelector.getConnectedSocketSelector().getSelector();
-        } else {
-            return selector;
-        }
-    }
-    
     /**
      * Process a line of data.
      *
      * @param line Line to handle
      */
     abstract void processLine(final String line);
-    
+
     /**
      * Action to take when socket is opened and ready.
      */
     public void socketOpened() { }
-    
+
     /**
      * Action to take when socket is closed.
      *
