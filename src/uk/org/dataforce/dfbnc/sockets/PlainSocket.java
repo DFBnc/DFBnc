@@ -18,27 +18,30 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
- * SVN: $Id$
  */
+
 package uk.org.dataforce.dfbnc.sockets;
 
 import java.nio.channels.SocketChannel;
 import java.io.IOException;
+import java.nio.channels.SelectionKey;
 
 /**
  * This defines a Plain (non-ssl) Socket.
  * SocketWrapper handles everything for this.
  */
 public class PlainSocket extends SocketWrapper {
+
     /**
      * Create a new PlainSocket
      *
      * @param channel Channel to Wrap.
      * @param owner ConnectedSocket that owns this.
+     * @param key The selection key corresponding to the channel's registration
      * @throws IOException If there is a problem creating the socket
      */
-    public PlainSocket (final SocketChannel channel, final ConnectedSocket owner) throws IOException {
-        super(channel, owner);
+    public PlainSocket (final SocketChannel channel,
+            final ConnectedSocket owner, final SelectionKey key) throws IOException {
+        super(channel, owner, key);
     }
 }

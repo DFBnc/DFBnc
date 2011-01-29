@@ -35,6 +35,7 @@ import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.security.KeyStoreException;
 import java.io.FileNotFoundException;
+import java.nio.channels.SelectionKey;
 import java.security.NoSuchAlgorithmException;
 import java.security.KeyManagementException;
 import java.security.UnrecoverableKeyException;
@@ -45,11 +46,35 @@ import uk.org.dataforce.dfbnc.DFBnc;
  * This defines a Secure (ssl) Socket.
  */
 public class SecureSocket extends SocketWrapper {
+
     /** SSLEngine used for this socket */
     private final SSLEngine sslEngine;
     /** SSLContext in use by ssl sockets */
     private static SSLContext sslContext = null;
-    
+
+    /**
+     * Create a new SecureSocket
+     *
+     * @param channel Channel to Wrap.
+     * @param owner ConnectedSocket that owns this.
+     * @param key The selection key corresponding to the channel's registration
+     * @throws IOException If there is a problem creating and setting up the socket
+     */
+    public SecureSocket (final SocketChannel channel,
+            final ConnectedSocket owner, final SelectionKey key) throws IOException {
+        super(channel, owner, key);
+
+        try {
+            sslEngine = getSSLContext().createSSLEngine();
+            sslEngine.setUseClientMode(false);
+            sslEngine.beginHandshake();
+
+            myByteChannel = new SSLByteChannel(channel, sslEngine);
+        } catch (Exception e) {
+            throw new IOException("Error setting up SSL Socket: "+e.getMessage(), e);
+        }
+    }
+
     /**
      * Get (and create if needed) a copy of the SSLContext we are using.
      *
@@ -68,52 +93,31 @@ public class SecureSocket extends SocketWrapper {
             String storePassword =  DFBnc.getBNC().getConfig().getOption("ssl", "storepass", "");
             String keyPassword =  DFBnc.getBNC().getConfig().getOption("ssl", "keypass", "");
             String keyStore =  DFBnc.getBNC().getConfig().getOption("ssl", "keystore", "");
-            
+
             if (keyStore.isEmpty()) { throw new IllegalArgumentException("No keystore sepcified in config ('ssl.keystore')"); }
             else if (keyPassword.isEmpty()) { throw new IllegalArgumentException("No key password sepcified in config ('ssl.keypass')"); }
             else if (storePassword.isEmpty()) { throw new IllegalArgumentException("No keystore password sepcified in config ('ssl.storepass')"); }
-            
+
             File keyFile = new File(keyStore);
             if (!keyFile.exists()) { throw new FileNotFoundException("Keystore '"+keyStore+"' does not exist."); }
-            
+
             // Load the keystore
             KeyStore ks = KeyStore.getInstance("JKS");
             ks.load(new FileInputStream(keyFile), storePassword.toCharArray());
-            
+
             // Load the keymanager
             KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
             kmf.init(ks, keyPassword.toCharArray());
-            
+
             // Load the TrustManager
             TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
             tmf.init(ks);
-            
+
             // Create an SSLContext
             sslContext = SSLContext.getInstance("TLS");
             sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), new SecureRandom());
         }
 
         return sslContext;
-    }
-    
-    /**
-     * Create a new SecureSocket
-     *
-     * @param channel Channel to Wrap.
-     * @param owner ConnectedSocket that owns this.
-     * @throws IOException If there is a problem creating and setting up the socket
-     */
-    public SecureSocket (final SocketChannel channel, final ConnectedSocket owner) throws IOException {
-        super(channel, owner);
-        
-        try {
-            sslEngine = getSSLContext().createSSLEngine();
-            sslEngine.setUseClientMode(false);
-            sslEngine.beginHandshake();
-        
-            myByteChannel = new SSLByteChannel(channel, sslEngine);
-        } catch (Exception e) {
-            throw new IOException("Error setting up SSL Socket: "+e.getMessage(), e);
-        }
     }
 }
