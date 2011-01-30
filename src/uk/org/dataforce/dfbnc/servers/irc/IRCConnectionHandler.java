@@ -18,19 +18,11 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
- * SVN: $Id$
  */
+
 package uk.org.dataforce.dfbnc.servers.irc;
 
 import com.dmdirc.parser.common.AwayState;
-import uk.org.dataforce.dfbnc.ConnectionHandler;
-import uk.org.dataforce.dfbnc.Account;
-import uk.org.dataforce.dfbnc.Consts;
-import uk.org.dataforce.dfbnc.sockets.UserSocket;
-import uk.org.dataforce.dfbnc.sockets.UnableToConnectException;
-import uk.org.dataforce.dfbnc.sockets.UserSocketWatcher;
-
 import com.dmdirc.parser.common.CallbackNotFoundException;
 import com.dmdirc.parser.common.ChannelListModeItem;
 import com.dmdirc.parser.common.MyInfo;
@@ -51,8 +43,11 @@ import com.dmdirc.parser.interfaces.callbacks.Post005Listener;
 import com.dmdirc.parser.interfaces.callbacks.MotdEndListener;
 import com.dmdirc.parser.interfaces.callbacks.ChannelSelfJoinListener;
 import com.dmdirc.parser.interfaces.callbacks.ConnectErrorListener;
+import com.dmdirc.parser.interfaces.callbacks.ErrorInfoListener;
 import com.dmdirc.parser.interfaces.callbacks.SocketCloseListener;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,6 +55,13 @@ import java.util.Date;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import uk.org.dataforce.dfbnc.ConnectionHandler;
+import uk.org.dataforce.dfbnc.Account;
+import uk.org.dataforce.dfbnc.Consts;
+import uk.org.dataforce.dfbnc.sockets.UserSocket;
+import uk.org.dataforce.dfbnc.sockets.UnableToConnectException;
+import uk.org.dataforce.dfbnc.sockets.UserSocketWatcher;
 import uk.org.dataforce.libs.logger.Logger;
 
 /**
@@ -71,7 +73,8 @@ import uk.org.dataforce.libs.logger.Logger;
 public class IRCConnectionHandler implements ConnectionHandler,
         UserSocketWatcher, DataInListener, NickChangeListener,
         ServerReadyListener, Post005Listener, NumericListener, MotdEndListener,
-        SocketCloseListener, ChannelSelfJoinListener, ConnectErrorListener {
+        SocketCloseListener, ChannelSelfJoinListener, ConnectErrorListener,
+        ErrorInfoListener {
 
     /** Account that this IRCConnectionHandler is for */
     private final Account myAccount;
@@ -79,8 +82,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
     private final Parser myParser;
     /** Thread used to store IRCParser */
     private final Thread controlThread;
-    /** Have we recieved a post005 callback? */
-    //private boolean hasPost005 = false;
     /** Have we recieved a MOTDEnd callback? */
     private boolean hasMOTDEnd = false;
     /** Have we hacked in our own 005? (Shows support for LISTMODE) */
@@ -90,10 +91,99 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /** This stores tokens not related to a channel that we want to temporarily allow to come via onDataIn */
     private List<String> allowTokens = new ArrayList<String>();
     /** This stores lines that need to be processed at a later date. */
-    private final List<RequeueLine> requeueList =
-            new ArrayList<RequeueLine>();
+    private final List<RequeueLine> requeueList = new ArrayList<RequeueLine>();
     /** This timer handles reprocessing of items in the requeueList */
     private Timer requeueTimer = new Timer("requeueTimer");
+
+
+    /**
+     * Create a new IRCConnectionHandler
+     *
+     * @param user User who requested the connection
+     * @param serverNumber Server number to use to connect, negative = random
+     * @throws UnableToConnectException If there is a problem connecting to the server
+     */
+    public IRCConnectionHandler(final UserSocket user, final int serverNumber) throws UnableToConnectException {
+        this(user, user.getAccount(), serverNumber);
+        // Reprocess queued items every 5 seconds.
+        requeueTimer.scheduleAtFixedRate(new RequeueTimerTask(this), 0, 5000);
+        // Allow the initial usermode line through to the user
+        allowLine(null, "221");
+    }
+
+    /**
+     * Create a new IRCConnectionHandler
+     *
+     * @param user User who requested the connection
+     * @param acc Account that requested the connection
+     * @param serverNum Server number to use to connect, negative = random
+     * @throws UnableToConnectException If there is a problem connecting to the server
+     */
+    public IRCConnectionHandler(final UserSocket user, final Account acc, final int serverNum) throws UnableToConnectException {
+        myAccount = acc;
+        MyInfo me = new MyInfo();
+        me.setNickname(myAccount.getConfig().getOption("irc", "nickname", myAccount.getName()));
+        me.setAltNickname(myAccount.getConfig().getOption("irc", "altnickname", "_" + me.getNickname()));
+        me.setRealname(myAccount.getConfig().getOption("irc", "realname", myAccount.getName()));
+        me.setUsername(myAccount.getConfig().getOption("irc", "username", myAccount.getName()));
+
+        List<String> serverList = new ArrayList<String>();
+        serverList = user.getAccount().getConfig().getListOption("irc", "serverlist", serverList);
+
+        if (serverList.isEmpty()) {
+            throw new UnableToConnectException("No servers found");
+        }
+
+        int serverNumber = serverNum;
+        if (serverNumber >= serverList.size() || serverNumber < 0) {
+            serverNumber = (new Random()).nextInt(serverList.size());
+        }
+
+        String[] serverInfo = IRCServerType.parseServerString(serverList.get(serverNumber));
+        ServerInfo server;
+        try {
+            boolean isSSL = false;
+            final int portNum;
+            if (serverInfo[1].charAt(0) == '+') {
+                portNum = Integer.parseInt(serverInfo[1].substring(1));
+                isSSL = true;
+            } else {
+                portNum = Integer.parseInt(serverInfo[1]);
+            }
+            server = new ServerInfo(serverInfo[0], portNum, serverInfo[2]);
+            server.setSSL(isSSL);
+        } catch (NumberFormatException nfe) {
+            throw new UnableToConnectException("Invalid Port");
+        }
+
+        myParser = new IRCParser(me, server);
+
+        try {
+            myParser.getCallbackManager().addCallback(DataInListener.class, this);
+            myParser.getCallbackManager().addCallback(ServerReadyListener.class, this);
+            myParser.getCallbackManager().addCallback(Post005Listener.class, this);
+            myParser.getCallbackManager().addCallback(NumericListener.class, this);
+            myParser.getCallbackManager().addCallback(MotdEndListener.class, this);
+            myParser.getCallbackManager().addCallback(ChannelSelfJoinListener.class, this);
+            myParser.getCallbackManager().addCallback(NickChangeListener.class, this);
+            myParser.getCallbackManager().addCallback(SocketCloseListener.class, this);
+            myParser.getCallbackManager().addCallback(ConnectErrorListener.class, this);
+            myParser.getCallbackManager().addCallback(ErrorInfoListener.class, this);
+        } catch (CallbackNotFoundException cnfe) {
+            throw new UnableToConnectException("Unable to register callbacks");
+        }
+
+        user.sendBotMessage("Using server: " + serverInfo[3]);
+
+        final String bindIP = myAccount.getConfig().getOption("irc", "bindip", "");
+        if (!bindIP.isEmpty()) {
+            myParser.setBindIP(bindIP);
+            user.sendBotMessage("Trying to bind to: " + bindIP);
+        }
+
+        controlThread = new Thread(myParser);
+        controlThread.start();
+    }
 
     /**
      * Shutdown this ConnectionHandler
@@ -155,7 +245,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 for (String channelName : line[1].split(",")) {
                     if (resetOutData) {
                         if (outData.length() > 0) {
-//                            System.out.println("Sending old outData: "+outData.toString());
                             myParser.sendRawMessage(outData.toString());
                             outData = new StringBuilder();
                         }
@@ -219,7 +308,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                                 listName = "Channel Reop List";
                                             } else {
                                                 if (outData.length() == 0) {
-                                                    outData.append(line[0].toUpperCase() + " " + channelName + " ");
+                                                    outData.append(line[0].toUpperCase()).append(' ').append(channelName).append(' ');
                                                 }
                                                 outData.append(line[2].charAt(i));
                                                 resetOutData = true;
@@ -239,11 +328,9 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                                 listName = "Channel List Modes";
                                             }
                                             for (ChannelListModeItem item : modeList) {
-                                                user.sendIRCLine(itemNumber, myParser.getLocalClient().getNickname() + " " + channel, prefix + item.getItem() + " " + item.getOwner() + " " + item.getTime(), false);
+                                                user.sendIRCLine(itemNumber, myParser.getLocalClient().getNickname().append(' ').append(channel, prefix + item.getItem() + " " + item.getOwner() + " " + item.getTime(), false);
                                             }
-                                            if (!isListmode &&
-                                                    (modechar == 'b' ||
-                                                    modechar == 'q')) {
+                                            if (!isListmode && (modechar == 'b' || modechar == 'q')) {
                                                 // If we are emulating a hyperian ircd, we need to send these together, unless we are using listmode.
                                                 if (thisIRCD.equals("hyperion") ||
                                                         thisIRCD.equals("dancer")) {
@@ -272,7 +359,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                             }
                                         } else {
                                             if (outData.length() == 0) {
-                                                outData.append(line[0].toUpperCase() + " " + channelName + " ");
+                                                outData.append(line[0].toUpperCase()).append(' ').append(channelName).append(' ');
                                             }
                                             outData.append(line[2].charAt(i));
                                             resetOutData = true;
@@ -298,18 +385,18 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                 user.sendIRCLine(221, myParser.getLocalClient().getNickname(), ((IRCClientInfo) client).getModes(), false);
                             } else {
                                 if (outData.length() == 0) {
-                                    outData.append(line[0].toUpperCase() + " ");
+                                    outData.append(line[0].toUpperCase()).append(' ');
                                 } else {
-                                    outData.append(",");
+                                    outData.append(',');
                                 }
                                 outData.append(channelName);
                             }
                         }
                     } else {
                         if (outData.length() == 0) {
-                            outData.append(line[0].toUpperCase() + " ");
+                            outData.append(line[0].toUpperCase().append(' ');
                         } else {
-                            outData.append(",");
+                            outData.append(',');
                         }
                         outData.append(channelName);
                     }
@@ -323,10 +410,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
         }
 
         if (outData.length() == 0) {
-//            System.out.println("Sending: "+data);
             myParser.sendRawMessage(data);
         } else {
-//            System.out.println("Sending: "+outData.toString());
             myParser.sendRawMessage(outData.toString());
         }
     }
@@ -367,16 +452,11 @@ public class IRCConnectionHandler implements ConnectionHandler,
             return false;
         }
 
-//        System.out.println("Length: "+line.length);
-//        for (String bit : line) {
-//            System.out.println("Line: "+bit);
-//        }
-
         if (line[1].equalsIgnoreCase("-f")) {
             // if (/topic -f #foo)
             if (line.length == 3 || line.length == 4) {
                 outData.append(line[0]);
-                outData.append(" ");
+                outData.append(' ');
                 outData.append(line[2]);
                 if (line.length == 4) {
                     outData.append(line[0].equalsIgnoreCase("topic") ? " :" : " ");
@@ -445,7 +525,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
             // ie /mode #channel b
         } else if (line.length == 3) {
             if (line[0].equalsIgnoreCase("mode") || line[0].equalsIgnoreCase("listmode")) {
-//                System.out.println("Handle!");
                 return true;
             } else if (line[0].equalsIgnoreCase("topic")) {
                 outData.append(line[0]);
@@ -465,12 +544,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         return false;
     }
 
-    /**
-     * Servername to use in sendIRCLine and Bot SNOTICEs as an alternative to
-     * Functions.getServerName() or null if no change.
-     *
-     * @return servername to use.
-     */
+    /** {@inheritDoc} */
     @Override
     public String getServerName() {
         if (((IRCParser) myParser).isReady()) {
@@ -480,15 +554,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         }
     }
 
-    /**
-     * Called when we or another user change nickname.
-     * This is called after the nickname change has been done internally
-     * 
-     * @param parser Reference to the parser object that made the callback.
-     * @param client Client changing nickname
-     * @param oldNick Nickname before change
-     * @see com.dmdirc.parser.ProcessNick#callNickChanged
-     */
+    /** {@inheritDoc} */
     @Override
     public void onNickChanged(final Parser parser, final Date date, final ClientInfo client, final String oldNick) {
         if (client == parser.getLocalClient()) {
@@ -575,14 +641,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         return tokens.contains(token);
     }
 
-    /**
-     * Called When we join a channel.
-     * We are NOT added as a channelclient until after the names reply
-     *
-     * @param parser Reference to the parser object that made the callback.
-     * @param channel Channel Object
-     * @see com.dmdirc.parser.ProcessJoin#callChannelSelfJoin
-     */
+    /** {@inheritDoc} */
     @Override
     public void onChannelSelfJoin(final Parser parser, final Date date, final ChannelInfo channel) {
         // Allow Names Through
@@ -594,15 +653,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         allowLine(channel, "333");
     }
 
-    /**
-     * Called on every incomming line BEFORE parsing.
-     * We use this to choose what lines should or shouldn't be forwarded to the user.
-     * We block everything that we proxy unless it was forwaded to the server.
-     *
-     * @param parser Reference to the parser object that made the callback.
-     * @param data Incomming Line.
-     * @see com.dmdirc.parser.IRCParser#callDataIn
-     */
+    /** {@inheritDoc} */
     @Override
     public void onDataIn(final Parser parser, final Date date, final String data) {
         boolean forwardLine = true;
@@ -691,12 +742,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         }
     }
 
-    /**
-     * Called after 001.
-     * 
-     * @param parser Reference to the parser object that made the callback.
-     * @see com.dmdirc.parser.Process001#callServerReady
-     */
+    /** {@inheritDoc} */
     @Override
     public void onServerReady(final Parser parser, final Date date) {
         for (UserSocket socket : myAccount.getUserSockets()) {
@@ -705,12 +751,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         }
     }
 
-    /**
-     * Called after 005.
-     * 
-     * @param parser Reference to the parser object that made the callback.
-     * @see com.dmdirc.parser.Process001#callPost005
-     */
+    /** {@inheritDoc} */
     @Override
     public void onPost005(final Parser parser, final Date date) {
         //hasPost005 = true;
@@ -718,14 +759,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         myParser.getCallbackManager().delCallback(NumericListener.class, this);
     }
 
-    /**
-     * Called when "End of MOTD" or "No MOTD".
-     *
-     * @param parser Reference to the parser object that made the callback.
-     * @param noMOTD Set to true if this was a "No MOTD Found" message rather than an "End of MOTD"
-     * @param data The contents of the line (incase of language changes or so)
-     * @see com.dmdirc.parser.ProcessMOTD#callMOTDEnd
-     */
+    /** {@inheritDoc} */
     @Override
     public void onMOTDEnd(final Parser parser, final Date date, final boolean noMOTD, final String data) {
         hasMOTDEnd = true;
@@ -734,7 +768,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         for (String line : myList) {
             myParser.sendRawMessage(filterPerformLine(line));
         }
-        if (myAccount.getUserSockets().size() == 0) {
+        if (myAccount.getUserSockets().isEmpty()) {
             myList = new ArrayList<String>();
             myList = myAccount.getConfig().getListOption("irc", "perform.lastdetach", myList);
             for (String line : myList) {
@@ -743,14 +777,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         }
     }
 
-    /**
-     * Called on every incomming line with a numerical type.
-     * 
-     * @param parser Reference to the parser object that made the callback.
-     * @param numeric What numeric is this for
-     * @param token IRC Tokenised line
-     * @see com.dmdirc.parser.ProcessingManager#callNumeric
-     */
+    /** {@inheritDoc} */
     @Override
     public void onNumeric(final Parser parser, final Date date, final int numeric, final String[] token) {
         if (numeric > 1 && numeric < 6) {
@@ -799,12 +826,21 @@ public class IRCConnectionHandler implements ConnectionHandler,
         myAccount.handlerDisconnected("Connection error: " + description);
     }
 
-    /**
-     * Called when a new UserSocket is opened on an account that this class is
-     * linked to.
-     *
-     * @param user UserSocket for user
-     */
+
+    /** {@inheritDoc} */
+    @Override
+    public void onErrorInfo(final Parser parser, final Date date, final ParserError errorInfo) {
+        Logger.error("Parser error occurred: " + errorInfo.getData());
+        Logger.error("\tLast line received: " + errorInfo.getLastLine());
+
+        if (errorInfo.getException() != null) {
+            final StringWriter writer = new StringWriter();
+            errorInfo.getException().printStackTrace(new PrintWriter(writer));
+            Logger.error("\tStack trace: " + writer.getBuffer());
+        }
+    }
+
+    /** {@inheritDoc} */
     @Override
     public void userConnected(final UserSocket user) {
         Logger.debug2("IRC userConnected: Check for 001: "+((IRCParser) myParser).isReady());
@@ -827,16 +863,16 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 ClientInfo me = myParser.getLocalClient();
                 StringBuilder str302 = new StringBuilder(me.getNickname());
                 if (((IRCClientInfo) me).isOper()) {
-                    str302.append("*");
+                    str302.append('*');
                 }
-                str302.append("=");
+                str302.append('=');
                 if (((IRCClientInfo) me).getAwayState() == AwayState.AWAY) {
                     user.sendIRCLine(306, myParser.getLocalClient().getNickname(), "You have been marked as being away");
-                    str302.append("-");
+                    str302.append('-');
                 } else {
-                    str302.append("+");
+                    str302.append('+');
                 }
-                str302.append(me.getUsername() + "@" + me.getHostname());
+                str302.append(me.getUsername()).append('@').append(me.getHostname());
                 user.sendIRCLine(302, myParser.getLocalClient().getNickname(), str302.toString());
                 // Now send the usermode info
                 user.sendIRCLine(221, myParser.getLocalClient().getNickname(), ((IRCClientInfo) me).getModes(), false);
@@ -906,7 +942,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
     @Override
     public void userDisconnected(final UserSocket user) {
         if (((IRCParser) myParser).isReady()) {
-            if (myAccount.getUserSockets().size() == 0) {
+            if (myAccount.getUserSockets().isEmpty()) {
                 List<String> myList = new ArrayList<String>();
                 myList = myAccount.getConfig().getListOption("irc", "perform.lastdetach", myList);
                 for (String line : myList) {
@@ -928,93 +964,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
         result = result.replaceAll("$me", myParser.getLocalClient().getNickname());
         return result;
     }
-
-    /**
-     * Create a new IRCConnectionHandler
-     *
-     * @param user User who requested the connection
-     * @param serverNumber Server number to use to connect, negative = random
-     * @throws UnableToConnectException If there is a problem connecting to the server
-     */
-    public IRCConnectionHandler(final UserSocket user, final int serverNumber) throws UnableToConnectException {
-        this(user, user.getAccount(), serverNumber);
-        // Reprocess queued items every 5 seconds.
-        requeueTimer.scheduleAtFixedRate(new RequeueTimerTask(this), 0, 5000);
-        // Allow the initial usermode line through to the user
-        allowLine(null, "221");
-    }
-
-    /**
-     * Create a new IRCConnectionHandler
-     *
-     * @param user User who requested the connection
-     * @param acc Account that requested the connection
-     * @param serverNum Server number to use to connect, negative = random
-     * @throws UnableToConnectException If there is a problem connecting to the server
-     */
-    public IRCConnectionHandler(final UserSocket user, final Account acc, final int serverNum) throws UnableToConnectException {
-        myAccount = acc;
-        MyInfo me = new MyInfo();
-        me.setNickname(myAccount.getConfig().getOption("irc", "nickname", myAccount.getName()));
-        me.setAltNickname(myAccount.getConfig().getOption("irc", "altnickname", "_" + me.getNickname()));
-        me.setRealname(myAccount.getConfig().getOption("irc", "realname", myAccount.getName()));
-        me.setUsername(myAccount.getConfig().getOption("irc", "username", myAccount.getName()));
-
-        List<String> serverList = new ArrayList<String>();
-        serverList = user.getAccount().getConfig().getListOption("irc", "serverlist", serverList);
-        if (serverList.size() == 0) {
-            throw new UnableToConnectException("No servers found");
-        }
-
-        int serverNumber = serverNum;
-        if (serverNumber >= serverList.size() || serverNumber < 0) {
-            serverNumber = (new Random()).nextInt(serverList.size());
-        }
-        String[] serverInfo = IRCServerType.parseServerString(serverList.get(serverNumber));
-        ServerInfo server;
-        try {
-            boolean isSSL = false;
-            final int portNum;
-            if (serverInfo[1].charAt(0) == '+') {
-                portNum = Integer.parseInt(serverInfo[1].substring(1));
-                isSSL = true;
-            } else {
-                portNum = Integer.parseInt(serverInfo[1]);
-            }
-            server = new ServerInfo(serverInfo[0], portNum, serverInfo[2]);
-            server.setSSL(isSSL);
-        } catch (NumberFormatException nfe) {
-            throw new UnableToConnectException("Invalid Port");
-        }
-
-        myParser = new IRCParser(me, server);
-
-        try {
-            myParser.getCallbackManager().addCallback(DataInListener.class, this);
-            myParser.getCallbackManager().addCallback(ServerReadyListener.class, this);
-            myParser.getCallbackManager().addCallback(Post005Listener.class, this);
-            myParser.getCallbackManager().addCallback(NumericListener.class, this);
-            myParser.getCallbackManager().addCallback(MotdEndListener.class, this);
-            myParser.getCallbackManager().addCallback(ChannelSelfJoinListener.class, this);
-            myParser.getCallbackManager().addCallback(NickChangeListener.class, this);
-            myParser.getCallbackManager().addCallback(SocketCloseListener.class, this);
-            myParser.getCallbackManager().addCallback(ConnectErrorListener.class, this);
-        } catch (CallbackNotFoundException cnfe) {
-            throw new UnableToConnectException("Unable to register callbacks");
-        }
-
-        user.sendBotMessage("Using server: " + serverInfo[3]);
-
-        final String bindIP = myAccount.getConfig().getOption("irc", "bindip", "");
-        if (!bindIP.isEmpty()) {
-            myParser.setBindIP(bindIP);
-            user.sendBotMessage("Trying to bind to: " + bindIP);
-        }
-
-        controlThread = new Thread(myParser);
-        controlThread.start();
-    }
-
 }
 
 /**
