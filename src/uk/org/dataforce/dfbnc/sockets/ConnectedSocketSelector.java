@@ -28,6 +28,8 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.ClosedChannelException;
 import java.util.Iterator;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.concurrent.Semaphore;
 
 import uk.org.dataforce.libs.logger.Logger;
@@ -132,6 +134,13 @@ public final class ConnectedSocketSelector implements Runnable {
                 } catch (IOException e) {
                     selKey.cancel();
                     break;
+                } catch (Exception ex) {
+                    Logger.error("Unexpected exception while processing selected keys");
+                    Logger.error("\tSocket ID: " + ((ConnectedSocket) selKey.attachment()).getSocketID());
+
+                    final StringWriter writer = new StringWriter();
+                    ex.printStackTrace(new PrintWriter(writer));
+                    Logger.error("\tStack trace: " + writer.getBuffer());
                 }
             }
         }

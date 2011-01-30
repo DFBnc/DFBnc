@@ -31,6 +31,7 @@ import java.nio.channels.SelectionKey;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.channels.ByteChannel;
+import java.nio.channels.CancelledKeyException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import uk.org.dataforce.libs.logger.Logger;
@@ -103,20 +104,30 @@ public abstract class SocketWrapper {
         }
 
         if (!mySocketChannel.isConnected()) {
-            Logger.error("Trying to write to Disconnected SocketChannel -> "+line);
+            Logger.error("Trying to write to Disconnected SocketChannel -> " + line);
             myOwner.close();
             return;
         }
-        synchronized(this) { if (isClosing) { return; } }
+
+        synchronized(this) {
+            if (isClosing) {
+                return;
+            }
+        }
 
         synchronized (outBuffer) {
             outBuffer.append(line).append("\r\n");
 
             synchronized(writeRegistered) {
                 if (!writeRegistered.get()) {
-                    key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_CONNECT | SelectionKey.OP_WRITE);
-                    ConnectedSocketSelector.getConnectedSocketSelector().getSelector().wakeup();
-                    writeRegistered.set(true);
+                    try {
+                        key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_CONNECT | SelectionKey.OP_WRITE);
+                        ConnectedSocketSelector.getConnectedSocketSelector().getSelector().wakeup();
+                        writeRegistered.set(true);
+                    } catch (CancelledKeyException ex) {
+                        Logger.warning("Trying to write but key is cancelled -> " + line);
+                        myOwner.close();
+                    }
                 }
             }
         }

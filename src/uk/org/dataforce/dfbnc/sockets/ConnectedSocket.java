@@ -25,10 +25,8 @@ package uk.org.dataforce.dfbnc.sockets;
 import java.nio.channels.SocketChannel;
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.CountDownLatch;
 
-import uk.org.dataforce.dfbnc.DFBnc;
 import uk.org.dataforce.libs.logger.Logger;
 
 /**
@@ -46,7 +44,7 @@ public abstract class ConnectedSocket {
     /** Are we an SSL Socket? */
     protected final boolean isSSL;
     /** Lock for guarding read/writes to socket wrapper. Urgh. */
-    private ReadWriteLock socketWrapperLock = new ReentrantReadWriteLock();
+    private CountDownLatch socketWrapperLock = new CountDownLatch(1);
 
     /**
      * Create a new ConnectedSocket.
@@ -57,8 +55,6 @@ public abstract class ConnectedSocket {
      * @throws IOException If there is a problem creating Socket
      */
     protected ConnectedSocket(final SocketChannel channel, final String idstring, final boolean fromSSL) throws IOException {
-        socketWrapperLock.writeLock().lock();
-
         isSSL = fromSSL;
 
         channel.configureBlocking(false);
@@ -71,7 +67,7 @@ public abstract class ConnectedSocket {
             mySocketWrapper = new PlainSocket(channel, this, key);
         }
 
-        socketWrapperLock.writeLock().unlock();
+        socketWrapperLock.countDown();
     }
 
     /**
@@ -107,10 +103,11 @@ public abstract class ConnectedSocket {
      */
     public SocketWrapper getSocketWrapper() {
         try {
-            socketWrapperLock.readLock().lock();
+            socketWrapperLock.await();
             return mySocketWrapper;
-        } finally {
-            socketWrapperLock.readLock().unlock();
+        } catch (InterruptedException ex) {
+            Logger.error("Thread interrupted while waiting to get socket wrapper");
+            return null;
         }
     }
 
@@ -121,6 +118,15 @@ public abstract class ConnectedSocket {
      */
     public void setSocketID(final String idstring) {
         socketID = idstring;
+    }
+
+    /**
+     * Gets the ID of this socket.
+     *
+     * @return This socket's ID
+     */
+    public String getSocketID() {
+        return socketID;
     }
 
     /**
