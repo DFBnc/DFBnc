@@ -39,7 +39,7 @@ import uk.org.dataforce.libs.logger.Logger;
 /**
  * This defines a basic SocketWrapper
  */
-public abstract class SocketWrapper {
+public abstract class SocketWrapper implements SelectedSocketHandler {
     /** Used to process incoming data. */
     private ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
     /** Used to process outgoing data. */
@@ -121,8 +121,8 @@ public abstract class SocketWrapper {
             synchronized(writeRegistered) {
                 if (!writeRegistered.get()) {
                     try {
-                        key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_CONNECT | SelectionKey.OP_WRITE);
-                        ConnectedSocketSelector.getConnectedSocketSelector().getSelector().wakeup();
+                        key.interestOps(SelectionKey.OP_WRITE);
+                        SocketSelector.getConnectedSocketSelector().getSelector().wakeup();
                         writeRegistered.set(true);
                     } catch (CancelledKeyException ex) {
                         Logger.warning("Trying to write but key is cancelled -> " + line);
@@ -229,12 +229,8 @@ public abstract class SocketWrapper {
         return mySocket.getLocalSocketAddress();
     }
 
-    /**
-     * Handles events from the socket.
-     *
-     * @param selKey SelectionKey from socket selector
-     * @throws IOException If there is a problem processing the key
-     */
+    /** {@inheritDoc} */
+    @Override
     public final void processSelectionKey(final SelectionKey selKey) throws IOException {
         final SocketChannel channel = (SocketChannel) selKey.channel();
 
@@ -284,7 +280,7 @@ public abstract class SocketWrapper {
                     buf = ByteBuffer.wrap(outBuffer.toString().getBytes());
                     outBuffer.setLength(0);
                 } else {
-                    selKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_CONNECT);
+                    selKey.interestOps(SelectionKey.OP_READ);
                     writeRegistered.set(false);
                     return;
                 }

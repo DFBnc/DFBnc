@@ -22,7 +22,6 @@
 
 package uk.org.dataforce.dfbnc.sockets;
 
-import java.nio.channels.SocketChannel;
 import java.nio.channels.Selector;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ClosedChannelException;
@@ -30,52 +29,41 @@ import java.util.Iterator;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.channels.SelectableChannel;
 import java.util.concurrent.Semaphore;
 
 import uk.org.dataforce.libs.logger.Logger;
 
 /**
- * This is responsible for handling the selector for all Sockets when in
- * single-thread mode.
- * This is not used at all in multi-thread mode.
+ * This is responsible for handling the selector for all Sockets.
  */
-public final class ConnectedSocketSelector implements Runnable {
+public final class SocketSelector implements Runnable {
 
+    /** Singleton instance of SocketSelector. */
+    private static SocketSelector myConnectedSocketSelector = null;
+    
     /** Used to monitor the sockets. */
     private Selector selector = null;
     /** Thread to run the selector under */
     private Thread myThread = new Thread(this);
-    /** Instance of ConnectedSocketSelector in use */
-    private static ConnectedSocketSelector myConnectedSocketSelector = null;
     /** Lock for access to the selector. */
     private final Semaphore selectorLock = new Semaphore(1);
 
     /**
-     * Create a new ConnectedSocketSelector.
+     * Create a new SocketSelector.
      */
-    private ConnectedSocketSelector() throws IOException {
+    private SocketSelector() throws IOException {
         selector = Selector.open();
 
-        myThread.setName("Connected Socket Selector Thread");
+        myThread.setName("Socket Selector Thread");
+    }
+    
+    /**
+     * Starts this selector.
+     */
+    private void start() {
         myThread.start();
     }
-
-    /**
-     * Get the instance of ConnectedSocketSelector
-     *
-     * @return The instance of ConnectedSocketSelector
-     */
-    public static synchronized ConnectedSocketSelector getConnectedSocketSelector() {
-        if (myConnectedSocketSelector == null) {
-            try {
-                myConnectedSocketSelector = new ConnectedSocketSelector();
-            } catch (IOException e) {
-                Logger.error("Error opening socket selector.");
-            }
-        }
-        return myConnectedSocketSelector;
-    }
-
 
     /**
      * Get the selector in use by this Socket
@@ -94,14 +82,36 @@ public final class ConnectedSocketSelector implements Runnable {
      * @throws ClosedChannelException If the channel is closed when trying to register with the selector
      * @return A key representing the registration of the channel
      */
-    public SelectionKey registerSocket(final SocketChannel channel, final ConnectedSocket socket) throws ClosedChannelException {
+    public SelectionKey registerSocket(final SelectableChannel channel, final ConnectedSocket socket) throws ClosedChannelException {
+        return registerSocket(channel, socket, SelectionKey.OP_READ | SelectionKey.OP_CONNECT);
+    }
+    
+    /**
+     * Register a ListenSocket
+     *
+     * @param channel SocketChannel to register
+     * @param socket ListenSocket to call for events
+     * @throws ClosedChannelException If the channel is closed when trying to register with the selector
+     * @return A key representing the registration of the channel
+     */
+    public SelectionKey registerSocket(final SelectableChannel channel, final ListenSocket socket) throws ClosedChannelException {
+        return registerSocket(channel, socket, SelectionKey.OP_ACCEPT);
+    }
+    
+    /**
+     * Register a socket
+     *
+     * @param channel SocketChannel to register
+     * @param socket The socket to call for events
+     * @throws ClosedChannelException If the channel is closed when trying to register with the selector
+     * @return A key representing the registration of the channel
+     */
+    private SelectionKey registerSocket(final SelectableChannel channel, final SelectedSocketHandler socket, final int ops) throws ClosedChannelException {
         try {
             selectorLock.acquireUninterruptibly();
             selector.wakeup();
 
-            return channel.register(selector,
-                    SelectionKey.OP_READ | SelectionKey.OP_CONNECT,
-                    socket);
+            return channel.register(selector, ops, socket);
         } finally {
             selectorLock.release();
         }
@@ -124,19 +134,18 @@ public final class ConnectedSocketSelector implements Runnable {
                 break;
             }
 
-            Iterator<SelectionKey> it = selector.selectedKeys().iterator();
+            final Iterator<SelectionKey> it = selector.selectedKeys().iterator();
             while (it.hasNext()) {
                 final SelectionKey selKey = it.next();
                 it.remove();
 
                 try {
-                    ((ConnectedSocket) selKey.attachment()).getSocketWrapper().processSelectionKey(selKey);
+                    ((SelectedSocketHandler) selKey.attachment()).processSelectionKey(selKey);
                 } catch (IOException e) {
                     selKey.cancel();
                     break;
                 } catch (Exception ex) {
                     Logger.error("Unexpected exception while processing selected keys");
-                    Logger.error("\tSocket ID: " + ((ConnectedSocket) selKey.attachment()).getSocketID());
 
                     final StringWriter writer = new StringWriter();
                     ex.printStackTrace(new PrintWriter(writer));
@@ -144,5 +153,23 @@ public final class ConnectedSocketSelector implements Runnable {
                 }
             }
         }
+    }
+    
+    /**
+     * Get the instance of SocketSelector
+     *
+     * @return The instance of SocketSelector
+     */
+    public static synchronized SocketSelector getConnectedSocketSelector() {
+        if (myConnectedSocketSelector == null) {
+            try {
+                myConnectedSocketSelector = new SocketSelector();
+                myConnectedSocketSelector.start();
+            } catch (IOException e) {
+                Logger.error("Error opening socket selector.");
+            }
+        }
+
+        return myConnectedSocketSelector;
     }
 }
