@@ -33,7 +33,7 @@ import uk.org.dataforce.libs.logger.Logger;
  * This is responsible for taking incoming data, and separating it
   * into "\n" separated lines.
  */
-public abstract class ConnectedSocket {
+public abstract class ConnectedSocket implements SelectedSocketHandler {
 
     /** SocketWrapper, used to allow for SSL Sockets */
     protected final SocketWrapper mySocketWrapper;
@@ -59,7 +59,7 @@ public abstract class ConnectedSocket {
 
         channel.configureBlocking(false);
 
-        final SelectionKey key = ConnectedSocketSelector.getConnectedSocketSelector().registerSocket(channel, this);
+        final SelectionKey key = SocketSelector.getConnectedSocketSelector().registerSocket(channel, this);
 
         if (isSSL) {
             mySocketWrapper = new SecureSocket(channel, this, key);
@@ -159,12 +159,21 @@ public abstract class ConnectedSocket {
     /**
      * Action to take when socket is opened and ready.
      */
-    public void socketOpened() { }
+    public void socketOpened() {
+    }
 
     /**
      * Action to take when socket is closed.
      *
      * @param userRequested True if socket was closed by the user, false otherwise
      */
-    protected void socketClosed(final boolean userRequested) { }
+    protected void socketClosed(final boolean userRequested) {
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void processSelectionKey(final SelectionKey selKey) throws IOException {
+        getSocketWrapper().processSelectionKey(selKey);
+    }
+    
 }
