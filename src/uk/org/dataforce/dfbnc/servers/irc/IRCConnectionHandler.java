@@ -36,6 +36,7 @@ import com.dmdirc.parser.interfaces.ClientInfo;
 import com.dmdirc.parser.interfaces.ChannelClientInfo;
 import com.dmdirc.parser.interfaces.ChannelInfo;
 import com.dmdirc.parser.interfaces.callbacks.DataInListener;
+import com.dmdirc.parser.interfaces.callbacks.DataOutListener;
 import com.dmdirc.parser.interfaces.callbacks.ServerReadyListener;
 import com.dmdirc.parser.interfaces.callbacks.NickChangeListener;
 import com.dmdirc.parser.interfaces.callbacks.NumericListener;
@@ -48,6 +49,7 @@ import com.dmdirc.parser.interfaces.callbacks.SocketCloseListener;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -56,9 +58,12 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import java.util.logging.Level;
+import uk.org.dataforce.dfbnc.BackbufferMessage;
 import uk.org.dataforce.dfbnc.ConnectionHandler;
 import uk.org.dataforce.dfbnc.Account;
 import uk.org.dataforce.dfbnc.Consts;
+import uk.org.dataforce.dfbnc.RollingList;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
 import uk.org.dataforce.dfbnc.sockets.UnableToConnectException;
 import uk.org.dataforce.dfbnc.sockets.UserSocketWatcher;
@@ -71,7 +76,7 @@ import uk.org.dataforce.libs.logger.Logger;
  * It also handles the performs.
  */
 public class IRCConnectionHandler implements ConnectionHandler,
-        UserSocketWatcher, DataInListener, NickChangeListener,
+        UserSocketWatcher, DataInListener, DataOutListener, NickChangeListener,
         ServerReadyListener, Post005Listener, NumericListener, MotdEndListener,
         SocketCloseListener, ChannelSelfJoinListener, ConnectErrorListener,
         ErrorInfoListener {
@@ -146,6 +151,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
 
         try {
             myParser.getCallbackManager().addCallback(DataInListener.class, this);
+            myParser.getCallbackManager().addCallback(DataOutListener.class, this);
             myParser.getCallbackManager().addCallback(ServerReadyListener.class, this);
             myParser.getCallbackManager().addCallback(Post005Listener.class, this);
             myParser.getCallbackManager().addCallback(NumericListener.class, this);
@@ -391,7 +397,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                         }
                     } else {
                         if (outData.length() == 0) {
-                            outData.append(line[0].toUpperCase()).append(" ");
+                            outData.append(line[0].toUpperCase()).append(' ');
                         } else {
                             outData.append(',');
                         }
@@ -648,6 +654,59 @@ public class IRCConnectionHandler implements ConnectionHandler,
         allowLine(channel, "331");
         allowLine(channel, "332");
         allowLine(channel, "333");
+
+        channel.getMap().put("backbufferList", new RollingList<BackbufferMessage>(myAccount.getConfig().getIntOption("server", "backbuffer", 0)));
+    }
+
+    /**
+     * Add a message to the backbuffer.
+     *
+     * @param time
+     * @param message
+     */
+    @SuppressWarnings("unchecked")
+    private void addBackbufferMessage(final ChannelInfo channel, final long time, final String message) {
+        if (channel != null) {
+            final RollingList<BackbufferMessage> myList = (RollingList<BackbufferMessage>)channel.getMap().get("backbufferList");
+            myList.add(new BackbufferMessage(time, message));
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public RollingList<BackbufferMessage> getBackbufferList(final String channel) {
+        final ChannelInfo ci = myParser.getChannel(channel);
+        return getBackbufferList(ci);
+    }
+
+    /**
+     * Get backbuffer for a given channel.
+     *
+     * @param ci ChannelInfo to get backbuffer from
+     * @return backbuffer for the channel
+     */
+    @SuppressWarnings("unchecked")
+    public RollingList<BackbufferMessage> getBackbufferList(final ChannelInfo ci) {
+        if (ci != null) {
+            final RollingList<BackbufferMessage> list = (RollingList<BackbufferMessage>)ci.getMap().get("backbufferList");
+            if (list != null) {
+                return list;
+            }
+        }
+
+        return new RollingList<BackbufferMessage>(0);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void onDataOut(final Parser parser, final Date date, final String data, final boolean fromParser) {
+        final String[] bits = IRCParser.tokeniseLine(data);
+        if (bits[0].equals("PRIVMSG") && bits.length > 1) {
+            final ChannelInfo channel = parser.getChannel(bits[1]);
+            if (channel != null) {
+                this.addBackbufferMessage(channel, System.currentTimeMillis(), String.format(":%s %s", this.getMyHost(), data));
+            }
+        }
     }
 
     /** {@inheritDoc} */
@@ -659,6 +718,14 @@ public class IRCConnectionHandler implements ConnectionHandler,
         if (bits[1].equals("PONG") || bits[0].equals("PONG") || bits[1].equals("PING") || bits[0].equals("PING")) {
             return;
         }
+
+        if (bits[1].equals("PRIVMSG")) {
+            final ChannelInfo channel = parser.getChannel(bits[2]);
+            if (channel != null) {
+                this.addBackbufferMessage(channel, System.currentTimeMillis(), data);
+            }
+        }
+
         try {
             final int numeric = Integer.parseInt(bits[1]);
             final boolean supportLISTMODE = ((IRCParser) myParser).get005().containsKey("LISTMODE");
@@ -784,7 +851,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 // Add our own 005.
                 // * Show support for advanced LISTMODE (http://shane.dmdirc.com/listmodes.php)
                 // * Show that this is a BNC Connection
-                final String my005 = ":" + getServerName() + " 005 " + myParser.getLocalClient().getNickname() + " LISTMODE=997 BNC=DFBNC :are supported by this server";
+                final String my005 = ":" + getServerName() + " 005 " + myParser.getLocalClient().getNickname() + " LISTMODE=997 BNC=DFBNC TIMESTAMPEDIRC :are supported by this server";
                 for (UserSocket socket : myAccount.getUserSockets()) {
                     socket.sendLine(my005);
                 }
@@ -815,8 +882,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 description = "No route to host";
             } else if (exception instanceof java.net.SocketTimeoutException) {
                 description = "Connection attempt timed out";
-            } else if (exception instanceof java.net.SocketException
-                    || exception instanceof javax.net.ssl.SSLException) {
+            } else if (exception instanceof java.net.SocketException || exception instanceof javax.net.ssl.SSLException) {
                 description = exception.getMessage();
             } else {
                 description = "Unknown error: " + exception.getMessage();
@@ -869,7 +935,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
 
                 // Now send 302 to let the client know its userhost
                 // also send a 306 if the user is away so that the client can update itself
-                ClientInfo me = myParser.getLocalClient();
+                final ClientInfo me = myParser.getLocalClient();
                 StringBuilder str302 = new StringBuilder(me.getNickname());
                 if (((IRCClientInfo) me).isOper()) {
                     str302.append('*');
@@ -885,14 +951,31 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 user.sendIRCLine(302, myParser.getLocalClient().getNickname(), str302.toString());
                 // Now send the usermode info
                 user.sendIRCLine(221, myParser.getLocalClient().getNickname(), ((IRCClientInfo) me).getModes(), false);
-
-                // Rejoin channels
-                for (ChannelInfo channel : myParser.getChannels()) {
+                
+                
+                final Collection<? extends ChannelInfo> channels = myParser.getChannels();
+                
+                for (final ChannelInfo channel : channels) {
                     user.sendLine(":%s JOIN %s", me, channel);
 
                     sendTopic(user, channel);
                     sendNames(user, channel);
                 }
+                
+                // Send the backbuffers a little later to allow time for us to
+                // process a request for timestamped irc.
+                if (myAccount.getConfig().getIntOption("server", "backbuffer", 0) > 0) {
+                    new Timer().schedule(new TimerTask() {
+                        /** {@inheritDoc} */
+                        @Override
+                        public void run() {
+                            for (final ChannelInfo channel : channels) {
+                                sendBackbuffer(user, channel);
+                            }
+                        }
+                    }, 2000);
+                }
+
             }
             if (myAccount.getUserSockets().size() == 1) {
                 List<String> myList = new ArrayList<String>();
@@ -940,6 +1023,63 @@ public class IRCConnectionHandler implements ConnectionHandler,
             user.sendIRCLine(353, myParser.getLocalClient().getNickname() + " = " + channel, names.toString().trim());
         }
         user.sendIRCLine(366, myParser.getLocalClient().getNickname() + " " + channel, "End of /NAMES list. (Cached)");
+    }
+
+    /**
+     * Send the current backbuffer for a given channel to the given user
+     *
+     * @param user User to send reply to
+     * @param channel Channel to send reply for
+     */
+    public void sendBackbuffer(final UserSocket user, final ChannelInfo channel) {
+        final RollingList<BackbufferMessage> backbufferList = getBackbufferList(channel);
+        
+        if (backbufferList.isEmpty()) {
+            user.sendBotChat(channel.getName(), "NOTICE", "This channel has no current backbuffer.");
+            return;
+        }
+        
+        user.sendBotChat(channel.getName(), "NOTICE", "Beginning backbuffer...");
+        final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        
+        for (BackbufferMessage message : backbufferList) {
+            final String preMessage;
+            final String postMessage;
+            if (user.getTimestampedIRC()) {
+                preMessage = "@" + Long.toString(message.getTime()) + "@";
+                postMessage = "";
+            } else {
+                final String date = sdf.format(message.getTime());
+                preMessage = "";
+                postMessage = "    ["+date+"]";
+            }
+            final String line = String.format("%s%s%s", preMessage, message.getMessage(), postMessage);
+            final int maxLength = 510;
+            
+            if (line.length() <= maxLength) {
+                user.sendLine(line);
+            } else {
+                // Line is longer than 510...
+                // We need to split it and send it in bits.
+                
+                // Firstly separate the protocol bits, and the acual message
+                final int lastarg = line.indexOf(" :");
+                final String lastBit = line.substring(lastarg + 2);
+                final String startBits = line.substring(0, lastarg) + " :";
+                
+                // Now work out the allowed characters per bit.
+                final int allowed = maxLength - startBits.length();
+                
+                StringBuilder sendLine = new StringBuilder(startBits);
+                
+                for (int i = 0; i < lastBit.length(); i = i + allowed) {
+                    sendLine.append(lastBit.substring(i, Math.min(i + allowed, lastBit.length())));
+                    user.sendLine(sendLine.toString());
+                    sendLine = new StringBuilder(startBits);
+                }
+            }
+        }
+        user.sendBotChat(channel.getName(), "NOTICE", "End of backbuffer.");
     }
 
     /**

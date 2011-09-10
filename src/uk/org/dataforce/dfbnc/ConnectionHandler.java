@@ -22,6 +22,7 @@
 package uk.org.dataforce.dfbnc;
 
 import uk.org.dataforce.dfbnc.sockets.UnableToConnectException;
+
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
 
 /**
@@ -68,4 +69,14 @@ public interface ConnectionHandler {
      * @return New instance of tihs ConnectionHandler.
      */
     public ConnectionHandler newInstance() throws UnableToConnectException;
+    
+    
+    /**
+     * Get the backbuffer rolling list for the given channel name.
+     *
+     * @param channel Channel name
+     * @return Backbuffer list.
+     */
+    public RollingList<BackbufferMessage> getBackbufferList(final String channel);
+ 
 }

@@ -64,6 +64,9 @@ public class UserSocket extends ConnectedSocket {
      */
     private boolean post001 = false;
 
+    /** Does this connection support time-stamped IRC messages? */
+    private boolean timestampedIRC = false;
+    
     /** Given username */
     private String username = null;
     /** Given realname */
@@ -155,6 +158,24 @@ public class UserSocket extends ConnectedSocket {
      */
     public String getID() {
         return myID;
+    }
+
+    /**
+     * Does this user support timestamped IRC?
+     * 
+     * @return true if timestamped IRC is supported.
+     */
+    public boolean getTimestampedIRC() {
+        return timestampedIRC;
+    }
+
+    /**
+     * Set if this socket supports timestamped irc.
+     * 
+     * @param newValue New value for timestampedIRC support.
+     */    
+    public void setTimestampedIRC(final boolean newValue) {
+        timestampedIRC = newValue;
     }
 
     /**
@@ -285,6 +306,19 @@ public class UserSocket extends ConnectedSocket {
             sendLine("NOTICE AUTH :- %s", String.format(data, args));
         }
     }
+    
+    /**
+     * Send a message from the bot to the given target.
+     * This allows us to make the bot chat in channels
+     *
+     * @param target Target of message
+     * @param type Type of message
+     * @param data The format string
+     * @param args The args for the format string
+     */
+    public void sendBotChat(final String target, final String type, final String data, final Object... args) {
+        sendLine(":%s!bot@%s %s %s :%s", Util.getBotName(), Util.getServerName(myAccount), type, target, String.format(data, args));
+    }
 
     /**
      * Get the status of post001
@@ -405,7 +439,7 @@ public class UserSocket extends ConnectedSocket {
         if (!checkParamCount(line, 2)) {
             return;
         }
-
+        
         if (line[0].equals("USER")) {
             // Username may be given in PASS so check that it hasn't before assigning
             if (username == null) { username = line[1]; }
@@ -432,6 +466,8 @@ public class UserSocket extends ConnectedSocket {
             } else {
                 password = bits[0];
             }
+        } else if (line[0].equals("TIMESTAMPEDIRC")) {
+            setTimestampedIRC(true);
         } else {
             sendIRCLine(Consts.ERR_NOTREGISTERED, line[0], "You must login first.");
         }
@@ -565,6 +601,15 @@ public class UserSocket extends ConnectedSocket {
                 sendIRCLine(Consts.RPL_ENDOFWHOIS, nickname+" "+Util.getBotName(), "End of /WHOIS list");
                 return;
             }
+        } else if (line[0].equals("TIMESTAMPEDIRC")) {
+            if (line.length <= 2 || line[1].equalsIgnoreCase("ON")) {
+                setTimestampedIRC(true);
+                sendLine(":%s TSIRC %s %s :%s", Util.getServerName(myAccount), "1", (System.currentTimeMillis()), "Timestamped IRC Enabled");
+            } else {
+                setTimestampedIRC(false);
+                sendLine(":%s TSIRC %s %s :%s", Util.getServerName(myAccount), "0", (System.currentTimeMillis()), "Timestamped IRC Disabled");
+            }
+            return;
         }
 
         // We don't handle this ourselves, send it to the ConnectionHandler

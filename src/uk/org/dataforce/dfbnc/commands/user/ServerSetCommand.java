@@ -53,6 +53,7 @@ public class ServerSetCommand extends AbstractSetCommand {
         validParams.put("reconnect", new ParamInfo("Auto reconnect on disconnect.", ParamType.BOOL));
         validParams.put("reporterrors", new ParamInfo("Report errors from ConnectionHandlers to connected users.", ParamType.BOOL));
         validParams.put("autoconnect", new ParamInfo("Auto connect on startup.", ParamType.BOOL));
+        validParams.put("backbuffer", new ParamInfo("Number of lines to store as backbuffer in each channel (0 to disable).", ParamType.INT));
     }
 
     /**
