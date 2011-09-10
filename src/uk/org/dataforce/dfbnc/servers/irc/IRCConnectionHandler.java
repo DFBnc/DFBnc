@@ -842,10 +842,18 @@ public class IRCConnectionHandler implements ConnectionHandler,
         Logger.error("Parser error occurred: " + errorInfo.getData());
         Logger.error("\tLast line received: " + errorInfo.getLastLine());
 
+        if (myAccount.getConfig().getBoolOption("server", "reporterrors", false)) {
+            myAccount.sendBotMessage("Parser error occurred: %s", errorInfo.getData());
+            myAccount.sendBotMessage("    Last line received: %s", errorInfo.getLastLine());
+        }
+
         if (errorInfo.getException() != null) {
             final StringWriter writer = new StringWriter();
             errorInfo.getException().printStackTrace(new PrintWriter(writer));
             Logger.error("\tStack trace: " + writer.getBuffer());
+            if (myAccount.getConfig().getBoolOption("server", "reporterrors", false)) {
+                myAccount.sendBotMessage("    Stack trace: %s", writer.getBuffer());
+            }
         }
     }
 
