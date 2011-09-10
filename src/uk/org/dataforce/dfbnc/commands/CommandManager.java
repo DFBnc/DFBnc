@@ -259,6 +259,9 @@ public final class CommandManager {
      * @throws CommandNotFoundException exception if no commands exists to handle the line
      */
     public void handle(final UserSocket user, final String[] params) throws CommandNotFoundException {
+        if (params.length == 0 || params[0] == null || params[0].isEmpty()) {
+            throw new CommandNotFoundException("No valid command given.");
+        }
         Command commandHandler = null;
         try {
             commandHandler = getCommand(params[0]);

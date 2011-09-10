@@ -493,12 +493,17 @@ public class UserSocket extends ConnectedSocket {
                     sendAll(String.format("%s %s", myHost, normalLine), true);
                 }
             }
-        } else if (line[0].equalsIgnoreCase("DFBNC") && line.length > 1) {
-            String[] lineBits = normalLine.split(" ");
-            String[] bits = new String[lineBits.length-1];
-            System.arraycopy(lineBits, 1, bits, 0, lineBits.length-1);
+        } else if (line[0].equalsIgnoreCase("DFBNC")) {
+            String[] bits;
+            if (line.length > 1) {
+                String[] lineBits = normalLine.split(" ");
+                bits = new String[lineBits.length-1];
+                System.arraycopy(lineBits, 1, bits, 0, lineBits.length-1);
+                return;
+            } else {
+                bits = new String[0];
+            }
             handleBotCommand(bits);
-            return;
         } else if (line[0].equalsIgnoreCase("PING")) {
             if (line.length > 1) {
                 sendLine(":%s PONG %1$s :%s", Util.getServerName(myAccount), line[1]);
