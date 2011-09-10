@@ -198,6 +198,9 @@ public abstract class AbstractListEditCommand extends Command {
             } else if (params[1].equalsIgnoreCase("clear")) {
                 myList.clear();
                 user.sendBotMessage("Your " + getListName(params[0]) + " has been cleared.");
+            } else {
+                user.sendBotMessage("Invalid subcommand: " + params[1]);
+                user.sendBotMessage("For assistance, please try: /dfbnc " + params[0]);
             }
             user.getAccount().getConfig().setListOption(getDomainName(params[0]), getPropertyName(params[0]), myList);
         } else {

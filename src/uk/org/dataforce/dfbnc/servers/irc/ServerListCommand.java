@@ -82,18 +82,15 @@ public class ServerListCommand extends AbstractListEditCommand {
     @Override
     public String[] getUsageOutput(final String command) {
         if (command.equalsIgnoreCase("add")) {
-            return new String[]{
-                                "You must specify a server to add in the format: <server>[:port] [password]",
+            return new String[]{"You must specify a server to add in the format: <server>[:port] [password]",
                                 "Prefixing the port with + signifies an SSL connection"
                                };
         } else if (command.equalsIgnoreCase("edit")) {
-            return new String[]{
-                                "You must specify a position number to edit, and a server to add in the format: <number> <server>[:[+]port] [password]",
+            return new String[]{"You must specify a position number to edit, and a server to add in the format: <number> <server>[:[+]port] [password]",
                                 "Prefixing the port with + signifies an SSL connection"
                                };
         } else if (command.equalsIgnoreCase("ins")) {
-            return new String[]{
-                                "You must specify a position to insert this item, and a server to add in the format: <number> <server>[:[+]port] [password]",
+            return new String[]{"You must specify a position to insert this item, and a server to add in the format: <number> <server>[:[+]port] [password]",
                                 "Prefixing the port with + signifies an SSL connection"
                                };
         } else {
@@ -149,11 +146,4 @@ public class ServerListCommand extends AbstractListEditCommand {
     public String getDescription(final String command) {
         return "This command lets you manipulate the irc server list";
     }
-    
-    /**
-     * Get SVN ServerList information.
-     *
-     * @return SVN ServerList String
-     */
-    public static String getSvnInfo () { return "$Id: Process001.java 1508 2007-06-11 20:08:12Z ShaneMcC $"; }    
 }
