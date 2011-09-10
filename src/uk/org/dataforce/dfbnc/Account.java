@@ -126,8 +126,7 @@ public final class Account implements UserSocketWatcher {
     @Override
     public void userDisconnected(final UserSocket user) {
         myUserSockets.remove(user);
-        if (myConnectionHandler != null &&
-                myConnectionHandler instanceof UserSocketWatcher) {
+        if (myConnectionHandler != null && myConnectionHandler instanceof UserSocketWatcher) {
             ((UserSocketWatcher) myConnectionHandler).userDisconnected(user);
         }
         for (UserSocket socket : myUserSockets) {

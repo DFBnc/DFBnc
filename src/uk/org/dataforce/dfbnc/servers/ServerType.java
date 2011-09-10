@@ -24,6 +24,8 @@
 package uk.org.dataforce.dfbnc.servers;
 
 import uk.org.dataforce.dfbnc.Account;
+import uk.org.dataforce.dfbnc.ConnectionHandler;
+import uk.org.dataforce.dfbnc.sockets.UnableToConnectException;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
 import uk.org.dataforce.dfbnc.sockets.UserSocketWatcher;
 
@@ -122,11 +124,13 @@ public abstract class ServerType implements UserSocketWatcher {
      */
     @Override
     public final String toString() { return this.getName(); }
-    
+
     /**
-     * Get SVN Version information.
+     * Create a new ConnectionHandler for this server type.
      *
-     * @return SVN Version String
+     * @param acc Account that requested the connection
+     * @param serverNum Server number to use to connect, negative = random
+     * @throws UnableToConnectException If there is a problem connecting to the server
      */
-    public static String getSvnInfo() { return "$Id: ServerType.java 1320 2007-05-21 09:53:01Z ShaneMcC $"; }    
+    public abstract ConnectionHandler newConnectionHandler(final Account acc, final int serverNum) throws UnableToConnectException;
 }

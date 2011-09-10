@@ -135,6 +135,7 @@ public class DFBnc {
         userCommandManager.addCommand(new PasswordCommand(userCommandManager));
         userCommandManager.addCommand(new SaveCommand(userCommandManager));
         userCommandManager.addCommand(new ServerSetCommand(userCommandManager));
+        userCommandManager.addCommand(new ConnectCommand(userCommandManager));
         
         Logger.info("Setting up Default Admin Command Manager");
         adminCommandManager.addCommand(new AddUserCommand(adminCommandManager));

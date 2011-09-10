@@ -278,12 +278,5 @@ public final class CommandManager {
             Logger.error("There has been an error with the command '"+params[0]+"'");
         }
     }
-    
-    /**
-     * Get SVN Version information.
-     *
-     * @return SVN Version String
-     */
-    public static String getSvnInfo () { return "$Id: CommandManager.java 1360 2007-05-25 19:12:05Z ShaneMcC $"; }    
 }
 

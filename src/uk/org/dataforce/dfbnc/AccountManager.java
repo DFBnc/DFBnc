@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Random;
 import uk.org.dataforce.dfbnc.servers.ServerType;
+import uk.org.dataforce.dfbnc.sockets.UnableToConnectException;
 import uk.org.dataforce.libs.logger.Logger;
 
 /**
@@ -167,12 +168,22 @@ public class AccountManager {
               try {
                  Account acc = new Account(file.getName());
                  accounts.put(acc.getName(), acc);
+
+                 if (acc.getConfig().getBoolOption("server", "autoconnect", false)) {
+                     final ServerType type = acc.getServerType();
+                     if (type != null) {
+                         try {
+                            final ConnectionHandler handler = type.newConnectionHandler(acc, -1);
+                            acc.setConnectionHandler(handler);
+                         }  catch (UnableToConnectException ex) {
+                             Logger.error("Unable to autoconnect account: " + file.getName());
+                         }
+                     }
+                 }
              } catch (IOException ex) {
-                     Logger.error("Unable to load account: " + file.getName() + "(" +
-                         ex.getMessage() + ")");
+                     Logger.error("Unable to load account: " + file.getName() + "(" + ex.getMessage() + ")");
              } catch (InvalidConfigFileException ex) {
-                    Logger.error("Unable to load account: " + file.getName() + "(" +
-                           ex.getMessage() + ")");
+                    Logger.error("Unable to load account: " + file.getName() + "(" + ex.getMessage() + ")");
                 }
             }
         }

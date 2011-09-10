@@ -27,6 +27,8 @@ import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.servers.ServerType;
 import uk.org.dataforce.dfbnc.servers.ServerTypeManager;
 import uk.org.dataforce.dfbnc.Account;
+import uk.org.dataforce.dfbnc.ConnectionHandler;
+import uk.org.dataforce.dfbnc.sockets.UnableToConnectException;
 
 /**
  * This file gives the ability to connect to an IRC Server
@@ -44,7 +46,6 @@ public class IRCServerType extends ServerType {
         super(manager);
         myCommandManager.addCommand(new ServerListCommand(myCommandManager));
         myCommandManager.addCommand(new IRCSetCommand(myCommandManager));
-        myCommandManager.addCommand(new ConnectCommand(myCommandManager));
         myCommandManager.addCommand(new PerformCommand(myCommandManager));
     }
     
@@ -128,9 +129,14 @@ public class IRCServerType extends ServerType {
     }
     
     /**
-     * Get SVN Version information.
+     * Create a new ConnectionHandler for this server type.
      *
-     * @return SVN Version String
+     * @param acc Account that requested the connection
+     * @param serverNum Server number to use to connect, negative = random
+     * @throws UnableToConnectException If there is a problem connecting to the server
      */
-    public static String getSvnInfo () { return "$Id: Process001.java 1508 2007-06-11 20:08:12Z ShaneMcC $"; }    
+    @Override
+    public IRCConnectionHandler newConnectionHandler(final Account acc, final int serverNum) throws UnableToConnectException {
+        return new IRCConnectionHandler(acc, serverNum);
+    }
 }

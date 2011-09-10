@@ -97,18 +97,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /** This timer handles reprocessing of items in the requeueList */
     private Timer requeueTimer = new Timer("requeueTimer");
 
-
-    /**
-     * Create a new IRCConnectionHandler
-     *
-     * @param user User who requested the connection
-     * @param serverNumber Server number to use to connect, negative = random
-     * @throws UnableToConnectException If there is a problem connecting to the server
-     */
-    public IRCConnectionHandler(final UserSocket user, final int serverNumber) throws UnableToConnectException {
-        this(user.getAccount(), serverNumber);
-    }
-
     /**
      * Create a new IRCConnectionHandler
      *

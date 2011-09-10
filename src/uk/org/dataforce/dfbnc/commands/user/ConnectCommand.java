@@ -21,8 +21,9 @@
  *
  * SVN: $Id$
  */
-package uk.org.dataforce.dfbnc.servers.irc;
+package uk.org.dataforce.dfbnc.commands.user;
 
+import uk.org.dataforce.dfbnc.ConnectionHandler;
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
@@ -64,7 +65,7 @@ public class ConnectCommand extends Command {
         if (user.getAccount().getConnectionHandler() == null) {
             user.sendBotMessage("Connecting...");
             try {
-                IRCConnectionHandler handler = new IRCConnectionHandler(user, -1);
+                ConnectionHandler handler = user.getAccount().getServerType().newConnectionHandler(user.getAccount(), -1);
                 user.getAccount().setConnectionHandler(handler);
             } catch (UnableToConnectException utce) {
                 user.sendBotMessage("There was an error connecting: "+utce.getMessage());
@@ -105,14 +106,7 @@ public class ConnectCommand extends Command {
         } else if (command.equalsIgnoreCase("disconnect") || command.equalsIgnoreCase("quit")) {
             return "This command lets you disconnect the current session";
         } else {
-            return "This command lets you connect to an IRC Server if not already connected";
+            return "This command lets you connect to a Server if not already connected";
         }
     }
-    
-    /**
-     * Get SVN information.
-     *
-     * @return SVN Info String
-     */
-    public static String getSvnInfo () { return "$Id: Process001.java 1508 2007-06-11 20:08:12Z ShaneMcC $"; }    
 }
