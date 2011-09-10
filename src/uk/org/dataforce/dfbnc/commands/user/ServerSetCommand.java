@@ -22,15 +22,15 @@
  * SVN: $Id$
  */
 
-package uk.org.dataforce.dfbnc.servers.irc;
+package uk.org.dataforce.dfbnc.commands.user;
 
 import uk.org.dataforce.dfbnc.commands.AbstractSetCommand;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 
 /**
- * This file represents the 'IRCSet' command
+ * This file represents the 'ServerSet' command
  */
-public class IRCSetCommand extends AbstractSetCommand {
+public class ServerSetCommand extends AbstractSetCommand {
     /**
      * What does this Command handle.
      *
@@ -38,7 +38,7 @@ public class IRCSetCommand extends AbstractSetCommand {
      */
     @Override
     public String[] handles() {
-        return new String[]{"ircset", "is"};
+        return new String[]{"serverset", "ss"};
     }
 
     /**
@@ -46,18 +46,13 @@ public class IRCSetCommand extends AbstractSetCommand {
      *
      * @param manager CommandManager that is in charge of this Command
      */
-    public IRCSetCommand(final CommandManager manager) {
+    public ServerSetCommand(final CommandManager manager) {
         super(manager);
 
-        setDomain = "irc";
+        setDomain = "server";
 
         // Add the valid params
-        validParams.put("nickname", new ParamInfo("Nickname to use on IRC", ParamType.WORD));
-        validParams.put("altnickname", new ParamInfo("Alternative nickname to use if nickname is taken", ParamType.WORD));
-        validParams.put("realname", new ParamInfo("Realname to use on IRC", ParamType.STRING));
-        validParams.put("username", new ParamInfo("Username to use on IRC", ParamType.WORD));
-
-        validParams.put("bindip", new ParamInfo("IP Address to bind to for new connections", ParamType.WORD));
+        validParams.put("reconnect", new ParamInfo("Auto reconnect on disconnect.", ParamType.BOOL));
     }
 
     /**
@@ -69,6 +64,6 @@ public class IRCSetCommand extends AbstractSetCommand {
      */
     @Override
     public String getDescription(final String command) {
-        return "This command lets you manipulate irc settings";
+        return "This command lets you manipulate global server-related settings";
     }
 }

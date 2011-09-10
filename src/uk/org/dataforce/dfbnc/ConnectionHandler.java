@@ -23,6 +23,7 @@
  */
 package uk.org.dataforce.dfbnc;
 
+import uk.org.dataforce.dfbnc.sockets.UnableToConnectException;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
 
 /**
@@ -59,4 +60,14 @@ public interface ConnectionHandler {
      * @return servername to use.
      */
     public String getServerName();
+
+    /**
+     * Generate a new instance of this ConnectionHandler with the same
+     * parameters used for construction previously.
+     * This is not a clone of the ConnectionHandler, but is suitable for
+     * reconnecting the connection.
+     *
+     * @return New instance of tihs ConnectionHandler.
+     */
+    public ConnectionHandler newInstance() throws UnableToConnectException;
 }

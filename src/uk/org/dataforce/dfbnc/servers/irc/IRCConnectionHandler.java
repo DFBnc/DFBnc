@@ -76,8 +76,10 @@ public class IRCConnectionHandler implements ConnectionHandler,
         SocketCloseListener, ChannelSelfJoinListener, ConnectErrorListener,
         ErrorInfoListener {
 
-    /** Account that this IRCConnectionHandler is for */
+    /** Account that this IRCConnectionHandler is for. */
     private final Account myAccount;
+    /** Server we were supposed to connect to. */
+    private final int myServerNum;
     /** IRCParser we are using. */
     private final Parser myParser;
     /** Thread used to store IRCParser */
@@ -104,23 +106,19 @@ public class IRCConnectionHandler implements ConnectionHandler,
      * @throws UnableToConnectException If there is a problem connecting to the server
      */
     public IRCConnectionHandler(final UserSocket user, final int serverNumber) throws UnableToConnectException {
-        this(user, user.getAccount(), serverNumber);
-        // Reprocess queued items every 5 seconds.
-        requeueTimer.scheduleAtFixedRate(new RequeueTimerTask(this), 0, 5000);
-        // Allow the initial usermode line through to the user
-        allowLine(null, "221");
+        this(user.getAccount(), serverNumber);
     }
 
     /**
      * Create a new IRCConnectionHandler
      *
-     * @param user User who requested the connection
      * @param acc Account that requested the connection
      * @param serverNum Server number to use to connect, negative = random
      * @throws UnableToConnectException If there is a problem connecting to the server
      */
-    public IRCConnectionHandler(final UserSocket user, final Account acc, final int serverNum) throws UnableToConnectException {
+    public IRCConnectionHandler(final Account acc, final int serverNum) throws UnableToConnectException {
         myAccount = acc;
+        myServerNum = serverNum;
         MyInfo me = new MyInfo();
         me.setNickname(myAccount.getConfig().getOption("irc", "nickname", myAccount.getName()));
         me.setAltNickname(myAccount.getConfig().getOption("irc", "altnickname", "_" + me.getNickname()));
@@ -128,7 +126,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         me.setUsername(myAccount.getConfig().getOption("irc", "username", myAccount.getName()));
 
         List<String> serverList = new ArrayList<String>();
-        serverList = user.getAccount().getConfig().getListOption("irc", "serverlist", serverList);
+        serverList = acc.getConfig().getListOption("irc", "serverlist", serverList);
 
         if (serverList.isEmpty()) {
             throw new UnableToConnectException("No servers found");
@@ -173,16 +171,27 @@ public class IRCConnectionHandler implements ConnectionHandler,
             throw new UnableToConnectException("Unable to register callbacks");
         }
 
-        user.sendBotMessage("Using server: " + serverInfo[3]);
+        acc.sendBotMessage("Using server: " + serverInfo[3]);
 
         final String bindIP = myAccount.getConfig().getOption("irc", "bindip", "");
         if (!bindIP.isEmpty()) {
             myParser.setBindIP(bindIP);
-            user.sendBotMessage("Trying to bind to: " + bindIP);
+            acc.sendBotMessage("Trying to bind to: " + bindIP);
         }
+
+        // Reprocess queued items every 5 seconds.
+        requeueTimer.scheduleAtFixedRate(new RequeueTimerTask(this), 0, 5000);
+        // Allow the initial usermode line through to the user
+        allowLine(null, "221");
 
         controlThread = new Thread(myParser);
         controlThread.start();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public ConnectionHandler newInstance() throws UnableToConnectException {
+        return new IRCConnectionHandler(myAccount, myServerNum);
     }
 
     /**
@@ -328,7 +337,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                                 listName = "Channel List Modes";
                                             }
                                             for (ChannelListModeItem item : modeList) {
-                                                user.sendIRCLine(itemNumber, myParser.getLocalClient().getNickname().append(' ').append(channel, prefix + item.getItem() + " " + item.getOwner() + " " + item.getTime(), false);
+                                                user.sendIRCLine(itemNumber, myParser.getLocalClient().getNickname() + " " + channel, prefix + item.getItem() + " " + item.getOwner() + " " + item.getTime(), false);
                                             }
                                             if (!isListmode && (modechar == 'b' || modechar == 'q')) {
                                                 // If we are emulating a hyperian ircd, we need to send these together, unless we are using listmode.
@@ -394,7 +403,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                         }
                     } else {
                         if (outData.length() == 0) {
-                            outData.append(line[0].toUpperCase().append(' ');
+                            outData.append(line[0].toUpperCase()).append(" ");
                         } else {
                             outData.append(',');
                         }

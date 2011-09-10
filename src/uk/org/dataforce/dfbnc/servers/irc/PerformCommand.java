@@ -85,17 +85,11 @@ public class PerformCommand extends AbstractListEditCommand {
     @Override
     public String[] getUsageOutput(final String command) {
         if (command.equalsIgnoreCase("add")) {
-            return new String[]{
-                                "You must specify something to add to the perform"
-                               };
+            return new String[]{"You must specify something to add to the perform"};
         } else if (command.equalsIgnoreCase("edit")) {
-            return new String[]{
-                                "You must specify a position number to edit, and something to use in the perform"
-                               };
+            return new String[]{"You must specify a position number to edit, and something to use in the perform"};
         } else if (command.equalsIgnoreCase("ins")) {
-            return new String[]{
-                                "You must specify a position to insert this item, and something to use in the perform"
-                               };
+            return new String[]{"You must specify a position to insert this item, and something to use in the perform"};
         } else {
             return new String[]{""};
         }
@@ -121,8 +115,7 @@ public class PerformCommand extends AbstractListEditCommand {
     @Override
     public String[] getHelpOutput(final String command) {
         if (command.equalsIgnoreCase("perform")) {
-            return new String[]{
-                                "DFBnc provides 3 types of perform.",
+            return new String[]{"DFBnc provides 3 types of perform.",
                                 "    * On Connect (cperform) - When the BNC Connects to the IRC Server, with or without the user connected",
                                 "    * On First Attach (aperform) - When the first user connects to the bnc whilst connected to a server",
                                 "    * On Last Detach (dperform) - When the last user disconnects from the bnc whilst connected to a server (Also after cperform if no user is connected)"
@@ -177,11 +170,4 @@ public class PerformCommand extends AbstractListEditCommand {
             return "This command gives you information on the types of Perform DFBnc provides";
         }
     }
-    
-    /**
-     * Get SVN information.
-     *
-     * @return SVN String
-     */
-    public static String getSvnInfo () { return "$Id: Process001.java 1508 2007-06-11 20:08:12Z ShaneMcC $"; }    
 }

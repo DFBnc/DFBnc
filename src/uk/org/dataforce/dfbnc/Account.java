@@ -34,6 +34,7 @@ import uk.org.dataforce.dfbnc.config.Config;
 import uk.org.dataforce.dfbnc.config.InvalidConfigFileException;
 import uk.org.dataforce.dfbnc.servers.ServerType;
 import uk.org.dataforce.dfbnc.servers.ServerTypeNotFound;
+import uk.org.dataforce.dfbnc.sockets.UnableToConnectException;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
 import uk.org.dataforce.dfbnc.sockets.UserSocketWatcher;
 import uk.org.dataforce.libs.logger.Logger;
@@ -72,8 +73,7 @@ public final class Account implements UserSocketWatcher {
      * @throws IOException Error loading config
      * @throws InvalidConfigFileException  Error loading config
      */
-    public Account(final String username) throws IOException,
-            InvalidConfigFileException {
+    public Account(final String username) throws IOException, InvalidConfigFileException {
         myName = username;
 
         final File confDir = new File(DFBnc.getConfigDirName(), username);
@@ -144,6 +144,18 @@ public final class Account implements UserSocketWatcher {
      */
     public List<UserSocket> getUserSockets() {
         return myUserSockets;
+    }
+
+    /**
+     * Send a message to all connected users from the bnc bot in printf format.
+     *
+     * @param data The format string
+     * @param args The args for the format string
+     */
+    public void sendBotMessage(final String data, final Object... args) {
+        for (UserSocket user : myUserSockets) {
+            user.sendBotMessage(data, args);
+        }
     }
 
     /**
@@ -395,6 +407,17 @@ public final class Account implements UserSocketWatcher {
             socket.sendLine("ERROR : " + reason, false);
             socket.close();
         }
-        myConnectionHandler = null;
+
+        if (config.getBoolOption("server", "reconnect", false)) {
+            try {
+                final ConnectionHandler newHandler = myConnectionHandler.newInstance();
+                myConnectionHandler = newHandler;
+            } catch (UnableToConnectException ex) {
+                sendBotMessage("Unable to reconnect: " + ex.getMessage());
+                myConnectionHandler = null;
+            }
+        } else {
+            myConnectionHandler = null;
+        }
     }
 }
