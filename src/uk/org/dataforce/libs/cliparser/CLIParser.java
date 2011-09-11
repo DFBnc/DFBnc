@@ -227,29 +227,39 @@ public class CLIParser {
         for (String arg : args) {
             if (arg.length() > 1 && arg.charAt(0) == '-' && !allRedundant) {
                 if (lastParam != null) { lastParam.setValue(""); }
-                String name = arg.substring(1);
-                if (name.equals("-")) {
+                String fullparam = arg.substring(1);
+                if (fullparam.equals("-")) {
                     allRedundant = true;
                 } else {
-                    lastParam = getParam(name);
-                    if (lastParam != null) {
-                        Logger.debug("Got Param: -"+name);
-                        lastParam.incNumber();
+                    final ArrayList<String> givenParams = new ArrayList<String>();
+                    if (arg.charAt(1) == '-') {
+                        givenParams.add(fullparam);
                     } else {
-                        Logger.warning("Unknown Param: -"+name);
-                        if (helpParam != null) {
-                            String command = "";
-                            if (helpParam.getString().length() > 0) {
-                                command = helpParam.getString();
-                            } else if (helpParam.getChr() != 0) {
-                                command = ""+helpParam.getChr();
-                            }
-                            if (command.length() > 0) {
-                                Logger.warning("Use "+command+" to get help.");
-                            }
+                        for (int i = 1; i < arg.length(); i++) {
+                            givenParams.add("" + arg.charAt(i));
                         }
-                        if (strict) {
-                            System.exit(1);
+                    }
+                    for (String name : givenParams) {
+                        lastParam = getParam(name);
+                        if (lastParam != null) {
+                            Logger.debug("Got Param: -"+name);
+                            lastParam.incNumber();
+                        } else {
+                            Logger.warning("Unknown Param: -"+name);
+                            if (helpParam != null) {
+                                String command = "";
+                                if (helpParam.getString().length() > 0) {
+                                    command = helpParam.getString();
+                                } else if (helpParam.getChr() != 0) {
+                                    command = ""+helpParam.getChr();
+                                }
+                                if (command.length() > 0) {
+                                    Logger.warning("Use "+command+" to get help.");
+                                }
+                            }
+                            if (strict) {
+                                System.exit(1);
+                            }
                         }
                     }
                 }

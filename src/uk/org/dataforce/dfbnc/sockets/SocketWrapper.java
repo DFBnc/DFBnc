@@ -32,6 +32,9 @@ import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.CancelledKeyException;
+import java.nio.charset.CharacterCodingException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import uk.org.dataforce.libs.logger.Logger;
@@ -66,6 +69,10 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
     /** Are we waiting to close? */
     protected boolean isClosing = false;
 
+    /** The charsets list used when trying to decode messages. */
+    private final ArrayList<Charset> myCharsets = new ArrayList<Charset>();
+
+
     /**
      * Create a new SocketWrapper
      *
@@ -73,8 +80,7 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
      * @param owner ConnectedSocket that owns this.
      * @param key The selection key corresponding to the channel's registration
      */
-    public SocketWrapper(final SocketChannel channel,
-            final ConnectedSocket owner, final SelectionKey key) {
+    public SocketWrapper(final SocketChannel channel, final ConnectedSocket owner, final SelectionKey key) {
         this.key = key;
 
         myOwner = owner;
@@ -229,6 +235,95 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
         return mySocket.getLocalSocketAddress();
     }
 
+    /**
+     * Get the charset currently used by this socket.
+     *
+     * @return The charset in use by this socket.
+     */
+    public Charset getCharset() {
+        synchronized (myCharsets) {
+            return myCharsets.get(0);
+        }
+    }
+
+    /**
+     * Set the charset currently used by this socket.
+     *
+     * @param cs Charset to use as a string.
+     * @return True if the charset was set.
+     */
+    public boolean setCharset(final String cs) {
+        try {
+            setCharset(Charset.forName(cs));
+            return true;
+        } catch (final Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Set the charset currently used by this socket.
+     *
+     * @param cs Charset to use.
+     */
+    public void setCharset(final Charset cs) {
+        synchronized (myCharsets) {
+            myCharsets.clear();
+            // First add the current socket charset as the first to try
+            myCharsets.add(cs);
+            Logger.debug4("Added charset to list: "+cs.displayName());
+            // Now add the fallbacks.
+            for (String charset : Arrays.asList("UTF-8", "windows-1252", "ISO-8859-1")) {
+                try {
+                    final Charset c = Charset.forName(charset);
+                    if (!myCharsets.contains(c)) {
+                        myCharsets.add(c);
+                        Logger.debug4("Added charset to list: "+c.displayName());
+                    }
+                } catch (final Exception e) { /* Do nothing. */ }
+            }
+        }
+    }
+
+    /**
+     * Try and decode the incoming buffer using a socket-specific charset,
+     * followed by some fallback charsets before throwing an exception.
+     * This is not ideal, as something may well decode with one of the charsets
+     * but not display correctly. However, its better than throwing an exception
+     * and disconnecting the user.
+     *
+     * @param buffer ByteBuffer to try and decode
+     * @return CharBuffer created by decoding buffer
+     * @throws CharacterCodingException if we were unable to convert the charset
+     */
+    private CharBuffer getCharBuffer(final ByteBuffer buffer) throws CharacterCodingException {
+        CharBuffer charBuffer = null;
+
+        CharacterCodingException firstException = null;
+        synchronized (myCharsets) {
+            if (myCharsets.isEmpty()) {
+                Logger.debug4("No charsets set, using default");
+                setCharset("UTF-8");
+            }
+            Logger.debug4("My Charsets: "+myCharsets);
+            for (Charset c : myCharsets) {
+                try {
+                    Logger.debug4("Charset: " + c);
+                    charBuffer = c.newDecoder().decode(buffer);
+                    return charBuffer;
+                } catch (final CharacterCodingException cce) {
+                    if (firstException != null) {
+                        firstException = cce;
+                    }
+                }
+            }
+        }
+
+        // If we get here, no charsets worked, return the first exception as
+        // it was the one against the socket charset.
+        throw firstException;
+    }
+
     /** {@inheritDoc} */
     @Override
     public final void processSelectionKey(final SelectionKey selKey) throws IOException {
@@ -260,7 +355,8 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
                     break;
                 } else {
                     buffer.flip();
-                    CharBuffer charBuffer = Charset.forName("UTF-8").newDecoder().decode(buffer);
+                    final CharBuffer charBuffer = getCharBuffer(buffer);
+
                     char c;
                     for (int i = 0; i < charBuffer.limit(); ++i) {
                         c = charBuffer.get();

@@ -103,14 +103,32 @@ public class DFBnc {
         
         if (cli.getParamNumber("-silent") > 0) {
             Logger.setLevel(LogLevel.SILENT);
-        } else if (cli.getParamNumber("-debug") > 2) {
-            Logger.info("Enabling Extra Extra Debugging Information.");
+        } else if (cli.getParamNumber("-debug") >= 9) {
+            Logger.info("Enabling Stupidly Advanced Debugging Information (DEBUG9).");
+            Logger.setLevel(LogLevel.DEBUG9);
+        } else if (cli.getParamNumber("-debug") == 8) {
+            Logger.info("Enabling Spammy Advanced Debugging Information (DEBUG8).");
+            Logger.setLevel(LogLevel.DEBUG8);
+        } else if (cli.getParamNumber("-debug") == 7) {
+            Logger.info("Enabling Stupid Amounts of Advanced Debugging Information (DEBUG7).");
+            Logger.setLevel(LogLevel.DEBUG7);
+        } else if (cli.getParamNumber("-debug") == 6) {
+            Logger.info("Enabling Loads More Advanced Debugging Information (DEBUG6).");
+            Logger.setLevel(LogLevel.DEBUG6);
+        } else if (cli.getParamNumber("-debug") == 5) {
+            Logger.info("Enabling Yet More Advanced Debugging Information (DEBUG5).");
+            Logger.setLevel(LogLevel.DEBUG5);
+        } else if (cli.getParamNumber("-debug") == 4) {
+            Logger.info("Enabling Even More Advanced Debugging Information (DEBUG4).");
+            Logger.setLevel(LogLevel.DEBUG4);
+        } else if (cli.getParamNumber("-debug") == 3) {
+            Logger.info("Enabling More Advanced Debugging Information (DEBUG3).");
             Logger.setLevel(LogLevel.DEBUG3);
-        } else if (cli.getParamNumber("-debug") > 1) {
-            Logger.info("Enabling Extra Debugging Information.");
+        } else if (cli.getParamNumber("-debug") == 2) {
+            Logger.info("Enabling Advanced Debugging Information (DEBUG2).");
             Logger.setLevel(LogLevel.DEBUG2);
-        } else if (cli.getParamNumber("-debug") > 0) {
-            Logger.info("Enabling Debugging Information.");
+        } else if (cli.getParamNumber("-debug") == 1) {
+            Logger.info("Enabling Debugging Information (DEBUG).");
             Logger.setLevel(LogLevel.DEBUG);
         }
         
@@ -299,11 +317,11 @@ public class DFBnc {
     private static void setupCLIParser() {
         cli.clear();
         cli.add(new BooleanParam('h', "help", "Show Help"));
-        cli.add(new BooleanParam('d', "debug", "Enable extra debugging. (Use twice for more)"));
+        cli.add(new BooleanParam('d', "debug", "Enable extra debugging. (Use multiple times for more)"));
         cli.add(new BooleanParam('s', "silent", "Disable all output"));
-        cli.add(new BooleanParam((char)0, "convert", "Convert old (delphi) style config file to new style"));
+        // cli.add(new BooleanParam((char)0, "convert", "Convert old (delphi) style config file to new style"));
         cli.add(new StringParam('c', "config", "Alternative config directory to use"));
-        cli.add(new BooleanParam((char)0, "enableDebugOptions", "Enable debugging. config settings"));
+        cli.add(new BooleanParam((char)0, "enableDebugOptions", "Enable 'debugging.*' config settings"));
         cli.setHelp(cli.getParam("-help"));
     }
     
