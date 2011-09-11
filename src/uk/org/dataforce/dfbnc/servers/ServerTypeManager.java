@@ -18,8 +18,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
- * SVN: $Id$
  */
 package uk.org.dataforce.dfbnc.servers;
 
@@ -146,12 +144,5 @@ public final class ServerTypeManager {
     public Collection<String> getServerTypeNames() {
         return new ArrayList<String>(knownServerTypes.keySet());
     }
-    
-    /**
-     * Get SVN Version information.
-     *
-     * @return SVN Version String
-     */
-    public static String getSvnInfo () { return "$Id: CommandManager.java 1360 2007-05-25 19:12:05Z ShaneMcC $"; }    
 }
 

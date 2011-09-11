@@ -18,8 +18,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
- * SVN: $Id: ServerTypeNotFound.java 1320 2007-05-21 09:53:01Z ShaneMcC $
  */
 
 package uk.org.dataforce.dfbnc.servers;
@@ -45,11 +43,4 @@ public class ServerTypeNotFound extends Exception {
      * @param message Reason for exception
      */
     public ServerTypeNotFound(String message) { super(message); }
-    
-    /**
-     * Get SVN Version information.
-     *
-     * @return SVN Version String
-     */
-    public static String getSvnInfo () { return "$Id: ServerTypeNotFound.java 1320 2007-05-21 09:53:01Z ShaneMcC $"; }    
 }

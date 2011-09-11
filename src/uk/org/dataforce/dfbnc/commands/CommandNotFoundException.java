@@ -18,8 +18,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
- * SVN: $Id: CommandNotFoundException.java 1320 2007-05-21 09:53:01Z ShaneMcC $
  */
 
 package uk.org.dataforce.dfbnc.commands;
@@ -44,12 +42,5 @@ public class CommandNotFoundException extends Exception {
      *
      * @param message Reason for exception
      */
-    public CommandNotFoundException(String message) { super(message); }
-    
-    /**
-     * Get SVN Version information.
-     *
-     * @return SVN Version String
-     */
-    public static String getSvnInfo () { return "$Id: CommandNotFound.java 1320 2007-05-21 09:53:01Z ShaneMcC $"; }    
+    public CommandNotFoundException(String message) { super(message); }   
 }

@@ -18,8 +18,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
- * SVN: $Id$
  */
 package uk.org.dataforce.dfbnc.commands.user;
 
@@ -122,12 +120,5 @@ public class ServerTypeCommand extends Command {
     @Override
     public String getDescription(final String command) {
         return "This command changes your ServerType";
-    }
-    
-    /**
-     * Get SVN Version information.
-     *
-     * @return SVN Version String
-     */
-    public static String getSvnInfo () { return "$Id: Process001.java 1508 2007-06-11 20:08:12Z ShaneMcC $"; }    
+    }  
 }
