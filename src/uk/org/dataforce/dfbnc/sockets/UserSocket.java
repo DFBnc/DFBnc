@@ -29,13 +29,19 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import uk.org.dataforce.dfbnc.Account;
 import uk.org.dataforce.dfbnc.AccountManager;
 import uk.org.dataforce.dfbnc.ConnectionHandler;
 import uk.org.dataforce.dfbnc.Consts;
 import uk.org.dataforce.dfbnc.DFBnc;
+import uk.org.dataforce.dfbnc.commands.Command;
+import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.commands.CommandNotFoundException;
 import uk.org.dataforce.libs.logger.Logger;
 import uk.org.dataforce.libs.util.Util;
@@ -231,6 +237,8 @@ public class UserSocket extends ConnectedSocket {
                 final String method = myAccount.getContactMethod();
                 if (method.equalsIgnoreCase("SNOTICE")) {
                     sendServerLine("NOTICE", data, args);
+                } else if (method.equalsIgnoreCase("AUTH")) {
+                    sendLine("NOTICE AUTH :- %s", String.format(data, args));
                 } else {
                     sendBotLine(method, data, args);
                 }
@@ -499,11 +507,11 @@ public class UserSocket extends ConnectedSocket {
                 String[] lineBits = normalLine.split(" ");
                 bits = new String[lineBits.length-1];
                 System.arraycopy(lineBits, 1, bits, 0, lineBits.length-1);
-                return;
             } else {
                 bits = new String[0];
             }
             handleBotCommand(bits);
+            return;
         } else if (line[0].equalsIgnoreCase("PING")) {
             if (line.length > 1) {
                 sendLine(":%s PONG %1$s :%s", Util.getServerName(myAccount), line[1]);
@@ -544,9 +552,23 @@ public class UserSocket extends ConnectedSocket {
                 myAccount.getCommandManager().handle(this, bits);
             }
         } catch (CommandNotFoundException c) {
-            sendBotMessage("Unknown command '%s' Please try 'ShowCommands'", bits[0]);
+            sendBotMessage("Unknown command '%s' Please try 'ShowCommands'", (bits.length > 0 ? bits[0] : ""));
+            if (DFBnc.getBNC().getConfig().getBoolOption("general", "allowshortcommands", false) && bits.length > 0) {
+                final SortedMap<String, Command> cmds = new TreeMap<String, Command>(myAccount.getCommandManager().getAllCommands(bits[0]));
+                if (cmds.size() > 0) {
+                    sendBotMessage("Possible matching commands:");
+                    sendBotMessage("----------");
+                    for (Entry<String, Command> entry : cmds.entrySet()) {
+                        if (entry.getKey().charAt(0) == '*') { continue; }
+                        final Command command = entry.getValue();
+                        if (!command.isAdminOnly() || myAccount.isAdmin()) {
+                            sendBotMessage(String.format("%-20s - %s", entry.getKey(), command.getDescription(entry.getKey())));
+                        }
+                    }
+                }
+            }
         } catch (Exception e) {
-            sendBotMessage("Exception with command '%s': %s", bits[0], e.getMessage());
+            sendBotMessage("Exception with command '%s': %s", (bits.length > 0 ? bits[0] : ""), e.getMessage());
         }
     }
 }

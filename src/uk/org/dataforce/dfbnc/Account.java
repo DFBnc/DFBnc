@@ -225,13 +225,16 @@ public final class Account implements UserSocketWatcher {
      * @return true/false depending on successful match
      */
     public boolean checkPassword(final String password) {
-        StringBuffer hashedPassword = new StringBuffer(myName.toLowerCase());
+        StringBuilder hashedPassword = new StringBuilder(myName.toLowerCase());
         if (caseSensitivePasswords) {
             hashedPassword.append(password);
         } else {
             hashedPassword.append(password.toLowerCase());
         }
         hashedPassword.append(salt);
+
+        Logger.debug3("Real MD5: " + config.getOption("user", "password", ""));
+        Logger.debug3("Check MD5: " + Util.md5(hashedPassword.toString()));
 
         return Util.md5(hashedPassword.toString()).equals(config.getOption("user", "password", "..."));
     }
@@ -242,7 +245,7 @@ public final class Account implements UserSocketWatcher {
      * @param password New password
      */
     public void setPassword(final String password) {
-        StringBuffer hashedPassword = new StringBuffer(myName.toLowerCase());
+        StringBuilder hashedPassword = new StringBuilder(myName.toLowerCase());
         if (caseSensitivePasswords) {
             hashedPassword.append(password);
         } else {
@@ -251,6 +254,7 @@ public final class Account implements UserSocketWatcher {
         hashedPassword.append(salt);
 
         config.setOption("user", "password", Util.md5(hashedPassword.toString()));
+        Logger.debug3("Setting MD5 for " + getName() + " to " + config.getOption("user", "password", ""));
         config.save();
     }
 
@@ -384,7 +388,7 @@ public final class Account implements UserSocketWatcher {
      * @return value for contactMethod
      */
     public String getContactMethod() {
-        return config.getOption("user", "contactMethod", "SNOTICE");
+        return config.getOption("user", "contactMethod", "NOTICE");
     }
 
     /**

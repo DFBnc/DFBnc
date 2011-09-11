@@ -33,6 +33,7 @@ import java.util.Random;
 import uk.org.dataforce.dfbnc.servers.ServerType;
 import uk.org.dataforce.dfbnc.sockets.UnableToConnectException;
 import uk.org.dataforce.libs.logger.Logger;
+import uk.org.dataforce.libs.logger.LogLevel;
 
 /**
  * Manages the list of accounts.
@@ -72,11 +73,11 @@ public class AccountManager {
      * @param password Password to check
      * @return true/false depending on successful match
      */
-    public static boolean checkPassword(final String username,
-            final String password) {
+    public static boolean checkPassword(final String username, final String password) {
         if (exists(username)) {
             return get(username).checkPassword(password);
         } else {
+            Logger.debug2("CheckPassword: User does not exist "+username);
             return false;
         }
     }
@@ -88,6 +89,12 @@ public class AccountManager {
      * @return true/false depending on if the account exists or not
      */
     public static boolean exists(final String username) {
+        Logger.debug2("CheckPassword: Checking if user exists: " + username.replace('.', '_').toLowerCase());
+        if (Logger.getLevel().isLoggable(LogLevel.DEBUG2)) {
+            for (String a : accounts.keySet()) {
+                Logger.debug3("CheckPassword: Found acc: " + a);
+            }
+        }
         return accounts.containsKey(username.replace('.', '_').toLowerCase());
     }
 
@@ -110,12 +117,13 @@ public class AccountManager {
      *
      * @return The account created, or null if the account could not be created
      */
-    public static Account createAccount(final String username,
-            final String password) {
+    public static Account createAccount(final String username, final String password) {
         final String accountName = username.replace('.', '_').toLowerCase();
+        Logger.debug2("createAccount: Saving user as: " + username.replace('.', '_').toLowerCase());
         synchronized (accounts) {
             Account acc = null;
             if (!exists(accountName)) {
+                Logger.debug2("Creating new account: "+accountName);
                 try {
                     acc = new Account(accountName);
                 } catch (IOException ex) {
@@ -124,8 +132,9 @@ public class AccountManager {
                     Logger.error("Error creating account: " + ex.getMessage());
                 }
                 if (acc != null) {
+                    Logger.debug2("Account created.");
                     acc.setPassword(password);
-                    accounts.put(username, acc);
+                    accounts.put(accountName, acc);
                 }
             }
             return acc;

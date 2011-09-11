@@ -105,6 +105,9 @@ public class DFBnc {
         
         if (cli.getParamNumber("-silent") > 0) {
             Logger.setLevel(LogLevel.SILENT);
+        } else if (cli.getParamNumber("-debug") > 2) {
+            Logger.info("Enabling Extra Extra Debugging Information.");
+            Logger.setLevel(LogLevel.DEBUG3);
         } else if (cli.getParamNumber("-debug") > 1) {
             Logger.info("Enabling Extra Debugging Information.");
             Logger.setLevel(LogLevel.DEBUG2);

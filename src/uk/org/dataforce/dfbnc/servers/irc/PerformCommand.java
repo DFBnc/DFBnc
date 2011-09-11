@@ -39,11 +39,11 @@ public class PerformCommand extends AbstractListEditCommand {
     @Override
     public String getPropertyName(final String command) {
         if (command.equalsIgnoreCase("cperform")) {
-            return "irc.perform.connect";
+            return "perform.connect";
         } else if (command.equalsIgnoreCase("dperform")) {
-            return "irc.perform.lastdetach";
+            return "perform.lastdetach";
         } else if (command.equalsIgnoreCase("aperform")) {
-            return "irc.perform.firstattach";
+            return "perform.firstattach";
         }
         return "";
     };

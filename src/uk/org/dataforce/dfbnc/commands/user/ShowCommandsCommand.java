@@ -56,7 +56,7 @@ public class ShowCommandsCommand extends Command {
             CommandManager cmdmgr = user.getAccount().getCommandManager();
             SortedMap<String, Command> commands = new TreeMap<String, Command>(cmdmgr.getAllCommands());
             for (Entry<String, Command> entry : commands.entrySet()) {
-                                if (entry.getKey().charAt(0) == '*') { continue; }
+                if (entry.getKey().charAt(0) == '*') { continue; }
                 final Command command = entry.getValue();
                 if (command.isAdminOnly()) {
                     adminCommands.add(String.format("%-20s - %s", entry.getKey(), command.getDescription(entry.getKey())));

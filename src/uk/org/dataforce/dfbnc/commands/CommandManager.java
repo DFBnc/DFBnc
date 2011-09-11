@@ -30,6 +30,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
+import uk.org.dataforce.dfbnc.DFBnc;
 
 /**
  * DFBNC Command Manager.
@@ -102,17 +104,40 @@ public final class CommandManager {
     
     /**
      * Get all the commands available to this CommandManager.
-     * This is a *very* expensive command.
+     * This is potentially expensive.
      *
      * @return Map of available commands.
      */
-    public Map<String, Command> getAllCommands() {    
+    public Map<String, Command> getAllCommands() {
+        return getAllCommands("");
+    }
+
+    /**
+     * Get all the commands available to this CommandManager.
+     * This is potentially expensive.
+     *
+     * @param startsWith Limit to commands that start with this string.
+     * @return Map of available commands.
+     */
+    public Map<String, Command> getAllCommands(final String startsWith) {
         // First get our own commands,
-        Map<String, Command> result = new HashMap<String, Command>(knownCommands);
+        Map<String, Command> result;
+        final String sw = startsWith.toLowerCase();
+
+        if (startsWith.isEmpty()) {
+            result = new HashMap<String, Command>(knownCommands);
+        } else {
+            result = new HashMap<String, Command>();
+            for (Entry<String, Command> entry : new HashMap<String, Command>(knownCommands).entrySet()) {
+                if (!result.containsKey(entry.getKey()) && entry.getKey().startsWith(sw)) {
+                    result.put(entry.getKey(), entry.getValue());
+                }
+            }
+        }
         
         // Now all our submanagers commands
         for (CommandManager subManager : subManagers) {
-            Map<String, Command> subResult = subManager.getAllCommands();
+            Map<String, Command> subResult = subManager.getAllCommands(startsWith);
             for (Entry<String, Command> entry : subResult.entrySet()) {
                 if (!result.containsKey(entry.getKey())) {
                     result.put(entry.getKey(), entry.getValue());
@@ -236,7 +261,7 @@ public final class CommandManager {
     protected Command getCommand(final String name, final int nesting) throws CommandNotFoundException {
         if (knownCommands.containsKey(name.toLowerCase())) {
             return knownCommands.get(name.toLowerCase());
-                } else if (knownCommands.containsKey("*"+name.toLowerCase())) {
+        } else if (knownCommands.containsKey("*"+name.toLowerCase())) {
             return knownCommands.get("*"+name.toLowerCase());
         } else {
             if (nesting <= nestingLimit) {
@@ -263,18 +288,35 @@ public final class CommandManager {
             throw new CommandNotFoundException("No valid command given.");
         }
         Command commandHandler = null;
+        CommandNotFoundException cnfe = null;
+        String[] handleParams = params;
         try {
             commandHandler = getCommand(params[0]);
+        } catch (CommandNotFoundException p) {
+            cnfe = p;
+        }
+        
+        if (commandHandler == null && DFBnc.getBNC().getConfig().getBoolOption("general", "allowshortcommands", false)) {
+            // Find a matching command.
+            final Map<String, Command> cmds = new TreeMap<String, Command>(getAllCommands(params[0]));
+            if (cmds.size() == 1) {
+                for (Entry<String, Command> entry : cmds.entrySet()) {
+                    commandHandler = entry.getValue();
+                    handleParams[0] = entry.getKey();
+                    break;
+                }
+            } else {
+                throw cnfe;
+            }
+        }
+
+        try {
             if (commandHandler.isAdminOnly() && !user.getAccount().isAdmin()) {
                 throw new CommandNotFoundException("No command is known by "+params[0]);
             } else {
-                commandHandler.handle(user, params);
+                commandHandler.handle(user, handleParams);
             }
-        } catch (CommandNotFoundException p) {
-            throw p;
         } catch (Exception e) {
-//            StringBuilder line = new StringBuilder();
-//            for (int i = 0; i < token.length; ++i ) { line.append(" ").append(token[i]); }
             Logger.error("There has been an error with the command '"+params[0]+"'");
         }
     }

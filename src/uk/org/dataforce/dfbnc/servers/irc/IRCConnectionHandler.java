@@ -762,8 +762,10 @@ public class IRCConnectionHandler implements ConnectionHandler,
         hasMOTDEnd = true;
         List<String> myList = new ArrayList<String>();
         myList = myAccount.getConfig().getListOption("irc", "perform.connect", myList);
+        Logger.debug3("Connected. Handling performs");
         for (String line : myList) {
             myParser.sendRawMessage(filterPerformLine(line));
+            Logger.debug3("Sending perform line: " + line);
         }
         if (myAccount.getUserSockets().isEmpty()) {
             myList = new ArrayList<String>();
@@ -853,10 +855,12 @@ public class IRCConnectionHandler implements ConnectionHandler,
         if (((IRCParser) myParser).isReady()) {
             Logger.debug2("Has 001");
             user.sendIRCLine(1, myParser.getLocalClient().getNickname(), "Welcome to the Internet Relay Network, " + myParser.getLocalClient().getNickname());
+            user.setNickname(myParser.getLocalClient().getNickname());
             // Now send any of the 002-005 lines that we have
             for (String line : connectionLines) {
                 user.sendLine(line);
             }
+            user.setPost001(true);
             // Now, if the parser has recieved an end of MOTD Line, we should send our own MOTD and User Host info
             if (hasMOTDEnd) {
                 user.sendIRCLine(375, myParser.getLocalClient().getNickname(), "- " + myParser.getServerName() + " Message of the Day -");
