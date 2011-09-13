@@ -112,17 +112,17 @@ public class UserSocket extends ConnectedSocket {
 
         super.setSocketID("[UserSocket: " + myID + "]");
 
-        InetSocketAddress address = (InetSocketAddress)mySocketWrapper.getRemoteSocketAddress();
-        final String remoteInfo = "[" + address.getAddress() + "]:" + address.getPort();
-        address = (InetSocketAddress)mySocketWrapper.getLocalSocketAddress();
-        final String localInfo = "[" + address.getAddress() + "]:" + address.getPort();
+        final InetSocketAddress remoteAddress = (InetSocketAddress)mySocketWrapper.getRemoteSocketAddress();
+        final String remoteInfo = "[" + remoteAddress.getAddress() + "]:" + remoteAddress.getPort();
+        final InetSocketAddress localAddress = (InetSocketAddress)mySocketWrapper.getLocalSocketAddress();
+        final String localInfo = "[" + localAddress.getAddress() + "]:" + localAddress.getPort();
         if (fromSSL) {
             myInfo = remoteInfo+" (" + localInfo + " [SSL]) [" + myID + "]";
         } else {
             myInfo = remoteInfo+" (" + localInfo + ") [" + myID + "]";
         }
 
-        myIP = address.getAddress().getHostAddress();
+        myIP = remoteAddress.getAddress().getHostAddress();
         Logger.info("User Connected: " + myInfo);
     }
 

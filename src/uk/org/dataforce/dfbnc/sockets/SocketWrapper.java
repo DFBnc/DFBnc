@@ -306,9 +306,11 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
                 setCharset("UTF-8");
             }
             Logger.debug4("My Charsets: "+myCharsets);
+            buffer.mark();
             for (Charset c : myCharsets) {
                 try {
                     Logger.debug4("Charset: " + c);
+                    buffer.reset();
                     charBuffer = c.newDecoder().decode(buffer);
                     return charBuffer;
                 } catch (final CharacterCodingException cce) {
