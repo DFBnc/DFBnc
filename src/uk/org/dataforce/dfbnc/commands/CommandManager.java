@@ -308,6 +308,8 @@ public final class CommandManager {
             }
         }
 
+        if (commandHandler == null) { throw cnfe; }
+
         try {
             if (commandHandler.isAdminOnly() && !user.getAccount().isAdmin()) {
                 throw new CommandNotFoundException("No command is known by "+params[0]);
@@ -316,6 +318,7 @@ public final class CommandManager {
             }
         } catch (Exception e) {
             Logger.error("There has been an error with the command '"+params[0]+"'");
+            e.printStackTrace();
         }
     }
 }
