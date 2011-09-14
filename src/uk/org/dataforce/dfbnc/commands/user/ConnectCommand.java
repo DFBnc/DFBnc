@@ -82,6 +82,13 @@ public class ConnectCommand extends Command {
     public String[] handles() {
         return new String[]{"connect", "reconnect", "disconnect", "*quit"};
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean allowShort(final String handle) {
+        // Only allow the connect command to be shortened.
+        return handle.equalsIgnoreCase("connect");
+    }
     
     /**
      * Create a new instance of the Command Object

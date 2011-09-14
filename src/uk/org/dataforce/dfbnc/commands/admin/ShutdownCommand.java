@@ -25,7 +25,7 @@ package uk.org.dataforce.dfbnc.commands.admin;
 import uk.org.dataforce.dfbnc.Account;
 import uk.org.dataforce.dfbnc.AccountManager;
 import uk.org.dataforce.dfbnc.DFBnc;
-import uk.org.dataforce.dfbnc.commands.Command;
+import uk.org.dataforce.dfbnc.commands.AdminCommand;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
 import uk.org.dataforce.libs.util.Util;
@@ -33,7 +33,7 @@ import uk.org.dataforce.libs.util.Util;
 /**
  * This file represents the 'Shutdown' command
  */
-public class ShutdownCommand extends Command {
+public class ShutdownCommand extends AdminCommand {
     /**
      * Handle a shutdown command.
      *
@@ -68,6 +68,12 @@ public class ShutdownCommand extends Command {
     @Override
     public String[] handles() {
         return new String[]{"shutdown"};
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean allowShort(final String handle) {
+        return false;
     }
     
     /**

@@ -21,6 +21,9 @@
  */
 package uk.org.dataforce.dfbnc.commands.user;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
@@ -41,37 +44,56 @@ public class ServerTypeCommand extends Command {
      */
     @Override
     public void handle(final UserSocket user, final String[] params) {
-        if (params.length > 1 && params[1].equalsIgnoreCase("settype")) {
+        String[] actualParams = params;
+
+        if (actualParams.length > 1) {
+            final List<String> paramMatch = getParamMatch(actualParams[1], Arrays.asList("settype", "help"));
+            if (paramMatch.size() > 1) {
+                user.sendBotMessage("Multiple possible matches were found for '"+actualParams[1]+"': ");
+                for (String p : paramMatch) {
+                    user.sendBotMessage("    " + p);
+                }
+                return;
+            } else { actualParams[1] = paramMatch.get(0); }
+        }
+
+        if (actualParams.length > 1 && actualParams[1].equalsIgnoreCase("settype")) {
             user.sendBotMessage("----------------");
-            if (params.length > 2) {
+            if (actualParams.length > 2) {
+                final Collection<String> availableTypes = DFBnc.getServerTypeManager().getServerTypeNames();
+                availableTypes.add("none");
+                final List<String> paramMatch = getParamMatch(actualParams[2], availableTypes);
+                if (paramMatch.size() > 1) {
+                    user.sendBotMessage("Multiple possible matches were found for '"+actualParams[2]+"': ");
+                    for (String p : paramMatch) {
+                        user.sendBotMessage("    " + p);
+                    }
+                    return;
+                } else { actualParams[2] = paramMatch.get(0); }
+
                 final ServerType currentType = user.getAccount().getServerType();
-                if (params[2].equalsIgnoreCase("none")) {
+                if (actualParams[2].equalsIgnoreCase("none")) {
                     user.getAccount().getConfig().setOption("server", "servertype", "");
                     user.sendBotMessage("You now have no servertype.");
                     if (currentType != null) { currentType.deactivate(user.getAccount()); }
                 } else {
                     try {
-                        ServerType serverType = DFBnc.getServerTypeManager().getServerType(params[2]);
+                        ServerType serverType = DFBnc.getServerTypeManager().getServerType(actualParams[2]);
                         if (currentType != null) { currentType.deactivate(user.getAccount()); }
                         serverType.activate(user.getAccount());
-                        user.getAccount().getConfig().setOption("server", "servertype", params[2].toLowerCase());
-                        user.sendBotMessage("Your ServerType is now "+params[2].toLowerCase()+".");
+                        user.getAccount().getConfig().setOption("server", "servertype", actualParams[2].toLowerCase());
+                        user.sendBotMessage("Your ServerType is now "+actualParams[2].toLowerCase()+".");
                     } catch (ServerTypeNotFound e) {
                         user.sendBotMessage("Sorry, "+e);
                     }
                 }
             } else {
                 user.sendBotMessage("Available Types:");
-                for (String server : DFBnc.getServerTypeManager().getServerTypeNames()) {
-                    try {
-                        ServerType serverType = DFBnc.getServerTypeManager().getServerType(server);
-                        user.sendBotMessage("    "+server+" - "+serverType.getDescription());
-                    } catch (ServerTypeNotFound e) {
-                        Logger.error("Unknown server type: " + e.getMessage());
-                    }
+                for (ServerType type : DFBnc.getServerTypeManager().getServerTypes()) {
+                    user.sendBotMessage("    "+type.getName()+" - "+type.getDescription());
                 }
             }
-        } else if (params.length > 1 && params[1].equalsIgnoreCase("help")) {
+        } else if (actualParams.length > 1 && actualParams[1].equalsIgnoreCase("help")) {
             user.sendBotMessage("----------------");
             user.sendBotMessage("This command allows you to set the servertype for this account.");
             final String currentType = user.getAccount().getConfig().getOption("server", "servertype", "");
@@ -86,10 +108,10 @@ public class ServerTypeCommand extends Command {
                 user.sendBotMessage("Your current servertype is: "+currentType+info);
             }
             user.sendBotMessage("");
-            user.sendBotMessage("You can set your type using the command: /dfbnc "+params[0]+" settype <type>");
+            user.sendBotMessage("You can set your type using the command: /dfbnc "+actualParams[0]+" settype <type>");
             user.sendBotMessage("A list of available types can be seen by ommiting the <type> param");
         } else {
-            user.sendBotMessage("For usage information use /dfbnc "+params[0]+" help");
+            user.sendBotMessage("For usage information use /dfbnc "+actualParams[0]+" help");
         }
     }
     

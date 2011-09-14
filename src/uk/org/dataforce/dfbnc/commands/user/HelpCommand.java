@@ -21,8 +21,8 @@
  */
 package uk.org.dataforce.dfbnc.commands.user;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Map;
+import java.util.Map.Entry;
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.commands.CommandNotFoundException;
@@ -47,23 +47,35 @@ public class HelpCommand extends Command {
         if (!command.equals("")) {
             if (user.getAccount() != null) {
                 try {
-                    final Command cmd = user.getAccount().getCommandManager().getCommand(params[0]);
+                    final Entry<String, Command> e = user.getAccount().getCommandManager().getMatchingCommand(command, user.getAccount().isAdmin());
+                    final Command cmd = e.getValue();
+
                     final String[] help = cmd.getHelp(params);
                     if (help != null) {
                         for (String line : help) {
                             user.sendBotMessage(line);
                         }
                     } else {
-                        user.sendBotMessage("The command '%s' has no detailed help available.", params[1]);
+                        user.sendBotMessage("The command '%s' has no detailed help available.", e.getKey());
                     }
                 } catch (CommandNotFoundException e) {
-                    user.sendBotMessage("The command '%s' does not exist.", params[1]);
+                    final Map<String, Command> allCommands = user.getAccount().getCommandManager().getAllCommands(command, user.getAccount().isAdmin());
+                    if (allCommands.size() > 0) {
+                        user.sendBotMessage("Multiple possible matches were found for '"+command+"': ");
+                        for (String p : allCommands.keySet()) {
+                            user.sendBotMessage("    " + (p.startsWith("*") ? p.substring(1) : p));
+                        }
+                        return;
+                    } else {
+                        user.sendBotMessage("The command '%s' does not exist.", command);
+                        return;
+                    }
                 }
             }
         } else {
             //try to execute showcommands, else tell user to do so
             try {
-                user.getAccount().getCommandManager().getCommand("showcommands").handle(user, params);
+                user.getAccount().getCommandManager().getCommand("showcommands").handle(user, new String[]{"showcommands"});
             } catch (CommandNotFoundException ex) {
                 user.sendBotMessage("You need to specify a command to get help for, try 'showcommands' to see all the commands");
             }

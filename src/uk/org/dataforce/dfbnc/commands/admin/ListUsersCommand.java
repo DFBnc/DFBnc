@@ -21,16 +21,17 @@
  */
 package uk.org.dataforce.dfbnc.commands.admin;
 
+import java.util.Collection;
 import uk.org.dataforce.dfbnc.Account;
 import uk.org.dataforce.dfbnc.AccountManager;
-import uk.org.dataforce.dfbnc.commands.Command;
+import uk.org.dataforce.dfbnc.commands.AdminCommand;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
 
 /**
  * Shows a list of users known to the bouncer.
  */
-public class ListUsersCommand extends Command {
+public class ListUsersCommand extends AdminCommand {
 
     /**
      * Create a new instance of the Command Object
@@ -43,17 +44,38 @@ public class ListUsersCommand extends Command {
 
     /** {@inheritDoc} */
     @Override
-    public void handle(UserSocket user, String[] params) {
-        user.sendBotMessage("Users: ");
-        for (Account account : AccountManager.getAccounts()) {
-            user.sendBotMessage("Username: %s", account.getName());
+    public void handle(final UserSocket user, final String[] params) {
+        final Collection<Account> accounts = AccountManager.getAccounts();
+        user.sendBotMessage("This BNC has " + accounts.size() + " users: ");
+        for (Account account : accounts) {
+            final StringBuilder sb = new StringBuilder("    ");
+
+            if (account.equals(user.getAccount())) { sb.append((char)2); }
+            sb.append(account.getName());
+            if (account.equals(user.getAccount())) { sb.append((char)2); }
+
+            if (account.isAdmin()) {
+                sb.append("  [Admin]");
+            }
+
+            if (account.isSuspended()) {
+                sb.append("  [Suspended: ");
+                sb.append(account.getSuspendReason());
+                sb.append("]");
+            }
+
+            if (account.getUserSockets().size() > 0) {
+                sb.append("  (Currently connected)");
+            }
+
+            user.sendBotMessage(sb.toString());
         }
     }
 
     /** {@inheritDoc} */
     @Override
     public String[] handles() {
-        return new String[]{"listusers", "lu",};
+        return new String[]{"users",};
     }
 
     /** {@inheritDoc} */

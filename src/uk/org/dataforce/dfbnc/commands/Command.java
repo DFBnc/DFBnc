@@ -21,6 +21,11 @@
  */
 package uk.org.dataforce.dfbnc.commands;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import uk.org.dataforce.dfbnc.DFBnc;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
 
 /**
@@ -94,16 +99,73 @@ public abstract class Command {
      *
      * @return true if admin-only command
      */
-    public final boolean isAdminOnly() {
+    public boolean isAdminOnly() {
         return false;
+    }
+
+    /**
+     * Can this command be run when called in short form when shortcommands are
+     * enabled?
+     *
+     * @param handle Handle that is being asked for
+     * @return true if short-form is allowed for this command.
+     */
+    public boolean allowShort(final String handle) {
+        return true;
     }
     
     /**
      * Get the name for this Command in lowercase.
+     *
      * @return lower case name of this Command
      */
     public final String getLowerName() {
         return this.getName().toLowerCase();
+    }
+
+    /**
+     * From a given list of possible params, and a given param, find any
+     * possible matching params.
+     *
+     * The returned list will ALWAYS contain at least 1 item (which may or
+     * may not be empty)
+     *
+     * - If allowshortcommands is off, then the given param is returned
+     *   (regardless of whether it is null or empty.)
+     * - If param is null, empty or "?" then the given list of params is
+     *   returned.
+     * - If param is not null or empty then any params from the list that start
+     *   case-insentiviely with param are returned (although the actual case of
+     *   the param in the list is used in the result);
+     * - If there are no matches, the given param is returned
+     *
+     * @param param Param given
+     * @param params Collection of params to check against
+     * @return List of matching params.
+     */
+    public List<String> getParamMatch(final String param, final Collection<String> params) {
+        if (!DFBnc.getBNC().getConfig().getBoolOption("general", "allowshortcommands", false)) {
+            return Arrays.asList(param);
+        }
+        final String sw = param.toLowerCase();
+
+        if (param == null || param.isEmpty() || param.equals("?")) {
+            return new ArrayList<String>(params);
+        } else {
+            final List<String> result = new ArrayList<String>();
+            for (String p : params) {
+                p = p.toLowerCase();
+                if (!result.contains(p) && p.startsWith(sw)) {
+                    result.add(p);
+                }
+            }
+
+            if (result.isEmpty()) {
+                result.add(param);
+            }
+
+            return result;
+        }
     }
     
     /**

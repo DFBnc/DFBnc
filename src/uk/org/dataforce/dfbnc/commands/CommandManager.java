@@ -21,13 +21,16 @@
  */
 package uk.org.dataforce.dfbnc.commands;
 
+import java.util.AbstractMap.SimpleImmutableEntry;
 import uk.org.dataforce.libs.logger.Logger;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 import uk.org.dataforce.dfbnc.DFBnc;
 
@@ -99,35 +102,47 @@ public final class CommandManager {
         }
         return false;
     }
-    
+
     /**
      * Get all the commands available to this CommandManager.
      * This is potentially expensive.
      *
+     * @param allowAdmin Allow admin-only commands?
      * @return Map of available commands.
      */
-    public Map<String, Command> getAllCommands() {
-        return getAllCommands("");
+    public Map<String, Command> getAllCommands(final boolean allowAdmin) {
+        return getAllCommands("", allowAdmin);
     }
 
     /**
      * Get all the commands available to this CommandManager.
      * This is potentially expensive.
      *
-     * @param startsWith Limit to commands that start with this string.
+     * @param startsWith Limit to commands that start with this string. "" or
+     *        "?" will return all commands.
+     * @param allowAdmin Allow admin-only commands?
      * @return Map of available commands.
      */
-    public Map<String, Command> getAllCommands(final String startsWith) {
+    public Map<String, Command> getAllCommands(final String startsWith, final boolean allowAdmin) {
         // First get our own commands,
         Map<String, Command> result;
         final String sw = startsWith.toLowerCase();
 
-        if (startsWith.isEmpty()) {
-            result = new HashMap<String, Command>(knownCommands);
+        if (startsWith.isEmpty() || startsWith.equals("?")) {
+            if (allowAdmin) {
+                result = new HashMap<String, Command>(knownCommands);
+            } else {
+                // For non-admins we actually need to check all the commands to
+                // see if we are allowed use it or not.
+                result = new HashMap<String, Command>();
+                for (Entry<String, Command> entry : new HashMap<String, Command>(knownCommands).entrySet()) {
+                    result.put(entry.getKey(), entry.getValue());
+                }
+            }
         } else {
             result = new HashMap<String, Command>();
             for (Entry<String, Command> entry : new HashMap<String, Command>(knownCommands).entrySet()) {
-                if (!result.containsKey(entry.getKey()) && entry.getKey().startsWith(sw)) {
+                if (!result.containsKey(entry.getKey()) && (entry.getKey().startsWith(sw) || entry.getKey().startsWith("*" + sw)) && (allowAdmin || !entry.getValue().isAdminOnly())) {
                     result.put(entry.getKey(), entry.getValue());
                 }
             }
@@ -135,7 +150,7 @@ public final class CommandManager {
         
         // Now all our submanagers commands
         for (CommandManager subManager : subManagers) {
-            Map<String, Command> subResult = subManager.getAllCommands(startsWith);
+            Map<String, Command> subResult = subManager.getAllCommands(startsWith, allowAdmin);
             for (Entry<String, Command> entry : subResult.entrySet()) {
                 if (!result.containsKey(entry.getKey())) {
                     result.put(entry.getKey(), entry.getValue());
@@ -236,7 +251,73 @@ public final class CommandManager {
             }
         }
     }
-    
+
+
+    /**
+     * Get the matching command used for a specified name.
+     * If AllowShortCommands is off, this returns the same as getCommand would,
+     * otherwise this tries to find a single matching command.
+     *
+     * @param name Name to look for
+     * @param allowAdmin Allow admin-only commands?
+     * @return Command Entry for the given name.f
+     * @throws CommandNotFoundException If the requested command doesn't exist in this or any sub managers
+     */
+    public Entry<String, Command> getMatchingCommand(final String name, final boolean allowAdmin) throws CommandNotFoundException {
+        CommandNotFoundException cnfe = null;
+
+        Logger.debug5("Looking for matching command: " + name);
+
+        try {
+            return new SimpleImmutableEntry<String, Command>(name, getCommand(name, allowAdmin));
+        } catch (CommandNotFoundException p) {
+            cnfe = p;
+        }
+
+        Logger.debug5("No exact match found.");
+        
+        if (DFBnc.getBNC().getConfig().getBoolOption("general", "allowshortcommands", false)) {
+            Logger.debug5("Short commands enabled.");
+            // Find a matching command.
+            final Map<String, Command> cmds = new TreeMap<String, Command>(getAllCommands(name, allowAdmin));
+            final Set<Command> commands = new HashSet<Command>(cmds.values());
+            Logger.debug5("Matching Handlers: " + cmds.size());
+            Logger.debug5("Matching Commands: " + commands.size());
+            
+            // Check for only 1 resulting command.
+            // This checks for only one handler for the given word, or in the
+            // case of multiple matching handlers, are they actually just the
+            // same command anyway?
+            if (cmds.size() == 1 || commands.size() == 1) {
+                for (Entry<String, Command> entry : cmds.entrySet()) {
+                    Logger.debug5("Matching Handler: " + entry);
+                    // Don't match this command if the short form is not permitted.
+                    if (!entry.getValue().allowShort(entry.getKey())) {
+                        throw cnfe;
+                    }
+
+                    String handlerName = entry.getKey().startsWith("*") ? entry.getKey().substring(1) : entry.getKey();
+                    if (cmds.size() > 1) {
+                        // Single command, but multiple handles. Use the
+                        // earliest one from the handles array.
+                        Logger.debug5("Multi handler match");
+                        for (String handle : entry.getValue().handles()) {
+                            if (handle.toLowerCase().startsWith(name.toLowerCase())) {
+                                handlerName = handle;
+                                break;
+                            }
+                        }
+                    }
+                    return new SimpleImmutableEntry<String, Command>(handlerName, entry.getValue());
+                }
+            } else {
+                throw cnfe;
+            }
+        }
+
+        throw cnfe;
+    }
+
     /**
      * Get the command used for a specified name.
      *
@@ -245,35 +326,55 @@ public final class CommandManager {
      * @throws CommandNotFoundException If the requested command doesn't exist in this or any sub managers
      */
     public Command getCommand(final String name) throws CommandNotFoundException {
-        return getCommand(name, 0);
+        return getCommand(name, true, 0);
+    }
+
+    /**
+     * Get the command used for a specified name.
+     *
+     * @param name Name to look for
+     * @param allowAdmin Allow admin-only commands?
+     * @return Command for the given name.
+     * @throws CommandNotFoundException If the requested command doesn't exist in this or any sub managers
+     */
+    public Command getCommand(final String name, final boolean allowAdmin) throws CommandNotFoundException {
+        return getCommand(name, allowAdmin, 0);
     }
     
     /**
      * Get the command used for a specified name.
      *
      * @param name Name to look for
+     * @param allowAdmin Allow admin-only commands?
      * @param nesting Amount of previous calls.
      * @return Command for the given name.
      * @throws CommandNotFoundException If the requested command doesn't exist in this or any sub managers
      */
-    protected Command getCommand(final String name, final int nesting) throws CommandNotFoundException {
+    protected Command getCommand(final String name, final boolean allowAdmin, final int nesting) throws CommandNotFoundException {
+        Command result = null;
         if (knownCommands.containsKey(name.toLowerCase())) {
-            return knownCommands.get(name.toLowerCase());
+            result = knownCommands.get(name.toLowerCase());
         } else if (knownCommands.containsKey("*"+name.toLowerCase())) {
-            return knownCommands.get("*"+name.toLowerCase());
-        } else {
+            result = knownCommands.get("*"+name.toLowerCase());
+        }
+
+        if (result == null || (result.isAdminOnly() && !allowAdmin)) {
             if (nesting <= nestingLimit) {
                 for (CommandManager manager : subManagers) {
                     try {
-                        return manager.getCommand(name, (nesting+1));
+                        return manager.getCommand(name, allowAdmin, (nesting+1));
                     } catch (CommandNotFoundException cnf) { /* Ignore, it might be in other managers */ }
                 }
             }
             // Command was not found in any manager.
+            // If short commands are enabled, try to find a matching command.
+
             throw new CommandNotFoundException("No command is known by "+name);
+        } else {
+            return result;
         }
     }
-    
+
     /**
      * Handle a command.
      *
@@ -285,30 +386,11 @@ public final class CommandManager {
         if (params.length == 0 || params[0] == null || params[0].isEmpty()) {
             throw new CommandNotFoundException("No valid command given.");
         }
-        Command commandHandler = null;
-        CommandNotFoundException cnfe = null;
-        String[] handleParams = params;
-        try {
-            commandHandler = getCommand(params[0]);
-        } catch (CommandNotFoundException p) {
-            cnfe = p;
-        }
-        
-        if (commandHandler == null && DFBnc.getBNC().getConfig().getBoolOption("general", "allowshortcommands", false)) {
-            // Find a matching command.
-            final Map<String, Command> cmds = new TreeMap<String, Command>(getAllCommands(params[0]));
-            if (cmds.size() == 1) {
-                for (Entry<String, Command> entry : cmds.entrySet()) {
-                    commandHandler = entry.getValue();
-                    handleParams[0] = entry.getKey();
-                    break;
-                }
-            } else {
-                throw cnfe;
-            }
-        }
 
-        if (commandHandler == null) { throw cnfe; }
+        final Entry<String, Command> e = getMatchingCommand(params[0], user.getAccount().isAdmin());
+        String[] handleParams = params;
+        handleParams[0] = e.getKey();
+        final Command commandHandler = e.getValue();
 
         try {
             if (commandHandler.isAdminOnly() && !user.getAccount().isAdmin()) {
@@ -316,9 +398,9 @@ public final class CommandManager {
             } else {
                 commandHandler.handle(user, handleParams);
             }
-        } catch (Exception e) {
+        } catch (Exception ex) {
             Logger.error("There has been an error with the command '"+params[0]+"'");
-            e.printStackTrace();
+            ex.printStackTrace();
         }
     }
 }

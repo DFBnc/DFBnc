@@ -33,7 +33,7 @@ import uk.org.dataforce.dfbnc.sockets.UserSocket;
 public class SaveCommand extends Command {
 
     /**
-     * Handle a version command.
+     * Handle a save command.
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
@@ -51,7 +51,7 @@ public class SaveCommand extends Command {
      */
     @Override
     public String[] handles() {
-        return new String[]{"saveconfig", "sc"};
+        return new String[]{"saveconfig", "save", "*sc"};
     }
 
     /**

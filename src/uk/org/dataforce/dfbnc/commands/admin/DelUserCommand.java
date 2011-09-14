@@ -21,7 +21,7 @@
  */
 package uk.org.dataforce.dfbnc.commands.admin;
 
-import uk.org.dataforce.dfbnc.commands.Command;
+import uk.org.dataforce.dfbnc.commands.AdminCommand;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
 import uk.org.dataforce.dfbnc.AccountManager;
@@ -29,7 +29,7 @@ import uk.org.dataforce.dfbnc.AccountManager;
 /**
  * This file represents the 'DelUser' command
  */
-public class DelUserCommand extends Command {
+public class DelUserCommand extends AdminCommand {
     /**
      * Handle a DelUser command.
      *

@@ -22,6 +22,7 @@
 package uk.org.dataforce.dfbnc.commands;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
 
@@ -47,23 +48,34 @@ public abstract class AbstractSetCommand extends Command {
     public void handle(final UserSocket user, final String[] params) {
         user.sendBotMessage("----------------");
 
-        if (params.length > 1 && validParams.containsKey(params[1].toLowerCase())) {
+        String[] actualParams = params;
+
+        if (actualParams.length > 1) {
+            final List<String> paramMatch = getParamMatch(actualParams[1], validParams.keySet());
+            if (paramMatch.size() > 1) {
+                user.sendBotMessage("Multiple possible matches were found for '"+actualParams[1]+"': ");
+                for (String p : paramMatch) {
+                    user.sendBotMessage("    " + p);
+                }
+                return;
+            } else { actualParams[1] = paramMatch.get(0); }
+
             // Get the current value
-            final String currentValue = user.getAccount().getConfig().getOption(setDomain, params[1], "");
+            final String currentValue = user.getAccount().getConfig().getOption(setDomain, actualParams[1], "");
             // And the type of this param
-            final ParamType paramType = validParams.get(params[1].toLowerCase()).getType();
+            final ParamType paramType = validParams.get(actualParams[1].toLowerCase()).getType();
             // Check if user wants to change it
-            if (params.length > 2) {
+            if (actualParams.length > 2) {
                 String newValue;
                 // If its a string we get the rest of the line, else just the first word
                 if (paramType == ParamType.STRING) {
                     final StringBuilder allInput = new StringBuilder();
-                    for (int i = 2; i < params.length; ++i) {
-                        allInput.append(params[i] + " ");
+                    for (int i = 2; i < actualParams.length; ++i) {
+                        allInput.append(actualParams[i]).append(" ");
                     }
                     newValue = allInput.toString().trim();
                 } else {
-                    newValue = params[2];
+                    newValue = actualParams[2];
                 }
 
                 // Now validate and set.
@@ -71,44 +83,44 @@ public abstract class AbstractSetCommand extends Command {
                     try {
                         int newValueInt = Integer.parseInt(newValue);
                         if ((paramType == ParamType.NEGATIVEINT && newValueInt >= 0) || (paramType == ParamType.POSITIVEINT && newValueInt < 0)) {
-                            user.sendBotMessage("Sorry, '" + newValue + "' is not a valid value for '" + params[1] + "'");
+                            user.sendBotMessage("Sorry, '" + newValue + "' is not a valid value for '" + actualParams[1] + "'");
                             return;
                         } else {
-                            user.getAccount().getConfig().setIntOption(setDomain, params[1], newValueInt);
+                            user.getAccount().getConfig().setIntOption(setDomain, actualParams[1], newValueInt);
                         }
                     } catch (NumberFormatException nfe) {
-                        user.sendBotMessage("Sorry, '" + newValue + "' is not a valid value for '" + params[1] + "'");
+                        user.sendBotMessage("Sorry, '" + newValue + "' is not a valid value for '" + actualParams[1] + "'");
                         return;
                     }
                 } else if (paramType == ParamType.FLOAT || paramType == ParamType.NEGATIVEFLOAT || paramType == ParamType.POSITIVEFLOAT) {
                     try {
                         float newValueFloat = Float.parseFloat(newValue);
                         if ((paramType == ParamType.NEGATIVEFLOAT && newValueFloat >= 0) || (paramType == ParamType.POSITIVEFLOAT && newValueFloat < 0)) {
-                            user.sendBotMessage("Sorry, '" + newValue + "' is not a valid value for '" + params[1] + "'");
+                            user.sendBotMessage("Sorry, '" + newValue + "' is not a valid value for '" + actualParams[1] + "'");
                             return;
                         } else {
-                            user.getAccount().getConfig().setFloatOption(setDomain, params[1], newValueFloat);
+                            user.getAccount().getConfig().setFloatOption(setDomain, actualParams[1], newValueFloat);
                         }
                     } catch (NumberFormatException nfe) {
-                        user.sendBotMessage("Sorry, '" + newValue + "' is not a valid value for '" + params[1] + "'");
+                        user.sendBotMessage("Sorry, '" + newValue + "' is not a valid value for '" + actualParams[1] + "'");
                         return;
                     }
                 } else if (paramType == ParamType.BOOL) {
                     if (newValue.equalsIgnoreCase("true") || newValue.equalsIgnoreCase("yes") || newValue.equalsIgnoreCase("on") || newValue.equalsIgnoreCase("1")) {
-                        user.getAccount().getConfig().setBoolOption(setDomain, params[1], true);
+                        user.getAccount().getConfig().setBoolOption(setDomain, actualParams[1], true);
                         newValue = "True";
                     } else {
-                        user.getAccount().getConfig().setBoolOption(setDomain, params[1], false);
+                        user.getAccount().getConfig().setBoolOption(setDomain, actualParams[1], false);
                         newValue = "False";
                     }
                 } else {
-                    user.getAccount().getConfig().setOption(setDomain, params[1], newValue);
+                    user.getAccount().getConfig().setOption(setDomain, actualParams[1], newValue);
                 }
 
                 // And let the user know.
-                user.sendBotMessage("Changed value of '" + params[1].toLowerCase() + "' from '" + currentValue + "' to '" + newValue + "'");
+                user.sendBotMessage("Changed value of '" + actualParams[1].toLowerCase() + "' from '" + currentValue + "' to '" + newValue + "'");
             } else {
-                user.sendBotMessage("The current value of '" + params[1].toLowerCase() + "' is: " + currentValue);
+                user.sendBotMessage("The current value of '" + actualParams[1].toLowerCase() + "' is: " + currentValue);
             }
         } else {
             user.sendBotMessage("You need to choose a valid setting to set the value for.");
@@ -118,7 +130,7 @@ public abstract class AbstractSetCommand extends Command {
                 String value = user.getAccount().getConfig().getOption(setDomain, param, "");
                 user.sendBotMessage(String.format("  %15s - %s [Current: %s]", param, description, value));
             }
-            user.sendBotMessage("Syntax: /dfbnc " + params[0] + " <param> [value]");
+            user.sendBotMessage("Syntax: /dfbnc " + actualParams[0] + " <param> [value]");
             user.sendBotMessage("Ommiting [value] will show you the current value.");
         }
     }

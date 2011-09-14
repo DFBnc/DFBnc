@@ -43,11 +43,11 @@ public class FirstTimeCommand extends Command {
                 user.sendBotMessage("----------------");
                 user.sendBotMessage("As an admin of this BNC you have addional commands available to you");
                 user.sendBotMessage("You can see what these are by using:");
-                user.sendBotMessage("    /dfbnc ShowCommands admin");
+                user.sendBotMessage("    /dfbnc show commands admin");
                 user.sendBotMessage(" or");
-                user.sendBotMessage("    /dfbnc ShowCommands all");
+                user.sendBotMessage("    /dfbnc show commands all");
                 user.sendBotMessage("----");
-                user.sendBotMessage("You may view this again at anytime by issuing: /dfbnc firsttime admin");
+                user.sendBotMessage("You may view this again at anytime by issuing: /dfbnc show firsttime admin");
             } else {
                 user.sendBotMessage("You do not have permission to access this command.");
             }
@@ -56,31 +56,31 @@ public class FirstTimeCommand extends Command {
             user.sendBotMessage("Welcome to DFBnc. It seems that this is your first time using this account.");
             user.sendBotMessage("With DFBnc you can issue commands to the BNC using /dfbnc (or /raw dfbnc or /quote dfbnc depending on your client)");
             user.sendBotMessage("For example to see what commands are available you would use:");
-            user.sendBotMessage("    /dfbnc ShowCommands");
+            user.sendBotMessage("    /dfbnc show commands");
             user.sendBotMessage("Some commands are only available when the corresponding servertype is in use, and as such will not be displayed if not available.");
             user.sendBotMessage("----");
             user.sendBotMessage("The first thing you will want to do is setup a server connection type, this can be done using:");
-            user.sendBotMessage("    /dfbnc <servertype|st> settype <type>");
+            user.sendBotMessage("    /dfbnc servertype settype <type>");
             user.sendBotMessage("The available types can be found out by omiting the <type> parameter.");
             user.sendBotMessage("Each account can only use one servertype at a time, however changing the servertype will not remove the settings associated with the old type");
             user.sendBotMessage("----");
             user.sendBotMessage("Once you have set the servertype the command:");
-            user.sendBotMessage("    /dfbnc <servertype|st> help");
+            user.sendBotMessage("    /dfbnc servertype help");
             user.sendBotMessage("Will give you more specific information about the servertype currently in use.");
             user.sendBotMessage("----");
-                        user.sendBotMessage("Most server types will provide a 'serverlist' command you can use to add a server to connect to:");
-                        user.sendBotMessage("    /dfbnc serverlist add irc.quakenet.org:6667");
-                        user.sendBotMessage("----");
+            user.sendBotMessage("Most server types will provide a 'serverlist' command you can use to add a server to connect to:");
+            user.sendBotMessage("    /dfbnc serverlist add irc.quakenet.org:6667");
+            user.sendBotMessage("----");
             user.sendBotMessage("Once you have your servertype setup correctly and servers added, you can use");
             user.sendBotMessage("    /dfbnc connect");
             user.sendBotMessage("To connect the bnc to the server");
             user.sendBotMessage("----");
-            user.sendBotMessage("You may view this again at anytime by issuing: /dfbnc firsttime");
+            user.sendBotMessage("You may view this again at anytime by issuing: /dfbnc show firsttime");
             user.sendBotMessage("----");
             user.sendBotMessage("In all cases /dfbnc can be substituted for /msg "+Util.getBotName()+". Example:");
-            user.sendBotMessage("    /msg "+Util.getBotName()+" ShowCommands");
+            user.sendBotMessage("    /msg "+Util.getBotName()+" show commands");
             user.sendBotMessage(" will do the same as:");
-            user.sendBotMessage("    /dfbnc ShowCommands");
+            user.sendBotMessage("    /dfbnc show commands");
         }
         user.getAccount().setFirst(false);
     }
@@ -92,7 +92,7 @@ public class FirstTimeCommand extends Command {
      */
     @Override
     public String[] handles() {
-        return new String[]{"firsttime", "*ft"};
+        return new String[]{"firsttime"};
     }
     
     /**

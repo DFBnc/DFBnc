@@ -46,13 +46,14 @@ public class ShowCommandsCommand extends Command {
         // displayed at the end after the normal-user commands.
         ArrayList<String> adminCommands = new ArrayList<String>();
     
-        final String commandsType = (params.length > 1) ? params[1] : "";
+        final String commandsType = (params.length > 2) ? params[2] : "";
 
         if (commandsType.equals("") || commandsType.equalsIgnoreCase("all") || commandsType.equalsIgnoreCase("user")) {
             user.sendBotMessage("----------------");
             user.sendBotMessage("The following commands are available to you:");
+            user.sendBotMessage("");
             CommandManager cmdmgr = user.getAccount().getCommandManager();
-            SortedMap<String, Command> commands = new TreeMap<String, Command>(cmdmgr.getAllCommands());
+            SortedMap<String, Command> commands = new TreeMap<String, Command>(cmdmgr.getAllCommands(user.getAccount().isAdmin()));
             for (Entry<String, Command> entry : commands.entrySet()) {
                 if (entry.getKey().charAt(0) == '*') { continue; }
                 final Command command = entry.getValue();
@@ -74,6 +75,7 @@ public class ShowCommandsCommand extends Command {
                     } else {
                         user.sendBotMessage("The following admin-only commands are also available to you:");
                     }
+                    user.sendBotMessage("");
                     for (String output : adminCommands) {
                         user.sendBotMessage(output);
                     }
@@ -92,7 +94,7 @@ public class ShowCommandsCommand extends Command {
      */
     @Override
     public String[] handles() {
-        return new String[]{"showcommands"};
+        return new String[]{"commands"};
     }
     
     /**

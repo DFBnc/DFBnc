@@ -123,7 +123,7 @@ public class ServerListCommand extends AbstractListEditCommand {
      */
     @Override
     public String[] handles() {
-        return new String[]{"serverlist", "sl"};
+        return new String[]{"serverlist", "*sl"};
     }
     
     /**

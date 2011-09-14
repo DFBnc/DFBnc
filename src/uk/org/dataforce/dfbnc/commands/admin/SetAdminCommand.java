@@ -21,7 +21,7 @@
  */
 package uk.org.dataforce.dfbnc.commands.admin;
 
-import uk.org.dataforce.dfbnc.commands.Command;
+import uk.org.dataforce.dfbnc.commands.AdminCommand;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
 import uk.org.dataforce.dfbnc.Account;
@@ -30,7 +30,7 @@ import uk.org.dataforce.dfbnc.AccountManager;
 /**
  * This file represents the 'SetAdmin' command
  */
-public class SetAdminCommand extends Command {
+public class SetAdminCommand extends AdminCommand {
     /**
      * Handle a SetAdmin command.
      *

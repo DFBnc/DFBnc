@@ -146,10 +146,8 @@ public class DFBnc {
         }
         
         Logger.info("Setting up Default User Command Manager");
-        userCommandManager.addCommand(new VersionCommand(userCommandManager));
-        userCommandManager.addCommand(new FirstTimeCommand(userCommandManager));
         userCommandManager.addCommand(new ServerTypeCommand(userCommandManager));
-        userCommandManager.addCommand(new ShowCommandsCommand(userCommandManager));
+        userCommandManager.addCommand(new ShowCommand(userCommandManager));
         userCommandManager.addCommand(new HelpCommand(userCommandManager));
         userCommandManager.addCommand(new PasswordCommand(userCommandManager));
         userCommandManager.addCommand(new SaveCommand(userCommandManager));
@@ -163,7 +161,6 @@ public class DFBnc {
         adminCommandManager.addCommand(new UnsuspendCommand(adminCommandManager));
         adminCommandManager.addCommand(new SetAdminCommand(adminCommandManager));
         adminCommandManager.addCommand(new ShutdownCommand(adminCommandManager));
-        adminCommandManager.addCommand(new ListUsersCommand(adminCommandManager));
         
         Logger.info("Setting up ServerType Manager");
         myServerTypeManager.init();

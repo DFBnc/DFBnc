@@ -23,14 +23,14 @@ package uk.org.dataforce.dfbnc.commands.admin;
 
 import uk.org.dataforce.dfbnc.Account;
 import uk.org.dataforce.dfbnc.AccountManager;
-import uk.org.dataforce.dfbnc.commands.Command;
+import uk.org.dataforce.dfbnc.commands.AdminCommand;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
 
 /**
  * This file represents the 'AddUser' command
  */
-public class AddUserCommand extends Command {
+public class AddUserCommand extends AdminCommand {
     /**
      * Handle an AddUser command.
      *

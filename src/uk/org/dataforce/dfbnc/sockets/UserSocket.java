@@ -550,23 +550,33 @@ public class UserSocket extends ConnectedSocket {
                 myAccount.getCommandManager().handle(this, bits);
             }
         } catch (CommandNotFoundException c) {
-            sendBotMessage("Unknown command '%s' Please try 'ShowCommands'", (bits.length > 0 ? bits[0] : ""));
             if (DFBnc.getBNC().getConfig().getBoolOption("general", "allowshortcommands", false) && bits.length > 0) {
-                final SortedMap<String, Command> cmds = new TreeMap<String, Command>(myAccount.getCommandManager().getAllCommands(bits[0]));
+                final SortedMap<String, Command> cmds = new TreeMap<String, Command>(myAccount.getCommandManager().getAllCommands(bits[0], myAccount.isAdmin()));
                 if (cmds.size() > 0) {
-                    sendBotMessage("Possible matching commands:");
-                    sendBotMessage("----------");
-                    for (Entry<String, Command> entry : cmds.entrySet()) {
-                        if (entry.getKey().charAt(0) == '*') { continue; }
-                        final Command command = entry.getValue();
-                        if (!command.isAdminOnly() || myAccount.isAdmin()) {
-                            sendBotMessage(String.format("%-20s - %s", entry.getKey(), command.getDescription(entry.getKey())));
+                    if (cmds.size() == 1) {
+                        final String req = (bits.length > 0 ? bits[0] : "");
+                        final String match = cmds.firstKey();
+                        sendBotMessage("The command '%s' only matched a single command (%s). To prevent accidental use however, the full command is required.", req, match);
+                        return;
+                    } else {
+                        sendBotMessage("Unknown command '%s' Please try 'show commands'", (bits.length > 0 ? bits[0] : ""));
+                        sendBotMessage("Possible matching commands:");
+                        sendBotMessage("----------");
+                        for (Entry<String, Command> entry : cmds.entrySet()) {
+                            if (entry.getKey().charAt(0) == '*') { continue; }
+                            final Command command = entry.getValue();
+                            if (!command.isAdminOnly() || myAccount.isAdmin()) {
+                                sendBotMessage(String.format("%-20s - %s", entry.getKey(), command.getDescription(entry.getKey())));
+                            }
                         }
+                        return;
                     }
                 }
             }
+            sendBotMessage("Unknown command '%s' Please try 'show commands'", (bits.length > 0 ? bits[0] : ""));
         } catch (Exception e) {
             sendBotMessage("Exception with command '%s': %s", (bits.length > 0 ? bits[0] : ""), e.getMessage());
+            e.printStackTrace();
         }
     }
 }

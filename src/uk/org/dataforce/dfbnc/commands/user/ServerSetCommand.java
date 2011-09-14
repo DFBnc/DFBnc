@@ -36,7 +36,7 @@ public class ServerSetCommand extends AbstractSetCommand {
      */
     @Override
     public String[] handles() {
-        return new String[]{"serverset", "ss"};
+        return new String[]{"serverset", "*ss"};
     }
 
     /**
