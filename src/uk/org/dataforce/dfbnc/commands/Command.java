@@ -132,6 +132,7 @@ public abstract class Command {
      *
      * - If allowshortcommands is off, then the given param is returned
      *   (regardless of whether it is null or empty.)
+     * - If an exact match is found, it is returned.
      * - If param is null, empty or "?" then the given list of params is
      *   returned.
      * - If param is not null or empty then any params from the list that start
@@ -149,7 +150,9 @@ public abstract class Command {
         }
         final String sw = param.toLowerCase();
 
-        if (param == null || param.isEmpty() || param.equals("?")) {
+        if (params.contains(param)) {
+            return Arrays.asList(param);
+        } else if(param == null || param.isEmpty() || param.equals("?")) {
             return new ArrayList<String>(params);
         } else {
             final List<String> result = new ArrayList<String>();

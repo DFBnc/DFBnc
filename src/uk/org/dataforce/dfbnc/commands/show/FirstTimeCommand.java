@@ -19,8 +19,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package uk.org.dataforce.dfbnc.commands.user;
+package uk.org.dataforce.dfbnc.commands.show;
 
+import java.util.Arrays;
+import java.util.List;
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
@@ -38,7 +40,17 @@ public class FirstTimeCommand extends Command {
      */
     @Override
     public void handle(final UserSocket user, final String[] params) {
-        if (params.length > 1 && params[1].equalsIgnoreCase("admin")) {
+        String option = (params.length > 2) ? params[2] : "";
+        final List<String> paramMatch = getParamMatch(option, Arrays.asList("admin", "user", ""));
+        if (paramMatch.size() > 1) {
+            user.sendBotMessage("Multiple possible matches were found for '"+option+"': ");
+            for (String p : paramMatch) {
+                user.sendBotMessage("    " + p);
+            }
+            return;
+        } else { option = paramMatch.get(0); }
+
+        if (params.length > 2 && option.equalsIgnoreCase("admin")) {
             if (user.getAccount().isAdmin()) {
                 user.sendBotMessage("----------------");
                 user.sendBotMessage("As an admin of this BNC you have addional commands available to you");

@@ -140,6 +140,44 @@ public class UserSocket extends ConnectedSocket {
     }
 
     /**
+     * Get the info for this socket
+     *
+     * @return Info for this socket.
+     */
+    public String getInfo() {
+        return myInfo;
+    }
+
+    /**
+     * Get the socket ID for this socket.
+     *
+     * @return ID for this socket.
+     */
+    public String getID() {
+        return myID;
+    }
+
+    /**
+     * Get a usersocket by ID
+     *
+     * @param id Id of socket to get
+     * @return Socket with the given ID if found.
+     */
+    public static UserSocket getUserSocket(final String id) {
+        return knownSockets.get(id);
+    }
+
+    /**
+     * Get a List of all UserSockets.
+     *
+     * @param account Account to check sockets against
+     * @return a Collection of all UserSockets that are part of the given account
+     */
+    public static List<UserSocket> getUserSockets() {
+        return new ArrayList<UserSocket>(knownSockets.values());
+    }
+
+    /**
      * Get a List of all UserSockets that are part of a given account
      *
      * @param account Account to check sockets against
@@ -424,10 +462,10 @@ public class UserSocket extends ConnectedSocket {
                     }
                     // Run the firsttime command if this is the first time the account has been used
                     if (myAccount.isFirst()) {
-                        handleBotCommand(new String[]{"firsttime"});
+                        handleBotCommand(new String[]{"show", "firsttime"});
                         if (myAccount.isAdmin()) {
                             sendBotMessage("");
-                            handleBotCommand(new String[]{"firsttime", "admin"});
+                            handleBotCommand(new String[]{"show", "firsttime", "admin"});
                         }
                     }
                     Logger.debug2("processNonAuthenticated - User Connected");

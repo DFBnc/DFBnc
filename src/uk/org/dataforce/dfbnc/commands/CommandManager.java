@@ -256,7 +256,9 @@ public final class CommandManager {
     /**
      * Get the matching command used for a specified name.
      * If AllowShortCommands is off, this returns the same as getCommand would,
-     * otherwise this tries to find a single matching command.
+     * otherwise this tries to find a single matching command. If multiple
+     * matching commands are found, but only one of them is non-hidden, it will
+     * be returned.
      *
      * @param name Name to look for
      * @param allowAdmin Allow admin-only commands?
@@ -296,7 +298,7 @@ public final class CommandManager {
                         throw cnfe;
                     }
 
-                    String handlerName = entry.getKey().startsWith("*") ? entry.getKey().substring(1) : entry.getKey();
+                    String handlerName = entry.getKey().charAt(0) == '*' ? entry.getKey().substring(1) : entry.getKey();
                     if (cmds.size() > 1) {
                         // Single command, but multiple handles. Use the
                         // earliest one from the handles array.
@@ -311,7 +313,29 @@ public final class CommandManager {
                     return new SimpleImmutableEntry<String, Command>(handlerName, entry.getValue());
                 }
             } else {
-                throw cnfe;
+                // Last ditch attempt, see if there is a single non-hidden
+                // command returned.
+                Entry<String, Command> unhidden = null;
+                for (Entry<String, Command> entry : cmds.entrySet()) {
+                    // Check if this is a non-hidden entry
+                    if (entry.getKey().charAt(0) != '*') {
+                        // If we have found no un-hidden entries yet, save it
+                        // otherwise, if we have already found one, then abort
+                        // and forget about any we found.
+                        if (unhidden == null) {
+                            unhidden = new SimpleImmutableEntry<String, Command>(entry);
+                        } else {
+                            unhidden = null;
+                            break;
+                        }
+                    }
+                }
+
+                if (unhidden == null) {
+                    throw cnfe;
+                } else {
+                    return unhidden;
+                }
             }
         }
 

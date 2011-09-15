@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package uk.org.dataforce.dfbnc.commands.user;
+package uk.org.dataforce.dfbnc.commands.show;
 
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
@@ -28,6 +28,8 @@ import uk.org.dataforce.dfbnc.sockets.UserSocket;
 import java.util.TreeMap;
 import java.util.SortedMap;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map.Entry;
 
 /**
@@ -46,7 +48,15 @@ public class ShowCommandsCommand extends Command {
         // displayed at the end after the normal-user commands.
         ArrayList<String> adminCommands = new ArrayList<String>();
     
-        final String commandsType = (params.length > 2) ? params[2] : "";
+        String commandsType = (params.length > 2) ? params[2] : "";
+        final List<String> paramMatch = getParamMatch(commandsType, Arrays.asList("all", "admin", "user", ""));
+        if (paramMatch.size() > 1) {
+            user.sendBotMessage("Multiple possible matches were found for '"+commandsType+"': ");
+            for (String p : paramMatch) {
+                user.sendBotMessage("    " + p);
+            }
+            return;
+        } else { commandsType = paramMatch.get(0); }
 
         if (commandsType.equals("") || commandsType.equalsIgnoreCase("all") || commandsType.equalsIgnoreCase("user")) {
             user.sendBotMessage("----------------");

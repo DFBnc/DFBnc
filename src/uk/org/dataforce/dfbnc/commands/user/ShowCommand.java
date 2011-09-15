@@ -28,7 +28,7 @@ import java.util.Map.Entry;
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.commands.CommandNotFoundException;
-import uk.org.dataforce.dfbnc.commands.admin.ListUsersCommand;
+import uk.org.dataforce.dfbnc.commands.show.*;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
 
 /**
@@ -46,6 +46,7 @@ public class ShowCommand extends Command {
     @Override
     public void handle(final UserSocket user, final String[] params) {
         String[] actualParams = params;
+        boolean legacy = false;
 
         // Legacy Support...
         // This may be removed in future.
@@ -55,16 +56,24 @@ public class ShowCommand extends Command {
             } else {
                 actualParams = new String[]{"show", "commands"};
             }
+            legacy = true;
         } else if (actualParams[0].equalsIgnoreCase("lu") || actualParams[0].equalsIgnoreCase("listusers")) {
             actualParams = new String[]{"show", "users"};
+            legacy = true;
         } else if (actualParams[0].equalsIgnoreCase("ft") || actualParams[0].equalsIgnoreCase("firsttime")) {
             if (actualParams.length > 1) {
                 actualParams = new String[]{"show", "firsttime", actualParams[1]};
             } else {
                 actualParams = new String[]{"show", "firsttime"};
             }
+            legacy = true;
         } else if (actualParams[0].equalsIgnoreCase("version")) {
             actualParams = new String[]{"show", "version"};
+            legacy = true;
+        }
+
+        if (legacy) {
+            user.sendBotMessage("Note: The command '%s' has been deprecated in favour of 'show %s'. Support for legacy command names may be dropped in the future.", params[0], actualParams[1]);
         }
 
         if (actualParams.length > 1) {
@@ -77,6 +86,7 @@ public class ShowCommand extends Command {
                 if (allCommands.size() > 0) {
                     user.sendBotMessage("Multiple possible matches were found for '"+actualParams[1]+"': ");
                     for (String p : allCommands.keySet()) {
+                        if (p.charAt(0) == '*') { continue; }
                         user.sendBotMessage("    " + p);
                     }
                     return;
@@ -94,7 +104,7 @@ public class ShowCommand extends Command {
             user.sendBotMessage("You need to choose something to show.");
             user.sendBotMessage("Valid options are:");
             for (Entry<String, Command> e : showManager.getAllCommands(user.getAccount().isAdmin()).entrySet()) {
-                if (!e.getKey().startsWith("*")) {
+                if (e.getKey().charAt(0) != '*') {
                     final String description = e.getValue().getDescription(e.getKey());
                     user.sendBotMessage(String.format("%-20s - %s", e.getKey(), description));
                 }
@@ -125,6 +135,7 @@ public class ShowCommand extends Command {
         showManager.addCommand(new ShowCommandsCommand(showManager));
         showManager.addCommand(new VersionCommand(showManager));
         showManager.addCommand(new FirstTimeCommand(showManager));
+        showManager.addCommand(new SessionsCommand(showManager));
         showManager.addCommand(new Command(showManager){
 
             /** {@inheritDoc} */

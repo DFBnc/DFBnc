@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package uk.org.dataforce.dfbnc.commands.admin;
+package uk.org.dataforce.dfbnc.commands.show;
 
 import java.util.Collection;
 import uk.org.dataforce.dfbnc.Account;

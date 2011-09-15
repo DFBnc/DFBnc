@@ -49,15 +49,20 @@ public class PasswordCommand extends Command {
             username = user.getAccount().getName();
             password = params[1];
             account = user.getAccount();
-        } else if (params.length == 3) {
-            username = params[1];
-            password = params[2];
-            account = getAccount(params[1]);
+        } else if (params.length > 2) {
+            if (user.getAccount().isAdmin()) {
+                username = params[1];
+                password = params[2];
+                account = AccountManager.get(params[1]);
+            } else {
+                user.sendBotMessage("Error: Only admins can set the password for other users.");
+                return;
+            }
         } else {
             if (user.getAccount().isAdmin()) {
-                user.sendBotMessage("passwd [user] newpasswd", "");
+                user.sendBotMessage("%s [user] newpasswd", params[0]);
             } else {
-                user.sendBotMessage("passwd newpasswd", "");
+                user.sendBotMessage("%s newpasswd", params[0]);
             }
             return;
         }
@@ -69,14 +74,6 @@ public class PasswordCommand extends Command {
         }
     }
 
-    private Account getAccount(final String username) {
-        if (AccountManager.exists(username)) {
-            return AccountManager.get(username);
-        } else {
-            return null;
-        }
-    }
-
     /**
      * What does this Command handle.
      *
@@ -84,7 +81,7 @@ public class PasswordCommand extends Command {
      */
     @Override
     public String[] handles() {
-        return new String[]{"password", "passwd", "setpassword"};
+        return new String[]{"setpassword", "*password", "*passwd"};
     }
 
     /**

@@ -24,6 +24,7 @@ package uk.org.dataforce.dfbnc.commands.user;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.logging.Level;
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
@@ -89,8 +90,11 @@ public class ServerTypeCommand extends Command {
                 }
             } else {
                 user.sendBotMessage("Available Types:");
-                for (ServerType type : DFBnc.getServerTypeManager().getServerTypes()) {
-                    user.sendBotMessage("    "+type.getName()+" - "+type.getDescription());
+                for (String name : DFBnc.getServerTypeManager().getServerTypeNames()) {
+                    try {
+                        final ServerType type = DFBnc.getServerTypeManager().getServerType(name);
+                        user.sendBotMessage("    " + name + " - " + type.getDescription());
+                    } catch (ServerTypeNotFound ex) { /* It will be found. */ }
                 }
             }
         } else if (actualParams.length > 1 && actualParams[1].equalsIgnoreCase("help")) {

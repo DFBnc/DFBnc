@@ -63,7 +63,7 @@ public class HelpCommand extends Command {
                     if (allCommands.size() > 0) {
                         user.sendBotMessage("Multiple possible matches were found for '"+command+"': ");
                         for (String p : allCommands.keySet()) {
-                            user.sendBotMessage("    " + (p.startsWith("*") ? p.substring(1) : p));
+                            user.sendBotMessage("    " + (p.charAt(0) == '*' ? p.substring(1) : p));
                         }
                         return;
                     } else {
@@ -74,6 +74,7 @@ public class HelpCommand extends Command {
             }
         } else {
             //try to execute showcommands, else tell user to do so
+            user.sendBotMessage("You need to specify a command to get help for.");
             try {
                 user.getAccount().getCommandManager().getCommand("showcommands").handle(user, new String[]{"showcommands"});
             } catch (CommandNotFoundException ex) {
