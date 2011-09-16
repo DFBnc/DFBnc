@@ -47,7 +47,7 @@ public class DFBnc {
     private static DFBnc me = null;
 
     /** Version String */
-    public final static String VERSION = "DFBnc-Java 0.1";
+    public final static String VERSION = "DFBnc-Java 0.2";
     
     /** The CLIParser */
     private static CLIParser cli = CLIParser.getCLIParser();
