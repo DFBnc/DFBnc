@@ -33,6 +33,13 @@ import java.util.Collection;
  */
 public class RollingList<T> extends LinkedList<T> {
     
+    /**
+     * A version number for this class. It should be changed whenever the class
+     * structure is changed (or anything else that would prevent serialised
+     * objects being un-serialised with the new class).
+     */
+    private static final long serialVersionUID = 1L;
+    
     /** Capacity of the list */
     private int capacity;
     
