@@ -25,6 +25,8 @@ package uk.org.dataforce.dfbnc;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import uk.org.dataforce.dfbnc.commands.CommandManager;
@@ -61,6 +63,8 @@ public final class Account implements UserSocketWatcher {
     private List<UserSocket> myUserSockets = new CopyOnWriteArrayList<UserSocket>();
     /** Account config file. */
     private Config config;
+    /** Reconnect Timer. */
+    private Timer reconnectTimer;
 
     /**
      * Create an Account object.
@@ -404,19 +408,33 @@ public final class Account implements UserSocketWatcher {
      * @param reason Reason for disconnection
      */
     public void handlerDisconnected(final String reason) {
+        if (reconnectTimer != null) {
+            reconnectTimer.cancel();
+            reconnectTimer = null;
+        }
         for (UserSocket socket : getUserSockets()) {
             socket.sendLine("ERROR : " + reason, false);
             socket.close();
         }
 
         if (config.getBoolOption("server", "reconnect", false)) {
-            try {
-                final ConnectionHandler newHandler = myConnectionHandler.newInstance();
-                myConnectionHandler = newHandler;
-            } catch (UnableToConnectException ex) {
-                sendBotMessage("Unable to reconnect: " + ex.getMessage());
-                myConnectionHandler = null;
-            }
+            final ConnectionHandler oldHandler = myConnectionHandler;
+            myConnectionHandler = null;
+            reconnectTimer = new Timer("Reconnect Timer - " + getName());
+
+            reconnectTimer.schedule(new TimerTask(){
+                @Override
+                public void run() {
+                    try {
+                        sendBotMessage("Attempting reconnect...");
+                        final ConnectionHandler newHandler = oldHandler.newInstance();
+                        setConnectionHandler(newHandler);
+                    } catch (UnableToConnectException ex) {
+                        sendBotMessage("Unable to reconnect: " + ex.getMessage());
+                        myConnectionHandler = null;
+                    }
+                }
+            }, 5000);
         } else {
             myConnectionHandler = null;
         }

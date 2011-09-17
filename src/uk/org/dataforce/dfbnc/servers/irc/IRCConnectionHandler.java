@@ -68,6 +68,7 @@ import uk.org.dataforce.dfbnc.sockets.UserSocket;
 import uk.org.dataforce.dfbnc.sockets.UnableToConnectException;
 import uk.org.dataforce.dfbnc.sockets.UserSocketWatcher;
 import uk.org.dataforce.libs.logger.Logger;
+import uk.org.dataforce.libs.util.Util;
 
 /**
  * This file represents an IRCConnectionHandler.
@@ -865,6 +866,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /** {@inheritDoc} */
     @Override
     public void onSocketClosed(final Parser parser, final Date date) {
+        requeueTimer.cancel();
         myAccount.handlerDisconnected("Remote connection closed.");
     }
     
@@ -888,6 +890,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 description = "Unknown error: " + exception.getMessage();
             }
         }
+        requeueTimer.cancel();
         myAccount.handlerDisconnected("Connection error: " + description);
     }
 
@@ -924,7 +927,11 @@ public class IRCConnectionHandler implements ConnectionHandler,
             user.setNickname(myParser.getLocalClient().getNickname());
             // Now send any of the 002-005 lines that we have
             for (String line : connectionLines) {
-                user.sendLine(line);
+                final String[] bits = line.split(" ");
+                if (bits.length > 2) {
+                    bits[2] = user.getNickname();
+                    user.sendLine(Util.joinString(bits, " ", 0, 0));
+                }
             }
             user.setPost001(true);
             // Now, if the parser has recieved an end of MOTD Line, we should send our own MOTD and User Host info

@@ -86,7 +86,7 @@ public final class Util {
             if (result.length() > 0) { result.append(joiner); }
             result.append(input[i]);
         }
-        return Arrays.toString(input);
+        return result.toString();
     }
     
     /**
