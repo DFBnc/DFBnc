@@ -59,6 +59,17 @@ public abstract class AbstractSetCommand extends Command {
                 }
                 return;
             } else { actualParams[1] = paramMatch.get(0); }
+            
+            if (validParams.get(actualParams[1].toLowerCase()) == null) {
+                user.sendBotMessage("Invalid setting '"+actualParams[1]+"'.");
+                user.sendBotMessage("Valid settings are:");
+                for (String param : validParams.keySet()) {
+                    String description = validParams.get(param).getDescription();
+                    String value = user.getAccount().getConfig().getOption(setDomain, param, "");
+                    user.sendBotMessage(String.format("  %15s - %s [Current: %s]", param, description, value));
+                }
+                return;
+            }
 
             // Get the current value
             final String currentValue = user.getAccount().getConfig().getOption(setDomain, actualParams[1], "");
@@ -123,7 +134,7 @@ public abstract class AbstractSetCommand extends Command {
                 user.sendBotMessage("The current value of '" + actualParams[1].toLowerCase() + "' is: " + currentValue);
             }
         } else {
-            user.sendBotMessage("You need to choose a valid setting to set the value for.");
+            user.sendBotMessage("You need to choose a setting to set the value for.");
             user.sendBotMessage("Valid settings are:");
             for (String param : validParams.keySet()) {
                 String description = validParams.get(param).getDescription();

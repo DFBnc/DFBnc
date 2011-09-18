@@ -65,6 +65,8 @@ public final class Account implements UserSocketWatcher {
     private Config config;
     /** Reconnect Timer. */
     private Timer reconnectTimer;
+    /** Is the next disconnect intentional? */
+    private boolean disconnectWanted;
 
     /**
      * Create an Account object.
@@ -401,25 +403,42 @@ public final class Account implements UserSocketWatcher {
     public Config getConfig() {
         return config;
     }
+    
+    /**
+     * Are we currently trying to reconnect?
+     * 
+     * @return True if there is a reconnectTimer around
+     */
+    public boolean isReconnecting() {
+        return reconnectTimer != null;
+    }
 
+    /**
+     * Cancel any ongoing reconnection attempts.
+     */
+    public void cancelReconnect() {
+        if (reconnectTimer != null) {
+            reconnectTimer.cancel();
+            reconnectTimer = null;
+        }
+    }
+    
+    /**
+     * Calling this will prevent the next disconnect causing a reconnect.
+     */
+    public void disableReconnect() {
+        disconnectWanted = true;
+    }
+    
     /**
      * Called when the IRC Connnection handler is disconnected.
      *
      * @param reason Reason for disconnection
      */
     public void handlerDisconnected(final String reason) {
-        if (reconnectTimer != null) {
-            reconnectTimer.cancel();
-            reconnectTimer = null;
-        }
-        for (UserSocket socket : getUserSockets()) {
-            socket.sendLine("ERROR : " + reason, false);
-            socket.close();
-        }
-
-        if (config.getBoolOption("server", "reconnect", false)) {
-            final ConnectionHandler oldHandler = myConnectionHandler;
-            myConnectionHandler = null;
+        final ConnectionHandler oldHandler = myConnectionHandler;
+        myConnectionHandler = null;
+        if (!disconnectWanted && config.getBoolOption("server", "reconnect", false)) {
             reconnectTimer = new Timer("Reconnect Timer - " + getName());
 
             reconnectTimer.schedule(new TimerTask(){
@@ -432,11 +451,33 @@ public final class Account implements UserSocketWatcher {
                     } catch (UnableToConnectException ex) {
                         sendBotMessage("Unable to reconnect: " + ex.getMessage());
                         myConnectionHandler = null;
+                        // This is not the place to try again, this exception
+                        // happens if the params we have are not valid for
+                        // creating a connection.
+                        // Errors actually trying to make the connection will
+                        // result in a handlerDisconnected() call.
                     }
+                    cancelReconnect();
                 }
             }, 5000);
-        } else {
-            myConnectionHandler = null;
         }
+        
+        if (config.getBoolOption("server", "userdisconnect", true)) {
+            for (UserSocket socket : getUserSockets()) {
+                // Only disconnect users if they have had a 001.
+                if (socket.getPost001()) {
+                    socket.sendLine("ERROR : " + reason, false);
+                    socket.close();
+                } else {
+                    socket.sendBotMessage("Disconnected from server: " + reason);
+                }
+            }
+        } else {
+            for (UserSocket socket : getUserSockets()) {
+                oldHandler.cleanupUser(socket, reason);
+            }
+        }
+        
+        disconnectWanted = false;
     }
 }

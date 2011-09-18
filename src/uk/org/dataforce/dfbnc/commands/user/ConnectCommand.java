@@ -21,6 +21,7 @@
  */
 package uk.org.dataforce.dfbnc.commands.user;
 
+import uk.org.dataforce.dfbnc.Account;
 import uk.org.dataforce.dfbnc.ConnectionHandler;
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
@@ -41,10 +42,16 @@ public class ConnectCommand extends Command {
     @Override
     public void handle(final UserSocket user, final String[] params) {
         user.sendBotMessage("----------------");
+        final Account acc = user.getAccount();
+        
         if (!params[0].equalsIgnoreCase("connect")) {
             user.sendBotMessage("Disconnecting...");
-            if (user.getAccount().getConnectionHandler() == null) {
+            if (acc.getConnectionHandler() == null) {
                 user.sendBotMessage("Not connected!");
+                if (acc.isReconnecting()) {
+                    acc.cancelReconnect();
+                    user.sendBotMessage("Reconnect attempt cancelled.");
+                }
             } else {
                 String reason = "BNC Disconnecting";
                 if (params.length > 1) {
@@ -54,17 +61,18 @@ public class ConnectCommand extends Command {
                 } else if (params[0].equalsIgnoreCase("reconnect")) {
                     reason = "Reconnecting";
                 }
-                user.getAccount().getConnectionHandler().shutdown(reason);
-                user.getAccount().setConnectionHandler(null);
+                acc.disableReconnect();
+                acc.getConnectionHandler().shutdown(reason);
+                acc.setConnectionHandler(null);
             }
             if (!params[0].equalsIgnoreCase("reconnect")) { return; }
         }
         
-        if (user.getAccount().getConnectionHandler() == null) {
+        if (acc.getConnectionHandler() == null) {
             user.sendBotMessage("Connecting...");
             try {
-                ConnectionHandler handler = user.getAccount().getServerType().newConnectionHandler(user.getAccount(), -1);
-                user.getAccount().setConnectionHandler(handler);
+                ConnectionHandler handler = acc.getServerType().newConnectionHandler(user.getAccount(), -1);
+                acc.setConnectionHandler(handler);
             } catch (UnableToConnectException utce) {
                 user.sendBotMessage("There was an error connecting: "+utce.getMessage());
             }

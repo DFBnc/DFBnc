@@ -1120,6 +1120,24 @@ public class IRCConnectionHandler implements ConnectionHandler,
         result = result.replaceAll("$me", myParser.getLocalClient().getNickname());
         return result;
     }
+    
+    /** {@inheritDoc} */
+    @Override
+    public void cleanupUser(final UserSocket user, final String reason) {
+        for (ChannelInfo channel : myParser.getChannels()) {
+            /*
+            user.sendLine(":%s!bot@%s JOIN %s", Util.getBotName(), Util.getServerName(myAccount), channel.getName());
+            user.sendLine(":%s!bot@%s MODE %s +o %1$s", Util.getBotName(), Util.getServerName(myAccount), channel.getName());
+            user.sendBotChat(channel.getName(), "PRIVMSG", "Disconnected from server: "+reason);
+            for (ChannelClientInfo cci : channel.getChannelClients()) {
+                user.sendLine(":%s!bot@%s KICK %s %s :Socket Closed: %s", Util.getBotName(), Util.getServerName(myAccount), channel.getName(), cci.getClient().getNickname(), reason);
+            }
+            user.sendLine(":%s!bot@%s PART %s :My work here is done...", Util.getBotName(), Util.getServerName(myAccount), channel.getName());
+            */
+           
+            user.sendLine(":%s KICK %s %s :Socket Closed: %s", Util.getServerName(myAccount), channel.getName(), user.getNickname(), reason);
+        }
+    }
 }
 
 /**
