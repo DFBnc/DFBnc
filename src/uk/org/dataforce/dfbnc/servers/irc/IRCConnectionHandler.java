@@ -960,38 +960,31 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 
                 
                 final Collection<? extends ChannelInfo> channels = myParser.getChannels();
-                
-                for (final ChannelInfo channel : channels) {
-                    user.sendLine(":%s JOIN %s", me, channel);
 
-                    sendTopic(user, channel);
-                    sendNames(user, channel);
-                }
-                
-                // Send the backbuffers a little later to allow time for us to
-                // process a request for timestamped irc.
-                // Schedule each channel slightly differently timed so as to
-                // allow a chance for the buffer to be sent between each
-                // channel rather than all at once.
-                if (myAccount.getConfig().getIntOption("server", "backbuffer", 0) > 0) {
-                    final Random rand = new Random();
-                    for (final ChannelInfo channel : channels) {
-                        new Timer().schedule(new TimerTask() {
-                            /** {@inheritDoc} */
-                            @Override
-                            public void run() {
+                new Timer().schedule(new TimerTask() {
+                    /** {@inheritDoc} */
+                    @Override
+                    public void run() {
+                        for (final ChannelInfo channel : channels) {
+                            user.sendLine(":%s JOIN %s", me, channel);
+                            
+                            sendTopic(user, channel);
+                            sendNames(user, channel);
+                    
+                            if (myAccount.getConfig().getIntOption("server", "backbuffer", 0) > 0) {
                                 sendBackbuffer(user, channel);
                             }
-                        }, (Math.max(1, myAccount.getConfig().getIntOption("server", "backbufferdelay", 2)) * 1000) + rand.nextInt(1000));
+                        }
+                        
+                        if (myAccount.getUserSockets().size() == 1) {
+                            List<String> myList = new ArrayList<String>();
+                            myList = myAccount.getConfig().getListOption("irc", "perform.firstattach", myList);
+                            for (String line : myList) {
+                                myParser.sendRawMessage(filterPerformLine(line));
+                            }
+                        }
                     }
-                }
-            }
-            if (myAccount.getUserSockets().size() == 1) {
-                List<String> myList = new ArrayList<String>();
-                myList = myAccount.getConfig().getListOption("irc", "perform.firstattach", myList);
-                for (String line : myList) {
-                    myParser.sendRawMessage(filterPerformLine(line));
-                }
+                }, Math.max(1, myAccount.getConfig().getIntOption("server", "syncdelay", 1)) * 1000);
             }
         }
         Logger.debug2("end irc user connected.");

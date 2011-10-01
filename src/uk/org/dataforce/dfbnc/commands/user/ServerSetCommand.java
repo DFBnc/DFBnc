@@ -54,7 +54,7 @@ public class ServerSetCommand extends AbstractSetCommand {
         validParams.put("reporterrors", new ParamInfo("Report errors from ConnectionHandlers to connected users.", ParamType.BOOL));
         validParams.put("autoconnect", new ParamInfo("Auto connect on startup.", ParamType.BOOL));
         validParams.put("backbuffer", new ParamInfo("Number of lines to store as backbuffer in each channel (0 to disable).", ParamType.INT));
-        validParams.put("backbufferdelay", new ParamInfo("Approximate delay (in seconds) from joining untill backbuffer is sent.", ParamType.INT));
+        validParams.put("syncdelay", new ParamInfo("Approximate delay (in seconds) from connecting untill channels are synced to the client.", ParamType.INT));
         validParams.put("userdisconnect", new ParamInfo("Disconnect user if the server disconnects us.", ParamType.BOOL));
     }
 
