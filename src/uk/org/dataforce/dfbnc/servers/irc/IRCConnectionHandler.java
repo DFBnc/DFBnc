@@ -58,7 +58,6 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import java.util.logging.Level;
 import uk.org.dataforce.dfbnc.BackbufferMessage;
 import uk.org.dataforce.dfbnc.ConnectionHandler;
 import uk.org.dataforce.dfbnc.Account;
@@ -971,18 +970,21 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 
                 // Send the backbuffers a little later to allow time for us to
                 // process a request for timestamped irc.
+                // Schedule each channel slightly differently timed so as to
+                // allow a chance for the buffer to be sent between each
+                // channel rather than all at once.
                 if (myAccount.getConfig().getIntOption("server", "backbuffer", 0) > 0) {
-                    new Timer().schedule(new TimerTask() {
-                        /** {@inheritDoc} */
-                        @Override
-                        public void run() {
-                            for (final ChannelInfo channel : channels) {
+                    final Random rand = new Random();
+                    for (final ChannelInfo channel : channels) {
+                        new Timer().schedule(new TimerTask() {
+                            /** {@inheritDoc} */
+                            @Override
+                            public void run() {
                                 sendBackbuffer(user, channel);
                             }
-                        }
-                    }, 2000);
+                        }, (Math.max(1, myAccount.getConfig().getIntOption("server", "backbufferdelay", 2)) * 1000) + rand.nextInt(1000));
+                    }
                 }
-
             }
             if (myAccount.getUserSockets().size() == 1) {
                 List<String> myList = new ArrayList<String>();
@@ -1033,14 +1035,24 @@ public class IRCConnectionHandler implements ConnectionHandler,
     }
 
     /**
-     * Send the current backbuffer for a given channel to the given user
+     * Send the current backbuffer for a given channel to the given user.
      *
-     * @param user User to send reply to
-     * @param channel Channel to send reply for
+     * @param user User to send backbuffer to
+     * @param channel Channel to send backbuffer for
      */
     public void sendBackbuffer(final UserSocket user, final ChannelInfo channel) {
         final RollingList<BackbufferMessage> backbufferList = getBackbufferList(channel);
-        
+        sendBackbuffer(user, channel, backbufferList);
+    }
+
+    /**
+     * Send the given backbuffer to the given channel to the given user.
+     *
+     * @param user User to send backbuffer to
+     * @param channel Channel to send backbuffer to
+     * @param backbufferList Backbuffer to send
+     */
+    private void sendBackbuffer(final UserSocket user, final ChannelInfo channel, final RollingList<BackbufferMessage> backbufferList) {
         if (backbufferList.isEmpty()) {
             user.sendBotChat(channel.getName(), "NOTICE", "This channel has no current backbuffer.");
             return;

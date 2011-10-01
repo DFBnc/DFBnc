@@ -35,6 +35,7 @@ import java.nio.channels.CancelledKeyException;
 import java.nio.charset.CharacterCodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import uk.org.dataforce.libs.logger.Logger;
@@ -72,6 +73,8 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
     /** The charsets list used when trying to decode messages. */
     private final ArrayList<Charset> myCharsets = new ArrayList<Charset>();
 
+    /** Semaphore for outbuffer synchronization */
+    private final Semaphore outbufferSem = new Semaphore(1);
 
     /**
      * Create a new SocketWrapper
@@ -95,48 +98,53 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
      * @param line Line to send
      */
     public final void sendLine(final String line) {
+        outbufferSem.acquireUninterruptibly();
         if (outBuffer == null) {
             Logger.error("Null outBuffer -> " + line); return;
         }
 
         if (mySocketChannel == null) {
             Logger.error("Null mySocketChannel -> " + line);
+            outbufferSem.release();
             return;
         }
 
         if (myOwner == null) {
             Logger.error("Null myOwner -> " + line);
+            outbufferSem.release();
             return;
         }
 
         if (!mySocketChannel.isConnected()) {
             Logger.error("Trying to write to Disconnected SocketChannel -> " + line);
             myOwner.close();
+            outbufferSem.release();
             return;
         }
 
         synchronized(this) {
             if (isClosing) {
+                outbufferSem.release();
                 return;
             }
         }
 
-        synchronized (outBuffer) {
-            outBuffer.append(line).append("\r\n");
 
-            synchronized(writeRegistered) {
-                if (!writeRegistered.get()) {
-                    try {
-                        key.interestOps(SelectionKey.OP_WRITE);
-                        SocketSelector.getConnectedSocketSelector().getSelector().wakeup();
-                        writeRegistered.set(true);
-                    } catch (CancelledKeyException ex) {
-                        Logger.warning("Trying to write but key is cancelled -> " + line);
-                        myOwner.close();
-                    }
+        outBuffer.append(line).append("\r\n");
+
+        synchronized(writeRegistered) {
+            if (!writeRegistered.get()) {
+                try {
+                    key.interestOps(SelectionKey.OP_WRITE);
+                    SocketSelector.getConnectedSocketSelector().getSelector().wakeup();
+                    writeRegistered.set(true);
+                } catch (CancelledKeyException ex) {
+                    Logger.warning("Trying to write but key is cancelled -> " + line);
+                    myOwner.close();
                 }
             }
         }
+        outbufferSem.release();
     }
 
 
@@ -177,15 +185,15 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
         // affects the broken socket, but here be potenially bad breaking code
         // and this should be the first port of call for any break-on-close
         // related bugs!
-        synchronized (outBuffer) {
-            if (outBuffer.length() > 0) {
-                ByteBuffer buf = ByteBuffer.wrap(outBuffer.toString().getBytes());
-                outBuffer.setLength(0);
-                try {
-                    write(buf);
-                } catch (IOException e) { }
-            }
+        outbufferSem.acquireUninterruptibly();
+        if (outBuffer.length() > 0) {
+            ByteBuffer buf = ByteBuffer.wrap(outBuffer.toString().getBytes());
+            outBuffer.setLength(0);
+            try {
+                write(buf);
+            } catch (IOException e) { }
         }
+        outbufferSem.release();
 
         if (myByteChannel != null) {
             myByteChannel.close();
@@ -373,16 +381,16 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
             } while (numBytesRead != 0);
         } else if (selKey.isValid() && selKey.isWritable()) {
             ByteBuffer buf;
-            synchronized (outBuffer) {
-                if (outBuffer.length() > 0) {
-                    buf = ByteBuffer.wrap(outBuffer.toString().getBytes());
-                    outBuffer.setLength(0);
-                } else {
-                    selKey.interestOps(SelectionKey.OP_READ);
-                    writeRegistered.set(false);
-                    return;
-                }
+            outbufferSem.acquireUninterruptibly();
+            if (outBuffer.length() > 0) {
+                buf = ByteBuffer.wrap(outBuffer.toString().getBytes());
+                outBuffer.setLength(0);
+            } else {
+                selKey.interestOps(SelectionKey.OP_READ);
+                writeRegistered.set(false);
+                return;
             }
+            outbufferSem.release();
 
             try {
                 write(buf);
