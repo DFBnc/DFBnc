@@ -98,32 +98,40 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
      * @param line Line to send
      */
     public final void sendLine(final String line) {
+        Logger.debug9("SendLine Outbuffer Acquire: " + Thread.currentThread().getName());
         outbufferSem.acquireUninterruptibly();
         if (outBuffer == null) {
-            Logger.error("Null outBuffer -> " + line); return;
+            Logger.error("Null outBuffer -> " + line);
+            Logger.debug9("SendLine Outbuffer Release: " + Thread.currentThread().getName());
+            outbufferSem.release();
+            return;
         }
 
         if (mySocketChannel == null) {
             Logger.error("Null mySocketChannel -> " + line);
+            Logger.debug9("SendLine Outbuffer Release: " + Thread.currentThread().getName());
             outbufferSem.release();
             return;
         }
 
         if (myOwner == null) {
             Logger.error("Null myOwner -> " + line);
+            Logger.debug9("SendLine Outbuffer Release: " + Thread.currentThread().getName());
             outbufferSem.release();
             return;
         }
 
         if (!mySocketChannel.isConnected()) {
             Logger.error("Trying to write to Disconnected SocketChannel -> " + line);
-            myOwner.close();
+            Logger.debug9("SendLine Outbuffer Release: " + Thread.currentThread().getName());
             outbufferSem.release();
+            myOwner.close();
             return;
         }
 
         synchronized(this) {
             if (isClosing) {
+                Logger.debug9("SendLine Outbuffer Release: " + Thread.currentThread().getName());
                 outbufferSem.release();
                 return;
             }
@@ -131,7 +139,9 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
 
 
         outBuffer.append(line).append("\r\n");
-
+        Logger.debug9("SendLine Outbuffer Release: " + Thread.currentThread().getName());
+        outbufferSem.release();
+        
         synchronized(writeRegistered) {
             if (!writeRegistered.get()) {
                 try {
@@ -144,7 +154,6 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
                 }
             }
         }
-        outbufferSem.release();
     }
 
 
@@ -185,6 +194,7 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
         // affects the broken socket, but here be potenially bad breaking code
         // and this should be the first port of call for any break-on-close
         // related bugs!
+        Logger.debug9("close Outbuffer Acquire: " + Thread.currentThread().getName());
         outbufferSem.acquireUninterruptibly();
         if (outBuffer.length() > 0) {
             ByteBuffer buf = ByteBuffer.wrap(outBuffer.toString().getBytes());
@@ -193,6 +203,7 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
                 write(buf);
             } catch (IOException e) { }
         }
+        Logger.debug9("close Outbuffer Release: " + Thread.currentThread().getName());
         outbufferSem.release();
 
         if (myByteChannel != null) {
@@ -381,6 +392,7 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
             } while (numBytesRead != 0);
         } else if (selKey.isValid() && selKey.isWritable()) {
             ByteBuffer buf;
+            Logger.debug9("processSelectionKey Outbuffer Aquire: " + Thread.currentThread().getName());
             outbufferSem.acquireUninterruptibly();
             if (outBuffer.length() > 0) {
                 buf = ByteBuffer.wrap(outBuffer.toString().getBytes());
@@ -388,8 +400,11 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
             } else {
                 selKey.interestOps(SelectionKey.OP_READ);
                 writeRegistered.set(false);
+                Logger.debug9("processSelectionKey Outbuffer Release: " + Thread.currentThread().getName());
+                outbufferSem.release();
                 return;
             }
+            Logger.debug9("processSelectionKey Outbuffer Release: " + Thread.currentThread().getName());
             outbufferSem.release();
 
             try {
