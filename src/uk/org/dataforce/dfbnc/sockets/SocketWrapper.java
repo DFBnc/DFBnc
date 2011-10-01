@@ -35,7 +35,6 @@ import java.nio.channels.CancelledKeyException;
 import java.nio.charset.CharacterCodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import uk.org.dataforce.libs.logger.Logger;
@@ -44,12 +43,13 @@ import uk.org.dataforce.libs.logger.Logger;
  * This defines a basic SocketWrapper
  */
 public abstract class SocketWrapper implements SelectedSocketHandler {
-    /** Used to process incoming data. */
+    /** Used to hold incoming data. */
     private ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
-    /** Used to process outgoing data. */
+    /** Used to process incoming data. */
     private StringBuilder lineBuffer = new StringBuilder();
+    
     /** Lines to be sent to the user go into this buffer. */
-    protected final StringBuffer outBuffer = new StringBuffer();
+    protected final OutputBuffer outbuffer = new OutputBuffer();
 
     /** The selection key corresponding to the channel's registration */
     private final SelectionKey key;
@@ -73,9 +73,6 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
     /** The charsets list used when trying to decode messages. */
     private final ArrayList<Charset> myCharsets = new ArrayList<Charset>();
 
-    /** Semaphore for outbuffer synchronization */
-    private final Semaphore outbufferSem = new Semaphore(1);
-
     /**
      * Create a new SocketWrapper
      *
@@ -90,6 +87,23 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
         mySocketChannel = channel;
         mySocket = channel.socket();
     }
+    
+    /**
+     * Try to write the output buffer to the socket.
+     * 
+     * @return False if no data was available to write, or true if data was
+     *         written to the socket.
+     * @throws IOException If there was a problem writing to the socket.
+     */
+    public boolean writeBuffer() throws IOException {
+        final String data = outbuffer.getAndReset();
+        if (!data.isEmpty()) {
+            write(ByteBuffer.wrap(data.getBytes()));
+            return true;
+        }
+        
+        return false;
+    }
 
     /**
      * Used to send a line of data to this socket.
@@ -98,49 +112,29 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
      * @param line Line to send
      */
     public final void sendLine(final String line) {
-        Logger.debug9("SendLine Outbuffer Acquire: " + Thread.currentThread().getName());
-        outbufferSem.acquireUninterruptibly();
-        if (outBuffer == null) {
-            Logger.error("Null outBuffer -> " + line);
-            Logger.debug9("SendLine Outbuffer Release: " + Thread.currentThread().getName());
-            outbufferSem.release();
-            return;
-        }
-
         if (mySocketChannel == null) {
             Logger.error("Null mySocketChannel -> " + line);
-            Logger.debug9("SendLine Outbuffer Release: " + Thread.currentThread().getName());
-            outbufferSem.release();
             return;
         }
 
         if (myOwner == null) {
             Logger.error("Null myOwner -> " + line);
-            Logger.debug9("SendLine Outbuffer Release: " + Thread.currentThread().getName());
-            outbufferSem.release();
             return;
         }
 
         if (!mySocketChannel.isConnected()) {
             Logger.error("Trying to write to Disconnected SocketChannel -> " + line);
-            Logger.debug9("SendLine Outbuffer Release: " + Thread.currentThread().getName());
-            outbufferSem.release();
             myOwner.close();
             return;
         }
 
         synchronized(this) {
             if (isClosing) {
-                Logger.debug9("SendLine Outbuffer Release: " + Thread.currentThread().getName());
-                outbufferSem.release();
                 return;
             }
         }
 
-
-        outBuffer.append(line).append("\r\n");
-        Logger.debug9("SendLine Outbuffer Release: " + Thread.currentThread().getName());
-        outbufferSem.release();
+        outbuffer.addData(line, "\r\n");
         
         synchronized(writeRegistered) {
             if (!writeRegistered.get()) {
@@ -188,23 +182,20 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
         synchronized(this) { isClosing = true; }
 
         // Write any waiting data.
+        //
         // This has the potential to cause some kind of breakage that I can't
-        // actualy remember right now related to writing at teh wrong time.
+        // actualy remember right now related to writing at the wrong time.
         // I don't think it matters because we are closing anyway and it only
         // affects the broken socket, but here be potenially bad breaking code
         // and this should be the first port of call for any break-on-close
         // related bugs!
-        Logger.debug9("close Outbuffer Acquire: " + Thread.currentThread().getName());
-        outbufferSem.acquireUninterruptibly();
-        if (outBuffer.length() > 0) {
-            ByteBuffer buf = ByteBuffer.wrap(outBuffer.toString().getBytes());
-            outBuffer.setLength(0);
-            try {
-                write(buf);
-            } catch (IOException e) { }
-        }
-        Logger.debug9("close Outbuffer Release: " + Thread.currentThread().getName());
-        outbufferSem.release();
+        //
+        // 2011-10-02 DF: The above was written a long time ago, I don't think
+        // it really applies anymore since some things were rewritten, I
+        // certainly haven't seen any recent break-on-close bugs!
+       try {
+            writeBuffer();
+        } catch (IOException e) { }
 
         if (myByteChannel != null) {
             myByteChannel.close();
@@ -391,24 +382,21 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
                 }
             } while (numBytesRead != 0);
         } else if (selKey.isValid() && selKey.isWritable()) {
-            ByteBuffer buf;
-            Logger.debug9("processSelectionKey Outbuffer Aquire: " + Thread.currentThread().getName());
-            outbufferSem.acquireUninterruptibly();
-            if (outBuffer.length() > 0) {
-                buf = ByteBuffer.wrap(outBuffer.toString().getBytes());
-                outBuffer.setLength(0);
-            } else {
-                selKey.interestOps(SelectionKey.OP_READ);
-                writeRegistered.set(false);
-                Logger.debug9("processSelectionKey Outbuffer Release: " + Thread.currentThread().getName());
-                outbufferSem.release();
-                return;
-            }
-            Logger.debug9("processSelectionKey Outbuffer Release: " + Thread.currentThread().getName());
-            outbufferSem.release();
-
             try {
-                write(buf);
+                final boolean wroteData = writeBuffer();
+                
+                // If we didn't write any data, then the buffer was empty, so
+                // we need to switch back to read mode.
+                if (!wroteData) {
+                    try {
+                        selKey.interestOps(SelectionKey.OP_READ);
+                    } catch (final CancelledKeyException cke) {
+                        Logger.warning("Trying to switch back to read but key is cancelled");
+                        myOwner.close();
+                    }
+                    writeRegistered.set(false);
+                    return;
+                }
             } catch (IOException e) {
                 Logger.info("Socket has been closed.");
                 myOwner.close();
