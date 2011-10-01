@@ -450,7 +450,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
      */
     public boolean handleCommandProxy(final UserSocket user, final String[] line, final StringBuilder outData) {
         // if (/topic -f)
-        if (line.length == 0) {
+        if (line.length == 0 || line.length == 1) {
             user.sendIRCLine(Consts.ERR_NEEDMOREPARAMS, line[0], "Not enough parameters");
             return false;
         }
