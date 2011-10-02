@@ -974,16 +974,15 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 // allow a chance for the buffer to be sent between each
                 // channel rather than all at once.
                 if (myAccount.getConfig().getIntOption("server", "backbuffer", 0) > 0) {
-                    final Random rand = new Random();
-                    for (final ChannelInfo channel : channels) {
-                        new Timer().schedule(new TimerTask() {
-                            /** {@inheritDoc} */
-                            @Override
-                            public void run() {
+                    new Timer().schedule(new TimerTask() {
+                        /** {@inheritDoc} */
+                        @Override
+                        public void run() {
+                            for (final ChannelInfo channel : channels) {
                                 sendBackbuffer(user, channel);
                             }
-                        }, (Math.max(1, myAccount.getConfig().getIntOption("server", "backbufferdelay", 2)) * 1000) + rand.nextInt(1000));
-                    }
+                        }
+                    }, Math.max(1, myAccount.getConfig().getIntOption("server", "backbufferdelay", 2)) * 1000);
                 }
             }
             if (myAccount.getUserSockets().size() == 1) {

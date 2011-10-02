@@ -35,7 +35,6 @@ import java.nio.channels.CancelledKeyException;
 import java.nio.charset.CharacterCodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import uk.org.dataforce.libs.logger.Logger;
 
@@ -63,9 +62,8 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
     protected final Socket mySocket;
     /** My Byte Channel. */
     protected ByteChannel myByteChannel;
-
-    /** Are we currently registered for write? */
-    protected final AtomicBoolean writeRegistered = new AtomicBoolean(false);
+    /** ByteBuffer used during write requests. */
+    private ByteBuffer outputBytes = null;
 
     /** Are we waiting to close? */
     protected boolean isClosing = false;
@@ -91,18 +89,36 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
     /**
      * Try to write the output buffer to the socket.
      * 
-     * @return False if no data was available to write, or true if data was
-     *         written to the socket.
+     * If outputBytes is null, take all the data out of OutputBuffer and feed
+     * it to the socket, if its not null we try to send the remaining data from
+     * the last write attempt.
+     * 
+     * If the socket accepted all the data (ie, its internal buffer didn't fill
+     * up) then we set outputBytes back to null, otherwise we leave it around
+     * until the next time we are called. (We return true, so OP_WRITE will
+     * still be registered, so we should be called again soon.)
+     * 
+     * @return False if no data was available to write, else true.
      * @throws IOException If there was a problem writing to the socket.
      */
     public boolean writeBuffer() throws IOException {
-        final String data = outbuffer.getAndReset();
-        if (!data.isEmpty()) {
-            write(ByteBuffer.wrap(data.getBytes()));
-            return true;
-        }
+        synchronized (outbuffer) {
+            if (outputBytes == null) {
+                final String data = outbuffer.getAndReset();
+                if (!data.isEmpty()) {
+                    outputBytes = ByteBuffer.wrap(data.getBytes());
+                }
+            }
+            if (outputBytes != null && outputBytes.remaining() > 0) {
+                write(outputBytes);
+                if (outputBytes.remaining() == 0) {
+                    outputBytes = null;
+                }
+                return true;
+            }
         
-        return false;
+            return false;
+        }
     }
 
     /**
@@ -136,18 +152,14 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
 
         outbuffer.addData(line, "\r\n");
         
-        synchronized (writeRegistered) {
-            if (!writeRegistered.get()) {
-                try {
-                    key.interestOps(SelectionKey.OP_WRITE);
-                    SocketSelector.getConnectedSocketSelector().getSelector().wakeup();
-                    writeRegistered.set(true);
-                } catch (CancelledKeyException ex) {
-                    Logger.warning("Trying to write but key is cancelled -> " + line);
-                    myOwner.close();
-                }
-            }
+        try {
+            key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+            SocketSelector.getConnectedSocketSelector().getSelector().wakeup();
+        } catch (CancelledKeyException ex) {
+            Logger.warning("Trying to write but key is cancelled -> " + line);
+            myOwner.close();
         }
+
     }
 
 
@@ -387,17 +399,14 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
                 
                 // If we didn't write any data, then the buffer was empty, so
                 // we need to switch back to read mode.
-                synchronized (writeRegistered) {
-                    if (!wroteData) {
-                        try {
-                            selKey.interestOps(SelectionKey.OP_READ);
-                        } catch (final CancelledKeyException cke) {
-                            Logger.warning("Trying to switch back to read but key is cancelled");
-                            myOwner.close();
-                        }
-                        writeRegistered.set(false);
-                        return;
+                if (!wroteData) {
+                    try {
+                        selKey.interestOps(SelectionKey.OP_READ);
+                    } catch (final CancelledKeyException cke) {
+                        Logger.warning("Trying to switch back to read but key is cancelled");
+                        myOwner.close();
                     }
+                    return;
                 }
             } catch (IOException e) {
                 Logger.info("Socket has been closed.");
