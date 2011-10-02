@@ -136,7 +136,7 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
 
         outbuffer.addData(line, "\r\n");
         
-        synchronized(writeRegistered) {
+        synchronized (writeRegistered) {
             if (!writeRegistered.get()) {
                 try {
                     key.interestOps(SelectionKey.OP_WRITE);
@@ -387,15 +387,17 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
                 
                 // If we didn't write any data, then the buffer was empty, so
                 // we need to switch back to read mode.
-                if (!wroteData) {
-                    try {
-                        selKey.interestOps(SelectionKey.OP_READ);
-                    } catch (final CancelledKeyException cke) {
-                        Logger.warning("Trying to switch back to read but key is cancelled");
-                        myOwner.close();
+                synchronized (writeRegistered) {
+                    if (!wroteData) {
+                        try {
+                            selKey.interestOps(SelectionKey.OP_READ);
+                        } catch (final CancelledKeyException cke) {
+                            Logger.warning("Trying to switch back to read but key is cancelled");
+                            myOwner.close();
+                        }
+                        writeRegistered.set(false);
+                        return;
                     }
-                    writeRegistered.set(false);
-                    return;
                 }
             } catch (IOException e) {
                 Logger.info("Socket has been closed.");
