@@ -186,6 +186,15 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
     }
 
     /**
+     * Check if this socket is still connected
+     *
+     * @return True if the SocketChannel we are wrapping is connected.
+     */
+    public boolean isConnected() {
+        return mySocketChannel.isConnected();
+    }
+
+    /**
      * Close this SocketWrapper
      *
      * @throws IOException If there is a problem closing either of the ByteChannels

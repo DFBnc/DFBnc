@@ -801,7 +801,9 @@ public class IRCConnectionHandler implements ConnectionHandler,
 
         if (forwardLine) {
             for (UserSocket socket : myAccount.getUserSockets()) {
-                socket.sendLine(data);
+                if (socket.syncCompleted()) {
+                    socket.sendLine(data);
+                }
             }
         }
     }
@@ -965,6 +967,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
                     /** {@inheritDoc} */
                     @Override
                     public void run() {
+                        if (!user.getSocketWrapper().isConnected()) { return; }
+
                         for (final ChannelInfo channel : channels) {
                             user.sendLine(":%s JOIN %s", me, channel);
                             
@@ -975,6 +979,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                 sendBackbuffer(user, channel);
                             }
                         }
+                        user.setSyncCompleted();
                         
                         if (myAccount.getUserSockets().size() == 1) {
                             List<String> myList = new ArrayList<String>();
@@ -984,7 +989,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                             }
                         }
                     }
-                }, Math.max(1, myAccount.getConfig().getIntOption("server", "syncdelay", 1)) * 1000);
+                }, 1000);
             }
         }
         Logger.debug2("end irc user connected.");

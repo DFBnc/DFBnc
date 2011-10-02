@@ -66,6 +66,9 @@ public class UserSocket extends ConnectedSocket {
 
     /** Does this connection support time-stamped IRC messages? */
     private boolean timestampedIRC = false;
+
+    /** Has the sync for this user been run? */
+    private boolean syncCompleted = false;
     
     /** Given username */
     private String username = null;
@@ -176,6 +179,22 @@ public class UserSocket extends ConnectedSocket {
      */    
     public void setTimestampedIRC(final boolean newValue) {
         timestampedIRC = newValue;
+    }
+
+    /**
+     * Has this socket been synced?
+     *
+     * @return true if this socket has been synced.
+     */
+    public boolean syncCompleted() {
+        return syncCompleted;
+    }
+
+    /**
+     * Set this socket as syncCompleted.
+     */
+    public void setSyncCompleted() {
+        syncCompleted = true;
     }
 
     /**
