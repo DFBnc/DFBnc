@@ -959,8 +959,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 user.sendIRCLine(302, myParser.getLocalClient().getNickname(), str302.toString());
                 // Now send the usermode info
                 user.sendIRCLine(221, myParser.getLocalClient().getNickname(), ((IRCClientInfo) me).getModes(), false);
-                
-                
+
                 final Collection<? extends ChannelInfo> channels = myParser.getChannels();
 
                 new Timer().schedule(new TimerTask() {
@@ -971,16 +970,16 @@ public class IRCConnectionHandler implements ConnectionHandler,
 
                         for (final ChannelInfo channel : channels) {
                             user.sendLine(":%s JOIN %s", me, channel);
-                            
+
                             sendTopic(user, channel);
                             sendNames(user, channel);
-                    
+
                             if (myAccount.getConfig().getIntOption("server", "backbuffer", 0) > 0) {
                                 sendBackbuffer(user, channel);
                             }
                         }
                         user.setSyncCompleted();
-                        
+
                         if (myAccount.getUserSockets().size() == 1) {
                             List<String> myList = new ArrayList<String>();
                             myList = myAccount.getConfig().getListOption("irc", "perform.firstattach", myList);

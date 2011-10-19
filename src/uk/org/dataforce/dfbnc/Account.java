@@ -113,6 +113,8 @@ public final class Account implements UserSocketWatcher {
             Logger.debug2("Handle userConnected: "+myConnectionHandler+" -> "+user);
             ((UserSocketWatcher) myConnectionHandler).userConnected(user);
             Logger.debug2("Handled userConnected");
+        } else {
+            user.setSyncCompleted();
         }
         for (UserSocket socket : myUserSockets) {
             if (user != socket) {

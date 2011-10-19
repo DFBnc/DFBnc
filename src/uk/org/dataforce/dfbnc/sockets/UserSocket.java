@@ -69,7 +69,7 @@ public class UserSocket extends ConnectedSocket {
 
     /** Has the sync for this user been run? */
     private boolean syncCompleted = false;
-    
+
     /** Given username */
     private String username = null;
     /** Given realname */
@@ -165,7 +165,7 @@ public class UserSocket extends ConnectedSocket {
 
     /**
      * Does this user support timestamped IRC?
-     * 
+     *
      * @return true if timestamped IRC is supported.
      */
     public boolean getTimestampedIRC() {
@@ -174,9 +174,9 @@ public class UserSocket extends ConnectedSocket {
 
     /**
      * Set if this socket supports timestamped irc.
-     * 
+     *
      * @param newValue New value for timestampedIRC support.
-     */    
+     */
     public void setTimestampedIRC(final boolean newValue) {
         timestampedIRC = newValue;
     }
@@ -325,7 +325,7 @@ public class UserSocket extends ConnectedSocket {
             sendLine("NOTICE AUTH :- %s", String.format(data, args));
         }
     }
-    
+
     /**
      * Send a message from the bot to the given target.
      * This allows us to make the bot chat in channels
@@ -458,7 +458,7 @@ public class UserSocket extends ConnectedSocket {
         if (!checkParamCount(line, 2)) {
             return;
         }
-        
+
         if (line[0].equals("USER")) {
             // Username may be given in PASS so check that it hasn't before assigning
             if (username == null) { username = line[1]; }

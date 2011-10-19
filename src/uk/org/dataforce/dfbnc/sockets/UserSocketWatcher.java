@@ -32,7 +32,7 @@ public interface UserSocketWatcher {
      * @param user UserSocket for user
      */
     public void userConnected(final UserSocket user);
-    
+
     /**
      * Called when a UserSocket is closed on an account that this class is
      * linked to.
