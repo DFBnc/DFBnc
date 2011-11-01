@@ -24,6 +24,8 @@ package uk.org.dataforce.dfbnc;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -448,9 +450,14 @@ public final class Account implements UserSocketWatcher {
                 public void run() {
                     try {
                         sendBotMessage("Attempting reconnect...");
-                        final ConnectionHandler newHandler = oldHandler.newInstance();
-                        setConnectionHandler(newHandler);
-                    } catch (UnableToConnectException ex) {
+                        if (oldHandler == null) {
+                            sendBotMessage("Reconnect failed. No handler to reconnect.");
+                            myConnectionHandler = null;
+                        } else {
+                            final ConnectionHandler newHandler = oldHandler.newInstance();
+                            setConnectionHandler(newHandler);
+                        }
+                    } catch (final UnableToConnectException ex) {
                         sendBotMessage("Unable to reconnect: " + ex.getMessage());
                         myConnectionHandler = null;
                         // This is not the place to try again, this exception
@@ -458,6 +465,8 @@ public final class Account implements UserSocketWatcher {
                         // creating a connection.
                         // Errors actually trying to make the connection will
                         // result in a handlerDisconnected() call.
+                    } catch (final Throwable t) {
+                        reportException(t, "Unhandled Exception");
                     }
                     cancelReconnect();
                 }
@@ -481,5 +490,41 @@ public final class Account implements UserSocketWatcher {
         }
         
         disconnectWanted = false;
+    }
+
+    /**
+     * Report an exception to the console and any connected user.
+     *
+     * @param t Throwable to report.
+     */
+    public void reportException(final Throwable t) {
+        reportException(t, "Exception");
+    }
+
+    /**
+     * Report an exception to the console and any connected user.
+     *
+     * @param t Throwable to report.
+     * @param type Human-Friendly type of exception.
+     */
+    public void reportException(final Throwable t,  final String type) {
+        if (!getConfig().getBoolOption("server", "reporterrors", false) || t == null) { return; }
+
+        final StringWriter writer = new StringWriter();
+        t.printStackTrace(new PrintWriter(writer));
+
+        Logger.error("----");
+        Logger.error(type + ": " + t);
+        Logger.error(type + " Stack trace: " + writer.getBuffer());
+        Logger.error("----");
+
+        sendBotMessage("----");
+        sendBotMessage(type + ": " + t);
+        sendBotMessage(type + " Stack trace:");
+        final String[] bits = writer.getBuffer().toString().split("\n");
+        for (final String bit : bits) {
+            sendBotMessage("    " + bit);
+        }
+        sendBotMessage("----");
     }
 }

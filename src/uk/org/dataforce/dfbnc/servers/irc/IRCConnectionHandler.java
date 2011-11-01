@@ -260,8 +260,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                             sendTopic(user, channel);
                         } else if (line[0].equalsIgnoreCase("names")) {
                             sendNames(user, channel);
-                        } else if (line[0].equalsIgnoreCase("mode") ||
-                                line[0].equalsIgnoreCase("listmode")) {
+                        } else if (line[0].equalsIgnoreCase("mode") || line[0].equalsIgnoreCase("listmode")) {
                             if (channel != null) {
                                 boolean isListmode = line[0].equalsIgnoreCase("listmode");
                                 int itemNumber = 0;
@@ -279,9 +278,11 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                         continue;
                                     }
                                     // Make sure we don't send the same thing twice. A list is probably overkill for this, but meh
-                                    List<Character> alreadySent = new ArrayList<Character>();
-                                    for (int i = 0; i < line[2].length(); ++i) {
-                                        char modechar = line[2].charAt(i);
+                                    final List<Character> alreadySent = new ArrayList<Character>();
+                                    final String modeCharList = (isListmode && line[2].equals("*")) ? myParser.getListChannelModes() : line[2];
+                                    
+                                    for (int i = 0; i < modeCharList.length(); ++i) {
+                                        char modechar = modeCharList.charAt(i);
                                         if (alreadySent.contains(modechar)) {
                                             continue;
                                         } else {
@@ -313,7 +314,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                                 if (outData.length() == 0) {
                                                     outData.append(line[0].toUpperCase()).append(' ').append(channelName).append(' ');
                                                 }
-                                                outData.append(line[2].charAt(i));
+                                                outData.append(modeCharList.charAt(i));
                                                 resetOutData = true;
                                                 allowLine(channel, Integer.toString(itemNumber));
                                                 allowLine(channel, Integer.toString(itemNumber + 1));
@@ -364,7 +365,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                             if (outData.length() == 0) {
                                                 outData.append(line[0].toUpperCase()).append(' ').append(channelName).append(' ');
                                             }
-                                            outData.append(line[2].charAt(i));
+                                            outData.append(modeCharList.charAt(i));
                                             resetOutData = true;
                                         }
                                     }
@@ -907,14 +908,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
             myAccount.sendBotMessage("    Last line received: %s", errorInfo.getLastLine());
         }
 
-        if (errorInfo.getException() != null) {
-            final StringWriter writer = new StringWriter();
-            errorInfo.getException().printStackTrace(new PrintWriter(writer));
-            Logger.error("\tStack trace: " + writer.getBuffer());
-            if (myAccount.getConfig().getBoolOption("server", "reporterrors", false)) {
-                myAccount.sendBotMessage("    Stack trace: %s", writer.getBuffer());
-            }
-        }
+        myAccount.reportException(errorInfo.getException());
     }
 
     /** {@inheritDoc} */
