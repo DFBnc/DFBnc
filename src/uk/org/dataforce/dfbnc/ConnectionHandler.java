@@ -29,20 +29,21 @@ import uk.org.dataforce.dfbnc.sockets.UserSocket;
  * This file represents a ConnectionHandler
  */
 public interface ConnectionHandler {
+
     /**
      * Shutdown this ConnectionHandler
      *
      * @param reason Reason for the Shutdown
      */
-    public void shutdown(final String reason);
-    
+    void shutdown(final String reason);
+
     /**
      * Get the users host on this connection
      *
      * @return The users host on this connect
      */
-    public String getMyHost();
-    
+    String getMyHost();
+
     /**
      * Called when data is recieved on the user socket.
      *
@@ -50,15 +51,15 @@ public interface ConnectionHandler {
      * @param data Un-tokenised version of the Data that was recieved
      * @param line IRC-Tokenised version of the Data that was recieved
      */
-    public void dataRecieved(final UserSocket user, final String data, final String[] line);
-    
+    void dataRecieved(final UserSocket user, final String data, final String[] line);
+
     /**
      * Servername to use in sendIRCLine and Bot SNOTICEs as an alternative to
      * Functions.getServerName() or null if no change.
      *
      * @return servername to use.
      */
-    public String getServerName();
+    String getServerName();
 
     /**
      * Generate a new instance of this ConnectionHandler with the same
@@ -68,37 +69,37 @@ public interface ConnectionHandler {
      *
      * @return New instance of tihs ConnectionHandler.
      */
-    public ConnectionHandler newInstance() throws UnableToConnectException;
-    
-    
+    ConnectionHandler newInstance() throws UnableToConnectException;
+
+
     /**
      * Get the backbuffer rolling list for the given channel name.
      *
      * @param channel Channel name
      * @return Backbuffer list.
      */
-    public RollingList<BackbufferMessage> getBackbufferList(final String channel);
+    RollingList<BackbufferMessage> getBackbufferList(final String channel);
 
     /**
      * Called to make the BNC fake lines to the client on disconnect.
-     * 
+     *
      * This should let the user know that the bnc has been disconnected from
      * the server, and send lines that will make the client take actions to
      * make the disconnect visual to the user. (Eg remove all clients, and/or
      * the user themselves from any channels).
-     * 
+     *
      * This is not the preferred method of doing this, but some people may
      * prefer it over the preferred "disconnect on socket closed" option. This
      * is the behaviour of dfbnc-delphi.
-     * 
+     *
      * The BNC will still send a new 001-005 etc to the client on reconnect
      * which may cause some confusion and state-loss in the client parser,
      * which is why the default is to just  disconnect the user when the socket
      * is closed.
-     * 
+     *
      * @param user User to clean up.
      * @param reason Reason for clean up.
      */
-    public void cleanupUser(final UserSocket user, final String reason);
- 
+    void cleanupUser(final UserSocket user, final String reason);
+
 }

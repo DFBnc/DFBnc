@@ -47,8 +47,6 @@ import com.dmdirc.parser.interfaces.callbacks.ConnectErrorListener;
 import com.dmdirc.parser.interfaces.callbacks.ErrorInfoListener;
 import com.dmdirc.parser.interfaces.callbacks.SocketCloseListener;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.ArrayList;
@@ -280,7 +278,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                     // Make sure we don't send the same thing twice. A list is probably overkill for this, but meh
                                     final List<Character> alreadySent = new ArrayList<Character>();
                                     final String modeCharList = (isListmode && line[2].equals("*")) ? myParser.getListChannelModes() : line[2];
-                                    
+
                                     for (int i = 0; i < modeCharList.length(); ++i) {
                                         char modechar = modeCharList.charAt(i);
                                         if (alreadySent.contains(modechar)) {
@@ -871,7 +869,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         requeueTimer.cancel();
         myAccount.handlerDisconnected("Remote connection closed.");
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public void onConnectError(final Parser parser, final Date date, final ParserError errorInfo) {
@@ -1048,41 +1046,47 @@ public class IRCConnectionHandler implements ConnectionHandler,
             user.sendBotChat(channel.getName(), "NOTICE", "This channel has no current backbuffer.");
             return;
         }
-        
+
         user.sendBotChat(channel.getName(), "NOTICE", "Beginning backbuffer...");
         final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        
+
         for (BackbufferMessage message : backbufferList) {
-            final String preMessage;
-            final String postMessage;
+            final String line;
+
             if (user.getTimestampedIRC()) {
-                preMessage = "@" + Long.toString(message.getTime()) + "@";
-                postMessage = "";
+                line = "@" + Long.toString(message.getTime()) + "@" + message.getMessage();
             } else {
-                final String date = sdf.format(message.getTime());
-                preMessage = "";
-                postMessage = "    ["+date+"]";
+                final String date = "    [" + sdf.format(message.getTime()) + "]";
+
+                // If it's a CTCP (like an action), insert the timestamp before
+                // the trailing 0x01
+                if (message.getMessage().endsWith("\001")) {
+                    line = message.getMessage().substring(0, message.getMessage().length() - 1)
+                            + date + "\001";
+                } else {
+                    line = message.getMessage() + date;
+                }
             }
-            final String line = String.format("%s%s%s", preMessage, message.getMessage(), postMessage);
+
             final int maxLength = 510;
-            
+
             if (line.length() <= maxLength) {
                 user.sendLine(line);
             } else {
                 // Line is longer than 510...
                 // We need to split it and send it in bits.
-                
+
                 // Firstly separate the protocol bits, and the acual message
                 final int lastarg = line.indexOf(" :");
                 final String lastBit = line.substring(lastarg + 2);
                 final String startBits = line.substring(0, lastarg) + " :";
-                
+
                 // Now work out the allowed characters per bit.
                 final int allowed = maxLength - startBits.length();
-                
+
                 StringBuilder sendLine = new StringBuilder(startBits);
-                
-                for (int i = 0; i < lastBit.length(); i = i + allowed) {
+
+                for (int i = 0; i < lastBit.length(); i += allowed) {
                     sendLine.append(lastBit.substring(i, Math.min(i + allowed, lastBit.length())));
                     user.sendLine(sendLine.toString());
                     sendLine = new StringBuilder(startBits);
@@ -1123,7 +1127,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         result = result.replaceAll("$me", myParser.getLocalClient().getNickname());
         return result;
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public void cleanupUser(final UserSocket user, final String reason) {
@@ -1137,7 +1141,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
             }
             user.sendLine(":%s!bot@%s PART %s :My work here is done...", Util.getBotName(), Util.getServerName(myAccount), channel.getName());
             */
-           
+
             user.sendLine(":%s KICK %s %s :Socket Closed: %s", Util.getServerName(myAccount), channel.getName(), user.getNickname(), reason);
         }
     }
