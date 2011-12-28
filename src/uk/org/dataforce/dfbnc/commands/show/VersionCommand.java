@@ -21,6 +21,8 @@
  */
 package uk.org.dataforce.dfbnc.commands.show;
 
+import java.util.Arrays;
+import java.util.List;
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
@@ -38,7 +40,23 @@ public class VersionCommand extends Command {
      */
     @Override
     public void handle(final UserSocket user, final String[] params) {
-        user.sendBotMessage("This is %s", DFBnc.getVersion());
+        String versionType = (params.length > 1) ? params[1] : "";
+        final List<String> paramMatch = getParamMatch(versionType, Arrays.asList("all", "parser", "dfbnc", ""));
+        if (paramMatch.size() > 1) {
+            user.sendBotMessage("Multiple possible matches were found for '"+versionType+"': ");
+            for (String p : paramMatch) {
+                user.sendBotMessage("    " + p);
+            }
+            return;
+        } else { versionType = paramMatch.get(0); }
+        
+        if (versionType.equalsIgnoreCase("all") || versionType.equalsIgnoreCase("") || versionType.equalsIgnoreCase("dfbnc")) {
+            user.sendBotMessage("This is %s", DFBnc.getVersion());
+        }
+        
+        if (versionType.equalsIgnoreCase("all") || versionType.equalsIgnoreCase("parser")) {
+            user.sendBotMessage("Using DMDirc Parser Version: %s", DFBnc.getVersion("parser"));
+        }
     }
     
     /**

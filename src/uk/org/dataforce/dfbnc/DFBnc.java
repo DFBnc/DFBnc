@@ -52,7 +52,7 @@ public class DFBnc {
     private static DFBnc me = null;
 
     /** Version Config File */
-    public static Config versionConfig = BlackHoleConfig.createInstance();
+    private static Config versionConfig = BlackHoleConfig.createInstance();
     
     /** The CLIParser */
     private static CLIParser cli = CLIParser.getCLIParser();
@@ -143,12 +143,11 @@ public class DFBnc {
         try {
             config = createDefaultConfig();
         } catch (IOException ex) {
-            Logger.error("Error loading config: + " + configDirectory +
-                    " (" + ex.getMessage() + "). Exiting");
-            System.exit(0);
+            Logger.error("Error loading config: + " + configDirectory + " (" + ex.getMessage() + "). Exiting");
+            System.exit(1);
         } catch (InvalidConfigFileException ex) {
             Logger.error("Error loading config (" + ex.getMessage() + "). Exiting");
-            System.exit(0);
+            System.exit(1);
         }
         
         Logger.info("Setting up Default User Command Manager");
@@ -194,7 +193,7 @@ public class DFBnc {
             }
             if (count == 0) {
                 Logger.info("No sockets could be opened, Terminating");
-                System.exit(0);
+                System.exit(1);
             }
         }
         Logger.info("Running!");
@@ -234,15 +233,25 @@ public class DFBnc {
                 versionConfig = new Config(version);
             } catch (final Exception e) { /** Oh well, default it is. */ }
         }
-        System.out.println(getVersion());
-        System.exit(0);
     }
     
     /**
-     * Load the version info from the jar file if present.
+     * Get the DFBNC Version if possible.
+     * 
+     * @return DFBnc Version.
      */
     public static String getVersion() {
-        return versionConfig.getOption("versions", "dfbnc", "Unknown");
+        return getVersion("dfbnc");
+    }
+    
+    /**
+     * Get the Version of a given component if possible.
+     * 
+     * @param component Component to get version for.
+     * @return Component Version.
+     */
+    public static String getVersion(final String component) {
+        return versionConfig.getOption("versions", component, "Unknown");
     }
 
     /**
