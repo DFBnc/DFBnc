@@ -195,7 +195,7 @@ public class SSLByteChannel implements ByteChannel {
             // Don't use 100% cpu when processing...
             try { Thread.sleep(100); } catch (final InterruptedException ie) { /* Who cares. */ }
         } while (count > 0);
-       
+
         if (count < 0) { throw new ClosedChannelException(); }
 
         // Unwrap it into the buffer
@@ -243,6 +243,9 @@ public class SSLByteChannel implements ByteChannel {
         
         SSLEngineResult result = inputResult;
         
+        final int underflowLimit = 5;
+        int underflowCount = 0;
+
         // Handshake if needed.
         HandshakeStatus hsStatus = result.getHandshakeStatus();
         while (hsStatus != HandshakeStatus.FINISHED && hsStatus != HandshakeStatus.NOT_HANDSHAKING) {
@@ -264,6 +267,18 @@ public class SSLByteChannel implements ByteChannel {
                 case NEED_UNWRAP:
                     result = unwrap();
                     break;
+            }
+
+            // Catch "bad" sockets.
+            // If we loop too many times without producing or consuming
+            // anything, then break to allow something else to happen,
+            // otherwise we loop forever doing nothing and stop any other
+            // socket processing happening.
+            if (result.getStatus() == SSLEngineResult.Status.BUFFER_UNDERFLOW && result.bytesConsumed() == 0 && result.bytesProduced() == 0) {
+                underflowCount++;
+            } else { underflowCount = 0; }
+            if (underflowCount > underflowLimit) {
+                break;
             }
         }
         

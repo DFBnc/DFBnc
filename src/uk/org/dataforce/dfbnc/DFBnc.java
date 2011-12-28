@@ -29,6 +29,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.commands.admin.*;
 import uk.org.dataforce.dfbnc.commands.user.*;
@@ -203,6 +205,19 @@ public class DFBnc {
             Logger.warning("| in a non-test environment.                          |");
             Logger.warning("`-----------------------------------------------------'");
         }
+
+        // Check UserSockets every 10 seconds for inactivity, with a threshold
+        // of "6".
+        // This will cause sockets to send an initial PING after 1 minute of
+        // inactivity, and timeout after 2 minutes.
+        final Timer socketChecker = new Timer("Socket Checker Timer", true);
+        socketChecker.scheduleAtFixedRate(new TimerTask(){
+            @Override
+            public void run() {
+                System.out.println("Checking All");
+                UserSocket.checkAll(6);
+            }
+        }, 10000, 10000);
     }
     
     /**

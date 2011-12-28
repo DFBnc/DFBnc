@@ -80,6 +80,8 @@ public class UserSocket extends ConnectedSocket {
     private String password = null;
     /** Password attempts */
     private int passwordTries = 0;
+    /** Counter for inactivity. */
+    private int inactiveCounter = 0;
 
     /** Maximum password attempts.
      * This should be changed to a config setting at some point.
@@ -246,12 +248,47 @@ public class UserSocket extends ConnectedSocket {
 
         synchronized (knownSockets) {
             for (UserSocket socket : knownSockets.values()) {
-                socket.sendLine(":%s NOTICE :Connection terminating (%s)", Util.getServerName(socket.getAccount()), reason);
-                socket.close();
+                socket.close(reason);
             }
         }
 
         closeAll = false;
+    }
+
+    /**
+     * Check all user sockets to make sure they are still active.
+     *
+     * What this actually does, is increment the "inactiveCount" variable.
+     * Any input from the socket will reset it.
+     *
+     * The first time the counter goes above the threshold, a ping will be sent
+     * to try and generate a response from the client. If the count reaches
+     * threshold * 2, then the socket will be closed.
+     *
+     * @param threshold Threshold for killing sockets.
+     */
+    public static void checkAll(final int threshold) {
+        for (UserSocket socket : getUserSockets()) {
+            if (++socket.inactiveCounter >= threshold) {
+                if (socket.inactiveCounter == threshold) {
+                    System.out.println("Socket inactivity counter threshold exceeded (FIRST).");
+                    socket.sendLine("PING :%d", System.currentTimeMillis());
+                } else if (socket.inactiveCounter >= threshold * 2) {
+                    System.out.println("Socket inactivity counter threshold exceeded.");
+                    socket.close("Socket inactivity counter threshold exceeded.");
+                }
+            }
+        }
+    }
+
+    /**
+     * Used to close this socket, and send a reason to the user.
+     *
+     * @param reason Reason for closing the socket.
+     */
+    public void close(final String reason) {
+        this.sendLine(":%s NOTICE :Connection terminating (%s)", Util.getServerName(this.getAccount()), reason);
+        this.close();
     }
 
     /** {@inheritDoc} */
@@ -430,6 +467,9 @@ public class UserSocket extends ConnectedSocket {
     /** {@inheritDoc} */
     @Override
     protected void processLine(final String line) {
+        // Reset the inactive counter.
+        this.inactiveCounter = 0;
+
         // Tokenise the line
         final String[] newLine = IRCParser.tokeniseLine(line);
 
