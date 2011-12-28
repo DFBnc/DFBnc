@@ -28,7 +28,6 @@ import uk.org.dataforce.dfbnc.config.InvalidConfigFileException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -214,12 +213,15 @@ public class DFBnc {
         // This will cause sockets to send an initial PING after 1 minute of
         // inactivity, and timeout after 2 minutes.
         final Timer socketChecker = new Timer("Socket Checker Timer", true);
+        final int pingThreshold = config.getIntOption("timeout", "threshold", 1);
+        final int pingFrequency = config.getIntOption("timeout", "frequency", 120) * 1000;
+        
         socketChecker.scheduleAtFixedRate(new TimerTask(){
             @Override
             public void run() {
-                UserSocket.checkAll(6);
+                UserSocket.checkAll(pingThreshold);
             }
-        }, 10000, 10000);
+        }, pingFrequency, pingFrequency);
     }
 
     /**

@@ -40,7 +40,7 @@ public class VersionCommand extends Command {
      */
     @Override
     public void handle(final UserSocket user, final String[] params) {
-        String versionType = (params.length > 1) ? params[1] : "";
+        String versionType = (params.length > 2) ? params[2] : "";
         final List<String> paramMatch = getParamMatch(versionType, Arrays.asList("all", "parser", "dfbnc", ""));
         if (paramMatch.size() > 1) {
             user.sendBotMessage("Multiple possible matches were found for '"+versionType+"': ");
