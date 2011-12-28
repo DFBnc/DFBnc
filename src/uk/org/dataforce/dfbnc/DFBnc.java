@@ -27,6 +27,8 @@ import uk.org.dataforce.dfbnc.sockets.UserSocket;
 import uk.org.dataforce.dfbnc.config.InvalidConfigFileException;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -34,6 +36,7 @@ import java.util.TimerTask;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.commands.admin.*;
 import uk.org.dataforce.dfbnc.commands.user.*;
+import uk.org.dataforce.dfbnc.config.BlackHoleConfig;
 import uk.org.dataforce.dfbnc.servers.ServerTypeManager;
 import uk.org.dataforce.libs.cliparser.BooleanParam;
 import uk.org.dataforce.libs.cliparser.CLIParser;
@@ -48,8 +51,8 @@ public class DFBnc {
     /** Me */
     private static DFBnc me = null;
 
-    /** Version String */
-    public final static String VERSION = "DFBnc-Java 0.2.1";
+    /** Version Config File */
+    public static Config versionConfig = BlackHoleConfig.createInstance();
     
     /** The CLIParser */
     private static CLIParser cli = CLIParser.getCLIParser();
@@ -95,6 +98,7 @@ public class DFBnc {
     private void init(final String[] args) {
         Logger.setLevel(LogLevel.INFO);
         Logger.info("Starting DFBnc..");
+        DFBnc.loadVersionInfo();
         setupCLIParser();
         if (cli.wantsHelp(args)) {
             cli.showHelp("DFBnc Help", "DFBnc [options]");
@@ -219,7 +223,28 @@ public class DFBnc {
             }
         }, 10000, 10000);
     }
+
+    /**
+     * Load the version info from the jar file if present.
+     */
+    public static void loadVersionInfo() {
+        final InputStream version = DFBnc.class.getResourceAsStream("/uk/org/dataforce/dfbnc/version.config");
+        if (version != null) {
+            try {
+                versionConfig = new Config(version);
+            } catch (final Exception e) { /** Oh well, default it is. */ }
+        }
+        System.out.println(getVersion());
+        System.exit(0);
+    }
     
+    /**
+     * Load the version info from the jar file if present.
+     */
+    public static String getVersion() {
+        return versionConfig.getOption("versions", "dfbnc", "Unknown");
+    }
+
     /**
      * Get the start time
      *
@@ -354,8 +379,7 @@ public class DFBnc {
      * @throws IOException If an error occurred loading the config
      * @throws InvalidConfigFileException If the config was invalid
      */
-    public static Config createDefaultConfig() throws IOException,
-            InvalidConfigFileException {
+    public static Config createDefaultConfig() throws IOException, InvalidConfigFileException {
         final File directory = new File(configDirectory);
         final File file = new File(directory, configFile);
         if (!directory.exists()) {

@@ -43,11 +43,9 @@ public class ConfigFile extends TextFile {
     /** A list of domains in this config file. */
     private final List<String> domains = new ArrayList<String>();
     /** The values associated with each flat domain. */
-    private final MapList<String, String> flatdomains =
-            new MapList<String, String>();
+    private final MapList<String, String> flatdomains = new MapList<String, String>();
     /** The key/value sets associated with each key domain. */
-    private final Map<String, Map<String, String>> keydomains =
-            new HashMap<String, Map<String, String>>();
+    private final Map<String, Map<String, String>> keydomains = new HashMap<String, Map<String, String>>();
     /** Whether or not we should automatically create domains. */
     private boolean automake;
 
@@ -96,8 +94,7 @@ public class ConfigFile extends TextFile {
      * @throws IOException if an i/o exception occured when reading
      * @throws InvalidConfigFileException if the config file isn't valid
      */
-    public void read() throws FileNotFoundException, IOException,
-            InvalidConfigFileException {
+    public void read() throws FileNotFoundException, IOException, InvalidConfigFileException {
         String domain = null;
         boolean keydomain = false;
         int offset;
@@ -118,8 +115,7 @@ public class ConfigFile extends TextFile {
 
             if (tline.indexOf('#') == 0 || tline.isEmpty()) {
                 continue;
-            } else if ((tline.endsWith(":") && !tline.endsWith("\\:")) &&
-                    findEquals(tline) == -1) {
+            } else if ((tline.endsWith(":") && !tline.endsWith("\\:")) && findEquals(tline) == -1) {
                 domain = unescape(tline.substring(0, tline.length() - 1));
 
                 domains.add(domain);
@@ -132,8 +128,7 @@ public class ConfigFile extends TextFile {
                 } else if (!keydomain && !flatdomains.containsKey(domain)) {
                     flatdomains.add(domain);
                 }
-            } else if (domain != null && keydomain && (offset = findEquals(
-                    tline)) != -1) {
+            } else if (domain != null && keydomain && (offset = findEquals(tline)) != -1) {
                 final String key = unescape(tline.substring(0, offset));
                 final String value = unescape(tline.substring(offset + 1));
 
@@ -141,8 +136,7 @@ public class ConfigFile extends TextFile {
             } else if (domain != null && !keydomain) {
                 flatdomains.add(domain, unescape(tline));
             } else {
-                throw new InvalidConfigFileException("Unknown or unexpected" +
-                        " line encountered: " + tline);
+                throw new InvalidConfigFileException("Unknown or unexpected line encountered: " + tline);
             }
         }
     }
@@ -154,15 +148,13 @@ public class ConfigFile extends TextFile {
      */
     public void write() throws IOException {
         if (!isWritable()) {
-            throw new UnsupportedOperationException("Cannot write to a file " +
-                    "that isn't writable");
+            throw new UnsupportedOperationException("Cannot write to a file that isn't writable");
         }
 
         final List<String> lines = new ArrayList<String>();
 
         lines.add("# This is a DMDirc configuration file.");
-        lines.add("# Written on: " +
-                new GregorianCalendar().getTime().toString());
+        lines.add("# Written on: " + new GregorianCalendar().getTime().toString());
 
         writeMeta(lines);
 
@@ -180,10 +172,8 @@ public class ConfigFile extends TextFile {
                     lines.add("  " + escape(entry));
                 }
             } else {
-                for (Map.Entry<String, String> entry : keydomains.get(domain).
-                        entrySet()) {
-                    lines.add("  " + escape(entry.getKey()) + "=" + escape(
-                            entry.getValue()));
+                for (Map.Entry<String, String> entry : keydomains.get(domain).entrySet()) {
+                    lines.add("  " + escape(entry.getKey()) + "=" + escape(entry.getValue()));
                 }
             }
         }
@@ -199,8 +189,7 @@ public class ConfigFile extends TextFile {
     private void writeMeta(final List<String> lines) {
         lines.add("");
         lines.add("# This section indicates which sections below take key/value");
-        lines.add(
-                "# pairs, rather than a simple list. It should be placed above");
+        lines.add("# pairs, rather than a simple list. It should be placed above");
         lines.add("# any sections that take key/values.");
         lines.add("keysections:");
 

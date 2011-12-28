@@ -46,8 +46,7 @@ public class Config {
      * @throws IOException IO Error reading config file
      * @throws InvalidConfigFileException Invalid config file
      */
-    public Config(final String filename) throws IOException,
-            InvalidConfigFileException {
+    public Config(final String filename) throws IOException, InvalidConfigFileException {
         this(new File(filename));
     }
 
@@ -59,8 +58,7 @@ public class Config {
      * @throws IOException IO Error reading config file
      * @throws InvalidConfigFileException Invalid config file
      */
-    public Config(final File file) throws IOException,
-            InvalidConfigFileException {
+    public Config(final File file) throws IOException, InvalidConfigFileException {
         this(new ConfigFile(file));
     }
 
@@ -72,8 +70,7 @@ public class Config {
      * @throws IOException IO Error reading config file
      * @throws InvalidConfigFileException Invalid config file
      */
-    public Config(final InputStream is) throws IOException,
-            InvalidConfigFileException {
+    public Config(final InputStream is) throws IOException, InvalidConfigFileException {
         this(new ConfigFile(is));
     }
 
@@ -85,8 +82,7 @@ public class Config {
      * @throws IOException IO Error reading config file
      * @throws InvalidConfigFileException Invalid config file
      */
-    public Config(final ConfigFile configFile) throws IOException,
-            InvalidConfigFileException {
+    public Config(final ConfigFile configFile) throws IOException, InvalidConfigFileException {
         config = configFile;
         init();
     }
@@ -99,7 +95,7 @@ public class Config {
      * @throws InvalidConfigFileException Invalid config file
      */
     private void init() throws IOException, InvalidConfigFileException {
-        if (!config.getFile().exists()) {
+        if (config.getFile() != null && !config.getFile().exists()) {
             if (!config.getFile().createNewFile()) {
                 throw new IOException("Unable to create config file.");
             }
@@ -116,8 +112,7 @@ public class Config {
      * @param fallback Value to return if key is not found
      * @return the requested option, or the fallback value if not defined
      */
-    public String getOption(final String domain, final String key,
-            final String fallback) {
+    public String getOption(final String domain, final String key, final String fallback) {
         final String value = config.getKeyDomain(domain).get(key);
         if (value == null) {
             return fallback;
@@ -133,8 +128,7 @@ public class Config {
      * @param key key for option
      * @param value Value for option
      */
-    public void setOption(final String domain, final String key,
-            final String value) {
+    public void setOption(final String domain, final String key, final String value) {
         config.getKeyDomain(domain).put(key, value);
     }
 
@@ -146,8 +140,7 @@ public class Config {
      * @return True if the option exists, else false
      */
     public boolean hasOption(final String domain, final String key) {
-        return config.hasDomain(domain) != false && config.getKeyDomain(domain).
-                containsKey(key);
+        return config.hasDomain(domain) != false && config.getKeyDomain(domain).containsKey(key);
     }
 
     /**
@@ -158,11 +151,9 @@ public class Config {
      * @param fallback Value to return if key is not found
      * @return the requested Option, or the fallback value if not defined
      */
-    public byte getByteOption(final String domain, final String key,
-            final byte fallback) {
+    public byte getByteOption(final String domain, final String key, final byte fallback) {
         try {
-            return Byte.parseByte(
-                    getOption(domain, key, Byte.toString(fallback)));
+            return Byte.parseByte(getOption(domain, key, Byte.toString(fallback)));
         } catch (NumberFormatException nfe) {
             return fallback;
         }
@@ -175,8 +166,7 @@ public class Config {
      * @param key key for Option
      * @param value Value for Option
      */
-    public void setByteOption(final String domain, final String key,
-            final byte value) {
+    public void setByteOption(final String domain, final String key, final byte value) {
         setOption(domain, key, Byte.toString(value));
     }
 
@@ -188,11 +178,9 @@ public class Config {
      * @param fallback Value to return if key is not found
      * @return the requested Option, or the fallback value if not defined
      */
-    public short getShortOption(final String domain, final String key,
-            final short fallback) {
+    public short getShortOption(final String domain, final String key, final short fallback) {
         try {
-            return Short.parseShort(getOption(domain, key, Short.toString(
-                    fallback)));
+            return Short.parseShort(getOption(domain, key, Short.toString(fallback)));
         } catch (NumberFormatException nfe) {
             return fallback;
         }
@@ -205,8 +193,7 @@ public class Config {
      * @param key key for Option
      * @param value Value for Option
      */
-    public void setShortOption(final String domain, final String key,
-            final short value) {
+    public void setShortOption(final String domain, final String key, final short value) {
         setOption(domain, key, Short.toString(value));
     }
 
@@ -218,11 +205,9 @@ public class Config {
      * @param fallback Value to return if key is not found
      * @return the requested Option, or the fallback value if not defined
      */
-    public int getIntOption(final String domain, final String key,
-            final int fallback) {
+    public int getIntOption(final String domain, final String key, final int fallback) {
         try {
-            return Integer.parseInt(getOption(domain, key, Integer.toString(
-                    fallback)));
+            return Integer.parseInt(getOption(domain, key, Integer.toString(fallback)));
         } catch (NumberFormatException nfe) {
             return fallback;
         }
@@ -235,8 +220,7 @@ public class Config {
      * @param key key for Option
      * @param value Value for Option
      */
-    public void setIntOption(final String domain, final String key,
-            final int value) {
+    public void setIntOption(final String domain, final String key, final int value) {
         setOption(domain, key, Integer.toString(value));
     }
 
@@ -248,11 +232,9 @@ public class Config {
      * @param fallback Value to return if key is not found
      * @return the requested Option, or the fallback value if not defined
      */
-    public long getLongOption(final String domain, final String key,
-            final long fallback) {
+    public long getLongOption(final String domain, final String key, final long fallback) {
         try {
-            return Long.parseLong(
-                    getOption(domain, key, Long.toString(fallback)));
+            return Long.parseLong(getOption(domain, key, Long.toString(fallback)));
         } catch (NumberFormatException nfe) {
             return fallback;
         }
@@ -265,8 +247,7 @@ public class Config {
      * @param key key for Option
      * @param value Value for Option
      */
-    public void setLongOption(final String domain, final String key,
-            final long value) {
+    public void setLongOption(final String domain, final String key, final long value) {
         setOption(domain, key, Long.toString(value));
     }
 
@@ -278,11 +259,9 @@ public class Config {
      * @param fallback Value to return if key is not found
      * @return the requested Option, or the fallback value if not defined
      */
-    public float getFloatOption(final String domain, final String key,
-            final float fallback) {
+    public float getFloatOption(final String domain, final String key, final float fallback) {
         try {
-            return Float.parseFloat(getOption(domain, key, Float.toString(
-                    fallback)));
+            return Float.parseFloat(getOption(domain, key, Float.toString(fallback)));
         } catch (NumberFormatException nfe) {
             return fallback;
         }
@@ -295,8 +274,7 @@ public class Config {
      * @param key key for Option
      * @param value Value for Option
      */
-    public void setFloatOption(final String domain, final String key,
-            final float value) {
+    public void setFloatOption(final String domain, final String key, final float value) {
         setOption(domain, key, Float.toString(value));
     }
 
@@ -308,11 +286,9 @@ public class Config {
      * @param fallback Value to return if key is not found
      * @return the requested Option, or the fallback value if not defined
      */
-    public double getDoubleOption(final String domain, final String key,
-            final double fallback) {
+    public double getDoubleOption(final String domain, final String key, final double fallback) {
         try {
-            return Double.parseDouble(getOption(domain, key, Double.toString(
-                    fallback)));
+            return Double.parseDouble(getOption(domain, key, Double.toString(fallback)));
         } catch (NumberFormatException nfe) {
             return fallback;
         }
@@ -325,8 +301,7 @@ public class Config {
      * @param key key for Option
      * @param value Value for Option
      */
-    public void setDoubleOption(final String domain, final String key,
-            final double value) {
+    public void setDoubleOption(final String domain, final String key, final double value) {
         setOption(domain, key, Double.toString(value));
     }
 
@@ -338,10 +313,8 @@ public class Config {
      * @param fallback Value to return if key is not found
      * @return the requested Option, or the fallback value if not defined
      */
-    public boolean getBoolOption(final String domain, final String key,
-            final boolean fallback) {
-        return Boolean.parseBoolean(getOption(domain, key, Boolean.toString(
-                fallback)));
+    public boolean getBoolOption(final String domain, final String key, final boolean fallback) {
+        return Boolean.parseBoolean(getOption(domain, key, Boolean.toString(fallback)));
     }
 
     /**
@@ -351,8 +324,7 @@ public class Config {
      * @param key key for Option
      * @param value Value for Option
      */
-    public void setBoolOption(final String domain, final String key,
-            final boolean value) {
+    public void setBoolOption(final String domain, final String key, final boolean value) {
         setOption(domain, key, Boolean.toString(value));
     }
 
@@ -364,8 +336,7 @@ public class Config {
      * @param fallback Value to return if key is not found
      * @return the requested Option, or the fallback value if not defined
      */
-    public char getCharOption(final String domain, final String key,
-            final char fallback) {
+    public char getCharOption(final String domain, final String key, final char fallback) {
         final String res = getOption(domain, key, Character.toString(fallback));
         if (res == null || res.isEmpty()) {
             return fallback;
@@ -381,8 +352,7 @@ public class Config {
      * @param key key for Option
      * @param value Value for Option
      */
-    public void setCharOption(final String domain, final String key,
-            final char value) {
+    public void setCharOption(final String domain, final String key, final char value) {
         setOption(domain, key, Character.toString(value));
     }
 
@@ -394,8 +364,7 @@ public class Config {
      * @param fallback List to return if key is not found
      * @return the requested Option, or the fallback value if not defined
      */
-    public List<String> getListOption(final String domain, final String key,
-            final List<String> fallback) {
+    public List<String> getListOption(final String domain, final String key, final List<String> fallback) {
         final String res = getOption(domain, key, "");
         if (res == null || res.isEmpty()) {
             return fallback;
@@ -416,8 +385,7 @@ public class Config {
      * @param key key for Option
      * @param value Value for Option
      */
-    public void setListOption(final String domain, final String key,
-            final List<String> value) {
+    public void setListOption(final String domain, final String key, final List<String> value) {
         final StringBuilder val = new StringBuilder();
         final String LF = "\n";
         boolean first = true;

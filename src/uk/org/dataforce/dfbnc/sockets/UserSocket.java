@@ -294,7 +294,7 @@ public class UserSocket extends ConnectedSocket {
     /** {@inheritDoc} */
     @Override
     public void socketOpened() {
-        sendBotMessage("Welcome to DFBnc (" + DFBnc.VERSION + ")");
+        sendBotMessage("Welcome to DFBnc (" + DFBnc.getVersion() + ")");
         if (isSSL) {
             sendBotMessage("You are connected using SSL");
         } else {

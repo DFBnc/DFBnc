@@ -38,7 +38,7 @@ public class VersionCommand extends Command {
      */
     @Override
     public void handle(final UserSocket user, final String[] params) {
-        user.sendBotMessage("This is %s", DFBnc.VERSION);
+        user.sendBotMessage("This is %s", DFBnc.getVersion());
     }
     
     /**
