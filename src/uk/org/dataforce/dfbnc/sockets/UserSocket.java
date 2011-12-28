@@ -629,7 +629,7 @@ public class UserSocket extends ConnectedSocket {
             } else {
                 final String myHost = (this.getAccount().getConnectionHandler() != null) ? this.getAccount().getConnectionHandler().getMyHost() : this.getNickname()+"!user@host" ;
                 if (myHost != null) {
-                    sendAll(String.format("%s %s", myHost, normalLine), true);
+                    sendAll(String.format(":%s %s", myHost, normalLine), true);
                 }
             }
         } else if (line[0].equalsIgnoreCase("DFBNC")) {
