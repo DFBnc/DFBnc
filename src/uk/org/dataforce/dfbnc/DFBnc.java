@@ -217,7 +217,6 @@ public class DFBnc {
         socketChecker.scheduleAtFixedRate(new TimerTask(){
             @Override
             public void run() {
-                System.out.println("Checking All");
                 UserSocket.checkAll(6);
             }
         }, 10000, 10000);
