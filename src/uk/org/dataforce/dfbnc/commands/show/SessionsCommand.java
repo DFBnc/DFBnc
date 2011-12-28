@@ -26,7 +26,6 @@ import java.util.List;
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
-import uk.org.dataforce.libs.util.Util;
 
 /**
  * This file represents the 'Sessions' command
@@ -40,19 +39,8 @@ public class SessionsCommand extends Command {
      */
     @Override
     public void handle(final UserSocket user, final String[] params) {
-
-        String optionString = (params.length > 2) ? params[2] : "";
-
-        if (user.getAccount().isAdmin()) {
-            final List<String> paramMatch = getParamMatch(optionString, Arrays.asList("all", "authenticated", "unauthenticated", "account", ""));
-            if (paramMatch.size() > 1) {
-                user.sendBotMessage("Multiple possible matches were found for '"+optionString+"': ");
-                for (String p : paramMatch) {
-                    user.sendBotMessage("    " + p);
-                }
-                return;
-            } else { optionString = paramMatch.get(0); }
-        }
+        final String optionString = getFullParam(user, params, 2, Arrays.asList("all", "authenticated", "unauthenticated", "account", ""));
+        if (optionString == null) { return; }
 
         if (user.getAccount().isAdmin() && !optionString.equalsIgnoreCase("")) {
             user.sendBotMessage("Currently connected sockets (Type: %s):", optionString);

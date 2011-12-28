@@ -170,7 +170,35 @@ public abstract class Command {
             return result;
         }
     }
-    
+
+    /**
+     * From the given params check the parameter in the given position to see
+     * if it is one of the given options.
+     *
+     * If there are multiple possibilities, let the user know and return null,
+     * otherwise return the full version of the parameter if it matches, or the
+     * input the user gave.
+     *
+     * @param user User to send possible matches to
+     * @param params Parameters for the command
+     * @param position Position to check
+     * @param options Options to look for
+     * @return null or a string containing the full param or the input param.
+     */
+    public final String getFullParam(final UserSocket user, final String[] params, final int position, final Collection<String> options) {
+        String result = (params.length > position) ? params[position] : "";
+        final List<String> paramMatch = getParamMatch(result, options);
+        if (paramMatch.size() > 1) {
+            user.sendBotMessage("Multiple possible matches were found for '"+result+"': ");
+            for (String p : paramMatch) {
+                user.sendBotMessage("    " + p);
+            }
+            return null;
+        } else { result = paramMatch.get(0); }
+
+        return result;
+    }
+
     /**
      * Get the name for this Command.
      * @return the name of this Command

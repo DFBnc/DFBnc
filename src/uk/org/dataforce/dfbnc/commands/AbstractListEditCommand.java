@@ -118,15 +118,10 @@ public abstract class AbstractListEditCommand extends Command {
 
         user.sendBotMessage("----------------");
         if (actualParams.length > 1) {
-            final List<String> paramMatch = getParamMatch(actualParams[1], Arrays.asList("list", "add", "set", "edit", "delete", "clear", "insert"));
-            if (paramMatch.size() > 1) {
-                user.sendBotMessage("Multiple possible matches were found for '"+actualParams[1]+"': ");
-                for (String p : paramMatch) {
-                    user.sendBotMessage("    " + p);
-                }
-                return;
-            } else { actualParams[1] = paramMatch.get(0); }
-
+            
+            actualParams[1] = getFullParam(user, actualParams, 1, Arrays.asList("list", "add", "set", "edit", "delete", "clear", "insert"));
+            if (actualParams[1] == null) { return; }
+            
             if (getPropertyName(actualParams[0]).equals("")) {
                 user.sendBotMessage("There is no list to modify using '" + actualParams[0] + "'");
                 user.sendBotMessage("Please try /dfbnc '" + actualParams[0] + "' for more information");

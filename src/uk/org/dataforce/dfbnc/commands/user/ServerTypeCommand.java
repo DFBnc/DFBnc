@@ -24,14 +24,12 @@ package uk.org.dataforce.dfbnc.commands.user;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.logging.Level;
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
 import uk.org.dataforce.dfbnc.DFBnc;
 import uk.org.dataforce.dfbnc.servers.ServerType;
 import uk.org.dataforce.dfbnc.servers.ServerTypeNotFound;
-import uk.org.dataforce.libs.logger.Logger;
 
 /**
  * This file represents the 'ServerType' command
@@ -47,16 +45,8 @@ public class ServerTypeCommand extends Command {
     public void handle(final UserSocket user, final String[] params) {
         String[] actualParams = params;
 
-        if (actualParams.length > 1) {
-            final List<String> paramMatch = getParamMatch(actualParams[1], Arrays.asList("settype", "help"));
-            if (paramMatch.size() > 1) {
-                user.sendBotMessage("Multiple possible matches were found for '"+actualParams[1]+"': ");
-                for (String p : paramMatch) {
-                    user.sendBotMessage("    " + p);
-                }
-                return;
-            } else { actualParams[1] = paramMatch.get(0); }
-        }
+        actualParams[1] = getFullParam(user, actualParams, 1, Arrays.asList("settype", "help"));
+        if (actualParams[1] == null) { return; }
 
         if (actualParams.length > 1 && actualParams[1].equalsIgnoreCase("settype")) {
             user.sendBotMessage("----------------");

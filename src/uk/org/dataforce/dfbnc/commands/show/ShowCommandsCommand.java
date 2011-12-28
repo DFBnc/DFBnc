@@ -47,16 +47,9 @@ public class ShowCommandsCommand extends Command {
         // This stores the output for any admin commands we run across, these are
         // displayed at the end after the normal-user commands.
         ArrayList<String> adminCommands = new ArrayList<String>();
-    
-        String commandsType = (params.length > 2) ? params[2] : "";
-        final List<String> paramMatch = getParamMatch(commandsType, Arrays.asList("all", "admin", "user", ""));
-        if (paramMatch.size() > 1) {
-            user.sendBotMessage("Multiple possible matches were found for '"+commandsType+"': ");
-            for (String p : paramMatch) {
-                user.sendBotMessage("    " + p);
-            }
-            return;
-        } else { commandsType = paramMatch.get(0); }
+
+        final String commandsType = getFullParam(user, params, 2, Arrays.asList("all", "admin", "user", ""));
+        if (commandsType == null) { return; }
 
         if (commandsType.equals("") || commandsType.equalsIgnoreCase("all") || commandsType.equalsIgnoreCase("user")) {
             user.sendBotMessage("----------------");

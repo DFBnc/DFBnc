@@ -51,14 +51,8 @@ public abstract class AbstractSetCommand extends Command {
         String[] actualParams = params;
 
         if (actualParams.length > 1) {
-            final List<String> paramMatch = getParamMatch(actualParams[1], validParams.keySet());
-            if (paramMatch.size() > 1) {
-                user.sendBotMessage("Multiple possible matches were found for '"+actualParams[1]+"': ");
-                for (String p : paramMatch) {
-                    user.sendBotMessage("    " + p);
-                }
-                return;
-            } else { actualParams[1] = paramMatch.get(0); }
+            actualParams[1] = getFullParam(user, actualParams, 1, validParams.keySet());
+            if (actualParams[1] == null) { return; }
             
             if (validParams.get(actualParams[1].toLowerCase()) == null) {
                 user.sendBotMessage("Invalid setting '"+actualParams[1]+"'.");

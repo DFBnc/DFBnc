@@ -208,10 +208,9 @@ public class DFBnc {
             Logger.warning("`-----------------------------------------------------'");
         }
 
-        // Check UserSockets every 10 seconds for inactivity, with a threshold
-        // of "6".
-        // This will cause sockets to send an initial PING after 1 minute of
-        // inactivity, and timeout after 2 minutes.
+        // Check UserSockets every FREQUENCY seconds for inactivity, with a
+        // threshold of THRESHOLD.
+        // This will cause sockets to send an initial PING once the threshold has been hit
         final Timer socketChecker = new Timer("Socket Checker Timer", true);
         final int pingThreshold = config.getIntOption("timeout", "threshold", 1);
         final int pingFrequency = config.getIntOption("timeout", "frequency", 120) * 1000;

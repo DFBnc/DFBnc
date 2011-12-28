@@ -40,15 +40,8 @@ public class FirstTimeCommand extends Command {
      */
     @Override
     public void handle(final UserSocket user, final String[] params) {
-        String option = (params.length > 2) ? params[2] : "";
-        final List<String> paramMatch = getParamMatch(option, Arrays.asList("admin", "user", ""));
-        if (paramMatch.size() > 1) {
-            user.sendBotMessage("Multiple possible matches were found for '"+option+"': ");
-            for (String p : paramMatch) {
-                user.sendBotMessage("    " + p);
-            }
-            return;
-        } else { option = paramMatch.get(0); }
+        final String option = getFullParam(user, params, 2, Arrays.asList("admin", "user", ""));
+        if (option == null) { return; }
 
         if (params.length > 2 && option.equalsIgnoreCase("admin")) {
             if (user.getAccount().isAdmin()) {
