@@ -1,6 +1,21 @@
 /*
- * Copyright (c) 2006-2007 Shane Mc Cormack
+ * This class is given to the Public Domain. Do what you want with it.
+ * This software comes with no guarantees or warranties.
  *
+ * This is a modified version of David Crosson's Public Domain implementation
+ * from http://perso.wanadoo.fr/reuse/sslbytechannel/
+ *
+ * Specific Changes by Shane 'Dataforce' Mc Cormack (dataforce@dataforce.org.uk)
+ *  - unwrap() will now throw a ClosedChannelException() if the channel has
+ *    been closed when reading, rather than just sitting in a loop forever.
+ *  - Fix 100% CPU during long or repeated unwrap() calls;
+ *  - Fix a possible infinite loop in sslloop();
+ *
+ * In cases where "Public Domain" is not acceptable (either legally or by way of
+ * local policy) or where such a license could expose the author(s) to extra
+ * obligations, warranties or responsibilities, then this software should be
+ * considered to be licensed as follows:
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -33,10 +48,9 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
 
 /**
- * Wrapper for ByteChannel to read/write SSL Sockets
+ * Wrapper for ByteChannel to read/write SSL Sockets.
  *
- * This is a modified version of David Crosson's Public Domain implementation from
- * http://perso.wanadoo.fr/reuse/sslbytechannel/
+ * @version 1.0.3
  */
 public class SSLByteChannel implements ByteChannel {
     /** The raw channel we are wrapping */
