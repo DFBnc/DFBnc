@@ -28,6 +28,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SelectionKey;
 import java.io.IOException;
 
+import java.nio.channels.CancelledKeyException;
 import uk.org.dataforce.libs.logger.Logger;
 
 /**
@@ -82,11 +83,11 @@ public class ListenSocket implements SelectedSocketHandler {
         // the socket.
         isSSL = ssl;
         String portString = Integer.toString(port);
-        
+
         if (ssl) {
             portString = "+" + portString;
         }
-        
+
         if (ssl) {
             try {
                 SecureSocket.getSSLContext();
@@ -96,43 +97,49 @@ public class ListenSocket implements SelectedSocketHandler {
                 throw new IOException("Unable to use SSL");
             }
         }
-        
+
         ssChannel.configureBlocking(false);
         ssChannel.socket().bind(new InetSocketAddress(host, port));
-        
+
         SocketSelector.getConnectedSocketSelector().registerSocket(ssChannel, this);
 
         Logger.info("Listen Socket Opened: " + host + ":" + portString);
     }
-        
+
     /**
      * Close the socket
      */
-    public synchronized void close() {       
+    public synchronized void close() {
         try {
             ssChannel.socket().close();
         } catch (IOException e) {
             Logger.error("Unable to close socket.: " + e.getMessage());
         }
     }
-        
+
     /** {@inheritDoc} */
     @Override
     public void processSelectionKey(final SelectionKey selKey) {
-        if (selKey.isAcceptable()) {
-            final ServerSocketChannel selChannel = (ServerSocketChannel) selKey.channel();
+        try {
+            if (selKey.isAcceptable()) {
+                final ServerSocketChannel selChannel = (ServerSocketChannel) selKey.channel();
 
-            try {
-                final SocketChannel sChannel = selChannel.accept();
+                try {
+                    final SocketChannel sChannel = selChannel.accept();
 
-                if (sChannel != null) {
-                    Logger.info("Accepting new socket.");
-                    UserSocket userSocket = new UserSocket(sChannel, isSSL);
-                    userSocket.socketOpened();
+                    if (sChannel != null) {
+                        Logger.info("Accepting new socket.");
+                        UserSocket userSocket = new UserSocket(sChannel, isSSL);
+                        userSocket.socketOpened();
+                    }
+                } catch (IOException e) {
+                    Logger.error("Unable to open UserSocket: "+e.getMessage());
                 }
-            } catch (IOException e) {
-                Logger.error("Unable to open UserSocket: "+e.getMessage());
             }
+        } catch (final CancelledKeyException cke) {
+            // Key was cancelled, close the socket.
+            // (Chances are, the socket is already being closed...)
+            close();
         }
     }
 }
