@@ -6,10 +6,12 @@
             <name>DFBnc-Java</name>
             <source-roots>
                 <root id="src.dir" name="Main Source"/>
-                <root id="src.src.dir" name="IRCParser Source"/>
+                <root id="parser.src.dir" name="IRCParser Source"/>
+                <root id="akuma.src.dir" name="Akuma Source"/>
             </source-roots>
             <test-roots>
-                <root id="test.test.dir"/>
+                <root id="test.dir" name="Main Tests"/>
+                <root id="parser.test.dir" name="Parser Tests"/>
             </test-roots>
         </data>
     </configuration>

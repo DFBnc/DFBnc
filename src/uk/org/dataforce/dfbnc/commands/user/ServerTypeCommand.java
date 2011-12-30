@@ -53,14 +53,8 @@ public class ServerTypeCommand extends Command {
             if (actualParams.length > 2) {
                 final Collection<String> availableTypes = DFBnc.getServerTypeManager().getServerTypeNames();
                 availableTypes.add("none");
-                final List<String> paramMatch = getParamMatch(actualParams[2], availableTypes);
-                if (paramMatch.size() > 1) {
-                    user.sendBotMessage("Multiple possible matches were found for '"+actualParams[2]+"': ");
-                    for (String p : paramMatch) {
-                        user.sendBotMessage("    " + p);
-                    }
-                    return;
-                } else { actualParams[2] = paramMatch.get(0); }
+                actualParams[2] = getFullParam(user, actualParams, 2, availableTypes);
+                if (actualParams[2] == null) { return; }
 
                 final ServerType currentType = user.getAccount().getServerType();
                 if (actualParams[2].equalsIgnoreCase("none")) {
@@ -108,7 +102,7 @@ public class ServerTypeCommand extends Command {
             user.sendBotMessage("For usage information use /dfbnc "+actualParams[0]+" help");
         }
     }
-    
+
     /**
      * What does this Command handle.
      *
@@ -118,14 +112,14 @@ public class ServerTypeCommand extends Command {
     public String[] handles() {
         return new String[]{"servertype", "*st"};
     }
-    
+
     /**
      * Create a new instance of the Command Object
      *
      * @param manager CommandManager that is in charge of this Command
      */
     public ServerTypeCommand (final CommandManager manager) { super(manager); }
-    
+
     /**
      * Get a description of what this command does
      *
@@ -136,5 +130,5 @@ public class ServerTypeCommand extends Command {
     @Override
     public String getDescription(final String command) {
         return "This command changes your ServerType";
-    }  
+    }
 }

@@ -43,7 +43,7 @@ public abstract class Command {
     protected Command(final CommandManager manager) {
         this.myManager = manager;
     }
-    
+
     /**
      * Handle a Line.
      *
@@ -51,7 +51,7 @@ public abstract class Command {
      * @param params Params for command (param 0 is the command name)
      */
     public abstract void handle(final UserSocket user, final String[] params);
-    
+
     /**
      * What does this Command handle.
          * Aliases should be prefixed with * to hide from showcommands
@@ -59,7 +59,7 @@ public abstract class Command {
      * @return String[] with the names of the tokens we handle.
      */
     public abstract String[] handles();
-    
+
     /**
      * Get detailed help for this command.
      *
@@ -71,7 +71,7 @@ public abstract class Command {
     public String[] getHelp(final String[] params) {
         return null;
     }
-    
+
     /**
      * Get the name for this Command.
      * @return the name of this Command
@@ -84,7 +84,7 @@ public abstract class Command {
         }
         return this.getClass().getName().substring(packageLength);
     }
-    
+
     /**
      * Get a description of what this command does
      *
@@ -93,7 +93,7 @@ public abstract class Command {
      * @return A description of what this command does
      */
     public abstract String getDescription(final String command);
-    
+
     /**
      * Is this command Admin only?
      *
@@ -113,7 +113,7 @@ public abstract class Command {
     public boolean allowShort(final String handle) {
         return true;
     }
-    
+
     /**
      * Get the name for this Command in lowercase.
      *
@@ -188,10 +188,18 @@ public abstract class Command {
     public final String getFullParam(final UserSocket user, final String[] params, final int position, final Collection<String> options) {
         String result = (params.length > position) ? params[position] : "";
         final List<String> paramMatch = getParamMatch(result, options);
+        boolean hasEmpty = false;
         if (paramMatch.size() > 1) {
             user.sendBotMessage("Multiple possible matches were found for '"+result+"': ");
             for (String p : paramMatch) {
-                user.sendBotMessage("    " + p);
+                if (p.isEmpty()) {
+                    hasEmpty = true;
+                } else {
+                    user.sendBotMessage("    " + p);
+                }
+            }
+            if (hasEmpty) {
+                user.sendBotMessage("    <cr>");
             }
             return null;
         } else { result = paramMatch.get(0); }

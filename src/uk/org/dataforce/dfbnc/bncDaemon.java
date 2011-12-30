@@ -21,39 +21,43 @@
  */
 package uk.org.dataforce.dfbnc;
 
+import java.io.IOException;
+import com.sun.akuma.Daemon;
+import static com.sun.akuma.CLibrary.LIBC;
+
 /**
- * Shutdown hook.
+ * This class extends the Daemon class for DFBnc specific requirements.
  */
-public class ShutdownHook extends Thread {
-    /** The DFBnc instance that this ShutdownHook is for. */
-    private final DFBnc myBnc;
-    /** Already shutting down? */
-    private boolean inactive;
-    
+class bncDaemon extends Daemon {
     /**
-     * Create the Shutdown Hook
+     * Prepares the current process to act as a daemon.
+     * This version doesn't call closeDescriptors(), this will need to be done
+     * manually, and doesn't chdir to root.
      *
-     * @param bnc DFBnc instance
+     * @param pidFile the filename to which the daemon's PID is written or null;
      */
-    public ShutdownHook(final DFBnc bnc) {
-        myBnc = bnc;
-        inactive = false;
+    @SuppressWarnings({"OctalInteger"})
+    @Override
+    public void init(final String pidFile) throws Exception {
+        // start a new process session
+        LIBC.setsid();
+        if (pidFile != null) { writePidFile(pidFile); }
     }
 
     /**
-     * Inactivates this shutdown hook.
-     */
-    public void inactivate() {
-        inactive = true;
-    }
-    
-    /**
-     * What todo when shutting down
+     * {@inheritDoc}
      */
     @Override
-    public void run() {
-        if (!inactive) {
-            myBnc.shutdown(true);
-        }
+    public void closeDescriptors() throws IOException {
+        super.closeDescriptors();
+    }
+
+    /**
+     * Get the current PID.
+     *
+     * @return Current PID as an int.
+     */
+    public int getPID() {
+        return LIBC.getpid();
     }
 }

@@ -22,13 +22,61 @@
 
 package uk.org.dataforce.libs.logger;
 
+import java.io.BufferedWriter;
+
 /**
  * JISG Logger class.
  */
 public class Logger {
     /** Current log level. */
     private static LogLevel logLevel = LogLevel.DEBUG2;
-    
+
+    /** Optional Tag for log entries. */
+    private static String logTag = "";
+
+    /** Optional BufferedWriter to write output to in addition to console. */
+    private static BufferedWriter writer = null;
+
+    /**
+     * Change the logTag for this logger.
+     *
+     * @param newTag New tag to use.
+     */
+    public static void setTag(final String newTag) {
+        logTag = (newTag == null) ? "" : newTag;
+    }
+
+    /**
+     * Get the current logTag for this logger.
+     *
+     * @return The current log tag.
+     */
+    public static String getTag() {
+        return logTag;
+    }
+
+    /**
+     * Set a buffered writer for the logger to also log data to.
+     * The Application (not Logger) is responsible for opening this and closing
+     * it when no longer required.
+     * Setting this to null will disable writing.
+     * Logger will make no attempt to ensure that writing actually succeeds.
+     *
+     * @param newWriter New writer to use.
+     */
+    public static void setWriter(final BufferedWriter newWriter) {
+        writer = newWriter;
+    }
+
+    /**
+     * Get the current bufferedwriter we are using.
+     *
+     * @return The writer we are using.
+     */
+    public static BufferedWriter getWriter() {
+        return writer;
+    }
+
     /**
      * Log data at a customiseable log level.
      *
@@ -37,11 +85,23 @@ public class Logger {
      */
     public static void log(final LogLevel level, final String data) {
         if (level.isLoggable(logLevel) && level != LogLevel.SILENT) {
-            System.out.println("["+level+"] "+data);
-            // Optionally add logging to a file here.
+            final String output = data == null ? "" : String.format("[%s%s] %s", (logTag.isEmpty() ? "" : logTag + ":"), level, data);
+
+            System.out.println(output);
+            if (writer != null) {
+                try {
+                    writer.append(output);
+                    writer.append("\n");
+                    writer.flush();
+                } catch (final Exception e) {
+                    // Writing failed, so abandon writer!
+                    // This stops us trying this again every line.
+                    writer = null;
+                }
+            }
         }
     }
-    
+
     /**
      * Log data at the error level.
      *
@@ -50,7 +110,7 @@ public class Logger {
     public static void error(final String data) {
         log(LogLevel.ERROR, data);
     }
-    
+
     /**
      * Log data at the warning level.
      *
@@ -59,7 +119,7 @@ public class Logger {
     public static void warning(final String data) {
         log(LogLevel.WARNING, data);
     }
-    
+
     /**
      * Log data at the info level.
      *
@@ -68,7 +128,7 @@ public class Logger {
     public static void info(final String data) {
         log(LogLevel.INFO, data);
     }
-    
+
     /**
      * Log data at the debug level.
      *
@@ -77,7 +137,7 @@ public class Logger {
     public static void debug(final String data) {
         log(LogLevel.DEBUG, data);
     }
-    
+
     /**
      * Log data at the debug2 level.
      *
@@ -86,7 +146,7 @@ public class Logger {
     public static void debug2(final String data) {
         log(LogLevel.DEBUG2, data);
     }
-    
+
     /**
      * Log data at the debug3 level.
      *
@@ -149,7 +209,7 @@ public class Logger {
     public static void debug9(final String data) {
         log(LogLevel.DEBUG9, data);
     }
-    
+
     /**
      * Get the current log level.
      * Any data above the current log level will not be logged.
@@ -159,7 +219,7 @@ public class Logger {
     public static LogLevel getLevel() {
         return logLevel;
     }
-    
+
     /**
      * Set the current log level.
      * Any data above the current log level will not be logged.

@@ -21,7 +21,10 @@
  */
 package uk.org.dataforce.dfbnc.commands.show;
 
-import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Map;
+import java.util.Map.Entry;
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
@@ -39,18 +42,21 @@ public class VersionCommand extends Command {
      */
     @Override
     public void handle(final UserSocket user, final String[] params) {
-        final String versionType = getFullParam(user, params, 2, Arrays.asList("all", "parser", "dfbnc", ""));
+        final Map<String,String> versions = DFBnc.getVersions();
+        final Set<String> validParams = new HashSet<String>(versions.keySet());
+        validParams.add("");
+        validParams.add("all");
+
+        final String versionType = getFullParam(user, params, 2, validParams);
         if (versionType == null) { return; }
-        
-        if (versionType.equalsIgnoreCase("all") || versionType.equalsIgnoreCase("") || versionType.equalsIgnoreCase("dfbnc")) {
-            user.sendBotMessage("This is %s", DFBnc.getVersion());
-        }
-        
-        if (versionType.equalsIgnoreCase("all") || versionType.equalsIgnoreCase("parser")) {
-            user.sendBotMessage("Using DMDirc Parser Version: %s", DFBnc.getVersion("parser"));
+
+        for (Entry<String, String> e : versions.entrySet()) {
+            if (versionType.equalsIgnoreCase("") || versionType.equalsIgnoreCase("all") || versionType.equalsIgnoreCase(e.getKey())) {
+                user.sendBotMessage("%s version: %s", e.getKey(), e.getValue());
+            }
         }
     }
-    
+
     /**
      * What does this Command handle.
      *
@@ -60,14 +66,14 @@ public class VersionCommand extends Command {
     public String[] handles() {
         return new String[]{"version"};
     }
-    
+
     /**
      * Create a new instance of the Command Object
      *
      * @param manager CommandManager that is in charge of this Command
      */
     public VersionCommand (final CommandManager manager) { super(manager); }
-    
+
     /**
      * Get a description of what this command does
      *

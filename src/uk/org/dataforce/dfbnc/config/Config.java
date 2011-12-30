@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import uk.org.dataforce.libs.logger.Logger;
 
 /**
@@ -102,6 +103,16 @@ public class Config {
         }
         config.read();
         config.setAutomake(true);
+    }
+
+    /**
+     * Get option domain from the config
+     *
+     * @param domain Domain for option
+     * @return the requested option domain, or null
+     */
+    public Map<String, String> getOptionDomain(final String domain) {
+        return config.getKeyDomain(domain);
     }
 
     /**

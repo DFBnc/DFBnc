@@ -21,15 +21,20 @@
  */
 package uk.org.dataforce.dfbnc;
 
+import java.io.BufferedWriter;
 import uk.org.dataforce.dfbnc.config.Config;
 import uk.org.dataforce.dfbnc.sockets.ListenSocket;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
 import uk.org.dataforce.dfbnc.config.InvalidConfigFileException;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
@@ -38,6 +43,7 @@ import uk.org.dataforce.dfbnc.commands.user.*;
 import uk.org.dataforce.dfbnc.config.BlackHoleConfig;
 import uk.org.dataforce.dfbnc.servers.ServerTypeManager;
 import uk.org.dataforce.libs.cliparser.BooleanParam;
+import uk.org.dataforce.libs.cliparser.CLIParam;
 import uk.org.dataforce.libs.cliparser.CLIParser;
 import uk.org.dataforce.libs.cliparser.StringParam;
 import uk.org.dataforce.libs.logger.LogLevel;
@@ -52,25 +58,25 @@ public class DFBnc {
 
     /** Version Config File */
     private static Config versionConfig = BlackHoleConfig.createInstance();
-    
+
     /** The CLIParser */
     private static CLIParser cli = CLIParser.getCLIParser();
 
-    /** The config file name */
+    /** The config directory file name */
     private static String configDirectory = "DFBnc";
-    
+
     /** The config file name */
     private static String configFile = "DFBnc.conf";
-    
+
     /** The user command manager for this bnc */
     private static CommandManager userCommandManager = new CommandManager();
-    
+
     /** The admin command manager for this bnc */
     private static CommandManager adminCommandManager = new CommandManager();
-    
+
     /** The ServerType manager for this bnc */
     private static ServerTypeManager myServerTypeManager = new ServerTypeManager();
-    
+
     /** The arraylist of listenSockets */
     private static ArrayList<ListenSocket> listenSockets = new ArrayList<ListenSocket>();
 
@@ -82,6 +88,12 @@ public class DFBnc {
 
     /** Shutdown hook. */
     private ShutdownHook shutdownHook;
+
+    /** Daemon. */
+    final bncDaemon daemon = new bncDaemon();
+
+    /** PID File name. */
+    static String pidFile = "";
 
     /**
      * Create the BNC.
@@ -96,16 +108,65 @@ public class DFBnc {
      */
     private void init(final String[] args) {
         Logger.setLevel(LogLevel.INFO);
-        Logger.info("Starting DFBnc..");
-        DFBnc.loadVersionInfo();
+        loadVersionInfo();
+        if (daemon.isDaemonized()) {
+            Logger.setTag("(" + daemon.getPID() + ") Child");
+        } else {
+            Logger.info("Starting DFBnc (Version: " + getVersion() + ")..");
+        }
+
         setupCLIParser();
         if (cli.wantsHelp(args)) {
             cli.showHelp("DFBnc Help", "DFBnc [options]");
             System.exit(0);
         }
-        
+
+        Logger.info("Adding shutdown hook");
+        shutdownHook = new ShutdownHook(this);
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
+
         cli.parseArgs(args, true);
-        
+
+        setupLogging();
+
+        if (daemon.isDaemonized()) {
+            try {
+                final CLIParam pidFileCLI = cli.getParam("-pidfile");
+                pidFile = pidFileCLI.getStringValue().isEmpty() ? "dfbnc.pid" : pidFileCLI.getStringValue();
+                Logger.info("Using pid file: " + pidFile);
+
+                daemon.init(pidFile);
+            } catch (final Exception e) {
+                Logger.error("Daemon init failed. Exiting: " + e);
+                e.printStackTrace();
+                System.exit(1);
+            }
+        } else if (cli.getParamNumber("-background") > 0) {
+            try {
+                Logger.info("Forking to background...");
+                Logger.info(null);
+
+                // Before forking, close any sockets and files.
+                Logger.setLevel(LogLevel.SILENT);
+                shutdownHook.inactivate();
+                this.shutdown(true);
+
+                // Daemonise.
+                daemon.daemonize();
+
+                // Wait a short while for child to start so that user can see
+                // its output without a shell prompt appearing!
+                Thread.sleep(2000);
+
+                // Exit the parent.
+                System.exit(0);
+            } catch (Throwable t) {
+                Logger.error("Forking failed: " + t);
+                t.printStackTrace();
+                System.exit(1);
+            }
+        }
+
         if (cli.getParamNumber("-silent") > 0) {
             Logger.setLevel(LogLevel.SILENT);
         } else if (cli.getParamNumber("-debug") >= 9) {
@@ -136,19 +197,20 @@ public class DFBnc {
             Logger.info("Enabling Debugging Information (DEBUG).");
             Logger.setLevel(LogLevel.DEBUG);
         }
-        
+
         if (cli.getParamNumber("-config") > 0) { configDirectory = cli.getParam("-config").getStringValue(); }
         Logger.info("Loading Config..");
+
         try {
             config = createDefaultConfig();
         } catch (IOException ex) {
-            Logger.error("Error loading config: + " + configDirectory + " (" + ex.getMessage() + "). Exiting");
+            Logger.error("Error loading config: " + configDirectory + " (" + ex.getMessage() + "). Exiting");
             System.exit(1);
         } catch (InvalidConfigFileException ex) {
             Logger.error("Error loading config (" + ex.getMessage() + "). Exiting");
             System.exit(1);
         }
-        
+
         Logger.info("Setting up Default User Command Manager");
         userCommandManager.addCommand(new ServerTypeCommand(userCommandManager));
         userCommandManager.addCommand(new ShowCommand(userCommandManager));
@@ -157,7 +219,7 @@ public class DFBnc {
         userCommandManager.addCommand(new SaveCommand(userCommandManager));
         userCommandManager.addCommand(new ServerSetCommand(userCommandManager));
         userCommandManager.addCommand(new ConnectCommand(userCommandManager));
-        
+
         Logger.info("Setting up Default Admin Command Manager");
         adminCommandManager.addCommand(new AddUserCommand(adminCommandManager));
         adminCommandManager.addCommand(new DelUserCommand(adminCommandManager));
@@ -165,36 +227,10 @@ public class DFBnc {
         adminCommandManager.addCommand(new UnsuspendCommand(adminCommandManager));
         adminCommandManager.addCommand(new SetAdminCommand(adminCommandManager));
         adminCommandManager.addCommand(new ShutdownCommand(adminCommandManager));
-        
+
         Logger.info("Setting up ServerType Manager");
         myServerTypeManager.init();
-        
-        Logger.info("Loading Accounts..");
-        AccountManager.loadAccounts();
-        
-        Logger.info("Adding shutdown hook");
-        shutdownHook = new ShutdownHook(this);
-        Runtime.getRuntime().addShutdownHook(shutdownHook);
-        
-        Logger.info("Opening Listen Sockets..");
-        int count = 0;
-        List<String> defaulthosts = new ArrayList<String>();
-        defaulthosts.add("0.0.0.0:33262");
-        defaulthosts.add("0.0.0.0:+33263");
-        List<String> listenhosts = config.getListOption("general", "listenhost", defaulthosts);
-        
-        for (String listenhost : listenhosts) {
-            try {
-                listenSockets.add(new ListenSocket(listenhost));
-                count++;
-            } catch (IOException e) {
-                Logger.error("Unable to open socket: "+e.getMessage());
-            }
-            if (count == 0) {
-                Logger.info("No sockets could be opened, Terminating");
-                System.exit(1);
-            }
-        }
+
         Logger.info("Running!");
         if (config.getBoolOption("debugging", "autocreate", false)) {
             Logger.warning("/-----------------------------------------------------\\");
@@ -208,19 +244,98 @@ public class DFBnc {
             Logger.warning("`-----------------------------------------------------'");
         }
 
+        // By now, we will have forked if required.
+
+        Logger.info("Loading Accounts..");
+        AccountManager.loadAccounts();
+
+        openListenSockets();
+
         // Check UserSockets every FREQUENCY seconds for inactivity, with a
         // threshold of THRESHOLD.
         // This will cause sockets to send an initial PING once the threshold has been hit
         final Timer socketChecker = new Timer("Socket Checker Timer", true);
         final int pingThreshold = config.getIntOption("timeout", "threshold", 1);
         final int pingFrequency = config.getIntOption("timeout", "frequency", 120) * 1000;
-        
+
         socketChecker.scheduleAtFixedRate(new TimerTask(){
             @Override
             public void run() {
                 UserSocket.checkAll(pingThreshold);
             }
         }, pingFrequency, pingFrequency);
+
+        if (daemon.isDaemonized()) {
+            Logger.info("Forked and running! (PID: " + daemon.getPID() +")");
+            try {
+                daemon.closeDescriptors();
+            } catch (final IOException ioe) {
+                Logger.error("Error closing file descriptors: " + ioe);
+                ioe.printStackTrace();
+            }
+        } else {
+            Logger.info("Running!");
+        }
+    }
+
+    /**
+     * Set up the log file.
+     */
+    public void setupLogging() {
+        final CLIParam logFile = cli.getParam("-logfile");
+        if (!logFile.getStringValue().isEmpty()) {
+            final File file = new File(logFile.getStringValue());
+            if (!file.exists()) {
+                try {
+                    file.createNewFile();
+                } catch (final IOException ex) {
+                    Logger.error("Unable to create log file: " + ex);
+                }
+            }
+
+            try {
+                final BufferedWriter bw = new BufferedWriter(new FileWriter(file, true));
+                final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                if (!Logger.getTag().isEmpty()) {
+                    bw.append("[");
+                    bw.append(Logger.getTag());
+                    bw.append("] ");
+                }
+                bw.append("Log file opened at: " + sdf.format(new Date(System.currentTimeMillis())));
+                bw.append("\n");
+                bw.flush();
+                // We will never get to setting it here if it failed to write above!
+                Logger.setWriter(bw);
+                Logger.info("Using log file: " + file);
+            } catch (final IOException ex) {
+                Logger.error("Unable to write to log file: " + ex);
+            }
+        }
+    }
+
+    /**
+     * Open the listen sockets.
+     */
+    public void openListenSockets() {
+        Logger.info("Opening Listen Sockets..");
+        int count = 0;
+        final List<String> defaulthosts = new ArrayList<String>();
+        defaulthosts.add("0.0.0.0:33262");
+        defaulthosts.add("0.0.0.0:+33263");
+        final List<String> listenhosts = config.getListOption("general", "listenhost", defaulthosts);
+
+        for (String listenhost : listenhosts) {
+            try {
+                listenSockets.add(new ListenSocket(listenhost));
+                count++;
+            } catch (IOException e) {
+                Logger.error("Unable to open socket: "+e.getMessage());
+            }
+            if (count == 0) {
+                Logger.info("No sockets could be opened, Terminating");
+                System.exit(1);
+            }
+        }
     }
 
     /**
@@ -234,24 +349,33 @@ public class DFBnc {
             } catch (final Exception e) { /** Oh well, default it is. */ }
         }
     }
-    
+
     /**
      * Get the DFBNC Version if possible.
-     * 
+     *
      * @return DFBnc Version.
      */
     public static String getVersion() {
         return getVersion("dfbnc");
     }
-    
+
     /**
      * Get the Version of a given component if possible.
-     * 
+     *
      * @param component Component to get version for.
      * @return Component Version.
      */
     public static String getVersion(final String component) {
         return versionConfig.getOption("versions", component, "Unknown");
+    }
+
+    /**
+     * Get the versions of all known components.
+     *
+     * @return Component Versions Map.
+     */
+    public static Map<String,String> getVersions() {
+        return versionConfig.getOptionDomain("versions");
     }
 
     /**
@@ -262,7 +386,7 @@ public class DFBnc {
     public static long getStartTime() {
         return startTime;
     }
-    
+
     /**
      * Handle shutdown
      */
@@ -274,27 +398,54 @@ public class DFBnc {
      * Handle shutdown
      * @param shuttingDown are we already shutting down?
      */
-    public void shutdown(boolean shuttingDown) {
+    public void shutdown(final boolean shuttingDown) {
         Logger.info("---------------------");
         Logger.info("Shuting down.");
-        
+
         Logger.info("Closing Listen Sockets");
         for (int i = 0; i < listenSockets.size() ; ++i) {
             final ListenSocket ls = listenSockets.get(i);
             ls.close();
         }
         listenSockets.clear();
-        
+
         Logger.info("Closing User Sockets");
         UserSocket.closeAll("BNC Shutdown");
-            
+
         Logger.info("Saving Accounts");
         AccountManager.shutdown();
         AccountManager.saveAccounts();
-        
-        Logger.info("Saving config to '"+configFile+"'");
-        config.save();
-        shutdownHook.inactivate();
+
+        if (config != null) {
+            Logger.info("Saving config to '"+configFile+"'");
+            config.save();
+        }
+
+        Logger.info("Removing pid file");
+        if (!pidFile.isEmpty()) {
+            final File pid = new File(pidFile);
+            if (pid.exists()) { pid.delete(); }
+        }
+
+        Logger.info("Closing log file");
+        final BufferedWriter bw = Logger.getWriter();
+        if (bw != null) {
+            Logger.setWriter(null);
+            try {
+                final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                if (!Logger.getTag().isEmpty()) {
+                    bw.append("[");
+                    bw.append(Logger.getTag());
+                    bw.append("] ");
+                }
+                bw.append("Log file closed at: " + sdf.format(new Date(System.currentTimeMillis())));
+                bw.append("\n");
+                bw.flush();
+                bw.close();
+            } catch (final IOException ioe) { /** Oh well. */ }
+        }
+
+        if (shutdownHook != null) { shutdownHook.inactivate(); }
         if (!shuttingDown) {
             System.exit(0);
         }
@@ -308,7 +459,7 @@ public class DFBnc {
     public static String getConfigDirName() {
         return configDirectory;
     }
-    
+
     /**
      * Get the name of the configfile
      *
@@ -317,7 +468,7 @@ public class DFBnc {
     public static String getConfigFileName() {
         return configFile;
     }
-    
+
     /**
      * Get the user CommandManager
      *
@@ -326,7 +477,7 @@ public class DFBnc {
     public static CommandManager getUserCommandManager() {
         return userCommandManager;
     }
-    
+
     /**
      * Get the admin CommandManager
      *
@@ -335,7 +486,7 @@ public class DFBnc {
     public static CommandManager getAdminCommandManager() {
         return adminCommandManager;
     }
-    
+
     /**
      * Get the ServerTypeManager
      *
@@ -344,7 +495,7 @@ public class DFBnc {
     public static ServerTypeManager getServerTypeManager() {
         return myServerTypeManager;
     }
-    
+
     /**
      * Get the listenSockets array list
      *
@@ -353,7 +504,7 @@ public class DFBnc {
     public static ArrayList<ListenSocket> getListenSockets() {
         return listenSockets;
     }
-    
+
     /**
      * Setup the cli parser.
      * This clears the current CLIParser params and creates new ones.
@@ -365,12 +516,14 @@ public class DFBnc {
         cli.add(new BooleanParam('h', "help", "Show Help"));
         cli.add(new BooleanParam('d', "debug", "Enable extra debugging. (Use multiple times for more)"));
         cli.add(new BooleanParam('s', "silent", "Disable all output"));
-        // cli.add(new BooleanParam((char)0, "convert", "Convert old (delphi) style config file to new style"));
         cli.add(new StringParam('c', "config", "Alternative config directory to use"));
         cli.add(new BooleanParam((char)0, "enableDebugOptions", "Enable 'debugging.*' config settings"));
+        cli.add(new BooleanParam((char)0, "background", "Fork into background (EXPERIMENTAL)"));
+        cli.add(new StringParam((char)0, "pidfile", "Change pidfile location (Default: ./dfbnc.pid)"));
+        cli.add(new StringParam((char)0, "logfile", "Log file to use for console output. (Default: none)"));
         cli.setHelp(cli.getParam("-help"));
     }
-    
+
     /**
      * Get the DFBnc instance.
      *

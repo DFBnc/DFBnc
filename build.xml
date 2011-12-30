@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="dfbnc" default="default" basedir=".">
 	<description>Builds, tests, and runs the project dfbnc.</description>
+
+	<taskdef resource="net/sf/antcontrib/antcontrib.properties">
+		<classpath>
+			<pathelement location="libs/ant-contrib/ant-contrib-1.0b3.jar"/>
+		</classpath>
+	</taskdef>
+
+	<!-- Custom user properties should go in a file called build.properties -->
+	<property file="build.properties"/>
 	<!-- Default Properties -->
 	<property name="main.class" value="uk.org.dataforce.dfbnc.DFBnc"/>
 	<property name="dist.dir" value="dist"/>
@@ -22,23 +31,30 @@
 	<property name="build.classes.excludes" value="**/*.java,**/*.sh"/>
 	<property name="main.src.dir" value="src"/>
 	<property name="parser.src.dir" value="modules/parser/src" />
+	<property name="akuma.src.dir" value="modules/akuma/src/main/java/" />
+	<property name="libs.jars" value="libs/jna/jna.jar,libs/jna/platform.jar" />
+	<propertyregex property="libs.classpath" input="${libs.jars}" regexp="," replace=":" global="true" />
+	<!-- <property name="libs.jars" value="libs/jna/jna.jar:libs/jna/platform.jar" /> -->
+	<var name="mergelibs" value="true"/>
+	<var name="jar.compress" value="true" />
 	<property name="javac.classpath" value=""/>
 	<property name="javac.compilerargs" value="-Xlint:all"/>
 	<property name="javac.deprecation" value="true"/>
 	<property name="javac.debug" value="true"/>
 	<property name="javac.source" value="1.6"/>
 	<property name="javac.target" value="1.6"/>
+	<property name="javac.excludes" value="" />
 	<property name="test.src.dir" value="test"/>
+	<property name="test.libs.jars" value="libs/mockito/mockito-all-1.8.2.jar" />
+	<property name="parser.test.src.dir" value="modules/parser/test"/>
 	<property name="test.includes" value="**/*Test.java"/>
 	<property name="test.build.classes.excludes" value="**/*.java,**/*.sh"/>
 	<property name="test.build.classes.dir" value="${build.dir}/test/classes"/>
 	<property name="test.results.dir" value="${build.dir}/test/results"/>
-	<property name="test.junit.path" value="/usr/share/java/junit.jar"/>
+	<property name="test.junit.path" value="libs/junit/junit-4.8.1.jar"/>
 	<property name="javac.test.compilerargs" value="${javac.compilerargs}"/>
 	<property name="test.classpath" value="${javac.classpath}:${build.classes.dir}:${test.build.classes.dir}:${test.junit.path}"/>
 	<property name="test.reports" value="${build.dir}/test/report"/>
-	<!-- Custom user properties should go in a file called build.properties -->
-	<property file="build.properties"/>
 
 	<!--
 	  Initialisation
@@ -50,6 +66,20 @@
 		<mkdir dir="${test.reports}"/>
 		<mkdir dir="${javadoc.dir}"/>
 		<mkdir dir="${dist.dir}"/>
+	</target>
+
+	<!--
+	  Disable lib merging.
+	  -->
+	<target name="nomerge" description="Disable merging of libs into jar">
+		<var name="mergelibs" value="false" />
+	</target>
+
+	<!--
+	  Disable jar compression
+	  -->
+	<target name="nocompress" description="Disable compression of output jar">
+		<var name="jar.compress" value="false" />
 	</target>
 
 	<!--
@@ -78,15 +108,17 @@
 	  Testing
 	  -->
 	<target name="compile-test" depends="init" description="Compile Project Tests">
-		<javac srcdir="${test.src.dir}" destdir="${test.build.classes.dir}" deprecation="${javac.deprecation}" includeantruntime="false" debug="${javac.debug}">
+		<javac excludes="${javac.excludes}" sourcepath="" srcdir="${test.src.dir}:${parser.test.src.dir}" destdir="${test.build.classes.dir}" deprecation="${javac.deprecation}" includeantruntime="false" debug="${javac.debug}">
 			<classpath>
 				<path path="${test.classpath}"/>
+				<path path="${test.libs.jars}"/>
 			</classpath>
 			<compilerarg line="${javac.test.compilerargs}"/>
 		</javac>
 
 		<copy todir="${test.build.classes.dir}">
 			<fileset dir="${test.src.dir}" excludes="${test.build.classes.excludes}"/>
+			<fileset dir="${parser.test.src.dir}" excludes="${test.build.classes.excludes}"/>
 		</copy>
 	</target>
 
@@ -94,9 +126,11 @@
 		<junit showoutput="true" fork="true" failureproperty="tests.failed" errorproperty="tests.failed">
 			<batchtest todir="${test.results.dir}">
 				<fileset dir="${test.src.dir}" includes="${test.includes}"/>
+				<fileset dir="${parser.test.src.dir}" includes="${test.includes}"/>
 			</batchtest>
 			<classpath>
 				<path path="${test.classpath}"/>
+				<path path="${test.libs.jars}"/>
 			</classpath>
 			<syspropertyset>
 				<propertyref prefix="test-sys-prop."/>
@@ -120,9 +154,10 @@
 	  Compile
 	  -->
 	<target name="compile" depends="init" description="Compile Project">
-		<javac srcdir="${main.src.dir}:${parser.src.dir}" destdir="${build.classes.dir}" deprecation="${javac.deprecation}" source="${javac.source}" target="${javac.target}" includeantruntime="false" debug="${javac.debug}">
+		<javac excludes="${javac.excludes}" sourcepath="" srcdir="${main.src.dir}:${parser.src.dir}:${akuma.src.dir}" destdir="${build.classes.dir}" deprecation="${javac.deprecation}" source="${javac.source}" target="${javac.target}" includeantruntime="false" debug="${javac.debug}">
 			<classpath>
 				<path path="${javac.classpath}"/>
+				<path path="${libs.classpath}"/>
 			</classpath>
 			<compilerarg line="${javac.compilerargs}"/>
 		</javac>
@@ -130,6 +165,7 @@
 		<copy todir="${build.classes.dir}">
 			<fileset dir="${main.src.dir}" excludes="${build.classes.excludes}"/>
 			<fileset dir="${parser.src.dir}" excludes="${build.classes.excludes}"/>
+			<fileset dir="${akuma.src.dir}" excludes="${build.classes.excludes}"/>
 		</copy>
 	</target>
 
@@ -138,7 +174,7 @@
 	  -->
 	<property name="version.config" value="build/classes/uk/org/dataforce/dfbnc/version.config"/>
 	<available file=".git" property="is.git"/>
-	<target name="-write-all-version" depends="-write-version, -write-parser-version"/>
+	<target name="-write-all-version" depends="-write-version, -write-parser-version, -write-akuma-version"/>
 	<target name="-write-version" depends="-write-version-header, -add-version"/>
 	<target name="-write-version-header">
 		<echo file="${version.config}"># This is a DFBnc configuration file automatically generated by
@@ -172,15 +208,55 @@ versions:
 		</exec>
 	</target>
 
+	<target name="-write-akuma-version" depends="-write-akuma-version-header, -add-akuma-version"/>
+	<target name="-write-akuma-version-header">
+		<echo file="${version.config}" append="true">   akuma=</echo>
+	</target>
+	<target name="-add-akuma-version" depends="-add-akuma-git-version"/>
+	<target name="-add-akuma-git-version" if="is.git">
+		<exec executable="git" output="${version.config}" append="true">
+			<arg value="--git-dir=modules/akuma/.git"/>
+			<arg value="describe"/>
+			<arg value="--tags"/>
+		</exec>
+	</target>
+
 	<!--
 	  Build Jar File
 	  -->
-	<target name="jar" depends="compile,-write-all-version" description="Build JAR.">
-		<jar jarfile="${dist.jar}" compress="${jar.compress}" basedir="${build.classes.dir}">
+	<target name="-do-jar" depends="compile,-write-all-version" description="Build JAR.">
+		<jar jarfile="${dist.jar}.temp" compress="${jar.compress}" basedir="${build.classes.dir}">
 			<manifest>
 				<attribute name="Main-Class" value="${main.class}"/>
 			</manifest>
 		</jar>
+	</target>
+
+	<!-- Add libs to jar -->
+	<target name="-merge-jar-and-libs" depends="-do-jar" description="Merge JAR and Libs">
+		<delete file="${dist.jar}" />
+		<zip destfile="${dist.jar}" compress="${jar.compress}">
+			<zipgroupfileset dir="" includes="${dist.jar}.temp,${libs.jars}"/>
+		</zip>
+		<delete file="${dist.jar}.temp" />
+	</target>
+
+	<!-- Don't add libs to jar -->
+	<target name="-rename-temp-jar" depends="-do-jar" description="Rename Jar">
+		<move file="${dist.jar}.temp" tofile="${dist.jar}" overwrite="true" />
+	</target>
+
+	<!-- Add libs to jar -->
+	<target name="jar" depends="-do-jar" description="Build JAR and merge in libs.">
+		<if>
+			<equals arg1="${mergelibs}" arg2="true" />
+			<then>
+				<antcall target="-merge-jar-and-libs" />
+			</then>
+			<else>
+				<antcall target="-rename-temp-jar" />
+			</else>
+		</if>
 	</target>
 
 	<!--

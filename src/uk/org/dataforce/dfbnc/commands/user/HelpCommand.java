@@ -41,9 +41,9 @@ public class HelpCommand extends Command {
      */
     @Override
     public void handle(final UserSocket user, final String[] params) {
-    
+
         final String command = (params.length > 1) ? params[1] : "";
-    
+
         if (!command.equals("")) {
             if (user.getAccount() != null) {
                 try {
@@ -62,7 +62,7 @@ public class HelpCommand extends Command {
                     final Map<String, Command> allCommands = user.getAccount().getCommandManager().getAllCommands(command, user.getAccount().isAdmin());
                     if (allCommands.size() > 0) {
                         user.sendBotMessage("Multiple possible matches were found for '"+command+"': ");
-                        for (String p : allCommands.keySet()) {
+                        for (final String p : allCommands.keySet()) {
                             user.sendBotMessage("    " + (p.charAt(0) == '*' ? p.substring(1) : p));
                         }
                         return;
@@ -82,7 +82,7 @@ public class HelpCommand extends Command {
             }
         }
     }
-    
+
     /**
      * What does this Command handle.
      *
@@ -92,7 +92,7 @@ public class HelpCommand extends Command {
     public String[] handles() {
         return new String[]{"help"};
     }
-    
+
     /**
      * Get a description of what this command does
      *
@@ -104,11 +104,11 @@ public class HelpCommand extends Command {
     public String getDescription(final String command) {
         return "This command shows more detailed help for commands";
     }
-    
+
     /**
      * Create a new instance of the Command Object
      *
      * @param manager CommandManager that is in charge of this Command
      */
-    public HelpCommand (final CommandManager manager) { super(manager); }  
+    public HelpCommand (final CommandManager manager) { super(manager); }
 }
