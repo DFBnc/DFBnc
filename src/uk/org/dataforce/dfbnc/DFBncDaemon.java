@@ -83,9 +83,15 @@ class DFBncDaemon extends Daemon {
         try {
             JavaVMArguments.of(getPID());
             return true;
-        } catch (final IOException ioe) {
-            return false;
-        } catch (final UnsupportedOperationException uoe) {
+        } catch (final Throwable t) {
+            // A few known errors can occur here, all of which mean we can't
+            // fork, but also, if this gives ANY error then theres no point
+            // trying to fork.
+            //
+            // IOException - Technically we can fork, but we got an IO Error
+            //               reading our own process information, so assume no.
+            // UnsupportedOperationException - Akuma doesn't support this OS
+            // UnsatisfiedLinkError - Lib C can not be loaded.
             return false;
         }
     }

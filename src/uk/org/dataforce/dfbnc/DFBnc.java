@@ -110,7 +110,7 @@ public class DFBnc {
         Logger.setLevel(LogLevel.INFO);
         loadVersionInfo();
         if (DFBncDaemon.canFork() && daemon.isDaemonized()) {
-            Logger.setTag("(" + daemon.getPID() + ") Child");
+            Logger.setTag("(" + DFBncDaemon.getPID() + ") Child");
         } else {
             Logger.info("Starting DFBnc (Version: " + getVersion() + ")..");
         }
@@ -268,7 +268,7 @@ public class DFBnc {
         }, pingFrequency, pingFrequency);
 
         if (DFBncDaemon.canFork() && daemon.isDaemonized()) {
-            Logger.info("Forked and running! (PID: " + daemon.getPID() +")");
+            Logger.info("Forked and running! (PID: " + DFBncDaemon.getPID() +")");
             try {
                 daemon.closeDescriptors();
             } catch (final IOException ioe) {
