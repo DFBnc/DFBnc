@@ -235,7 +235,7 @@ versions:
 	<!-- Add libs to jar -->
 	<target name="-merge-jar-and-libs" depends="-do-jar" description="Merge JAR and Libs">
 		<delete file="${dist.jar}" />
-		<zip destfile="${dist.jar}" compress="${jar.compress}">
+		<zip destfile="${dist.jar}" compress="${jar.compress}" duplicate="preserve">
 			<zipgroupfileset dir="" includes="${dist.jar}.temp,${libs.jars}"/>
 		</zip>
 		<delete file="${dist.jar}.temp" />
