@@ -90,7 +90,7 @@ public class DFBnc {
     private ShutdownHook shutdownHook;
 
     /** Daemon. */
-    final bncDaemon daemon = new bncDaemon();
+    final static DFBncDaemon daemon = new DFBncDaemon();
 
     /** PID File name. */
     static String pidFile = "";
@@ -109,7 +109,7 @@ public class DFBnc {
     private void init(final String[] args) {
         Logger.setLevel(LogLevel.INFO);
         loadVersionInfo();
-        if (daemon.isDaemonized()) {
+        if (DFBncDaemon.canFork() && daemon.isDaemonized()) {
             Logger.setTag("(" + daemon.getPID() + ") Child");
         } else {
             Logger.info("Starting DFBnc (Version: " + getVersion() + ")..");
@@ -129,7 +129,7 @@ public class DFBnc {
 
         setupLogging();
 
-        if (daemon.isDaemonized()) {
+        if (DFBncDaemon.canFork() && daemon.isDaemonized()) {
             try {
                 final CLIParam pidFileCLI = cli.getParam("-pidfile");
                 pidFile = pidFileCLI.getStringValue().isEmpty() ? "dfbnc.pid" : pidFileCLI.getStringValue();
@@ -141,7 +141,9 @@ public class DFBnc {
                 e.printStackTrace();
                 System.exit(1);
             }
-        } else if (cli.getParamNumber("-background") > 0) {
+        } else if (!DFBncDaemon.canFork() && cli.getParamNumber("-background") > 0) {
+            Logger.error("Forking is not possible on the current OS (" +  System.getProperty("os.name") + ").");
+        } else if (DFBncDaemon.canFork() && cli.getParamNumber("-background") > 0) {
             try {
                 Logger.info("Forking to background...");
                 Logger.info(null);
@@ -265,7 +267,7 @@ public class DFBnc {
             }
         }, pingFrequency, pingFrequency);
 
-        if (daemon.isDaemonized()) {
+        if (DFBncDaemon.canFork() && daemon.isDaemonized()) {
             Logger.info("Forked and running! (PID: " + daemon.getPID() +")");
             try {
                 daemon.closeDescriptors();
@@ -421,10 +423,12 @@ public class DFBnc {
             config.save();
         }
 
-        Logger.info("Removing pid file");
-        if (!pidFile.isEmpty()) {
-            final File pid = new File(pidFile);
-            if (pid.exists()) { pid.delete(); }
+        if (DFBncDaemon.canFork() && daemon.isDaemonized()) {
+            if (!pidFile.isEmpty()) {
+                Logger.info("Removing pid file");
+                final File pid = new File(pidFile);
+                if (pid.exists()) { pid.delete(); }
+            }
         }
 
         Logger.info("Closing log file");
@@ -518,8 +522,13 @@ public class DFBnc {
         cli.add(new BooleanParam('s', "silent", "Disable all output"));
         cli.add(new StringParam('c', "config", "Alternative config directory to use"));
         cli.add(new BooleanParam((char)0, "enableDebugOptions", "Enable 'debugging.*' config settings"));
-        cli.add(new BooleanParam((char)0, "background", "Fork into background (EXPERIMENTAL)"));
-        cli.add(new StringParam((char)0, "pidfile", "Change pidfile location (Default: ./dfbnc.pid)"));
+        if (DFBncDaemon.canFork()) {
+            cli.add(new BooleanParam((char)0, "background", "Fork into background (EXPERIMENTAL)"));
+            cli.add(new StringParam((char)0, "pidfile", "Change pidfile location (Default: ./dfbnc.pid)"));
+        } else {
+            cli.add(new BooleanParam((char)0, "background", "Fork into background (EXPERIMENTAL) [UNSUPPORTED ON THIS OS]"));
+            cli.add(new StringParam((char)0, "pidfile", "Change pidfile location (Default: ./dfbnc.pid) [UNSUPPORTED ON THIS OS]"));
+        }
         cli.add(new StringParam((char)0, "logfile", "Log file to use for console output. (Default: none)"));
         cli.setHelp(cli.getParam("-help"));
     }
