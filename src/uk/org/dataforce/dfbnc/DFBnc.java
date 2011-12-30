@@ -431,9 +431,9 @@ public class DFBnc {
             }
         }
 
-        Logger.info("Closing log file");
         final BufferedWriter bw = Logger.getWriter();
         if (bw != null) {
+            Logger.info("Closing log file");
             Logger.setWriter(null);
             try {
                 final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
