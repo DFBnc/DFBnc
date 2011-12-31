@@ -264,7 +264,7 @@ public class UserSocket extends ConnectedSocket {
      * The first time the counter goes above the threshold, a ping will be sent
      * to try and generate a response from the client. If the count reaches
      * threshold * 2, then the socket will be closed.
-     * 
+     *
      * If threshold is less than 1, then this will do nothing at all.
      *
      * @param threshold Threshold for killing sockets.
@@ -272,7 +272,7 @@ public class UserSocket extends ConnectedSocket {
     public static void checkAll(final int threshold) {
         if (threshold < 1) { return; }
         for (UserSocket socket : getUserSockets()) {
-            if (++socket.inactiveCounter > threshold) {
+            if (++socket.inactiveCounter >= threshold) {
                 if (socket.inactiveCounter == threshold) {
                     socket.sendLine("PING :%d", System.currentTimeMillis());
                 } else if (socket.inactiveCounter > threshold * 2) {

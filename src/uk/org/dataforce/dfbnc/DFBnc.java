@@ -449,8 +449,10 @@ public class DFBnc {
             } catch (final IOException ioe) { /** Oh well. */ }
         }
 
+        Logger.info("Deactivating shutdown hook.");
         if (shutdownHook != null) { shutdownHook.inactivate(); }
         if (!shuttingDown) {
+            Logger.info("Exiting.");
             System.exit(0);
         }
     }

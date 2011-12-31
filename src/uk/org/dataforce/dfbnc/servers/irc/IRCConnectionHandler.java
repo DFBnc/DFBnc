@@ -30,23 +30,24 @@ import com.dmdirc.parser.common.ParserError;
 import com.dmdirc.parser.irc.IRCParser;
 import com.dmdirc.parser.irc.IRCChannelInfo;
 import com.dmdirc.parser.irc.IRCClientInfo;
-import com.dmdirc.parser.irc.ServerInfo;
 import com.dmdirc.parser.interfaces.Parser;
 import com.dmdirc.parser.interfaces.ClientInfo;
 import com.dmdirc.parser.interfaces.ChannelClientInfo;
 import com.dmdirc.parser.interfaces.ChannelInfo;
+import com.dmdirc.parser.interfaces.callbacks.CallbackInterface;
 import com.dmdirc.parser.interfaces.callbacks.DataInListener;
 import com.dmdirc.parser.interfaces.callbacks.DataOutListener;
 import com.dmdirc.parser.interfaces.callbacks.ServerReadyListener;
 import com.dmdirc.parser.interfaces.callbacks.NickChangeListener;
 import com.dmdirc.parser.interfaces.callbacks.NumericListener;
-import com.dmdirc.parser.interfaces.callbacks.Post005Listener;
 import com.dmdirc.parser.interfaces.callbacks.MotdEndListener;
 import com.dmdirc.parser.interfaces.callbacks.ChannelSelfJoinListener;
 import com.dmdirc.parser.interfaces.callbacks.ConnectErrorListener;
 import com.dmdirc.parser.interfaces.callbacks.ErrorInfoListener;
 import com.dmdirc.parser.interfaces.callbacks.SocketCloseListener;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.ArrayList;
@@ -75,7 +76,7 @@ import uk.org.dataforce.libs.util.Util;
  */
 public class IRCConnectionHandler implements ConnectionHandler,
         UserSocketWatcher, DataInListener, DataOutListener, NickChangeListener,
-        ServerReadyListener, Post005Listener, NumericListener, MotdEndListener,
+        ServerReadyListener, NumericListener, MotdEndListener,
         SocketCloseListener, ChannelSelfJoinListener, ConnectErrorListener,
         ErrorInfoListener {
 
@@ -85,19 +86,19 @@ public class IRCConnectionHandler implements ConnectionHandler,
     private final int myServerNum;
     /** IRCParser we are using. */
     private final Parser myParser;
-    /** Thread used to store IRCParser */
-    private final Thread controlThread;
-    /** Have we recieved a MOTDEnd callback? */
+    /** Have we received a ServerReady callback? */
+    private boolean parserReady = false;
+    /** Have we received a MOTDEnd callback? */
     private boolean hasMOTDEnd = false;
     /** Have we hacked in our own 005? (Shows support for LISTMODE) */
     private boolean hacked005 = false;
-    /** This stores the 002-005 lines which are sent to users who connect after we recieve them  */
+    /** This stores the 002-005 lines which are sent to users who connect after we receive them  */
     private List<String> connectionLines = new ArrayList<String>();
     /** This stores tokens not related to a channel that we want to temporarily allow to come via onDataIn */
     private List<String> allowTokens = new ArrayList<String>();
     /** This stores lines that need to be processed at a later date. */
     private final List<RequeueLine> requeueList = new ArrayList<RequeueLine>();
-    /** This timer handles reprocessing of items in the requeueList */
+    /** This timer handles re-processing of items in the requeueList */
     private Timer requeueTimer = new Timer("requeueTimer");
 
     /**
@@ -129,7 +130,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         }
 
         String[] serverInfo = IRCServerType.parseServerString(serverList.get(serverNumber));
-        ServerInfo server;
+        URI server;
         try {
             boolean isSSL = false;
             final int portNum;
@@ -139,26 +140,17 @@ public class IRCConnectionHandler implements ConnectionHandler,
             } else {
                 portNum = Integer.parseInt(serverInfo[1]);
             }
-            server = new ServerInfo(serverInfo[0], portNum, serverInfo[2]);
-            server.setSSL(isSSL);
+            server = new URI(isSSL ? "ircs" : "irc", serverInfo[2], serverInfo[0], portNum, "", "", "");
         } catch (NumberFormatException nfe) {
             throw new UnableToConnectException("Invalid Port");
+        } catch (URISyntaxException use) {
+            throw new UnableToConnectException("Unable to create URI: "+use);
         }
 
         myParser = new IRCParser(me, server);
 
         try {
-            myParser.getCallbackManager().addCallback(DataInListener.class, this);
-            myParser.getCallbackManager().addCallback(DataOutListener.class, this);
-            myParser.getCallbackManager().addCallback(ServerReadyListener.class, this);
-            myParser.getCallbackManager().addCallback(Post005Listener.class, this);
-            myParser.getCallbackManager().addCallback(NumericListener.class, this);
-            myParser.getCallbackManager().addCallback(MotdEndListener.class, this);
-            myParser.getCallbackManager().addCallback(ChannelSelfJoinListener.class, this);
-            myParser.getCallbackManager().addCallback(NickChangeListener.class, this);
-            myParser.getCallbackManager().addCallback(SocketCloseListener.class, this);
-            myParser.getCallbackManager().addCallback(ConnectErrorListener.class, this);
-            myParser.getCallbackManager().addCallback(ErrorInfoListener.class, this);
+            setupCallbacks();
         } catch (CallbackNotFoundException cnfe) {
             throw new UnableToConnectException("Unable to register callbacks");
         }
@@ -176,8 +168,22 @@ public class IRCConnectionHandler implements ConnectionHandler,
         // Allow the initial usermode line through to the user
         allowLine(null, "221");
 
-        controlThread = new Thread(myParser);
-        controlThread.start();
+        myParser.connect();
+        ((IRCParser)myParser).getControlThread().setName("IRC Parser - " + myAccount.getName() + " - <server>");
+    }
+
+    /**
+     * Set up the callbacks with the parser.
+     *
+     * @throws CallbackNotFoundException
+     */
+    @SuppressWarnings("unchecked")
+    private void setupCallbacks() throws CallbackNotFoundException {
+        for (Class c : IRCConnectionHandler.class.getInterfaces()) {
+            if (CallbackInterface.class.isAssignableFrom(c)) {
+                myParser.getCallbackManager().addCallback(c, this);
+            }
+        }
     }
 
     /** {@inheritDoc} */
@@ -502,9 +508,12 @@ public class IRCConnectionHandler implements ConnectionHandler,
                         allowLine(null, "221");
                     }
                 } else if (line[0].equalsIgnoreCase("listmode")) {
-                    if (((IRCParser) myParser).get005().containsKey("LISTMODE")) {
-                        allowLine(channel, ((IRCParser) myParser).get005().get("LISTMODE"));
-                        allowLine(channel, ((IRCParser) myParser).get005().get("LISTMODEEND"));
+                    if (myParser instanceof IRCParser) {
+                        final IRCParser ircParser = ((IRCParser) myParser);
+                        if (ircParser.get005().containsKey("LISTMODE")) {
+                            allowLine(channel, ircParser.get005().get("LISTMODE"));
+                            allowLine(channel, ircParser.get005().get("LISTMODEEND"));
+                        }
                     }
                 }
                 return false;
@@ -549,7 +558,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /** {@inheritDoc} */
     @Override
     public String getServerName() {
-        if (((IRCParser) myParser).isReady()) {
+        if (parserReady) {
             return myParser.getServerName();
         } else {
             return null;
@@ -727,12 +736,15 @@ public class IRCConnectionHandler implements ConnectionHandler,
 
         try {
             final int numeric = Integer.parseInt(bits[1]);
-            final boolean supportLISTMODE = ((IRCParser) myParser).get005().containsKey("LISTMODE");
-            if (supportLISTMODE) {
-                if (bits[1].equals(((IRCParser) myParser).get005().get("LISTMODE"))) {
-                    return;
-                } else if (bits[1].equals(((IRCParser) myParser).get005().get("LISTMODEEND"))) {
-                    return;
+            if (myParser instanceof IRCParser) {
+                final IRCParser ircParser = ((IRCParser) myParser);
+                final boolean supportLISTMODE = ircParser.get005().containsKey("LISTMODE");
+                if (supportLISTMODE) {
+                    if (bits[1].equals(ircParser.get005().get("LISTMODE"))) {
+                        return;
+                    } else if (bits[1].equals(ircParser.get005().get("LISTMODEEND"))) {
+                        return;
+                    }
                 }
             }
             final ChannelInfo channel = (bits.length > 3) ? myParser.getChannel(bits[3]) : null;
@@ -810,15 +822,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /** {@inheritDoc} */
     @Override
     public void onServerReady(final Parser parser, final Date date) {
-        for (UserSocket socket : myAccount.getUserSockets()) {
-            socket.setPost001(true);
-            socket.setNickname(parser.getLocalClient().getNickname());
-        }
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void onPost005(final Parser parser, final Date date) {
         //hasPost005 = true;
         // We no longer need this callback, so lets remove it
         myParser.getCallbackManager().delCallback(NumericListener.class, this);
@@ -861,6 +864,14 @@ public class IRCConnectionHandler implements ConnectionHandler,
             }
             connectionLines.add(parser.getLastLine());
         }
+        // The parser no longer has separate calls before and after 005..
+        if (numeric == 1) {
+            parserReady = true;
+            for (UserSocket socket : myAccount.getUserSockets()) {
+                socket.setPost001(true);
+                socket.setNickname(parser.getLocalClient().getNickname());
+            }
+        }
     }
 
     /** {@inheritDoc} */
@@ -900,6 +911,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
     public void onErrorInfo(final Parser parser, final Date date, final ParserError errorInfo) {
         Logger.error("Parser error occurred: " + errorInfo.getData());
         Logger.error("\tLast line received: " + errorInfo.getLastLine());
+        errorInfo.getException().printStackTrace();
 
         if (myAccount.getConfig().getBoolOption("server", "reporterrors", false)) {
             myAccount.sendBotMessage("Parser error occurred: %s", errorInfo.getData());
@@ -912,9 +924,9 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /** {@inheritDoc} */
     @Override
     public void userConnected(final UserSocket user) {
-        Logger.debug2("IRC userConnected: Check for 001: "+((IRCParser) myParser).isReady());
+        Logger.debug2("IRC userConnected: Check for 001: " + parserReady);
         // If the parser has processed a 001, we need to send our own
-        if (((IRCParser) myParser).isReady()) {
+        if (parserReady) {
             Logger.debug2("Has 001");
             user.sendIRCLine(1, myParser.getLocalClient().getNickname(), "Welcome to the Internet Relay Network, " + myParser.getLocalClient().getNickname());
             user.setNickname(myParser.getLocalClient().getNickname());
@@ -1104,7 +1116,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
      */
     @Override
     public void userDisconnected(final UserSocket user) {
-        if (((IRCParser) myParser).isReady()) {
+        if (parserReady) {
             if (myAccount.getUserSockets().isEmpty()) {
                 List<String> myList = new ArrayList<String>();
                 myList = myAccount.getConfig().getListOption("irc", "perform.lastdetach", myList);

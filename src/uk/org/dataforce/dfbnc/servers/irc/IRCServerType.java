@@ -34,7 +34,7 @@ import uk.org.dataforce.dfbnc.sockets.UnableToConnectException;
 public class IRCServerType extends ServerType {
     /** CommandManager for IRCServerType */
     final CommandManager myCommandManager = new CommandManager();
-     
+
     /**
      * Create a new instance of the ServerType Object
      *
@@ -46,7 +46,7 @@ public class IRCServerType extends ServerType {
         myCommandManager.addCommand(new IRCSetCommand(myCommandManager));
         myCommandManager.addCommand(new PerformCommand(myCommandManager));
     }
-    
+
     /**
      * Get the Description for this ServerType
      *
@@ -56,7 +56,7 @@ public class IRCServerType extends ServerType {
     public String getDescription() {
         return "This allows connecting to an IRC Server";
     }
-    
+
     /**
      * Called when this ServerType is activated
      *
@@ -66,7 +66,7 @@ public class IRCServerType extends ServerType {
     public void activate(final Account account) {
         account.getCommandManager().addSubCommandManager(myCommandManager);
     }
-    
+
     /**
      * Called when this ServerType is deactivated
      *
@@ -76,7 +76,7 @@ public class IRCServerType extends ServerType {
     public void deactivate(final Account account) {
         account.getCommandManager().delSubCommandManager(myCommandManager);
     }
-    
+
     /**
      * Called to close any Active connections.
      * This is called when an account is being disabled/removed or the BNC
@@ -87,8 +87,9 @@ public class IRCServerType extends ServerType {
      */
     @Override
     public void close(final Account account, final String reason) {
+        account.getConnectionHandler().shutdown(reason);
     }
-    
+
     /**
      * Parse a String to get server information.
      *
@@ -122,10 +123,10 @@ public class IRCServerType extends ServerType {
         result[0] = hostBits[0];
         // Set interpreted value
         result[3] = (result[0]+":"+result[1]+" "+result[2]).trim();
-        
+
         return result;
     }
-    
+
     /**
      * Create a new ConnectionHandler for this server type.
      *
