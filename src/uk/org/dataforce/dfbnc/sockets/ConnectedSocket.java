@@ -146,6 +146,7 @@ public abstract class ConnectedSocket implements SelectedSocketHandler {
      * @param line Line to send
      */
     public final void sendLine(final String line) {
+        System.out.println(line);
         mySocketWrapper.sendLine(line);
     }
 
@@ -175,5 +176,5 @@ public abstract class ConnectedSocket implements SelectedSocketHandler {
     public void processSelectionKey(final SelectionKey selKey) throws IOException {
         getSocketWrapper().processSelectionKey(selKey);
     }
-    
+
 }

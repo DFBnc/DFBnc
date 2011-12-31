@@ -21,6 +21,8 @@
  */
 package uk.org.dataforce.dfbnc;
 
+import java.util.Arrays;
+import java.util.List;
 import java.io.IOException;
 import com.sun.akuma.Daemon;
 import com.sun.akuma.JavaVMArguments;
@@ -29,7 +31,7 @@ import static com.sun.akuma.CLibrary.LIBC;
 /**
  * This class extends the Daemon class for DFBnc specific requirements.
  */
-class DFBncDaemon extends Daemon {
+public class DFBncDaemon extends Daemon {
     /** Is forking supported? */
     private static boolean canFork = checkCanFork();
 
@@ -54,6 +56,19 @@ class DFBncDaemon extends Daemon {
     @Override
     public void closeDescriptors() throws IOException {
         super.closeDescriptors();
+    }
+
+    /**
+     * Get the arguments used to call this process.
+     *
+     * @return Current Arguments
+     */
+    public static List<String> getArgs() {
+        try {
+            return JavaVMArguments.of(getPID());
+        } catch (final Throwable t) {
+            return Arrays.asList(new String[0]);
+        }
     }
 
     /**

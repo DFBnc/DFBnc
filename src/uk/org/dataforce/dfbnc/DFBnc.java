@@ -81,7 +81,7 @@ public class DFBnc {
     private static ArrayList<ListenSocket> listenSockets = new ArrayList<ListenSocket>();
 
     /** The time that the BNC was started at */
-    private static Long startTime = System.currentTimeMillis();
+    public static final Long startTime = System.currentTimeMillis();
 
     /** Global config. */
     private Config config;
@@ -90,7 +90,7 @@ public class DFBnc {
     private ShutdownHook shutdownHook;
 
     /** Daemon. */
-    final static DFBncDaemon daemon = new DFBncDaemon();
+    public final static DFBncDaemon daemon = new DFBncDaemon();
 
     /** PID File name. */
     static String pidFile = "";

@@ -136,6 +136,7 @@ public class ShowCommand extends Command {
         showManager.addCommand(new VersionCommand(showManager));
         showManager.addCommand(new FirstTimeCommand(showManager));
         showManager.addCommand(new SessionsCommand(showManager));
+        showManager.addCommand(new SystemCommand(showManager));
         showManager.addCommand(new Command(showManager){
 
             /** {@inheritDoc} */

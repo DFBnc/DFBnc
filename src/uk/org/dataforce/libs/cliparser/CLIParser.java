@@ -23,8 +23,9 @@
 package uk.org.dataforce.libs.cliparser;
 
 import java.util.ArrayList;
-import java.util.Hashtable;
-
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import uk.org.dataforce.libs.logger.Logger;
 
 /**
@@ -33,48 +34,53 @@ import uk.org.dataforce.libs.logger.Logger;
 public class CLIParser {
     /** Singleton instance of CLIParser. */
     private static CLIParser me;
-    
-    /** Singleton instance of CLIParser. */
-    CLIParam helpParam = null;
-    
+
+    /** What parameter is used for help? */
+    private CLIParam helpParam = null;
+
     /**
      * Known arguments.
-     * This hashtable stores the arguments with their flags as the key.
+     * This hashmap stores the arguments with their flags as the key.
      */
-    private Hashtable<String, CLIParam> params = new Hashtable<String, CLIParam>();
-    
+    private Map<String, CLIParam> params = new HashMap<String, CLIParam>();
+
     /**
      * Known arguments.
      * This ArrayList stores every param type. (used for help)
      */
-    private ArrayList<CLIParam> paramList = new ArrayList<CLIParam>();
-    
+    private List<CLIParam> paramList = new ArrayList<CLIParam>();
+
     /**
      * Redundant Strings.
      * This ArrayList stores redundant strings found whilst parsing the params.
      */
-    private ArrayList<String> redundant = new ArrayList<String>();
-    
+    private List<String> redundant = new ArrayList<String>();
+
+    /**
+     * Last set of arguments parsed.
+     */
+    private String[] lastArgs = null;
+
     /**
      * Get a reference to the CLIParser.
-     * 
+     *
      * @return The reference to the CLIParser in use
      */
     public static synchronized CLIParser getCLIParser() {
         if (me == null) { me = new CLIParser(); }
         return me;
     }
-    
+
     /** Private constructor for CLIParser to prevent non-singleton instance. */
     private CLIParser() { }
-    
+
     /** Clear known params from the hashtable. */
     public void clear() {
         params.clear();
         paramList.clear();
         redundant.clear();
     }
-    
+
     /**
      * Add a CLIParam to the cliparser.
      *
@@ -82,8 +88,8 @@ public class CLIParser {
      * @return true if added, false if already exists.
      */
     public boolean add(final CLIParam param) {
-        boolean validChar = (param.getChr() == 0 || !params.containsKey(""+param.getChr()));
-        boolean validString = (param.getString().length() == 0 || !params.containsKey("-"+param.getString()));
+        final boolean validChar = (param.getChr() == 0 || !params.containsKey(""+param.getChr()));
+        final boolean validString = (param.getString().length() == 0 || !params.containsKey("-"+param.getString()));
         if (validChar && validString) {
             if (param.getChr() != 0) {
                 params.put(""+param.getChr(), param);
@@ -99,7 +105,7 @@ public class CLIParser {
             return false;
         }
     }
-    
+
     /**
      * Get the number of times a param was given.
      * In the case of params with both a char and string value, this number is
@@ -109,15 +115,14 @@ public class CLIParser {
      * @return number, or -1 if the param is invalud
      */
     public int getParamNumber(final String flag) {
-        String check = flag;
-        if (flag.length() > 1) { check = flag.toLowerCase(); }
+        final String check = (flag.length() > 1) ? flag.toLowerCase() : flag;
         if (params.containsKey(check)) {
             return params.get(check).getNumber();
         } else {
             return -1;
         }
     }
-    
+
     /**
      * Get a CLIParam object for a given flag.
      *
@@ -125,37 +130,36 @@ public class CLIParser {
      * @return CLIParam object, or null if there is none.
      */
     public CLIParam getParam(final String flag) {
-        String check = flag;
-        if (flag.length() > 1) { check = flag.toLowerCase(); }
+        final String check = (flag.length() > 1) ? flag.toLowerCase() : flag;
         if (params.containsKey(check)) {
             return params.get(check);
         } else {
             return null;
         }
     }
-    
+
     /**
      * Get the list of params.
      *
      * @return list of params.
      */
-    public ArrayList<CLIParam> getParamList() {
+    public List<CLIParam> getParamList() {
         return paramList;
     }
-    
+
     /**
      * Get the list of redundant strings.
      *
      * @return list of redundant strings.
      */
-    public ArrayList<String> getRedundant() {
-        ArrayList<String> result = new ArrayList<String>();
+    public List<String> getRedundant() {
+        final List<String> result = new ArrayList<String>();
         for (String item : redundant) {
             result.add(item);
         }
         return result;
     }
-    
+
     /**
      * Set the "help" command.
      *
@@ -164,22 +168,22 @@ public class CLIParser {
     public void setHelp(final CLIParam param) {
         helpParam = param;
     }
-    
+
     /**
      * Check if the help parameter has been passed to the CLI.
-     * 
+     *
      * @param args Arguments passed to CLI
      * @return True if the designated help parameter has been requested
      */
     public boolean wantsHelp(String[] args) {
         if (helpParam == null) { return false; }
-        for (String arg : args) {
+        for (final String arg : args) {
             if (arg.length() > 1 && arg.charAt(0) == '-') {
-                String name = arg.substring(1);
+                final String name = arg.substring(1);
                 if (name.equals("-")) {
                     return false;
                 } else {
-                    CLIParam param = getParam(name);
+                    final CLIParam param = getParam(name);
                     if (param == helpParam) {
                         return true;
                     }
@@ -188,10 +192,10 @@ public class CLIParser {
         }
         return false;
     }
-    
+
     /**
      * Show the help
-     * 
+     *
      * @param title Title of application
      * @param usage CLI Usage String
      */
@@ -214,7 +218,7 @@ public class CLIParser {
             System.out.println("\t"+param.getDescription());
         }
     }
-    
+
     /**
      * Given a string array of arguments, parse as CLI Params.
      *
@@ -222,6 +226,7 @@ public class CLIParser {
      * @param strict if True, will terminate if a given param is invalid.
      */
     public void parseArgs(final String[] args, final boolean strict) {
+        lastArgs = args;
         CLIParam lastParam = null;
         boolean allRedundant = false;
         for (String arg : args) {
@@ -274,5 +279,14 @@ public class CLIParser {
                 }
             }
         }
+    }
+
+    /**
+     * Get the last args that were parsed.
+     *
+     * @return Last args that were parsed.
+     */
+    public String[] getLastArgs() {
+        return lastArgs;
     }
 }
