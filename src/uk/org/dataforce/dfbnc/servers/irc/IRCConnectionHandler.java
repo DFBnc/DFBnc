@@ -46,6 +46,8 @@ import com.dmdirc.parser.interfaces.callbacks.ConnectErrorListener;
 import com.dmdirc.parser.interfaces.callbacks.ErrorInfoListener;
 import com.dmdirc.parser.interfaces.callbacks.SocketCloseListener;
 
+import com.dmdirc.parser.irc.ServerType;
+import com.dmdirc.parser.irc.ServerTypeGroup;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
@@ -293,18 +295,30 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                             alreadySent.add(modechar);
                                         }
                                         final Collection<ChannelListModeItem> modeList = channel.getListMode(modechar);
+                                        final ServerType st = ((IRCParser)myParser).getServerType();
+                                        final boolean owner386 = ServerTypeGroup.OWNER_386.isMember(st);
+                                        final boolean isFreenode = ServerTypeGroup.FREENODE.isMember(st);
+                                        final boolean serverSupportsListmode = (myParser instanceof IRCParser) && ((IRCParser) myParser).get005().containsKey("LISTMODE");
+
                                         if (modeList != null) {
                                             // This covers most list items, if its not listed here it
                                             // gets forwarded to the server.
+                                            boolean backwardsList = false;
                                             if (modechar == 'b') {
                                                 itemNumber = 367;
                                                 listName = "Channel Ban List";
                                             } else if (modechar == 'd') {
                                                 itemNumber = 367;
                                                 listName = "Channel Ban List";
-                                            } else if (modechar == 'q') {
+                                            } else if (modechar == 'q' && !owner386) {
                                                 itemNumber = 367;
                                                 listName = "Channel Ban List";
+                                            } else if (modechar == 'q' && owner386) {
+                                                itemNumber = 386;
+                                                listName = "Channel Owner List";
+                                            } else if (modechar == 'a') {
+                                                itemNumber = 388;
+                                                listName = "Channel Protected List";
                                             } else if (modechar == 'e') {
                                                 itemNumber = 348;
                                                 listName = "Channel Exception List";
@@ -314,6 +328,17 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                             } else if (modechar == 'R') {
                                                 itemNumber = 344;
                                                 listName = "Channel Reop List";
+                                            } else if (modechar == 'g') {
+                                                itemNumber = 941;
+                                                backwardsList = true;
+                                                listName = "Channel Reop List";
+                                            } else if (isListmode && !serverSupportsListmode) {
+                                                // Well bugger. Client wants LISTMODE, we don't know how to handle the
+                                                // mode ourself and the underlying server doesn't support it.
+                                                // This is not ideal, so let the user know, then they can report it as
+                                                // an issue if they wish.
+                                                user.sendBotMessage("Unable to fulfil LISTMODE request for %s (Mode: %s) - This should be reported.", channel, modechar);
+                                                continue;
                                             } else {
                                                 if (outData.length() == 0) {
                                                     outData.append(line[0].toUpperCase()).append(' ').append(channelName).append(' ');
@@ -325,9 +350,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                                 continue;
                                             }
                                             String prefix = "";
-                                            String thisIRCD = myParser.getServerSoftwareType().toLowerCase();
                                             // TODO: This should probably use the parser ServerTypes
-                                            if ((thisIRCD.equals("hyperion") || thisIRCD.equals("dancer")) && modechar == 'q') {
+                                            if (isFreenode && modechar == 'q') {
                                                 prefix = "%";
                                             }
                                             if (isListmode) {
@@ -340,8 +364,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                             }
                                             if (!isListmode && (modechar == 'b' || modechar == 'q')) {
                                                 // If we are emulating a hyperian ircd, we need to send these together, unless we are using listmode.
-                                                if (thisIRCD.equals("hyperion") ||
-                                                        thisIRCD.equals("dancer")) {
+                                                if (isFreenode) {
                                                     Collection<ChannelListModeItem> newmodeList;
                                                     if (modechar == 'b') {
                                                         newmodeList = channel.getListMode('q');
@@ -363,7 +386,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                                 }
                                             }
                                             if (!isListmode) {
-                                                user.sendIRCLine(itemNumber + 1, myParser.getLocalClient().getNickname() + " " + channel, "End of " + listName + " (Cached)");
+                                                user.sendIRCLine(itemNumber + (backwardsList ? -1 : 1), myParser.getLocalClient().getNickname() + " " + channel, "End of " + listName + " (Cached)");
                                             }
                                         } else {
                                             if (outData.length() == 0) {
