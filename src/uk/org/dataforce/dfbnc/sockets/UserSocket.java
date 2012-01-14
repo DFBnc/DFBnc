@@ -511,7 +511,7 @@ public class UserSocket extends ConnectedSocket {
         if (newLine[0].equalsIgnoreCase("NOTICE") && newLine.length > 2 && newLine[1].equalsIgnoreCase(Util.getBotName()) && newLine[2].charAt(0) == (char)1 && newLine[2].charAt(newLine[2].length() - 1) == (char)1) {
             final String[] version = newLine[2].split(" ", 2);
             if (version.length > 1) {
-                clientVersion = version[1].substring(0, version[1].length() - 2);
+                clientVersion = version[1].substring(0, version[1].length() - 1);
                 return;
             }
         }

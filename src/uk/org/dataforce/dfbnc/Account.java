@@ -119,27 +119,33 @@ public final class Account implements UserSocketWatcher {
             user.setSyncCompleted();
         }
 
-        final StringBuilder sb = new StringBuilder("Another client has connected (");
-        sb.append(user.getIP());
+        new Timer().schedule(new TimerTask() {
+            /** {@inheritDoc} */
+            @Override
+            public void run() {
+                final StringBuilder sb = new StringBuilder("Another client has connected (");
+                sb.append(user.getIP());
 
-        if (user.getClientID() != null) {
-            sb.append(" [");
-            sb.append(user.getClientID());
-            sb.append("]");
-        }
-        if (user.getClientVersion() != null) {
-            sb.append(" - \"");
-            sb.append(user.getClientVersion());
-            sb.append("\"");
-        }
+                if (user.getClientID() != null) {
+                    sb.append(" [");
+                    sb.append(user.getClientID());
+                    sb.append("]");
+                }
+                if (user.getClientVersion() != null) {
+                    sb.append(" - \"");
+                    sb.append(user.getClientVersion());
+                    sb.append("\"");
+                }
 
-        sb.append(")");
+                sb.append(")");
 
-        for (UserSocket socket : myUserSockets) {
-            if (user != socket) {
-                socket.sendBotMessage(sb.toString());
+                for (UserSocket socket : myUserSockets) {
+                    if (user != socket) {
+                        socket.sendBotMessage(sb.toString());
+                    }
+                }
             }
-        }
+        }, 1000);
     }
 
     /**
