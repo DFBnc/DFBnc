@@ -29,7 +29,6 @@ import java.util.TreeMap;
 import java.util.SortedMap;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map.Entry;
 
 /**
@@ -67,7 +66,7 @@ public class ShowCommandsCommand extends Command {
                 }
             }
         }
-        
+
         if (commandsType.equals("") || commandsType.equalsIgnoreCase("all") || commandsType.equalsIgnoreCase("admin")) {
             if (user.getAccount().isAdmin()) {
                 if (adminCommands.size() > 0) {
@@ -89,7 +88,7 @@ public class ShowCommandsCommand extends Command {
             }
         }
     }
-    
+
     /**
      * What does this Command handle.
      *
@@ -99,7 +98,7 @@ public class ShowCommandsCommand extends Command {
     public String[] handles() {
         return new String[]{"commands"};
     }
-    
+
     /**
      * Get a description of what this command does
      *
@@ -111,11 +110,11 @@ public class ShowCommandsCommand extends Command {
     public String getDescription(final String command) {
         return "This command shows what commands are available to you";
     }
-    
+
     /**
      * Create a new instance of the Command Object
      *
      * @param manager CommandManager that is in charge of this Command
      */
-    public ShowCommandsCommand (final CommandManager manager) { super(manager); }  
+    public ShowCommandsCommand (final CommandManager manager) { super(manager); }
 }
