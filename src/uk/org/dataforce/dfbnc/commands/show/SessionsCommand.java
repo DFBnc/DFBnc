@@ -39,8 +39,14 @@ public class SessionsCommand extends Command {
      */
     @Override
     public void handle(final UserSocket user, final String[] params) {
-        final String optionString = getFullParam(user, params, 2, Arrays.asList("all", "authenticated", "unauthenticated", "account", ""));
+        final List<String> validParams = Arrays.asList("all", "authenticated", "unauthenticated", "account", "");
+        final String optionString = getFullParam(user, params, 2, validParams);
         if (optionString == null) { return; }
+
+        if (!validParams.contains(optionString)) {
+            user.sendBotMessage("Unknown session type: %s", optionString);
+            return;
+        }
 
         if (user.getAccount().isAdmin() && !optionString.equalsIgnoreCase("")) {
             user.sendBotMessage("Currently connected sockets (Type: %s):", optionString);
@@ -50,7 +56,7 @@ public class SessionsCommand extends Command {
             for (final UserSocket u : UserSocket.getUserSockets()) {
                 count++;
                 final StringBuilder sb = new StringBuilder();
-                
+
                 sb.append(u.getInfo());
                 sb.append(" - ");
                 sb.append(u.getSocketID());
@@ -64,6 +70,17 @@ public class SessionsCommand extends Command {
                     sb.append(u.getAccount().getName());
                     if (u.getAccount().isAdmin()) { sb.append('*'); }
                 }
+                if (u.getClientID() != null) {
+                    sb.append(" [");
+                    sb.append(u.getClientID());
+                    sb.append("]");
+                }
+                if (u.getClientVersion() != null) {
+                    sb.append(" \"");
+                    sb.append(u.getClientVersion());
+                    sb.append("\"");
+                }
+
                 sb.append("     (");
                 sb.append(u.toString());
                 sb.append(")");
@@ -79,13 +96,26 @@ public class SessionsCommand extends Command {
             int count = 0;
             for (final UserSocket u : user.getAccount().getUserSockets()) {
                 count++;
-                user.sendBotMessage(u.getIP());
+                final StringBuilder sb = new StringBuilder();
+                sb.append(u.getIP());
+                if (u.getClientID() != null) {
+                    sb.append(" [");
+                    sb.append(u.getClientID());
+                    sb.append("]");
+                }
+                if (u.getClientVersion() != null) {
+                    sb.append(" - \"");
+                    sb.append(u.getClientVersion());
+                    sb.append("\"");
+                }
+
+                user.sendBotMessage(sb.toString());
             }
             user.sendBotMessage("----------");
             user.sendBotMessage("Total: %d", count);
         }
     }
-    
+
     /**
      * What does this Command handle.
      *
@@ -95,14 +125,14 @@ public class SessionsCommand extends Command {
     public String[] handles() {
         return new String[]{"sessions"};
     }
-    
+
     /**
      * Create a new instance of the Command Object
      *
      * @param manager CommandManager that is in charge of this Command
      */
     public SessionsCommand (final CommandManager manager) { super(manager); }
-    
+
     /**
      * Get a description of what this command does
      *
@@ -113,5 +143,5 @@ public class SessionsCommand extends Command {
     @Override
     public String getDescription(final String command) {
         return "This command gives information on currently connected sessions.";
-    } 
+    }
 }

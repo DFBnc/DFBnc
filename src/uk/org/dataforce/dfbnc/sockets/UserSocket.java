@@ -505,7 +505,18 @@ public class UserSocket extends ConnectedSocket {
         // Pass it on the appropriate processing function
         if (newLine[0].equals("QUIT")) {
             close();
-        } else if (myAccount != null) {
+            return;
+        }
+
+        if (newLine[0].equalsIgnoreCase("NOTICE") && newLine.length > 2 && newLine[1].equalsIgnoreCase(Util.getBotName()) && newLine[2].charAt(0) == (char)1 && newLine[2].charAt(newLine[2].length() - 1) == (char)1) {
+            final String[] version = newLine[2].split(" ", 2);
+            if (version.length > 1) {
+                clientVersion = version[1].substring(0, version[1].length() - 2);
+                return;
+            }
+        }
+
+        if (myAccount != null) {
             processAuthenticated(line, newLine);
         } else {
             processNonAuthenticated(newLine);
@@ -540,6 +551,7 @@ public class UserSocket extends ConnectedSocket {
                 sendBotMessage("    /QUOTE PASS [<username>:]<password");
                 sendBotMessage("    /RAW PASS [<username>:]<password>");
             }
+            sendBotLine("PRIVMSG", (char)1 + "VERSION" + (char)1);
         } else if (line[0].equals("PASS")) {
             final String[] bits = line[line.length-1].split(":",2);
             if (bits.length == 2) {
@@ -557,7 +569,7 @@ public class UserSocket extends ConnectedSocket {
         if (realname != null && password != null && nickname != null) {
             final String[] bits = username.split("\\+");
             username = bits[0];
-            clientID = (bits.length > 1) ? bits[1] : "";
+            clientID = (bits.length > 1) ? bits[1] : null;
             if (AccountManager.count() == 0 || (DFBnc.getBNC().getConfig().getBoolOption("debugging", "autocreate", false) && !AccountManager.exists(username))) {
                 Account acc = AccountManager.createAccount(username, password);
                     if (AccountManager.count() == 1) {
@@ -577,7 +589,6 @@ public class UserSocket extends ConnectedSocket {
                     myAccount = null;
                     close();
                 } else {
-                    sendBotLine("PRIVMSG", (char)1 + "VERSION" + (char)1);
                     sendBotMessage("You are now logged in");
                     if (myAccount.isAdmin()) {
                         sendBotMessage("This is an Admin account");
@@ -651,14 +662,7 @@ public class UserSocket extends ConnectedSocket {
         // or /DFBNC This is a command (not there is no : used to separate arguments anywhere)
         if ((line[0].equalsIgnoreCase("PRIVMSG") || line[0].equalsIgnoreCase("NOTICE")) && line.length > 2) {
             if (line[1].equalsIgnoreCase(Util.getBotName())) {
-                if (line[2].charAt(0) == (char)1 && line[2].charAt(line[2].length() - 1) == (char)1) {
-                    final String[] version = line[2].split(" ", 2);
-                    if (version.length > 1) {
-                        clientVersion = version[1].substring(0, version[1].length() - 2);
-                    }
-                } else {
-                    handleBotCommand(line[2].split(" "));
-                }
+                handleBotCommand(line[2].split(" "));
                 return;
             } else {
                 final String myHost = (this.getAccount().getConnectionHandler() != null) ? this.getAccount().getConnectionHandler().getMyHost() : this.getNickname()+"!user@host" ;

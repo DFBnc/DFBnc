@@ -118,9 +118,26 @@ public final class Account implements UserSocketWatcher {
         } else {
             user.setSyncCompleted();
         }
+
+        final StringBuilder sb = new StringBuilder("Another client has connected (");
+        sb.append(user.getIP());
+
+        if (user.getClientID() != null) {
+            sb.append(" [");
+            sb.append(user.getClientID());
+            sb.append("]");
+        }
+        if (user.getClientVersion() != null) {
+            sb.append(" - \"");
+            sb.append(user.getClientVersion());
+            sb.append("\"");
+        }
+
+        sb.append(")");
+
         for (UserSocket socket : myUserSockets) {
             if (user != socket) {
-                socket.sendBotMessage("Another client has connected (" + user.getIP() + ")");
+                socket.sendBotMessage(sb.toString());
             }
         }
     }
@@ -137,9 +154,26 @@ public final class Account implements UserSocketWatcher {
         if (myConnectionHandler != null && myConnectionHandler instanceof UserSocketWatcher) {
             ((UserSocketWatcher) myConnectionHandler).userDisconnected(user);
         }
+
+        final StringBuilder sb = new StringBuilder("Client has Disconnected (");
+        sb.append(user.getIP());
+
+        if (user.getClientID() != null) {
+            sb.append(" [");
+            sb.append(user.getClientID());
+            sb.append("]");
+        }
+        if (user.getClientVersion() != null) {
+            sb.append(" - \"");
+            sb.append(user.getClientVersion());
+            sb.append("\"");
+        }
+
+        sb.append(")");
+
         for (UserSocket socket : myUserSockets) {
             if (user != socket) {
-                socket.sendBotMessage("Client has Disconnected (" + user.getIP() + ")");
+                socket.sendBotMessage(sb.toString());
             }
         }
     }
@@ -407,10 +441,10 @@ public final class Account implements UserSocketWatcher {
     public Config getConfig() {
         return config;
     }
-    
+
     /**
      * Are we currently trying to reconnect?
-     * 
+     *
      * @return True if there is a reconnectTimer around
      */
     public boolean isReconnecting() {
@@ -426,14 +460,14 @@ public final class Account implements UserSocketWatcher {
             reconnectTimer = null;
         }
     }
-    
+
     /**
      * Calling this will prevent the next disconnect causing a reconnect.
      */
     public void disableReconnect() {
         disconnectWanted = true;
     }
-    
+
     /**
      * Called when the IRC Connnection handler is disconnected.
      *
@@ -472,7 +506,7 @@ public final class Account implements UserSocketWatcher {
                 }
             }, 5000);
         }
-        
+
         if (config.getBoolOption("server", "userdisconnect", true)) {
             for (UserSocket socket : getUserSockets()) {
                 // Only disconnect users if they have had a 001.
@@ -488,7 +522,7 @@ public final class Account implements UserSocketWatcher {
                 oldHandler.cleanupUser(socket, reason);
             }
         }
-        
+
         disconnectWanted = false;
     }
 

@@ -1015,8 +1015,11 @@ public class IRCConnectionHandler implements ConnectionHandler,
                             }
                         }
                     }
-                }, 1000);
+                }, 1500);
             }
+        } else {
+            // Make sure cliets get marked as sync completed.
+            user.setSyncCompleted();
         }
         Logger.debug2("end irc user connected.");
     }
