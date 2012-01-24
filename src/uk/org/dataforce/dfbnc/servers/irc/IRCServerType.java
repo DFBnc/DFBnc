@@ -43,6 +43,7 @@ public class IRCServerType extends ServerType {
     public IRCServerType (final ServerTypeManager manager) {
         super(manager);
         myCommandManager.addCommand(new ServerListCommand(myCommandManager));
+        myCommandManager.addCommand(new ChannelWhitelistCommand(myCommandManager));
         myCommandManager.addCommand(new IRCSetCommand(myCommandManager));
         myCommandManager.addCommand(new PerformCommand(myCommandManager));
     }

@@ -102,4 +102,14 @@ public interface ConnectionHandler {
      */
     void cleanupUser(final UserSocket user, final String reason);
 
+    /**
+     * Is the given socket allowed to interact with the given channel name on
+     * this connection?
+     *
+     * @param user User Socket to check
+     * @param channel Channel Name
+     * @return True if this socket is allowed, else false.
+     */
+    boolean allowedChannel(final UserSocket user, final String channel);
+
 }

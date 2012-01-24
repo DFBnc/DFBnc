@@ -70,6 +70,9 @@ public class UserSocket extends ConnectedSocket {
     /** Has the sync for this user been run? */
     private boolean syncCompleted = false;
 
+    /** Has this socket been announced to other users? */
+    private boolean socketAnnouncement = false;
+
     /** Given username */
     private String username = null;
     /** Given clientID */
@@ -154,6 +157,24 @@ public class UserSocket extends ConnectedSocket {
      */
     public String getClientVersion() {
         return clientVersion;
+    }
+
+    /**
+     * Has this socket been announced to other connected users yet?
+     *
+     * @return True if other users know about this socket yet.
+     */
+    public boolean getSocketAnnouncement() {
+        return socketAnnouncement;
+    }
+
+    /**
+     * Set if this socket has been announced to other connected users
+     *
+     * @param newValue new value for the socketAnnouncement variable.
+     */
+    public void setSocketAnnouncement(final boolean newValue) {
+        socketAnnouncement = newValue;
     }
 
     /**
@@ -418,6 +439,16 @@ public class UserSocket extends ConnectedSocket {
     }
 
     /**
+     * Is this socket allowed to interact with the given channel name?
+     *
+     * @param channel Channel Name
+     * @return True if this socket is allowed, else false.
+     */
+    public boolean allowedChannel(final String channel) {
+        return (myAccount.getConnectionHandler() != null) ? myAccount.getConnectionHandler().allowedChannel(this, channel) : true;
+    }
+
+    /**
      * Send a given raw line to all sockets
      *
      * @param line Line to send
@@ -426,6 +457,24 @@ public class UserSocket extends ConnectedSocket {
     public void sendAll(final String line, final boolean ignoreThis) {
         for (UserSocket socket : this.getAccount().getUserSockets()) {
             if (ignoreThis && socket == this) {
+                continue;
+            }
+
+            socket.sendLine(line);
+        }
+    }
+
+    /**
+     * Send a given raw line to all sockets, checking if the given channel
+     * is allowed for that socket.
+     *
+     * @param channel Channel to check
+     * @param line Line to send
+     * @param ignoreThis Don't send the line to this socket if true
+     */
+    public void sendAllChannel(final String channel, final String line, final boolean ignoreThis) {
+        for (UserSocket socket : this.getAccount().getUserSockets()) {
+            if (ignoreThis && socket == this || !socket.allowedChannel(channel)) {
                 continue;
             }
 
@@ -569,7 +618,7 @@ public class UserSocket extends ConnectedSocket {
         if (realname != null && password != null && nickname != null) {
             final String[] bits = username.split("\\+");
             username = bits[0];
-            clientID = (bits.length > 1) ? bits[1] : null;
+            clientID = (bits.length > 1) ? bits[1].toLowerCase() : null;
             if (AccountManager.count() == 0 || (DFBnc.getBNC().getConfig().getBoolOption("debugging", "autocreate", false) && !AccountManager.exists(username))) {
                 Account acc = AccountManager.createAccount(username, password);
                     if (AccountManager.count() == 1) {
@@ -667,7 +716,7 @@ public class UserSocket extends ConnectedSocket {
             } else {
                 final String myHost = (this.getAccount().getConnectionHandler() != null) ? this.getAccount().getConnectionHandler().getMyHost() : this.getNickname()+"!user@host" ;
                 if (myHost != null) {
-                    sendAll(String.format(":%s %s", myHost, normalLine), true);
+                    sendAllChannel(line[1], String.format(":%s %s", myHost, normalLine), true);
                 }
             }
         } else if (line[0].equalsIgnoreCase("DFBNC")) {

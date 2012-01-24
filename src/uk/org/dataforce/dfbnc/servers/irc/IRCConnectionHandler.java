@@ -249,6 +249,12 @@ public class IRCConnectionHandler implements ConnectionHandler,
     public void processDataRecieved(final UserSocket user, final String data, final String[] line, final int times) {
         StringBuilder outData = new StringBuilder();
         boolean resetOutData = false;
+
+        if (line.length > 1 && myParser.isValidChannelName(line[1]) && !user.allowedChannel(line[1])) {
+            user.sendIRCLine(403, myParser.getLocalClient().getNickname() + " " + line[1], "Channel is not whitelisted for this client", true);
+            return;
+        }
+
         if (line[0].equalsIgnoreCase("topic") || line[0].equalsIgnoreCase("names") || line[0].equalsIgnoreCase("mode") || line[0].equalsIgnoreCase("listmode")) {
             if (handleCommandProxy(user, line, outData)) {
                 for (String channelName : line[1].split(",")) {
@@ -744,6 +750,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
     @Override
     public void onDataIn(final Parser parser, final Date date, final String data) {
         boolean forwardLine = true;
+        String channelName = null;
         final String[] bits = IRCParser.tokeniseLine(data);
         // Don't forward pings or pongs from the server
         if (bits[1].equals("PONG") || bits[0].equals("PONG") || bits[1].equals("PING") || bits[0].equals("PING")) {
@@ -753,8 +760,11 @@ public class IRCConnectionHandler implements ConnectionHandler,
         if (bits[1].equals("PRIVMSG")) {
             final ChannelInfo channel = parser.getChannel(bits[2]);
             if (channel != null) {
+                channelName = channel.getName();
                 this.addBackbufferMessage(channel, System.currentTimeMillis(), data);
             }
+        } else if (parser.isValidChannelName(bits[2])) {
+            channelName = bits[2];
         }
 
         try {
@@ -771,6 +781,9 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 }
             }
             final ChannelInfo channel = (bits.length > 3) ? myParser.getChannel(bits[3]) : null;
+            if (channel != null) {
+                channelName = channel.getName();
+            }
             switch (numeric) {
                 case 324: // Channel Modes
                 case 367: // Ban List
@@ -782,8 +795,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
                     break;
 
                 case 353: // Names
-                    forwardLine = checkAllowLine(myParser.getChannel(bits[4]),
-                            bits[1]);
+                    channelName = bits[4];
+                    forwardLine = checkAllowLine(myParser.getChannel(bits[4]), bits[1]);
                     break;
 
                 case 368: // Ban List End
@@ -836,6 +849,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         if (forwardLine) {
             for (UserSocket socket : myAccount.getUserSockets()) {
                 if (socket.syncCompleted()) {
+                    if (channelName != null && !socket.allowedChannel(channelName)) { continue; }
                     socket.sendLine(data);
                 }
             }
@@ -996,6 +1010,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                         if (!user.getSocketWrapper().isConnected()) { return; }
 
                         for (final ChannelInfo channel : channels) {
+                            if (!user.allowedChannel(channel.getName())) { continue; }
                             user.sendLine(":%s JOIN %s", me, channel);
 
                             sendTopic(user, channel);
@@ -1183,6 +1198,32 @@ public class IRCConnectionHandler implements ConnectionHandler,
             user.sendLine(":%s KICK %s %s :Socket Closed: %s", Util.getServerName(myAccount), channel.getName(), user.getNickname(), reason);
         }
     }
+
+    /**
+     * Is this socket allowed to interact with the given channel name?
+     *
+     * @param channel Channel Name
+     * @return True if this socket is allowed, else false.
+     */
+    @Override
+    public boolean allowedChannel(final UserSocket user, final String channel) {
+        // TODO: This whole method needs optimising really... Allowed channels
+        //       need caching etc.
+        final List<String> validChannelList = user.getAccount().getConfig().getListOption("irc",  "channelwhitelist." + user.getClientID(), new ArrayList());
+
+        if (validChannelList.isEmpty()) {
+            return true;
+        } else {
+            for (final String c : validChannelList) {
+                if (c.equalsIgnoreCase(channel)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
 }
 
 /**

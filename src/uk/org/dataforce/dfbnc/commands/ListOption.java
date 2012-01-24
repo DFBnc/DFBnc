@@ -41,8 +41,7 @@ public class ListOption {
      * @param param Parameter
      * @param output Output
      */
-    public ListOption(final boolean isValid, final String param,
-            final String[] output) {
+    public ListOption(final boolean isValid, final String param, final String[] output) {
         super();
         this.isValid = isValid;
         this.param = param;

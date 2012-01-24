@@ -123,25 +123,29 @@ public final class Account implements UserSocketWatcher {
             /** {@inheritDoc} */
             @Override
             public void run() {
-                final StringBuilder sb = new StringBuilder("Another client has connected (");
-                sb.append(user.getIP());
+                synchronized (user) {
+                    if (user.getSocketAnnouncement()) { return; }
+                    user.setSocketAnnouncement(true);
+                    final StringBuilder sb = new StringBuilder("Another client has connected (");
+                    sb.append(user.getIP());
 
-                if (user.getClientID() != null) {
-                    sb.append(" [");
-                    sb.append(user.getClientID());
-                    sb.append("]");
-                }
-                if (user.getClientVersion() != null) {
-                    sb.append(" - \"");
-                    sb.append(user.getClientVersion());
-                    sb.append("\"");
-                }
+                    if (user.getClientID() != null) {
+                        sb.append(" [");
+                        sb.append(user.getClientID());
+                        sb.append("]");
+                    }
+                    if (user.getClientVersion() != null) {
+                        sb.append(" - \"");
+                        sb.append(user.getClientVersion());
+                        sb.append("\"");
+                    }
 
-                sb.append(")");
+                    sb.append(")");
 
-                for (UserSocket socket : myUserSockets) {
-                    if (user != socket) {
-                        socket.sendBotMessage(sb.toString());
+                    for (UserSocket socket : myUserSockets) {
+                        if (user != socket) {
+                            socket.sendBotMessage(sb.toString());
+                        }
                     }
                 }
             }
@@ -161,6 +165,10 @@ public final class Account implements UserSocketWatcher {
             ((UserSocketWatcher) myConnectionHandler).userDisconnected(user);
         }
 
+        if (!user.getSocketAnnouncement()) {
+            return;
+        }
+        user.setSocketAnnouncement(true);
         final StringBuilder sb = new StringBuilder("Client has Disconnected (");
         sb.append(user.getIP());
 
