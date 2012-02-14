@@ -57,6 +57,9 @@ public class UserSocket extends ConnectedSocket {
     /** This sockets info. */
     private final String myInfo;
 
+    /** This sockets sate. */
+    private SocketAwayState awayState = SocketAwayState.UNKNOWN;
+
     /**
      * This is true if a 001 has been sent to the user.
      * Before 001 NOTICE AUTH should be used for messages rather than
@@ -206,6 +209,15 @@ public class UserSocket extends ConnectedSocket {
      */
     public String getID() {
         return myID;
+    }
+
+    /**
+     * Get the Away State for this socket.
+     *
+     * @return ID for this socket.
+     */
+    public SocketAwayState getAwayState() {
+        return awayState;
     }
 
     /**
@@ -700,6 +712,56 @@ public class UserSocket extends ConnectedSocket {
     }
 
     /**
+     * Set the awayState of this user.
+     *
+     * @param awayState New state.
+     */
+    public void setAwayState(final SocketAwayState thisAwayState) {
+        // Find out what the overall state is now.
+        final SocketAwayState defaultState = myAccount.getConfig().getBoolOption("server", "defaultawaystate", true) ? SocketAwayState.AWAY : SocketAwayState.HERE;
+        if (thisAwayState == SocketAwayState.UNKNOWN) {
+            // This is the on-connect setAwayState call.
+            // Set our away state to be the default state.
+            awayState = defaultState;
+
+            // However, if we are the only client connected.
+            // And we are also currently connected to a server.
+            // Set the state to be the same as the socket if one is known.
+            //
+            // This means that myAccount.getAwayState() should always agree
+            // with the server based soley on clients, without needing to
+            // check with the server.
+            final ConnectionHandler ch = myAccount.getConnectionHandler();
+            if (myAccount.getUserSockets().size() == 1 && ch != null) {
+                final SocketAwayState sas = ch.getAwayState();
+                if (sas != SocketAwayState.UNKNOWN) {
+                    awayState = sas;
+                }
+            }
+        } else {
+            awayState = thisAwayState;
+        }
+
+        final SocketAwayState aggState = myAccount.getAwayState();
+
+        // Default to telling the server we are back.
+        String asLine = "AWAY";
+        // UNless we need to tell it we are away.
+        if (aggState == SocketAwayState.AWAY) {
+            asLine = "AWAY :" + myAccount.getLastAwayReason();
+        }
+        sendToConnectionHandler(asLine, IRCParser.tokeniseLine(asLine));
+
+        // Tell this user their away state.
+        // This is open to change in future.
+        if (awayState == SocketAwayState.AWAY) {
+            sendIRCLine(Consts.RPL_AWAY, getNickname(), "You have been marked as being away (Global State: " + aggState + ")");
+        } else {
+            sendIRCLine(Consts.RPL_UNAWAY, getNickname(), "You are no longer marked as being away (Global State: " + aggState + ")");
+        }
+    }
+
+    /**
      * Process a line of data from an authenticated user.
      *
      * @param normalLine Non-IRCTokenised version of Line to handle
@@ -709,6 +771,16 @@ public class UserSocket extends ConnectedSocket {
         // The bnc accepts commands as either:
         // /msg -BNC This is a command
         // or /DFBNC This is a command (not there is no : used to separate arguments anywhere)
+        if (line[0].equalsIgnoreCase("AWAY")) {
+            awayState = line.length > 1  ? SocketAwayState.AWAY : SocketAwayState.HERE;
+            myAccount.setLastAwayReason(line.length > 1 ? line[1] : "");
+
+            setAwayState(awayState);
+
+            // Abort, don't pass this state onto the server.
+            return;
+        }
+
         if ((line[0].equalsIgnoreCase("PRIVMSG") || line[0].equalsIgnoreCase("NOTICE")) && line.length > 2) {
             if (line[1].equalsIgnoreCase(Util.getBotName())) {
                 handleBotCommand(line[2].split(" "));
@@ -758,6 +830,10 @@ public class UserSocket extends ConnectedSocket {
             return;
         }
 
+        sendToConnectionHandler(normalLine, line);
+    }
+
+    private void sendToConnectionHandler(final String normalLine, final String[] line) {
         // We don't handle this ourselves, send it to the ConnectionHandler
         ConnectionHandler myConnectionHandler = myAccount.getConnectionHandler();
         if (myConnectionHandler != null) {

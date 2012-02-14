@@ -55,6 +55,11 @@ public class ServerSetCommand extends AbstractSetCommand {
         validParams.put("autoconnect", new ParamInfo("Auto connect on startup.", ParamType.BOOL));
         validParams.put("backbuffer", new ParamInfo("Number of lines to store as backbuffer in each channel (0 to disable).", ParamType.INT));
         validParams.put("userdisconnect", new ParamInfo("Disconnect user if the server disconnects us.", ParamType.BOOL));
+
+        validParams.put("defaultawaystate", new ParamInfo("Default away state (Default: True (Away))", ParamType.BOOL));
+        validParams.put("aggregateawaystate", new ParamInfo("Aggregate away states on servers (Default: False)", ParamType.BOOL));
+
+        validParams.put("rememberawaystate", new ParamInfo("Remember away state on reconnect (Default: True)", ParamType.BOOL));
     }
 
     /**

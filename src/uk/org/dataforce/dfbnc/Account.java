@@ -36,6 +36,7 @@ import uk.org.dataforce.dfbnc.config.Config;
 import uk.org.dataforce.dfbnc.config.InvalidConfigFileException;
 import uk.org.dataforce.dfbnc.servers.ServerType;
 import uk.org.dataforce.dfbnc.servers.ServerTypeNotFound;
+import uk.org.dataforce.dfbnc.sockets.SocketAwayState;
 import uk.org.dataforce.dfbnc.sockets.UnableToConnectException;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
 import uk.org.dataforce.dfbnc.sockets.UserSocketWatcher;
@@ -69,6 +70,8 @@ public final class Account implements UserSocketWatcher {
     private Timer reconnectTimer;
     /** Is the next disconnect intentional? */
     private boolean disconnectWanted;
+    /** Last away reason used on this account. */
+    private String myLastAwayReason = "";
 
     /**
      * Create an Account object.
@@ -103,6 +106,65 @@ public final class Account implements UserSocketWatcher {
     }
 
     /**
+     * Get the last away reason used on this account, or "Away..." if there
+     * is none.
+     *
+     * @return Last used away reason.
+     */
+    public String getLastAwayReason() {
+        return myLastAwayReason.isEmpty() ? "Away..." : myLastAwayReason;
+    }
+
+    /**
+     * Get the aggregate away state for this account.
+     * If Aggregation is off, then ask the connection handler.
+     *
+     * @return
+     */
+    public SocketAwayState getAwayState() {
+        SocketAwayState aggState = SocketAwayState.UNKNOWN;
+
+        if (getConfig().getBoolOption("server", "aggregateawaystate", false)) {
+            if (!getUserSockets().isEmpty()) {
+                aggState = SocketAwayState.AWAY;
+            }
+            for (final UserSocket u : getUserSockets()) {
+                if (u.getAwayState() != SocketAwayState.AWAY) {
+                    aggState = SocketAwayState.HERE;
+                    break;
+                }
+            }
+        } else {
+           if (myConnectionHandler != null) {
+               aggState = myConnectionHandler.getAwayState();
+           }
+        }
+
+        if (getConfig().getBoolOption("server", "rememberawaystate", true)) {
+            if (aggState == SocketAwayState.UNKNOWN && !myLastAwayReason.isEmpty()) {
+                aggState = SocketAwayState.AWAY;
+            }
+        }
+
+        if (aggState == SocketAwayState.UNKNOWN && !myLastAwayReason.isEmpty()) {
+            // If we don't have any away clients, then unset any stored
+            // away reason.
+            myLastAwayReason = "";
+        }
+
+        return aggState;
+    }
+
+    /**
+     * Set the last away reason used on this account.
+     *
+     * @param newValue Last used away reason.
+     */
+    public void setLastAwayReason(final String newValue) {
+        myLastAwayReason = newValue;
+    }
+
+    /**
      * Called when a new UserSocket is opened on an account that this class is
      * linked to.
      *
@@ -111,6 +173,7 @@ public final class Account implements UserSocketWatcher {
     @Override
     public void userConnected(final UserSocket user) {
         myUserSockets.add(user);
+        user.setAwayState(SocketAwayState.UNKNOWN);
         if (myConnectionHandler != null && myConnectionHandler instanceof UserSocketWatcher) {
             Logger.debug2("Handle userConnected: "+myConnectionHandler+" -> "+user);
             ((UserSocketWatcher) myConnectionHandler).userConnected(user);

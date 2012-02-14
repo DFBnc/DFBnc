@@ -64,6 +64,7 @@ import uk.org.dataforce.dfbnc.ConnectionHandler;
 import uk.org.dataforce.dfbnc.Account;
 import uk.org.dataforce.dfbnc.Consts;
 import uk.org.dataforce.dfbnc.RollingList;
+import uk.org.dataforce.dfbnc.sockets.SocketAwayState;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
 import uk.org.dataforce.dfbnc.sockets.UnableToConnectException;
 import uk.org.dataforce.dfbnc.sockets.UserSocketWatcher;
@@ -217,6 +218,19 @@ public class IRCConnectionHandler implements ConnectionHandler,
             return String.format("%s!@", myParser.getLocalClient().getNickname());
         } else {
             return null;
+        }
+    }
+
+    /* {@inheritDoc} */
+    @Override
+    public SocketAwayState getAwayState() {
+        switch (myParser.getLocalClient().getAwayState()) {
+            case AWAY:
+                return SocketAwayState.AWAY;
+
+            case HERE:
+            default:
+                return SocketAwayState.HERE;
         }
     }
 
@@ -737,6 +751,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /** {@inheritDoc} */
     @Override
     public void onDataOut(final Parser parser, final Date date, final String data, final boolean fromParser) {
+        System.out.println(" OUT: "+data);
         final String[] bits = IRCParser.tokeniseLine(data);
         if (bits[0].equals("PRIVMSG") && bits.length > 1) {
             final ChannelInfo channel = parser.getChannel(bits[1]);
@@ -749,6 +764,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /** {@inheritDoc} */
     @Override
     public void onDataIn(final Parser parser, final Date date, final String data) {
+        System.out.println(" IN: "+data);
         boolean forwardLine = true;
         String channelName = null;
         final String[] bits = IRCParser.tokeniseLine(data);
@@ -763,7 +779,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 channelName = channel.getName();
                 this.addBackbufferMessage(channel, System.currentTimeMillis(), data);
             }
-        } else if (parser.isValidChannelName(bits[2])) {
+        } else if (bits.length > 1 && parser.isValidChannelName(bits[2])) {
             channelName = bits[2];
         }
 
@@ -785,6 +801,12 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 channelName = channel.getName();
             }
             switch (numeric) {
+                case Consts.RPL_AWAY:
+                case Consts.RPL_UNAWAY:
+                    // Don't forward 305s and 306s, the bouncer handles these.
+                    forwardLine = false;
+                    break;
+
                 case 324: // Channel Modes
                 case 367: // Ban List
                 case 348: // Exception List
@@ -862,6 +884,30 @@ public class IRCConnectionHandler implements ConnectionHandler,
         //hasPost005 = true;
         // We no longer need this callback, so lets remove it
         myParser.getCallbackManager().delCallback(NumericListener.class, this);
+
+        syncAwayState();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void syncAwayState() {
+        // If the account thinks we were away, then set away on the server,
+        // else set back.
+
+        final ClientInfo lc = myParser.getLocalClient();
+        if (myAccount.getAwayState() == SocketAwayState.AWAY) {
+            boolean forceAway = false;
+            if (lc instanceof IRCClientInfo) {
+               final String oldReason = ((IRCClientInfo)lc).getAwayReason();
+               forceAway = !oldReason.equalsIgnoreCase(myAccount.getLastAwayReason());
+            }
+            if (forceAway || lc.getAwayState() == AwayState.HERE) {
+                myParser.getLocalClient().setAway(myAccount.getLastAwayReason());
+            }
+
+        } else if (myAccount.getAwayState() == SocketAwayState.HERE &&lc.getAwayState() == AwayState.AWAY) {
+            myParser.getLocalClient().setBack();
+        }
     }
 
     /** {@inheritDoc} */
@@ -990,8 +1036,12 @@ public class IRCConnectionHandler implements ConnectionHandler,
                     str302.append('*');
                 }
                 str302.append('=');
-                if (((IRCClientInfo) me).getAwayState() == AwayState.AWAY) {
-                    user.sendIRCLine(306, myParser.getLocalClient().getNickname(), "You have been marked as being away");
+
+                // Sent an appropriate away state to the user.
+                if (user.getAwayState() == SocketAwayState.AWAY) {
+                    // Bouncer will already have sent the 306, but as it came
+                    // before 001 the client may have ignored it.
+                    user.sendIRCLine(Consts.RPL_AWAY, myParser.getLocalClient().getNickname(), "You have been marked as being away (Global State: " + myAccount.getAwayState() + ")");
                     str302.append('-');
                 } else {
                     str302.append('+');
@@ -1029,12 +1079,17 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                 myParser.sendRawMessage(filterPerformLine(line));
                             }
                         }
+
+                        // Also sync the server here to the account...
+                        syncAwayState();
                     }
                 }, 1500);
             }
         } else {
             // Make sure cliets get marked as sync completed.
             user.setSyncCompleted();
+            // Also sync the server here to the account...
+            syncAwayState();
         }
         Logger.debug2("end irc user connected.");
     }
@@ -1165,6 +1220,9 @@ public class IRCConnectionHandler implements ConnectionHandler,
                     myParser.sendRawMessage(filterPerformLine(line));
                 }
             }
+
+            // Also sync the server here to the account...
+            syncAwayState();
         }
     }
 

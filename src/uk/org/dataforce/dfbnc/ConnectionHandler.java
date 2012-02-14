@@ -21,6 +21,7 @@
  */
 package uk.org.dataforce.dfbnc;
 
+import uk.org.dataforce.dfbnc.sockets.SocketAwayState;
 import uk.org.dataforce.dfbnc.sockets.UnableToConnectException;
 
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
@@ -43,6 +44,18 @@ public interface ConnectionHandler {
      * @return The users host on this connect
      */
     String getMyHost();
+
+    /**
+     * Get the away state of this connection
+     *
+     * @return The away state of this connection
+     */
+    SocketAwayState getAwayState();
+
+    /**
+     * Sync our away state with that of the Account.
+     */
+    void syncAwayState();
 
     /**
      * Called when data is recieved on the user socket.

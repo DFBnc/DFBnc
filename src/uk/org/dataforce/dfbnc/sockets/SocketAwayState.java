@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2013 Shane Mc Cormack
+ * Copyright (c) 2006-2012 DMDirc Developers
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,36 +19,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package uk.org.dataforce.dfbnc;
+
+package uk.org.dataforce.dfbnc.sockets;
+
+import com.dmdirc.parser.common.*;
 
 /**
- * This file stores various constants for the irc protocol
+ * Away states.
+ *
+ * @author Shane
+ * @since 0.6.3
  */
-public final class Consts {
-    // Standard Replies
-    public final static int RPL_WELCOME = 1;
-    public final static int RPL_YOURHOST = 2;
-    public final static int RPL_CREATED = 3;
-    public final static int RPL_MYINFO = 4;
-    public final static int RPL_ISUPPORT = 5;
-    public final static int RPL_UNAWAY = 305;
-    public final static int RPL_AWAY = 306;
-
-    // Errors
-    public final static int ERR_UNKNOWNCOMMAND = 421;
-    public final static int ERR_NOTREGISTERED = 451;
-    public final static int ERR_NEEDMOREPARAMS = 461;
-    public final static int ERR_PASSWDMISMATCH = 464;
-
-
-    // Whois
-    public final static int RPL_WHOISUSER = 311;
-    public final static int RPL_WHOISSERVER = 312;
-    public final static int RPL_WHOISIDLE = 317;
-    public final static int RPL_ENDOFWHOIS = 318;
-
-    /**
-     * Prevent Creation of Consts object
-     */
-    private Consts() {    }
+public enum SocketAwayState {
+    /** State is unknown. */
+    UNKNOWN,
+    /** User is here. */
+    HERE,
+    /** User is away. */
+    AWAY;
 }
