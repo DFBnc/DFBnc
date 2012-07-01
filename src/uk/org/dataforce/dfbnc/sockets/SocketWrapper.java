@@ -25,11 +25,11 @@ package uk.org.dataforce.dfbnc.sockets;
 import java.net.Socket;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
-import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.channels.SelectionKey;
 import java.io.IOException;
 import java.net.SocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.CancelledKeyException;
 import java.nio.charset.CharacterCodingException;
@@ -46,7 +46,7 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
     private ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
     /** Used to process incoming data. */
     private StringBuilder lineBuffer = new StringBuilder();
-    
+
     /** Lines to be sent to the user go into this buffer. */
     protected final OutputBuffer outbuffer = new OutputBuffer();
 
@@ -85,19 +85,19 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
         mySocketChannel = channel;
         mySocket = channel.socket();
     }
-    
+
     /**
      * Try to write the output buffer to the socket.
-     * 
+     *
      * If outputBytes is null, take all the data out of OutputBuffer and feed
      * it to the socket, if its not null we try to send the remaining data from
      * the last write attempt.
-     * 
+     *
      * If the socket accepted all the data (ie, its internal buffer didn't fill
      * up) then we set outputBytes back to null, otherwise we leave it around
      * until the next time we are called. (We return true, so OP_WRITE will
      * still be registered, so we should be called again soon.)
-     * 
+     *
      * @return False if no data was available to write, else true.
      * @throws IOException If there was a problem writing to the socket.
      */
@@ -116,7 +116,7 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
                 }
                 return true;
             }
-        
+
             return false;
         }
     }
@@ -151,7 +151,7 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
         }
 
         outbuffer.addData(line, "\r\n");
-        
+
         try {
             key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
             SocketSelector.getConnectedSocketSelector().getSelector().wakeup();
@@ -405,7 +405,7 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
         } else if (selKey.isValid() && selKey.isWritable()) {
             try {
                 final boolean wroteData = writeBuffer();
-                
+
                 // If we didn't write any data, then the buffer was empty, so
                 // we need to switch back to read mode.
                 if (!wroteData) {

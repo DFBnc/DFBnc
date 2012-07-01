@@ -15,7 +15,7 @@
  * local policy) or where such a license could expose the author(s) to extra
  * obligations, warranties or responsibilities, then this software should be
  * considered to be licensed as follows:
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -67,10 +67,10 @@ public class SSLByteChannel implements ByteChannel {
     private final ByteBuffer inNetData;
     /** Used to store wraped outgoing data */
     private final ByteBuffer outNetData;
-    
+
     /** Prevents trying to close twice. */
     private boolean socketOpen = true;
-    
+
     /**
      * Create a new SSLByteChannel by wrapping an old one.
      *
@@ -80,16 +80,16 @@ public class SSLByteChannel implements ByteChannel {
     public SSLByteChannel(final ByteChannel channel, final SSLEngine engine) {
         myChannel = channel;
         myEngine = engine;
-        
+
         // Create the ByteBuffers
         SSLSession session = myEngine.getSession();
         inAppData  = ByteBuffer.allocate(session.getApplicationBufferSize());
         outAppData = ByteBuffer.allocate(session.getApplicationBufferSize());
-    
+
         inNetData  = ByteBuffer.allocate(session.getPacketBufferSize());
         outNetData = ByteBuffer.allocate(session.getPacketBufferSize());
     }
-    
+
     /**
      * This cleanly ends the SSL Session, and then closes the channel
      *
@@ -107,7 +107,7 @@ public class SSLByteChannel implements ByteChannel {
             }
         }
     }
-    
+
     /**
      * Check if this ByteChannel is still open.
      *
@@ -117,7 +117,7 @@ public class SSLByteChannel implements ByteChannel {
     public boolean isOpen() {
         return socketOpen;
     }
-    
+
     /**
      * Read bytes from the socket into the given buffer.
      *
@@ -154,7 +154,7 @@ public class SSLByteChannel implements ByteChannel {
             return -1;
         }
     }
-    
+
     /**
      * Write bytes to the socket from the given buffer.
      *
@@ -165,7 +165,7 @@ public class SSLByteChannel implements ByteChannel {
     @Override
     public int write(final ByteBuffer buffer) throws IOException {
         if (!isOpen()) { return 0; }
-        
+
         int posBefore = buffer.position();
         if (buffer.remaining() < outAppData.remaining()) {
             outAppData.put(buffer);
@@ -175,7 +175,7 @@ public class SSLByteChannel implements ByteChannel {
             }
         }
         int posAfter = buffer.position();
-        
+
         if (isOpen()) {
             try {
                 while(true) {
@@ -190,10 +190,10 @@ public class SSLByteChannel implements ByteChannel {
                 close();
             }
         }
-        
+
         return posAfter - posBefore;
     }
-    
+
     /**
      * Unwrap data from inNetData to inAppData
      *
@@ -214,12 +214,17 @@ public class SSLByteChannel implements ByteChannel {
 
         // Unwrap it into the buffer
         inNetData.flip();
-        SSLEngineResult ser = myEngine.unwrap(inNetData, inAppData); 
+        SSLEngineResult ser = null;
+        if (inNetData.position() > 0) {
+            ser = myEngine.unwrap(inNetData, inAppData);
+        } else {
+            ser = new SSLEngineResult(SSLEngineResult.Status.BUFFER_UNDERFLOW, HandshakeStatus.NEED_UNWRAP, 0, 0);
+        }
         inNetData.compact();
-        
+
         return ser;
     }
-    
+
     /**
      * Wrap data from inAppData into inNetData and write it out to the socket.
      *
@@ -239,13 +244,13 @@ public class SSLByteChannel implements ByteChannel {
             myChannel.write(outNetData);
         }
         outNetData.compact();
-        
+
         return ser;
     }
-    
+
     /**
      * This handles handshaking if needed
-     * 
+     *
      * @param inputResult SSLEngineResult to work on (This lets us know if we need
      *                    to handshake again or not.
      * @return Last SSLEngineResult from tasks
@@ -254,9 +259,9 @@ public class SSLByteChannel implements ByteChannel {
      */
     private SSLEngineResult sslLoop(final SSLEngineResult inputResult) throws SSLException, IOException {
         if (inputResult == null) { return null; }
-        
+
         SSLEngineResult result = inputResult;
-        
+
         final int underflowLimit = 5;
         int underflowCount = 0;
 
@@ -295,7 +300,7 @@ public class SSLByteChannel implements ByteChannel {
                 break;
             }
         }
-        
+
         // Check if the socket was closed.
         switch(result.getStatus()) {
             case CLOSED:
@@ -306,7 +311,7 @@ public class SSLByteChannel implements ByteChannel {
                 }
                 break;
         }
-        
+
         return result;
     }
 }

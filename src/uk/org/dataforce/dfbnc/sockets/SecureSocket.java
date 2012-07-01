@@ -33,6 +33,7 @@ import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.security.KeyStoreException;
 import java.io.FileNotFoundException;
+import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.security.NoSuchAlgorithmException;
 import java.security.KeyManagementException;
@@ -58,8 +59,7 @@ public class SecureSocket extends SocketWrapper {
      * @param key The selection key corresponding to the channel's registration
      * @throws IOException If there is a problem creating and setting up the socket
      */
-    public SecureSocket (final SocketChannel channel,
-            final ConnectedSocket owner, final SelectionKey key) throws IOException {
+    public SecureSocket (final SocketChannel channel, final ConnectedSocket owner, final SelectionKey key) throws IOException {
         super(channel, owner, key);
 
         try {

@@ -24,6 +24,7 @@ package uk.org.dataforce.dfbnc.sockets;
 
 import java.nio.channels.SocketChannel;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 
 /**
@@ -40,8 +41,7 @@ public class PlainSocket extends SocketWrapper {
      * @param key The selection key corresponding to the channel's registration
      * @throws IOException If there is a problem creating the socket
      */
-    public PlainSocket (final SocketChannel channel,
-            final ConnectedSocket owner, final SelectionKey key) throws IOException {
+    public PlainSocket (final SocketChannel channel, final ConnectedSocket owner, final SelectionKey key) throws IOException {
         super(channel, owner, key);
     }
 }

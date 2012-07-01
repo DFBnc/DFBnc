@@ -88,7 +88,10 @@ public class IRCServerType extends ServerType {
      */
     @Override
     public void close(final Account account, final String reason) {
-        account.getConnectionHandler().shutdown(reason);
+        final ConnectionHandler ch = account.getConnectionHandler();
+        if (ch != null) {
+            ch.shutdown(reason);
+        }
     }
 
     /**
