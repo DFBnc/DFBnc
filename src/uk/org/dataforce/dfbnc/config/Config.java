@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import uk.org.dataforce.libs.logger.Logger;
+import uk.org.dataforce.libs.util.WeakList;
 
 /**
  * Configuration Files.
@@ -38,6 +39,9 @@ public class Config {
 
     /** Config File */
     private final ConfigFile config;
+
+    /** Config Changed Listeners. */
+    private final List<ConfigChangedListener> changeListeners = new WeakList<ConfigChangedListener>();
 
     /**
      * Creates a new config based on the specified file.
@@ -105,6 +109,38 @@ public class Config {
         config.setAutomake(true);
     }
 
+
+    /**
+     * Handle a setting change - let all listeners know.
+     *
+     * @param domain Domain that changed
+     * @param key Setting that changed
+     */
+    private void handleSettingChange(final String domain, final String key) {
+        for (ConfigChangedListener listener : new ArrayList<ConfigChangedListener>(changeListeners)) {
+            listener.configChanged(domain, key);
+        }
+    }
+
+
+    /**
+     * Adds a new ConfigChangedListener for this config.
+     *
+     * @param listener The listener to be added
+     */
+    public void addListener(final ConfigChangedListener listener) {
+        changeListeners.add(listener);
+    }
+
+    /**
+     * Removes the given ConfigChangedListener from this config.
+     *
+     * @param listener The listener to be removed
+     */
+    public void removeListener(final ConfigChangedListener listener) {
+        changeListeners.remove(listener);
+    }
+
     /**
      * Get option domain from the config
      *
@@ -141,6 +177,7 @@ public class Config {
      */
     public void setOption(final String domain, final String key, final String value) {
         config.getKeyDomain(domain).put(key, value);
+        handleSettingChange(domain, key);
     }
 
     /**

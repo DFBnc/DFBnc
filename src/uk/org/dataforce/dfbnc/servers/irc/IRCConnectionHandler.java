@@ -64,11 +64,13 @@ import uk.org.dataforce.dfbnc.ConnectionHandler;
 import uk.org.dataforce.dfbnc.Account;
 import uk.org.dataforce.dfbnc.Consts;
 import uk.org.dataforce.dfbnc.RollingList;
+import uk.org.dataforce.dfbnc.config.ConfigChangedListener;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
 import uk.org.dataforce.dfbnc.sockets.UnableToConnectException;
 import uk.org.dataforce.dfbnc.sockets.UserSocketWatcher;
 import uk.org.dataforce.libs.logger.Logger;
 import uk.org.dataforce.libs.util.Util;
+
 
 /**
  * This file represents an IRCConnectionHandler.
@@ -80,7 +82,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         UserSocketWatcher, DataInListener, DataOutListener, NickChangeListener,
         ServerReadyListener, NumericListener, MotdEndListener,
         SocketCloseListener, ChannelSelfJoinListener, ConnectErrorListener,
-        ErrorInfoListener {
+        ErrorInfoListener, ConfigChangedListener {
 
     /** Account that this IRCConnectionHandler is for. */
     private final Account myAccount;
@@ -692,7 +694,21 @@ public class IRCConnectionHandler implements ConnectionHandler,
         allowLine(channel, "332");
         allowLine(channel, "333");
 
+        myAccount.getConfig().addListener(this);
         channel.getMap().put("backbufferList", new RollingList<BackbufferMessage>(myAccount.getConfig().getIntOption("server", "backbuffer", 0)));
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    @SuppressWarnings("unchecked")
+    public void configChanged(final String domain, final String setting) {
+        if (domain.equalsIgnoreCase("server") && setting.equalsIgnoreCase("backbuffer")) {
+            final int size = myAccount.getConfig().getIntOption("server", "backbuffer", 0);
+            for (ChannelInfo channel : myParser.getChannels()) {
+                final RollingList<BackbufferMessage> myList = (RollingList<BackbufferMessage>)channel.getMap().get("backbufferList");
+                myList.setCapacity(size);
+            }
+        }
     }
 
     /**
@@ -1225,7 +1241,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
     }
 
 }
-
 /**
  * This stores a line that is being requeued.
  */
