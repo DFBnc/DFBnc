@@ -214,12 +214,7 @@ public class SSLByteChannel implements ByteChannel {
 
         // Unwrap it into the buffer
         inNetData.flip();
-        SSLEngineResult ser = null;
-        if (inNetData.position() > 0) {
-            ser = myEngine.unwrap(inNetData, inAppData);
-        } else {
-            ser = new SSLEngineResult(SSLEngineResult.Status.BUFFER_UNDERFLOW, HandshakeStatus.NEED_UNWRAP, 0, 0);
-        }
+        SSLEngineResult ser = myEngine.unwrap(inNetData, inAppData);
         inNetData.compact();
 
         return ser;
@@ -295,8 +290,12 @@ public class SSLByteChannel implements ByteChannel {
             // socket processing happening.
             if (result.getStatus() == SSLEngineResult.Status.BUFFER_UNDERFLOW && result.bytesConsumed() == 0 && result.bytesProduced() == 0) {
                 underflowCount++;
+            } else if (result.getStatus() == SSLEngineResult.Status.CLOSED) {
+                break;
             } else { underflowCount = 0; }
             if (underflowCount > underflowLimit) {
+                // Fake socket closed..
+                result = new SSLEngineResult(SSLEngineResult.Status.CLOSED, HandshakeStatus.NEED_UNWRAP, 0, 0);
                 break;
             }
         }
