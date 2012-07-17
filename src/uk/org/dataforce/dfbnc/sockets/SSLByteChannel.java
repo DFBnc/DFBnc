@@ -294,8 +294,6 @@ public class SSLByteChannel implements ByteChannel {
                 break;
             } else { underflowCount = 0; }
             if (underflowCount > underflowLimit) {
-                // Fake socket closed..
-                result = new SSLEngineResult(SSLEngineResult.Status.CLOSED, HandshakeStatus.NEED_UNWRAP, 0, 0);
                 break;
             }
         }
