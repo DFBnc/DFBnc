@@ -51,7 +51,6 @@ public class ShowCommandsCommand extends Command {
         if (commandsType == null) { return; }
 
         if (commandsType.equals("") || commandsType.equalsIgnoreCase("all") || commandsType.equalsIgnoreCase("user")) {
-            user.sendBotMessage("----------------");
             user.sendBotMessage("The following commands are available to you:");
             user.sendBotMessage("");
             CommandManager cmdmgr = user.getAccount().getCommandManager();
@@ -71,7 +70,6 @@ public class ShowCommandsCommand extends Command {
             if (user.getAccount().isAdmin()) {
                 if (adminCommands.size() > 0) {
                     user.sendBotMessage("");
-                    user.sendBotMessage("----------------");
                     if (commandsType.equalsIgnoreCase("admin")) {
                         user.sendBotMessage("The following admin-only commands are available to you:");
                     } else {
@@ -83,7 +81,6 @@ public class ShowCommandsCommand extends Command {
                     }
                 }
             } else if (commandsType.equalsIgnoreCase("admin")) {
-                user.sendBotMessage("----------------");
                 user.sendBotMessage("Admin commands are not available to you.");
             }
         }

@@ -146,7 +146,6 @@ public abstract class AbstractListEditCommand extends Command {
         final int commandParam = listParam + 1;
         final int positionParam = commandParam + 1;
 
-        user.sendBotMessage("----------------");
         if (actualParams.length > commandParam) {
 
             final String listParamName = hasSubList ? validSubList(actualParams[listParam]) : actualParams[listParam];

@@ -45,7 +45,6 @@ public class FirstTimeCommand extends Command {
 
         if (params.length > 2 && option.equalsIgnoreCase("admin")) {
             if (user.getAccount().isAdmin()) {
-                user.sendBotMessage("----------------");
                 user.sendBotMessage("As an admin of this BNC you have addional commands available to you");
                 user.sendBotMessage("You can see what these are by using:");
                 user.sendBotMessage("    /dfbnc show commands admin");
@@ -57,7 +56,6 @@ public class FirstTimeCommand extends Command {
                 user.sendBotMessage("You do not have permission to access this command.");
             }
         } else {
-            user.sendBotMessage("----------------");
             user.sendBotMessage("Welcome to DFBnc. It seems that this is your first time using this account.");
             user.sendBotMessage("With DFBnc you can issue commands to the BNC using /dfbnc (or /raw dfbnc or /quote dfbnc depending on your client)");
             user.sendBotMessage("For example to see what commands are available you would use:");
@@ -89,7 +87,7 @@ public class FirstTimeCommand extends Command {
         }
         user.getAccount().setFirst(false);
     }
-    
+
     /**
      * What does this Command handle.
      *
@@ -99,14 +97,14 @@ public class FirstTimeCommand extends Command {
     public String[] handles() {
         return new String[]{"firsttime"};
     }
-    
+
     /**
      * Create a new instance of the Command Object
      *
      * @param manager CommandManager that is in charge of this Command
      */
     public FirstTimeCommand (final CommandManager manager) { super(manager); }
-    
+
     /**
      * Get a description of what this command does
      *
@@ -117,5 +115,5 @@ public class FirstTimeCommand extends Command {
     @Override
     public String getDescription(final String command) {
         return "This command gives information on firsttime usage of dfbnc";
-    } 
+    }
 }

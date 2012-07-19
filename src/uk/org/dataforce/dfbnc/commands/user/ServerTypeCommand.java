@@ -49,7 +49,6 @@ public class ServerTypeCommand extends Command {
         if (actualParams[1] == null) { return; }
 
         if (actualParams.length > 1 && actualParams[1].equalsIgnoreCase("settype")) {
-            user.sendBotMessage("----------------");
             if (actualParams.length > 2) {
                 final Collection<String> availableTypes = DFBnc.getServerTypeManager().getServerTypeNames();
                 availableTypes.add("none");
@@ -82,7 +81,6 @@ public class ServerTypeCommand extends Command {
                 }
             }
         } else if (actualParams.length > 1 && actualParams[1].equalsIgnoreCase("help")) {
-            user.sendBotMessage("----------------");
             user.sendBotMessage("This command allows you to set the servertype for this account.");
             final String currentType = user.getAccount().getConfig().getOption("server", "servertype", "");
             if (currentType.equals("")) {

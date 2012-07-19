@@ -46,14 +46,13 @@ public abstract class AbstractSetCommand extends Command {
      */
     @Override
     public void handle(final UserSocket user, final String[] params) {
-        user.sendBotMessage("----------------");
 
         String[] actualParams = params;
 
         if (actualParams.length > 1) {
             actualParams[1] = getFullParam(user, actualParams, 1, validParams.keySet());
             if (actualParams[1] == null) { return; }
-            
+
             if (validParams.get(actualParams[1].toLowerCase()) == null) {
                 user.sendBotMessage("Invalid setting '"+actualParams[1]+"'.");
                 user.sendBotMessage("Valid settings are:");

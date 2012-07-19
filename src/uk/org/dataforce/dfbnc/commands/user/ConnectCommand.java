@@ -41,9 +41,8 @@ public class ConnectCommand extends Command {
      */
     @Override
     public void handle(final UserSocket user, final String[] params) {
-        user.sendBotMessage("----------------");
         final Account acc = user.getAccount();
-        
+
         if (!params[0].equalsIgnoreCase("connect")) {
             user.sendBotMessage("Disconnecting...");
             if (acc.getConnectionHandler() == null) {
@@ -67,7 +66,7 @@ public class ConnectCommand extends Command {
             }
             if (!params[0].equalsIgnoreCase("reconnect")) { return; }
         }
-        
+
         if (acc.getConnectionHandler() == null) {
             user.sendBotMessage("Connecting...");
             try {
@@ -80,7 +79,7 @@ public class ConnectCommand extends Command {
             user.sendBotMessage("Already connected.");
         }
     }
-    
+
     /**
      * What does this Command handle.
      *
@@ -97,14 +96,14 @@ public class ConnectCommand extends Command {
         // Only allow the connect command to be shortened.
         return handle.equalsIgnoreCase("connect");
     }
-    
+
     /**
      * Create a new instance of the Command Object
      *
      * @param manager CommandManager that is in charge of this Command
      */
     public ConnectCommand (final CommandManager manager) { super(manager); }
-    
+
     /**
      * Get a description of what this command does
      *
