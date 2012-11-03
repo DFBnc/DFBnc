@@ -42,11 +42,11 @@
 	<property name="plugin.src.dir" value="modules/plugins/src/" />
 	<property name="util.src.dir" value="modules/util/src/" />
 	<property name="libs.jars" value="libs/jna/jna.jar,libs/jna/platform.jar" />
+	<propertyregex property="libs.classpath" input="${libs.jars}" regexp="," replace=":" global="true" />
 	<path id="plugin.libs">
 		<fileset dir="${plugin.src.dir}/../libs/" includes="*.jar"/>
 	</path>
 	<property name="plugin.libs" refid="plugin.libs"/>
-	<propertyregex property="libs.classpath" input="${libs.jars}" regexp="," replace=":" global="true" />
 	<!-- <property name="libs.jars" value="libs/jna/jna.jar:libs/jna/platform.jar" /> -->
 	<var name="mergelibs" value="true"/>
 	<var name="jar.compress" value="true" />

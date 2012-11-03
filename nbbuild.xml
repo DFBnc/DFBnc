@@ -12,9 +12,9 @@
     <import file="nbproject/build-impl.xml"/>
     <!--
 
-    There exist several targets which are by default empty and which can be 
-    used for execution of your tasks. These targets are usually executed 
-    before and after some main targets. They are: 
+    There exist several targets which are by default empty and which can be
+    used for execution of your tasks. These targets are usually executed
+    before and after some main targets. They are:
 
       -pre-init:                 called before initialization of project properties
       -post-init:                called after initialization of project properties
@@ -40,12 +40,12 @@
             </obfuscate>
         </target>
 
-    For list of available properties check the imported 
-    nbproject/build-impl.xml file. 
+    For list of available properties check the imported
+    nbproject/build-impl.xml file.
 
 
     Another way to customize the build is by overriding existing main targets.
-    The targets of interest are: 
+    The targets of interest are:
 
       -init-macrodef-javac:     defines macro for javac compilation
       -init-macrodef-junit:     defines macro for junit execution
@@ -53,7 +53,7 @@
       -init-macrodef-java:      defines macro for class execution
       -do-jar-with-manifest:    JAR building (if you are using a manifest)
       -do-jar-without-manifest: JAR building (if you are not using a manifest)
-      run:                      execution of project 
+      run:                      execution of project
       -javadoc-build:           Javadoc generation
       test-report:              JUnit report generation
 
@@ -65,10 +65,57 @@
             </exec>
         </target>
 
-    Notice that the overridden target depends on the jar target and not only on 
-    the compile target as the regular run target does. Again, for a list of available 
+    Notice that the overridden target depends on the jar target and not only on
+    the compile target as the regular run target does. Again, for a list of available
     properties which you can use, check the target you are overriding in the
-    nbproject/build-impl.xml file. 
+    nbproject/build-impl.xml file.
 
     -->
+    <condition property="dynamic.properties.exists">
+        <available file="nbproject/private/dynamic.properties"/>
+    </condition>
+
+    <target name="-init-properties">
+        <path id="libclasspath">
+            <fileset dir="lib" includes="*.jar"/>
+        </path>
+
+        <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+            <classpath>
+                <pathelement location="libs/ant-contrib/ant-contrib-1.0b3.jar"/>
+            </classpath>
+        </taskdef>
+    </target>
+
+    <target name="-create-dynamic-properties" unless="dynamic.properties.exists">
+        <mkdir dir="nbproject/private"/>
+        <echo file="nbproject/private/dynamic.properties"/>
+    </target>
+
+    <target name="-check-dynamic-classpath">
+        <loadfile property="dynamic.properties.old" srcFile="nbproject/private/dynamic.properties"/>
+        <condition property="dynamic.properties.needsinsert">
+            <not>
+                <matches string="${dynamic.properties.old}" pattern="^dynamic.classpath=(.*)$" multiline="true" casesensitive="true"/>
+            </not>
+        </condition>
+    </target>
+
+    <target name="-create-dynamic-classpath" if="dynamic.properties.needsinsert">
+        <echo append="true" file="nbproject/private/dynamic.properties">${line.separator}dynamic.classpath=${line.separator}</echo>
+    </target>
+
+    <target name="-init-dynamic-properties" depends="-init-properties,-create-dynamic-properties,-check-dynamic-classpath,-create-dynamic-classpath">
+        <path id="all.libs">
+            <fileset dir="modules" includes="*/libs/*.jar"/>
+            <fileset dir="libs" includes="*/*.jar"/>
+        </path>
+
+        <propertyregex property="dynamic.classpath.value" input="${toString:all.libs}" regexp="\\" replace="/" global="true" defaultValue="${toString:all.libs}"/>
+        <replaceregexp file="nbproject/private/dynamic.properties" match="^dynamic.classpath=(.*)$" flags="im" replace="dynamic.classpath=${dynamic.classpath.value}"/>
+    </target>
+
+    <target name="-pre-init" depends="-init-dynamic-properties">
+        <property file="nbproject/private/dynamic.properties"/>
+    </target>
 </project>

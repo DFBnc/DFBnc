@@ -20,6 +20,12 @@ is divided into following sections:
 
         -->
 <project xmlns:j2seproject1="http://www.netbeans.org/ns/j2se-project/1" xmlns:j2seproject3="http://www.netbeans.org/ns/j2se-project/3" xmlns:jaxrpc="http://www.netbeans.org/ns/j2se-project/jax-rpc" basedir=".." default="default" name="DFBnc-Java-impl">
+
+    <path id="plugin.libs">
+        <fileset dir="${plugin.src.dir}/../libs/" includes="*.jar"/>
+    </path>
+    <property name="plugin.libs" refid="plugin.libs" />
+
     <fail message="Please build using Ant 1.7.1 or higher.">
         <condition>
             <not>
