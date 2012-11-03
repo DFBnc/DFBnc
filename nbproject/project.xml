@@ -8,6 +8,8 @@
                 <root id="src.dir" name="Main Source"/>
                 <root id="parser.src.dir" name="IRCParser Source"/>
                 <root id="akuma.src.dir" name="Akuma Source"/>
+                <root id="plugin.src.dir" name="Plugin Source"/>
+                <root id="util.src.dir" name="Util Source"/>
             </source-roots>
             <test-roots>
                 <root id="test.dir" name="Main Tests"/>

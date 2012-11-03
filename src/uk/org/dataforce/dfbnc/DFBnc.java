@@ -41,6 +41,7 @@ import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.commands.admin.*;
 import uk.org.dataforce.dfbnc.commands.user.*;
 import uk.org.dataforce.dfbnc.config.BlackHoleConfig;
+import uk.org.dataforce.dfbnc.plugins.PluginManager;
 import uk.org.dataforce.dfbnc.servers.ServerTypeManager;
 import uk.org.dataforce.libs.cliparser.BooleanParam;
 import uk.org.dataforce.libs.cliparser.CLIParam;
@@ -83,6 +84,9 @@ public class DFBnc {
     /** The time that the BNC was started at */
     public static final Long startTime = System.currentTimeMillis();
 
+    /** Our PluginManager */
+    private final PluginManager pluginManager;
+
     /** Global config. */
     private Config config;
 
@@ -98,7 +102,9 @@ public class DFBnc {
     /**
      * Create the BNC.
      */
-    private DFBnc() { }
+    private DFBnc() {
+        pluginManager = new PluginManager(this);
+    }
 
     /**
      * Init the application.
@@ -232,6 +238,14 @@ public class DFBnc {
 
         Logger.info("Setting up ServerType Manager");
         myServerTypeManager.init();
+
+        Logger.info("Loading plugins");
+        final Map<String, String> plugins = config.getOptionDomain("plugins");
+        for (Map.Entry<String,String> e : plugins.entrySet()) {
+            if (e.getValue().equalsIgnoreCase("enabled")) {
+                pluginManager.loadPlugin(e.getKey());
+            }
+        }
 
         Logger.info("Running!");
         if (config.getBoolOption("debugging", "autocreate", false)) {
