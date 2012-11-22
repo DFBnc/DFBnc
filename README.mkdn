@@ -1,35 +1,55 @@
-# Note #########################################################################
-This project is for the *JAVA* version of DFBnc (Read below for delphi/pascal)
+# DFBnc ########################################################################
+
+## What is it? #################################################################
+
+DFBnc is an open-source, MIT-Licensed, multi-tennant, java-based IRC Bouncer.
+
+## CI ##########################################################################
+
+DFBnc Uses Travis-CI for Continuous Integration, the status of which is shown
+below.
+
+All pull requests must pass CI before being accepted.
+
+[![Build Status](https://travis-ci.org/ShaneMcC/DFBnc.png)](https://travis-ci.org/ShaneMcC/DFBnc.png)
 
 # History ######################################################################
+
+## Then ########################################################################
 
 DFBnc was originally an IRC Bouncer written in Delphi. It compiled on Linux
 (FreePascal) and windows (using both Delphi and FreePascal).
 
-DFBNC Was originally licensed under the ZLIB License, unfortunately this version
-had a number of bugs in it, and is no longer available.
+DFBnc Was originally licensed under the ZLIB License, unfortunately this version
+had a number of bugs in it (random crashes, odd behaviour etc), and is no longer
+available.
 
-# Now ##########################################################################
+## Now #########################################################################
 
-Due to issues with the code and random other things, the decision was taken to
+Due to issues with the code and the "random" bugs, the decision was taken to
 completely rewrite DFBnc (for the 2nd time), and rather than relying on external
 librarys (lsocket and wsocket) and having to test on 3 compilers and work
 around the various differences in compilers/platforms by hand it was decided to
-be rewriten in Java, with the rock-solid IRC Parser from http://www.dmdirc.com/
-powering it.
+be rewriten in Java (which results in much less headaches supporting multiple
+platforms), and to use the rock-solid IRC Parser from http://www.dmdirc.com/
 
-# Compatability ################################################################
+## Compatability ###############################################################
 
 Config files between the 2 versions are not compatible with each other, due to
-the config-directory structure used by dfbnc-java.
+the config-directory structure used by dfbnc-java, there is no migration path,
+however there are no known users of the old version. (If you do use it, you
+should really stop and switch)
 
 # External Files ###############################################################
 
-DFBnc makes use of files from other projects. Some are included as git
-submodules, some are just included in the repo.
+DFBnc makes use of files from other projects. Included as git submodules where
+possible.
+
+Obviously the usual DFBnc License does not apply for code in these submodules,
+and their own license should be used.
 
 The projects used are:
 
   * [DMDirc](http://dmdirc.com/) (irc parser, some utilities)
   * [DF Libs](http://code.google.com/p/dflibs/) (cliparser and logger)
-
+  * [AKUMA](http://akuma.kohsuke.org/) (Akuma - forking on java)
