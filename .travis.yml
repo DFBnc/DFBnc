@@ -1,2 +1,2 @@
 language: java
-before_install: git submodule --init update
+before_install: git submodule update --init
