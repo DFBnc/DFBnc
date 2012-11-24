@@ -26,8 +26,6 @@ import uk.org.dataforce.dfbnc.plugins.Plugin;
 import uk.org.dataforce.dfbnc.plugins.PluginManager;
 import uk.org.dataforce.libs.logger.Logger;
 
-import org.eclipse.jetty.server.Server;
-
 /**
  * DFBnc Web Interface
  *
@@ -52,10 +50,9 @@ public class DFBncWeb extends Plugin {
     @Override
     public void pluginLoaded() {
         Logger.info("Woo, Plugin!");
-
-        final Server server = new Server(8080);
-        server.start();
-        server.join();
+        try {
+            new DFBncWebService().run(new String[]{"server"});
+        } catch (final Exception e) { }
     }
 
     /** {@inheritDoc} */

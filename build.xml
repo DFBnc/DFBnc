@@ -46,7 +46,6 @@
 	<path id="plugin.libs">
 		<fileset dir="${plugin.src.dir}/../libs/" includes="*.jar"/>
 	</path>
-	<property name="plugin.libs" refid="plugin.libs"/>
 	<!-- <property name="libs.jars" value="libs/jna/jna.jar:libs/jna/platform.jar" /> -->
 	<var name="mergelibs" value="true"/>
 	<var name="jar.compress" value="true" />
@@ -170,7 +169,7 @@
 			<classpath>
 				<path path="${javac.classpath}"/>
 				<path path="${libs.classpath}"/>
-				<path path="${plugin.libs}"/>
+				<path path="${toString:plugin.libs}"/>
 			</classpath>
 			<compilerarg line="${javac.compilerargs}"/>
 		</javac>
@@ -269,10 +268,20 @@ versions:
 	<!-- Add libs to jar -->
 	<target name="-merge-jar-and-libs" depends="-do-jar" description="Merge JAR and Libs">
 		<delete file="${dist.jar}" />
+
+		<jar jarfile="${dist.jar}.external">
+			<zipgroupfileset dir="" includes="${libs.jars}" />
+			<zipgroupfileset dir="${plugin.src.dir}/../libs/" includes="*.jar" />
+		</jar>
+
 		<zip destfile="${dist.jar}" compress="${jar.compress}" duplicate="preserve">
-			<zipgroupfileset dir="" includes="${dist.jar}.temp,${libs.jars}"/>
+			<zipgroupfileset dir="" includes="${dist.jar}.temp" />
+			<zipfileset src="${dist.jar}.external">
+				<exclude name="META-INF/*"/>
+			</zipfileset>
 		</zip>
 		<delete file="${dist.jar}.temp" />
+		<delete file="${dist.jar}.external" />
 	</target>
 
 	<!-- Don't add libs to jar -->

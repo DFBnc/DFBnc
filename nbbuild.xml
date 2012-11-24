@@ -9,6 +9,7 @@
 <!-- in the project's Project Properties dialog box.-->
 <project name="DFBnc-Java" default="default" basedir=".">
     <description>Builds, tests, and runs the project DFBnc-Java.</description>
+    <property file="nbproject/private/private.properties"/>
     <import file="nbproject/build-impl.xml"/>
     <!--
 
@@ -71,15 +72,11 @@
     nbproject/build-impl.xml file.
 
     -->
-    <condition property="dynamic.properties.exists">
-        <available file="nbproject/private/dynamic.properties"/>
+    <condition property="private.properties.exists">
+        <available file="nbproject/private/private.properties"/>
     </condition>
 
     <target name="-init-properties">
-        <path id="libclasspath">
-            <fileset dir="lib" includes="*.jar"/>
-        </path>
-
         <taskdef resource="net/sf/antcontrib/antcontrib.properties">
             <classpath>
                 <pathelement location="libs/ant-contrib/ant-contrib-1.0b3.jar"/>
@@ -87,35 +84,35 @@
         </taskdef>
     </target>
 
-    <target name="-create-dynamic-properties" unless="dynamic.properties.exists">
+    <target name="-create-private-properties" unless="private.properties.exists">
         <mkdir dir="nbproject/private"/>
-        <echo file="nbproject/private/dynamic.properties"/>
+        <echo file="nbproject/private/private.properties"/>
     </target>
 
-    <target name="-check-dynamic-classpath">
-        <loadfile property="dynamic.properties.old" srcFile="nbproject/private/dynamic.properties"/>
-        <condition property="dynamic.properties.needsinsert">
+    <target name="-check-private-classpath">
+        <loadfile property="private.properties.old" srcFile="nbproject/private/private.properties"/>
+        <condition property="private.properties.needsinsert">
             <not>
-                <matches string="${dynamic.properties.old}" pattern="^dynamic.classpath=(.*)$" multiline="true" casesensitive="true"/>
+                <matches string="${private.properties.old}" pattern="^private.classpath=(.*)$" multiline="true" casesensitive="true"/>
             </not>
         </condition>
     </target>
 
-    <target name="-create-dynamic-classpath" if="dynamic.properties.needsinsert">
-        <echo append="true" file="nbproject/private/dynamic.properties">${line.separator}dynamic.classpath=${line.separator}</echo>
+    <target name="-create-private-classpath" if="private.properties.needsinsert">
+        <echo append="true" file="nbproject/private/private.properties">${line.separator}private.classpath=${line.separator}</echo>
     </target>
 
-    <target name="-init-dynamic-properties" depends="-init-properties,-create-dynamic-properties,-check-dynamic-classpath,-create-dynamic-classpath">
+    <target name="-init-private-properties" depends="-init-properties,-create-private-properties,-check-private-classpath,-create-private-classpath">
         <path id="all.libs">
             <fileset dir="modules" includes="*/libs/*.jar"/>
             <fileset dir="libs" includes="*/*.jar"/>
         </path>
 
-        <propertyregex property="dynamic.classpath.value" input="${toString:all.libs}" regexp="\\" replace="/" global="true" defaultValue="${toString:all.libs}"/>
-        <replaceregexp file="nbproject/private/dynamic.properties" match="^dynamic.classpath=(.*)$" flags="im" replace="dynamic.classpath=${dynamic.classpath.value}"/>
+        <propertyregex property="private.classpath.value" input="${toString:all.libs}" regexp="\\" replace="/" global="true" defaultValue="${toString:all.libs}"/>
+        <replaceregexp file="nbproject/private/private.properties" match="^private.classpath=(.*)$" flags="im" replace="private.classpath=${private.classpath.value}"/>
     </target>
 
-    <target name="-pre-init" depends="-init-dynamic-properties">
-        <property file="nbproject/private/dynamic.properties"/>
+    <target name="-pre-init" depends="-init-private-properties">
+        <property file="nbproject/private/private.properties"/>
     </target>
 </project>
