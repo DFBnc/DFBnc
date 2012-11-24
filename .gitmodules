@@ -4,3 +4,6 @@
 [submodule "modules/akuma"]
 	path = modules/akuma
 	url = git://github.com/ShaneMcC/akuma.git
+[submodule "modules/util"]
+	path = modules/util
+	url = git://git.dmdirc.com/util/

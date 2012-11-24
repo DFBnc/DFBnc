@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -281,7 +282,22 @@ public final class Account implements UserSocketWatcher {
      * @return true/false depending on successful match
      */
     public boolean checkPassword(final String password) {
+        return checkPassword(null, password);
+    }
+
+    /**
+     * Check if a password matches this account password. If no subclient
+     * password is defined, fallback to the main account password.
+     *
+     * @param subclient Subclient to check, null for none.
+     * @param password Password to check
+     * @return true/false depending on successful match
+     */
+    public boolean checkPassword(final String subclient, final String password) {
         StringBuilder hashedPassword = new StringBuilder(myName.toLowerCase());
+        if (subclient != null) {
+            hashedPassword.append(subclient.toLowerCase());
+        }
         if (caseSensitivePasswords) {
             hashedPassword.append(password);
         } else {
@@ -289,10 +305,17 @@ public final class Account implements UserSocketWatcher {
         }
         hashedPassword.append(salt);
 
-        Logger.debug3("Real MD5: " + config.getOption("user", "password", ""));
-        Logger.debug3("Check MD5: " + Util.md5(hashedPassword.toString()));
+        final String passwordKey = "password" + ((subclient != null && subclient.length() > 0) ? "." + subclient.toLowerCase() : "");
 
-        return Util.md5(hashedPassword.toString()).equals(config.getOption("user", "password", "..."));
+        // Logger.debug3("Real MD5: " + config.getOption("user", passwordKey, ""));
+        // Logger.debug3("Check MD5: " + Util.md5(hashedPassword.toString()));
+
+        String check = config.getOption("user", passwordKey, "...");
+        if (check.equals("...")) {
+            check = config.getOption("user", "password", "...");
+        }
+
+        return Util.md5(hashedPassword.toString()).equals(check);
     }
 
     /**

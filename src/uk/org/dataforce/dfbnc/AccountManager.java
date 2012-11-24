@@ -70,12 +70,13 @@ public class AccountManager {
      * Check if a password matches an account.
      *
      * @param username Username to check
+     * @param subclient Subclient to check, "" for none.
      * @param password Password to check
      * @return true/false depending on successful match
      */
-    public static boolean checkPassword(final String username, final String password) {
+    public static boolean checkPassword(final String username, final String subclient, final String password) {
         if (exists(username)) {
-            return get(username).checkPassword(password);
+            return get(username).checkPassword(subclient, password);
         } else {
             Logger.debug2("CheckPassword: User does not exist "+username);
             return false;

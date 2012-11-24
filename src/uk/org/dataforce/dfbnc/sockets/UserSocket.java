@@ -630,7 +630,7 @@ public class UserSocket extends ConnectedSocket {
                     AccountManager.saveAccounts();
                     DFBnc.getBNC().getConfig().save();
             }
-            if (AccountManager.checkPassword(username, password)) {
+            if (AccountManager.checkPassword(username, clientID, password)) {
                 myAccount = AccountManager.get(username);
                 if (myAccount.isSuspended()) {
                     sendBotMessage("This account has been suspended.");

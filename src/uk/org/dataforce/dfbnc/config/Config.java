@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import uk.org.dataforce.libs.logger.Logger;
-import uk.org.dataforce.libs.util.WeakList;
+import com.dmdirc.util.collections.WeakList;
 
 /**
  * Configuration Files.
