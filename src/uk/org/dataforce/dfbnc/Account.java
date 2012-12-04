@@ -294,6 +294,40 @@ public final class Account implements UserSocketWatcher {
      * @return true/false depending on successful match
      */
     public boolean checkPassword(final String subclient, final String password) {
+        final String passwordKey = "password" + ((subclient != null && subclient.length() > 0) ? "." + subclient.toLowerCase() : "");
+        final StringBuilder hashedPassword = new StringBuilder(myName.toLowerCase());
+        final boolean hasSubClientPassword = subclient != null && config.hasOption("user", passwordKey);
+        if (hasSubClientPassword) {
+            hashedPassword.append(subclient.toLowerCase());
+        }
+        if (caseSensitivePasswords) {
+            hashedPassword.append(password);
+        } else {
+            hashedPassword.append(password.toLowerCase());
+        }
+        hashedPassword.append(salt);
+
+        final String check = hasSubClientPassword ? config.getOption("user", passwordKey, "...") : config.getOption("user", "password", "...");
+
+        return Util.md5(hashedPassword.toString()).equals(check);
+    }
+
+    /**
+     * Change the password of this account
+     *
+     * @param password New password
+     */
+    public void setPassword(final String password) {
+        setPassword(null, password);
+    }
+
+    /**
+     * Change the password of this account
+     *
+     * @param subclient Subclient to set password for, null for none.
+     * @param password New password
+     */
+    public void setPassword(final String subclient, final String password) {
         StringBuilder hashedPassword = new StringBuilder(myName.toLowerCase());
         if (subclient != null) {
             hashedPassword.append(subclient.toLowerCase());
@@ -307,33 +341,7 @@ public final class Account implements UserSocketWatcher {
 
         final String passwordKey = "password" + ((subclient != null && subclient.length() > 0) ? "." + subclient.toLowerCase() : "");
 
-        // Logger.debug3("Real MD5: " + config.getOption("user", passwordKey, ""));
-        // Logger.debug3("Check MD5: " + Util.md5(hashedPassword.toString()));
-
-        String check = config.getOption("user", passwordKey, "...");
-        if (check.equals("...")) {
-            check = config.getOption("user", "password", "...");
-        }
-
-        return Util.md5(hashedPassword.toString()).equals(check);
-    }
-
-    /**
-     * Change the password of this account
-     *
-     * @param password New password
-     */
-    public void setPassword(final String password) {
-        StringBuilder hashedPassword = new StringBuilder(myName.toLowerCase());
-        if (caseSensitivePasswords) {
-            hashedPassword.append(password);
-        } else {
-            hashedPassword.append(password.toLowerCase());
-        }
-        hashedPassword.append(salt);
-
-        config.setOption("user", "password", Util.md5(hashedPassword.toString()));
-        Logger.debug3("Setting MD5 for " + getName() + " to " + config.getOption("user", "password", ""));
+        config.setOption("user", passwordKey, Util.md5(hashedPassword.toString()));
         config.save();
     }
 

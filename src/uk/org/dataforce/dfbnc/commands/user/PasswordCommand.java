@@ -45,31 +45,35 @@ public class PasswordCommand extends Command {
         final Account account;
         final String password;
         final String username;
+        final String subclient;
         if (params.length == 2) {
             username = user.getAccount().getName();
+            subclient = null;
             password = params[1];
             account = user.getAccount();
         } else if (params.length > 2) {
-            if (user.getAccount().isAdmin()) {
-                username = params[1];
+            final String[] bits = params[1].split("\\+");
+            username = bits[0];
+            if (user.getAccount().isAdmin() || username.equalsIgnoreCase(user.getAccount().getName())) {
+                subclient = (bits.length > 1) ? bits[1].toLowerCase() : null;
                 password = params[2];
-                account = AccountManager.get(params[1]);
+                account = AccountManager.get(username);
             } else {
                 user.sendBotMessage("Error: Only admins can set the password for other users.");
                 return;
             }
         } else {
             if (user.getAccount().isAdmin()) {
-                user.sendBotMessage("%s [user] newpasswd", params[0]);
+                user.sendBotMessage("%s [user[+subclient]] newpasswd", params[0]);
             } else {
-                user.sendBotMessage("%s newpasswd", params[0]);
+                user.sendBotMessage("%s [%s[+subclient]] newpasswd", params[0], user.getAccount().getName());
             }
             return;
         }
         if (account == null) {
             user.sendBotMessage("Account %s doesnt exist", username);
         } else {
-            account.setPassword(password);
+            account.setPassword(subclient, password);
             user.sendBotMessage("Password successfully changed to: %s", password);
         }
     }
