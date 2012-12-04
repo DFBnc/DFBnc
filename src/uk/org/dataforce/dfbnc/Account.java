@@ -366,12 +366,29 @@ public final class Account implements UserSocketWatcher {
     /**
      * Delete this account
      */
-    public void delete() {
+    public void delete() throws IOException {
+        // Suspend so that reconnecting doesn't work.
+        config.setBoolOption("user", "suspended", true);
+        config.setOption("user", "suspendReason", "Account deleted.");
+
+        // Disconnect all users and the connection handler
         for (UserSocket socket : myUserSockets) {
             socket.sendLine(":%s NOTICE :Connection terminating (Account Deleted)", Util.getServerName(socket.getAccount()));
             socket.close();
         }
-        myConnectionHandler.shutdown("Account Deleted");
+        if (myConnectionHandler != null) {
+            myConnectionHandler.shutdown("Account Deleted");
+        }
+
+        final File confDir = new File(DFBnc.getConfigDirName(), getName());
+        if (confDir.exists()) {
+            if (!Util.deleteFolder(confDir)) {
+                throw new IOException("Unable to delete config directory.");
+            }
+        }
+
+        // Now remove the account.
+        AccountManager.remove(getName());
     }
 
     /**

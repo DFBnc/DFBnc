@@ -21,6 +21,7 @@
  */
 package uk.org.dataforce.libs.util;
 
+import java.io.File;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -113,62 +114,24 @@ public final class Util {
         }
     }
 
-
     /**
-     * Below code from DMDirc DateUtils:
-     * http://git.dmdirc.com/cgit.cgi/util/tree/src/com/dmdirc/util/DateUtils.java
-     * Specifically: http://git.dmdirc.com/cgit.cgi/util/tree/src/com/dmdirc/util/DateUtils.java?id=7e0b83a0c87d64b56bbc5b3d77669c41b06a78d1
+     * Delete a folder and all it's sub files/folders
      *
-     * MIT Licensed: Copyright (c) 2006-2011 DMDirc Developers
+     * @param folder Folder to delete
+     * @return Return code of the last delete operation (the folder itself)
      */
-
-    /**
-     * Tests for and adds one component of the duration format.
-     *
-     * @param builder The string builder to append text to
-     * @param current The number of seconds in the duration
-     * @param duration The number of seconds in this component
-     * @param name The name of this component
-     * @return The number of seconds used by this component
-     */
-    private static int doDuration(final StringBuilder builder, final int current, final int duration, final String name) {
-        int res = 0;
-
-        if (current >= duration) {
-            final int units = current / duration;
-            res = units * duration;
-
-            if (builder.length() > 0) {
-                builder.append(", ");
+    public static boolean deleteFolder(final File folder) {
+        final File[] files = folder.listFiles();
+        if (files != null) {
+            for (final File f : files) {
+                if (f.isDirectory()) {
+                    deleteFolder(f);
+                } else {
+                    f.delete();
+                }
             }
-
-            builder.append(units);
-            builder.append(' ');
-            builder.append(name);
-            builder.append(units == 1 ? "" : 's');
         }
-
-        return res;
-    }
-
-    /**
-     * Formats the specified number of seconds as a string containing the
-     * number of days, hours, minutes and seconds.
-     *
-     * @param duration The duration in seconds to be formatted
-     * @return A textual version of the duration
-     */
-    public static String formatDuration(final int duration) {
-        final StringBuilder buff = new StringBuilder();
-
-        int seconds = duration;
-
-        seconds -= doDuration(buff, seconds, 60 * 60 * 24, "day");
-        seconds -= doDuration(buff, seconds, 60 * 60, "hour");
-        seconds -= doDuration(buff, seconds, 60, "minute");
-        seconds -= doDuration(buff, seconds, 1, "second");
-
-        return buff.length() == 0 ? "0 seconds" : buff.toString();
+        return folder.delete();
     }
 
     /**

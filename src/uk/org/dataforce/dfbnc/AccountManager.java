@@ -90,10 +90,10 @@ public class AccountManager {
      * @return true/false depending on if the account exists or not
      */
     public static boolean exists(final String username) {
-        Logger.debug2("CheckPassword: Checking if user exists: " + username.replace('.', '_').toLowerCase());
+        Logger.debug2("exists: Checking if user exists: " + username.replace('.', '_').toLowerCase());
         if (Logger.getLevel().isLoggable(LogLevel.DEBUG2)) {
             for (String a : accounts.keySet()) {
-                Logger.debug3("CheckPassword: Found acc: " + a);
+                Logger.debug3("exists: Found acc: " + a);
             }
         }
         return accounts.containsKey(username.replace('.', '_').toLowerCase());
@@ -107,6 +107,18 @@ public class AccountManager {
      */
     public static Account get(final String username) {
         return accounts.get(username.replace('.', '_').toLowerCase());
+    }
+
+    /**
+     * Remove an account object
+     *
+     * @param username Username to remove
+     * @return Account object that was removed, or null if nothing was removed.
+     */
+    public static Account remove(final String username) {
+        synchronized (accounts) {
+            return accounts.remove(username.replace('.', '_').toLowerCase());
+        }
     }
 
     /**

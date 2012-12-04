@@ -21,6 +21,7 @@
  */
 package uk.org.dataforce.dfbnc.commands.admin;
 
+import java.io.IOException;
 import uk.org.dataforce.dfbnc.commands.AdminCommand;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
@@ -48,19 +49,24 @@ public class DelUserCommand extends AdminCommand {
                     AccountManager.get(account).setDeleteCode(deleteCode);
                     user.sendBotMessage("Deleting an account will remove all settings for the account.");
                     user.sendBotMessage("Are you sure you want to continue?");
-                    user.sendBotMessage("To continue please enter /dfbnc -BNC %s %s %s", params[0], account, deleteCode);
+                    user.sendBotMessage("To continue please enter /raw dfbnc %s %s %s", params[0], account, deleteCode);
                 } else if (!params[2].equals(AccountManager.get(account).getDeleteCode())) {
                     user.sendBotMessage("Invalid Delete code specified.");
                 } else {
                     user.sendBotMessage("Deleting account '%s'", account);
-                    AccountManager.get(account).delete();
+                    try {
+                        AccountManager.get(account).delete();
+                        user.sendBotMessage("Account '%s' deleted.", account);
+                    } catch (final IOException ioe) {
+                        user.sendBotMessage("Deleting account '%s' failed: %s", account, ioe);
+                    }
                 }
             } else {
                 user.sendBotMessage("An account with the name '%s' does not exist.", account);
             }
         }
     }
-    
+
     /**
      * What does this Command handle.
      *
@@ -70,14 +76,14 @@ public class DelUserCommand extends AdminCommand {
     public String[] handles() {
         return new String[]{"deluser"};
     }
-    
+
     /**
      * Create a new instance of the Command Object
      *
      * @param manager CommandManager that is in charge of this Command
      */
     public DelUserCommand (final CommandManager manager) { super(manager); }
-    
+
     /**
      * Get a description of what this command does
      *
