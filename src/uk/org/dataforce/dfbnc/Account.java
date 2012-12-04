@@ -184,7 +184,8 @@ public final class Account implements UserSocketWatcher {
             sb.append("\"");
         }
 
-        sb.append(")");
+        sb.append("): ");
+        sb.append(user.getCloseReason());
 
         for (UserSocket socket : myUserSockets) {
             if (user != socket) {
@@ -373,8 +374,7 @@ public final class Account implements UserSocketWatcher {
 
         // Disconnect all users and the connection handler
         for (UserSocket socket : myUserSockets) {
-            socket.sendLine(":%s NOTICE :Connection terminating (Account Deleted)", Util.getServerName(socket.getAccount()));
-            socket.close();
+            socket.close("Account deleted.");
         }
         if (myConnectionHandler != null) {
             myConnectionHandler.shutdown("Account Deleted");
@@ -404,8 +404,7 @@ public final class Account implements UserSocketWatcher {
             config.setOption("user", "suspendReason", suspendReason);
 
             for (UserSocket socket : myUserSockets) {
-                socket.sendLine(":%s NOTICE :Connection terminating - Account Suspended (%s)", Util.getServerName(socket.getAccount()), suspendReason);
-                socket.close();
+                socket.close("Account Suspended (" + suspendReason + ")");
             }
             myConnectionHandler.shutdown("Account Suspended");
         }
@@ -574,7 +573,7 @@ public final class Account implements UserSocketWatcher {
                 // Only disconnect users if they have had a 001.
                 if (socket.getPost001()) {
                     socket.sendLine("ERROR : " + reason, false);
-                    socket.close();
+                    socket.closeSocket("Error from server: " + reason);
                 } else {
                     socket.sendBotMessage("Disconnected from server: " + reason);
                 }

@@ -332,7 +332,7 @@ public class UserSocket extends ConnectedSocket {
      */
     public void close(final String reason) {
         this.sendLine(":%s NOTICE :Connection terminating (%s)", Util.getServerName(this.getAccount()), reason);
-        this.close();
+        this.closeSocket(reason);
     }
 
     /** {@inheritDoc} */
@@ -553,7 +553,7 @@ public class UserSocket extends ConnectedSocket {
 
         // Pass it on the appropriate processing function
         if (newLine[0].equals("QUIT")) {
-            close();
+            close("Client Quit: " + (newLine.length > 1 ? newLine[newLine.length - 1] : "No reason given."));
             return;
         }
 
@@ -636,7 +636,7 @@ public class UserSocket extends ConnectedSocket {
                     sendBotMessage("This account has been suspended.");
                     sendBotMessage("Reason: "+myAccount.getSuspendReason());
                     myAccount = null;
-                    close();
+                    close("Account suspended.");
                 } else {
                     sendBotMessage("You are now logged in");
                     if (myAccount.isAdmin()) {
@@ -666,7 +666,7 @@ public class UserSocket extends ConnectedSocket {
                 if (passwordTries >= maxPasswordTries) {
                     sendIRCLine(Consts.ERR_PASSWDMISMATCH, line[0], "Too many password attempts, closing socket.");
                     sendBotMessage("Too many password attempts, closing socket.");
-                    close();
+                    close("Too many password attempts.");
                 }
             }
         }
