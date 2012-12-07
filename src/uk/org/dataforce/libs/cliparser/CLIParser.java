@@ -124,6 +124,18 @@ public class CLIParser {
     }
 
     /**
+     * Check if the given param was given on the command line.
+     * In the case of params with both a char and string value, this will check
+     * either.
+     *
+     * @param flag Flag to check
+     * @return True if given, false if not given or invalid.
+     */
+    public boolean paramGiven(final String flag) {
+        return getParamNumber(flag) > 0;
+    }
+
+    /**
      * Get a CLIParam object for a given flag.
      *
      * @param flag Flag to get param for

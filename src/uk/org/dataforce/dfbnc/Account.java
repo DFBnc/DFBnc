@@ -104,6 +104,18 @@ public final class Account implements UserSocketWatcher {
     }
 
     /**
+     * Get the Server name that the BNC should use when dealing with this account.
+     *
+     * @return Server name that the BNC Uses
+     */
+    public String getServerName() {
+        if (getConnectionHandler() != null && getConnectionHandler().getServerName() != null) {
+            return getConnectionHandler().getServerName();
+        }
+        return DFBnc.getBNC().getDefaultServerName();
+    }
+
+    /**
      * Called when a new UserSocket is opened on an account that this class is
      * linked to.
      *

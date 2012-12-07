@@ -1211,7 +1211,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
             user.sendLine(":%s!bot@%s PART %s :My work here is done...", Util.getBotName(), Util.getServerName(myAccount), channel.getName());
             */
 
-            user.sendLine(":%s KICK %s %s :Socket Closed: %s", Util.getServerName(myAccount), channel.getName(), user.getNickname(), reason);
+            user.sendLine(":%s KICK %s %s :Socket Closed: %s", myAccount.getServerName(), channel.getName(), user.getNickname(), reason);
         }
     }
 

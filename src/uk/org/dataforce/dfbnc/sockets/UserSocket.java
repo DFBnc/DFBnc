@@ -142,6 +142,17 @@ public class UserSocket extends ConnectedSocket {
     }
 
     /**
+     * Get the Server name that the BNC should use when dealing with this socket.
+     * We might not always have an account to ask, so if not we will use the
+     * default name.
+     *
+     * @return Server name that the BNC Uses
+     */
+    public String getServerName() {
+        return (myAccount != null) ? myAccount.getServerName() : DFBnc.getBNC().getDefaultServerName();
+    }
+
+    /**
      * Get the client ID for this socket.
      *
      * @return The client ID for this socket.
@@ -331,7 +342,7 @@ public class UserSocket extends ConnectedSocket {
      * @param reason Reason for closing the socket.
      */
     public void close(final String reason) {
-        this.sendLine(":%s NOTICE :Connection terminating (%s)", Util.getServerName(this.getAccount()), reason);
+        this.sendLine(":%s NOTICE :Connection terminating (%s)", getServerName(), reason);
         this.closeSocket(reason);
     }
 
@@ -417,7 +428,7 @@ public class UserSocket extends ConnectedSocket {
      * @param args The args for the format string
      */
     public void sendBotChat(final String target, final String type, final String data, final Object... args) {
-        sendLine(":%s!bot@%s %s %s :%s", Util.getBotName(), Util.getServerName(myAccount), type, target, String.format(data, args));
+        sendLine(":%s!bot@%s %s %s :%s", Util.getBotName(), getServerName(), type, target, String.format(data, args));
     }
 
     /**
@@ -490,7 +501,7 @@ public class UserSocket extends ConnectedSocket {
      * @param args The args for the format string
      */
     public void sendBotLine(final String type, final String data, final Object... args) {
-        sendLine(":%s!bot@%s %s %s :%s", Util.getBotName(), Util.getServerName(myAccount), type, nickname, String.format(data, args));
+        sendLine(":%s!bot@%s %s %s :%s", Util.getBotName(), getServerName(), type, nickname, String.format(data, args));
     }
 
     /**
@@ -501,7 +512,7 @@ public class UserSocket extends ConnectedSocket {
      * @param args The args for the format string
      */
     public void sendServerLine(final String type, final String data, final Object... args) {
-        sendLine(":%s %s %s :%s", Util.getServerName(myAccount), type, nickname, String.format(data, args));
+        sendLine(":%s %s %s :%s", getServerName(), type, nickname, String.format(data, args));
     }
 
     /** {@inheritDoc} */
@@ -693,9 +704,9 @@ public class UserSocket extends ConnectedSocket {
      */
     public final void sendIRCLine(final int numeric, final String params, final String line, final boolean addColon) {
         if (addColon) {
-            sendLine(":%s %03d %s :%s", Util.getServerName(myAccount), numeric, params, line);
+            sendLine(":%s %03d %s :%s", getServerName(), numeric, params, line);
         } else {
-            sendLine(":%s %03d %s %s", Util.getServerName(myAccount), numeric, params, line);
+            sendLine(":%s %03d %s %s", getServerName(), numeric, params, line);
         }
     }
 
@@ -732,28 +743,28 @@ public class UserSocket extends ConnectedSocket {
             return;
         } else if (line[0].equalsIgnoreCase("PING")) {
             if (line.length > 1) {
-                sendLine(":%s PONG %1$s :%s", Util.getServerName(myAccount), line[1]);
+                sendLine(":%s PONG %1$s :%s", getServerName(), line[1]);
             } else {
-                sendLine(":%s PONG %1$s :%s", Util.getServerName(myAccount), System.currentTimeMillis());
+                sendLine(":%s PONG %1$s :%s", getServerName(), System.currentTimeMillis());
             }
             return;
         } else if (line[0].equalsIgnoreCase("PONG")) {
             return;
         } else if (line[0].equalsIgnoreCase("WHOIS")) {
             if (line[1].equalsIgnoreCase(Util.getBotName())) {
-                sendIRCLine(Consts.RPL_WHOISUSER, nickname+" "+Util.getBotName()+" bot "+Util.getServerName(myAccount)+" *", "DFBnc Pseudo Client");
+                sendIRCLine(Consts.RPL_WHOISUSER, nickname+" "+Util.getBotName()+" bot "+getServerName()+" *", "DFBnc Pseudo Client");
                 sendIRCLine(Consts.RPL_WHOISSERVER, nickname+" "+Util.getBotName()+" DFBNC.Server", "DFBnc Pseudo Server");
                 sendIRCLine(Consts.RPL_WHOISIDLE, nickname+" "+Util.getBotName()+" 0 "+(DFBnc.getStartTime()/1000), "seconds idle, signon time");
                 sendIRCLine(Consts.RPL_ENDOFWHOIS, nickname+" "+Util.getBotName(), "End of /WHOIS list");
                 return;
             }
-        } else if (line[0].equals("TIMESTAMPEDIRC")) {
-            if (line.length <= 2 || line[1].equalsIgnoreCase("ON")) {
+        } else if (line[0].equals("TIMESTAMPEDIRC") || line[0].equals("TSIRC")) {
+            if (line.length < 2 || line[1].equalsIgnoreCase("ON")) {
                 setTimestampedIRC(true);
-                sendLine(":%s TSIRC %s %s :%s", Util.getServerName(myAccount), "1", (System.currentTimeMillis()), "Timestamped IRC Enabled");
+                sendLine(":%s TSIRC %s %s :%s", getServerName(), "1", (System.currentTimeMillis()), "Timestamped IRC Enabled");
             } else {
                 setTimestampedIRC(false);
-                sendLine(":%s TSIRC %s %s :%s", Util.getServerName(myAccount), "0", (System.currentTimeMillis()), "Timestamped IRC Disabled");
+                sendLine(":%s TSIRC %s %s :%s", getServerName(), "0", (System.currentTimeMillis()), "Timestamped IRC Disabled");
             }
             return;
         }

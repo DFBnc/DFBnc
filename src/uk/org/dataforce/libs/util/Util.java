@@ -25,40 +25,12 @@ import java.io.File;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import uk.org.dataforce.dfbnc.Account;
 import uk.org.dataforce.dfbnc.DFBnc;
 
 /**
  * This file stores various useful functions
  */
 public final class Util {
-    /**
-     * Get the md5 hash of a string.
-     *
-     * @param string String to hash
-     * @return md5 hash of given string
-     */
-    public static String md5(final String string) {
-        return md5HashString(string);
-    }
-
-    /**
-     * Get the Server name that the BNC should use
-     *
-     * @param account If account has a ConnectionHandler it can define a different
-     *                name that we should use.
-     * @return Server name that the BNC Uses
-     */
-    public static String getServerName(final Account account) {
-        if (account != null) {
-            if (account.getConnectionHandler() != null) {
-                if (account.getConnectionHandler().getServerName() != null) {
-                    return account.getConnectionHandler().getServerName();
-                }
-            }
-        }
-        return DFBnc.getBNC().getConfig().getOption("general", "ServerName", "DFBnc.Server");
-    }
 
     /**
      * Join an array of Strings back together.
@@ -104,7 +76,7 @@ public final class Util {
      * @param string String to hash
      * @return md5 hash of given string
      */
-    public static String md5HashString(final String string) {
+    public static String md5(final String string) {
         try {
             final MessageDigest m = MessageDigest.getInstance("MD5");
             m.update(string.getBytes(), 0, string.length());
