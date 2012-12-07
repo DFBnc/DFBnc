@@ -111,14 +111,6 @@ public class DFBnc {
         Logger.setLevel(LogLevel.INFO);
         loadVersionInfo();
 
-        if (cli.paramGiven("-version")) {
-            for (Entry<String, String> e : DFBnc.getVersions().entrySet()) {
-                Logger.info(e.getKey() + " version: " + e.getValue());
-            }
-
-            System.exit(0);
-        }
-
         if (DFBncDaemon.canFork() && daemon.isDaemonized()) {
             Logger.setTag("(" + DFBncDaemon.getPID() + ") Child");
         } else {
@@ -131,11 +123,19 @@ public class DFBnc {
             System.exit(0);
         }
 
+        cli.parseArgs(args, true);
+
+        if (cli.paramGiven("-version")) {
+            for (Entry<String, String> e : DFBnc.getVersions().entrySet()) {
+                Logger.info(e.getKey() + " version: " + e.getValue());
+            }
+
+            System.exit(0);
+        }
+
         Logger.info("Adding shutdown hook");
         shutdownHook = new ShutdownHook(this);
         Runtime.getRuntime().addShutdownHook(shutdownHook);
-
-        cli.parseArgs(args, true);
 
         setupLogging();
 
