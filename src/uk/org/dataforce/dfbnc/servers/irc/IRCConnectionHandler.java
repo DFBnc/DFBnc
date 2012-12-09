@@ -48,6 +48,7 @@ import com.dmdirc.parser.interfaces.callbacks.ConnectErrorListener;
 import com.dmdirc.parser.interfaces.callbacks.ErrorInfoListener;
 import com.dmdirc.parser.interfaces.callbacks.SocketCloseListener;
 
+import com.dmdirc.parser.irc.IRCChannelClientInfo;
 import com.dmdirc.parser.irc.ServerType;
 import com.dmdirc.parser.irc.ServerTypeGroup;
 import java.net.URI;
@@ -1111,7 +1112,13 @@ public class IRCConnectionHandler implements ConnectionHandler,
 
                         for (final ChannelInfo channel : channels) {
                             if (!user.allowedChannel(channel.getName())) { continue; }
-                            user.sendLine(":%s JOIN %s", me, channel);
+
+                            if (user.getCapabilityState("extended-join") == CapabilityState.ENABLED) {
+                                final String accountName = (me instanceof IRCClientInfo) ? ((IRCClientInfo)me).getAccountName() : "*";
+                                user.sendLine(":%s JOIN %s %s :%s", me, channel, accountName, me.getRealname());
+                            } else {
+                                user.sendLine(":%s JOIN %s", me, channel);
+                            }
 
                             sendTopic(user, channel);
                             sendNames(user, channel);
@@ -1162,13 +1169,26 @@ public class IRCConnectionHandler implements ConnectionHandler,
      */
     public void sendNames(final UserSocket user, final ChannelInfo channel) {
         final int maxLength = 500 - (":" + getServerName() + " 353 " + myParser.getLocalClient(). getNickname() + " = " + channel + " :").length();
-        StringBuilder names = new StringBuilder();
+        final StringBuilder names = new StringBuilder();
+        final StringBuilder name = new StringBuilder();
         for (ChannelClientInfo cci : channel.getChannelClients()) {
-            if (cci.toString().length() > (maxLength - names.length())) {
-                user.sendIRCLine(353, myParser.getLocalClient().getNickname() + " = " + channel, names.toString().trim());
-                names = new StringBuilder();
+            name.setLength(0);
+            if (user.getCapabilityState("multi-prefix") == CapabilityState.ENABLED && cci instanceof IRCChannelClientInfo) {
+                name.append(((IRCChannelClientInfo)cci).getChanModeStr(true));
+            } else {
+                name.append(cci.getImportantModePrefix());
             }
-            names.append(cci.toString()).append(" ");
+            if (user.getCapabilityState("userhost-in-names") == CapabilityState.ENABLED) {
+                name.append(cci.getClient().toString());
+            } else {
+                name.append(cci.getClient().getNickname());
+            }
+
+            if (name.toString().length() > (maxLength - names.length())) {
+                user.sendIRCLine(353, myParser.getLocalClient().getNickname() + " = " + channel, names.toString().trim());
+                names.setLength(0);
+            }
+            names.append(name.toString()).append(" ");
         }
         if (names.length() > 0) {
             user.sendIRCLine(353, myParser.getLocalClient().getNickname() + " = " + channel, names.toString().trim());
