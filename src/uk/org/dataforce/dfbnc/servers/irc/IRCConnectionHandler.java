@@ -729,7 +729,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         // We do this rather than passing the "JOIN" through in onDataIn so that
         // we can deal with "extended-join" where possible.
         final ClientInfo ci = client.getClient();
-        final String accountName = (ci instanceof IRCClientInfo) ? ((IRCClientInfo)ci).getAccountName() : "*";
+        final String accountName = ci.getAccountName() == null ? "*" : ci.getAccountName();
 
         for (UserSocket socket : myAccount.getUserSockets()) {
             if (socket.syncCompleted()) {
@@ -1114,8 +1114,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                             if (!user.allowedChannel(channel.getName())) { continue; }
 
                             if (user.getCapabilityState("extended-join") == CapabilityState.ENABLED) {
-                                final String accountName = (me instanceof IRCClientInfo) ? ((IRCClientInfo)me).getAccountName() : "*";
-                                user.sendLine(":%s JOIN %s %s :%s", me, channel, accountName, me.getRealname());
+                                user.sendLine(":%s JOIN %s %s :%s", me, channel, (me.getAccountName() == null ? "*" : me.getAccountName()), me.getRealname());
                             } else {
                                 user.sendLine(":%s JOIN %s", me, channel);
                             }
@@ -1173,8 +1172,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
         final StringBuilder name = new StringBuilder();
         for (ChannelClientInfo cci : channel.getChannelClients()) {
             name.setLength(0);
-            if (user.getCapabilityState("multi-prefix") == CapabilityState.ENABLED && cci instanceof IRCChannelClientInfo) {
-                name.append(((IRCChannelClientInfo)cci).getChanModeStr(true));
+            if (user.getCapabilityState("multi-prefix") == CapabilityState.ENABLED) {
+                name.append(cci.getAllModesPrefix());
             } else {
                 name.append(cci.getImportantModePrefix());
             }
