@@ -942,7 +942,7 @@ public class UserSocket extends ConnectedSocket {
                 myAccount.getCommandManager().handle(this, bits);
             }
         } catch (CommandNotFoundException c) {
-            if (DFBnc.getBNC().getConfig().getBoolOption("general", "allowshortcommands", false) && bits.length > 0) {
+            if (DFBnc.getBNC().getConfig().getBoolOption("general", "allowshortcommands", true) && bits.length > 0) {
                 final SortedMap<String, Command> cmds = new TreeMap<String, Command>(myAccount.getCommandManager().getAllCommands(bits[0], myAccount.isAdmin()));
                 if (cmds.size() > 0) {
                     if (cmds.size() == 1) {
