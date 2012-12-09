@@ -28,11 +28,15 @@ import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.SortedMap;
 import java.util.TreeMap;
+
+import com.dmdirc.parser.irc.CapabilityState;
 
 import uk.org.dataforce.dfbnc.Account;
 import uk.org.dataforce.dfbnc.AccountManager;
@@ -63,9 +67,6 @@ public class UserSocket extends ConnectedSocket {
      * NOTICE/PRIVMSG/SNOTICE
      */
     private boolean post001 = false;
-
-    /** Does this connection support time-stamped IRC messages? */
-    private boolean timestampedIRC = false;
 
     /** Has the sync for this user been run? */
     private boolean syncCompleted = false;
@@ -104,6 +105,15 @@ public class UserSocket extends ConnectedSocket {
     /** Is closeAll being run? (This prevents socketClosed removing the HashMap entry) */
     private static boolean closeAll = false;
 
+    /** Is this socket in the middle of capability negotiation? */
+    private boolean isNegotiating = false;
+
+    /** Lines buffered during negotiation. */
+    private List<String> negotiationLines = new LinkedList<String>();
+
+    /** Map of capabilities and their state. */
+    private final Map<String, CapabilityState> capabilities = new HashMap<String, CapabilityState>();
+
     /**
      * Create a new UserSocket.
      *
@@ -139,6 +149,14 @@ public class UserSocket extends ConnectedSocket {
 
         myIP = remoteAddress.getAddress().getHostAddress();
         Logger.info("User Connected: " + myInfo);
+
+        // Set default capabilities
+        synchronized (capabilities) {
+            capabilities.put("userhost-in-names", CapabilityState.DISABLED);
+            capabilities.put("multi-prefix", CapabilityState.DISABLED);
+            capabilities.put("extended-join", CapabilityState.DISABLED);
+            capabilities.put("dfbnc.com/tsirc", CapabilityState.DISABLED);
+        }
     }
 
     /**
@@ -220,21 +238,32 @@ public class UserSocket extends ConnectedSocket {
     }
 
     /**
-     * Does this user support timestamped IRC?
+     * Check the state of the requested capability.
      *
-     * @return true if timestamped IRC is supported.
+     * @return State of the requested capability.
      */
-    public boolean getTimestampedIRC() {
-        return timestampedIRC;
+    public CapabilityState getCapabilityState(final String capability) {
+        synchronized (capabilities) {
+            if (capabilities.containsKey(capability.toLowerCase())) {
+                return capabilities.get(capability.toLowerCase());
+            } else {
+                return CapabilityState.INVALID;
+            }
+        }
     }
 
     /**
-     * Set if this socket supports timestamped irc.
+     * Set the state of the requested capability.
      *
-     * @param newValue New value for timestampedIRC support.
+     * @param capability Requested capability
+     * @param state State to set for capability
      */
-    public void setTimestampedIRC(final boolean newValue) {
-        timestampedIRC = newValue;
+    public void setCapabilityState(final String capability, final CapabilityState state) {
+        synchronized (capabilities) {
+            if (capabilities.containsKey(capability.toLowerCase())) {
+                capabilities.put(capability.toLowerCase(), state);
+            }
+        }
     }
 
     /**
@@ -540,7 +569,9 @@ public class UserSocket extends ConnectedSocket {
      */
     private boolean checkParamCount(final String[] newLine, final int count) {
         if (newLine.length < count) {
-            sendIRCLine(Consts.ERR_NEEDMOREPARAMS, newLine[0], "Not enough parameters");
+            if (newLine.length > 0) {
+                sendIRCLine(Consts.ERR_NEEDMOREPARAMS, newLine[0], "Not enough parameters");
+            }
             return false;
         }
 
@@ -562,12 +593,13 @@ public class UserSocket extends ConnectedSocket {
 
         newLine[0] = newLine[0].toUpperCase();
 
-        // Pass it on the appropriate processing function
+        // Handle QUIT requests here, don't bother processing them
         if (newLine[0].equals("QUIT")) {
             close("Client Quit: " + (newLine.length > 1 ? newLine[newLine.length - 1] : "No reason given."));
             return;
         }
 
+        // Is this a CTCP Reply to the bot? (used for versioning)
         if (newLine[0].equalsIgnoreCase("NOTICE") && newLine.length > 2 && newLine[1].equalsIgnoreCase(Util.getBotName()) && newLine[2].charAt(0) == (char)1 && newLine[2].charAt(newLine[2].length() - 1) == (char)1) {
             final String[] version = newLine[2].split(" ", 2);
             if (version.length > 1) {
@@ -576,6 +608,126 @@ public class UserSocket extends ConnectedSocket {
             }
         }
 
+        // Capability negotiation: http://www.leeh.co.uk/draft-mitchell-irc-capabilities-02.html
+        // This should only happen pre-registration, but we will handle it here
+        // incase the client sends some lines during negotiation that need to be
+        // handled by the authenticated handler rather than the non-authenticated
+        // handler.
+        if (newLine[0].equals("CAP")) {
+            if (!checkParamCount(newLine, 2)) { return; }
+
+            newLine[1] = newLine[1].toUpperCase();
+
+            if (!isNegotiating && myAccount == null) {
+                isNegotiating = true;
+                negotiationLines.clear();
+            }
+
+            // LS shows all capabilities
+            // LIST shows all enabled capabilities
+            // CLEAR disables and shows all capabilities
+            if (newLine[1].equals("LS") || newLine[1].equals("LIST") || newLine[1].equals("CLEAR")) {
+                final boolean onlyEnabled = newLine[1].equals("LIST") || newLine[1].equals("CLEAR");
+                final boolean clearing = newLine[1].equals("CLEAR");
+
+                // Respond with our capabilities, or the enabled capabilities
+                // as requested.
+                final String prefix = String.format(":%s CAP %s %s ", getServerName(), (nickname == null) ? '*' : nickname, newLine[1]);
+
+                final StringBuilder caps = new StringBuilder();
+                for (final String cap : capabilities.keySet()) {
+                    if (onlyEnabled && getCapabilityState(cap) != CapabilityState.ENABLED) {
+                        continue;
+                    }
+                    if (clearing) { setCapabilityState(cap, CapabilityState.DISABLED); }
+
+                    // 500 is a safe limit for the line length, allowing for
+                    // extra characters.
+                    if (prefix.length() + caps.length() > 500) {
+                        sendLine(prefix + "* :" + caps.toString().trim());
+                        caps.setLength(0);
+                    }
+
+                    caps.append(" ");
+                    if (clearing) { caps.append(CapabilityState.DISABLED.getModifier()); }
+                    caps.append(cap);
+                }
+
+                sendLine(prefix + ":" + caps.toString().trim());
+            } else if (newLine[1].equals("REQ")) {
+                // Client requests capablities
+                final Map<String, CapabilityState> goodCaps = new HashMap<String, CapabilityState>();
+                final String[] caps = newLine[newLine.length - 1].toLowerCase().split(" ");
+                for (String capability : caps) {
+                    if (capability.length() == 0) { continue; }
+                    final String cap;
+                    // Check for modifier
+                    char modifier = capability.charAt(0);
+                    // Check modifier is valid
+                    if (CapabilityState.fromModifier(modifier) != CapabilityState.INVALID) {
+                        if (capability.length() == 1) { continue; }
+                        cap = capability.substring(1);
+                    } else {
+                        modifier = '+';
+                        cap = capability;
+                    }
+
+                    // We have to accept the capabilities wholesale, or not at
+                    // all (stupid), so check to see if we can accept this one
+                    // and store it for a second round of processing...
+                    if (capabilities.containsKey(cap)) {
+                        goodCaps.put(cap, CapabilityState.fromModifier(modifier));
+                    } else {
+                        // Reject the lot, stupid standard.
+                        sendLine(":%s CAP %s NAK :%s", getServerName(), (nickname == null) ? '*' : nickname, newLine[newLine.length - 1]);
+
+                        sendLine(":%s CAP_DEBUG %s NAK :%s (%s)", getServerName(), (nickname == null) ? '*' : nickname, cap, modifier);
+                        return;
+                    }
+                }
+
+                // Ok, if we are here, check what CAPs were requested and do as
+                // requested.
+                for (Entry<String, CapabilityState> e : goodCaps.entrySet()) {
+                    setCapabilityState(e.getKey(), e.getValue());
+
+                    if (e.getKey().equals("dfbnc.com/tsirc")) {
+                        // Send the TSIRC timestamp.
+                        sendLine(":%s TSIRC %s %s :%s", getServerName(), "1", (System.currentTimeMillis()), "Timestamped IRC Enabled");
+                    }
+                }
+
+                // Acknowledge the caps.
+                sendLine(":%s CAP %s ACK :%s", getServerName(), (nickname == null) ? '*' : nickname, newLine[newLine.length - 1]);
+            } else if (newLine[1].equals("ACK")) {
+                // Client acknowledges capabilities
+                // None of our capabilities require acking currently, so this
+                // is a noop.
+            } else if (newLine[1].equals("END")) {
+                // Client is done with the negotiation.
+                if (isNegotiating) {
+                    isNegotiating = false;
+                    for (final String negLine : negotiationLines) {
+                        processLine(negLine);
+                    }
+                    negotiationLines.clear();
+                }
+            } else {
+                sendIRCLine(Consts.ERR_BADCAP, newLine[1], "Invalid CAP subcommand");
+            }
+
+            return;
+        } else if (isNegotiating) {
+            // This will only be true if we are pre-authentication, and is used
+            // to suspend authentication.
+            // If we are in the middle of negotiating capabilities, and this
+            // message isn't related to a capability, store it for now and we
+            // will replay it after negotiation has completed.
+            negotiationLines.add(line);
+            return;
+        }
+
+        // Pass it on the appropriate processing function
         if (myAccount != null) {
             processAuthenticated(line, newLine);
         } else {
@@ -620,8 +772,8 @@ public class UserSocket extends ConnectedSocket {
             } else {
                 password = bits[0];
             }
-        } else if (line[0].equals("TIMESTAMPEDIRC")) {
-            setTimestampedIRC(true);
+        } else if (line[0].equals("TIMESTAMPEDIRC") || line[0].equals("TSIRC")) {
+            setCapabilityState("dfbnc.com/tsirc", CapabilityState.ENABLED);
         } else {
             sendIRCLine(Consts.ERR_NOTREGISTERED, line[0], "You must login first.");
         }
@@ -759,12 +911,12 @@ public class UserSocket extends ConnectedSocket {
                 return;
             }
         } else if (line[0].equals("TIMESTAMPEDIRC") || line[0].equals("TSIRC")) {
-            if (line.length < 2 || line[1].equalsIgnoreCase("ON")) {
-                setTimestampedIRC(true);
-                sendLine(":%s TSIRC %s %s :%s", getServerName(), "1", (System.currentTimeMillis()), "Timestamped IRC Enabled");
-            } else {
-                setTimestampedIRC(false);
+            if (line.length < 2 && line[1].equalsIgnoreCase("OFF")) {
+                setCapabilityState("dfbnc.com/tsirc", CapabilityState.DISABLED);
                 sendLine(":%s TSIRC %s %s :%s", getServerName(), "0", (System.currentTimeMillis()), "Timestamped IRC Disabled");
+            } else if (line.length < 2 || line[1].equalsIgnoreCase("ON")) {
+                setCapabilityState("dfbnc.com/tsirc", CapabilityState.ENABLED);
+                sendLine(":%s TSIRC %s %s :%s", getServerName(), "1", (System.currentTimeMillis()), "Timestamped IRC Enabled");
             }
             return;
         }
