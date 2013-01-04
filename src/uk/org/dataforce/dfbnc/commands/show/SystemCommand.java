@@ -21,6 +21,7 @@
  */
 package uk.org.dataforce.dfbnc.commands.show;
 
+import com.dmdirc.util.DateUtils;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map.Entry;
@@ -52,7 +53,7 @@ public class SystemCommand extends AdminCommand {
         user.sendBotMessage("----------------------------------------");
         user.sendBotMessage("Started At: " + sdf.format(new Date(DFBnc.startTime)));
         final long upSeconds = (System.currentTimeMillis() - DFBnc.startTime) / 1000;
-        user.sendBotMessage("Uptime: " + Util.formatDuration((int)upSeconds));
+        user.sendBotMessage("Uptime: " + DateUtils.formatDuration((int)upSeconds));
         user.sendBotMessage("----------------------------------------");
         user.sendBotMessage("Startup Information:");
         user.sendBotMessage("--------------------");

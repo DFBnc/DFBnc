@@ -45,6 +45,8 @@ public abstract class ConnectedSocket implements SelectedSocketHandler {
     protected final boolean isSSL;
     /** Lock for guarding read/writes to socket wrapper. Urgh. */
     private CountDownLatch socketWrapperLock = new CountDownLatch(1);
+    /** What was the reason that this socket closed? */
+    private String closeReason = "Unknown reason.";
 
     /**
      * Create a new ConnectedSocket.
@@ -71,9 +73,19 @@ public abstract class ConnectedSocket implements SelectedSocketHandler {
     }
 
     /**
+     * Get the reason that this socket closed.
+     *
+     * @return The reason that this socket closed.
+     */
+    public String getCloseReason() {
+        return closeReason;
+    }
+
+    /**
      * Used to close this socket.
      */
-    public final void close() {
+    public final void closeSocket(final String reason) {
+        closeReason = reason;
         if (isClosed) { return; }
         Logger.info("Connected Socket closing ("+socketID+")");
         isClosed = true;

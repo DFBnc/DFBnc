@@ -140,7 +140,7 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
 
         if (!mySocketChannel.isConnected()) {
             Logger.error("Trying to write to Disconnected SocketChannel -> " + line);
-            myOwner.close();
+            myOwner.closeSocket("SocketChannel disconnected.");
             return;
         }
 
@@ -157,7 +157,7 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
             SocketSelector.getConnectedSocketSelector().getSelector().wakeup();
         } catch (CancelledKeyException ex) {
             Logger.warning("Trying to write but key is cancelled -> " + line);
-            myOwner.close();
+            myOwner.closeSocket("Write Key Cancelled.");
         }
 
     }
@@ -384,7 +384,7 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
                         selKey.cancel();
                     }
                     Logger.info("Socket got closed.");
-                    myOwner.close();
+                    myOwner.closeSocket("EOF from client.");
                     break;
                 } else {
                     buffer.flip();
@@ -413,13 +413,13 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
                         selKey.interestOps(SelectionKey.OP_READ);
                     } catch (final CancelledKeyException cke) {
                         Logger.warning("Trying to switch back to read but key is cancelled");
-                        myOwner.close();
+                        myOwner.closeSocket("Read key cancelled.");
                     }
                     return;
                 }
-            } catch (IOException e) {
+            } catch (final IOException ioe) {
                 Logger.info("Socket has been closed.");
-                myOwner.close();
+                myOwner.closeSocket("IOException on socket: " + ioe);
             }
         }
     }

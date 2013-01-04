@@ -44,10 +44,10 @@ import uk.org.dataforce.dfbnc.DFBnc;
 public final class CommandManager {
     /** HashMap used to store the different types of Command known. */
     private HashMap<String,Command> knownCommands = new HashMap<String,Command>();
-    
+
     /** List used to store sub command mamangers */
     private List<CommandManager> subManagers = new ArrayList<CommandManager>();
-    
+
     /** Nesting limit for calls to getCommand() */
     private final static int nestingLimit = 10;
 
@@ -55,7 +55,7 @@ public final class CommandManager {
      * Constructor to create a CommandManager
      */
     public CommandManager() { }
-    
+
     /**
      * Constructor to create a CommandManager, specifying a sub command manager.
      *
@@ -64,17 +64,17 @@ public final class CommandManager {
     public CommandManager(final CommandManager submanager) {
         subManagers.add(submanager);
     }
-    
+
     /**
      * Remove all commands
      */
     public void empty() {
         knownCommands.clear();
     }
-    
+
     /**
      * Empty clone method to prevent cloning to get more copies of the CommandManager
-     * 
+     *
      * @throws CloneNotSupportedException Always
      * @return Nothing
      */
@@ -90,7 +90,7 @@ public final class CommandManager {
      * @param manager CommandManager to look for.
      * @return True if manager is a SubManager of this or one of its SubManagers.
      */
-    public boolean hasSubCommandManager(final CommandManager manager) {    
+    public boolean hasSubCommandManager(final CommandManager manager) {
         if (subManagers.contains(manager)) {
             return true;
         } else {
@@ -147,7 +147,7 @@ public final class CommandManager {
                 }
             }
         }
-        
+
         // Now all our submanagers commands
         for (CommandManager subManager : subManagers) {
             Map<String, Command> subResult = subManager.getAllCommands(startsWith, allowAdmin);
@@ -157,7 +157,7 @@ public final class CommandManager {
                 }
             }
         }
-        
+
         return result;
     }
 
@@ -167,7 +167,7 @@ public final class CommandManager {
      * @param manager Sub CommandManager to add.
      * @return true if the CommandManager was added, else false.
      */
-    public boolean addSubCommandManager(final CommandManager manager) {    
+    public boolean addSubCommandManager(final CommandManager manager) {
         // Check that we don't have this already, its not us, and it doesn't have us.
         if (!hasSubCommandManager(manager) && manager != this && !manager.hasSubCommandManager(this)) {
             // now check that this doesn't have any of our sub-managers available
@@ -181,14 +181,14 @@ public final class CommandManager {
         }
         return false;
     }
-    
+
     /**
      * Delete Sub Command Manager.
      *
      * @param manager Sub CommandManager to remove.
      * @return true if the CommandManager was removed, else false.
      */
-    public boolean delSubCommandManager(final CommandManager manager) {    
+    public boolean delSubCommandManager(final CommandManager manager) {
         if (subManagers.contains(manager)) {
             subManagers.remove(manager);
             return true;
@@ -201,12 +201,12 @@ public final class CommandManager {
      *
      * @param command Command subclass for the command.
      */
-    public void addCommand(final Command command) {    
+    public void addCommand(final Command command) {
         // handles() returns a String array of all the main names that
         // this command will handle
         addCommand(command.handles(), command);
     }
-    
+
     /**
      * Add a command using given handles for the command
      *
@@ -214,9 +214,9 @@ public final class CommandManager {
      * @param command Command subclass for the Command.
      * @return the Command that was added, or null if adding failed.
      */
-    public Command addCommand(final String[] handles, final Command command) {    
+    public Command addCommand(final String[] handles, final Command command) {
         Logger.debug("Adding command: "+command.getName());
-        
+
         try {
             for (String handle : handles) {
                 if (knownCommands.containsKey(handle.toLowerCase())) {
@@ -233,13 +233,13 @@ public final class CommandManager {
         }
         return command;
     }
-        
+
     /**
      * Remove a Command type.
      *
      * @param command Command subclass for the command.
      */
-    public void delCommand(final Command command) {    
+    public void delCommand(final Command command) {
         Command testCommand;
         Logger.debug("Deleting command: "+command.getName());
         for (String elementName : knownCommands.keySet()) {
@@ -277,15 +277,15 @@ public final class CommandManager {
         }
 
         Logger.debug5("No exact match found.");
-        
-        if (DFBnc.getBNC().getConfig().getBoolOption("general", "allowshortcommands", false)) {
+
+        if (DFBnc.getBNC().getConfig().getBoolOption("general", "allowshortcommands", true)) {
             Logger.debug5("Short commands enabled.");
             // Find a matching command.
             final Map<String, Command> cmds = new TreeMap<String, Command>(getAllCommands(name, allowAdmin));
             final Set<Command> commands = new HashSet<Command>(cmds.values());
             Logger.debug5("Matching Handlers: " + cmds.size());
             Logger.debug5("Matching Commands: " + commands.size());
-            
+
             // Check for only 1 resulting command.
             // This checks for only one handler for the given word, or in the
             // case of multiple matching handlers, are they actually just the
@@ -364,7 +364,7 @@ public final class CommandManager {
     public Command getCommand(final String name, final boolean allowAdmin) throws CommandNotFoundException {
         return getCommand(name, allowAdmin, 0);
     }
-    
+
     /**
      * Get the command used for a specified name.
      *

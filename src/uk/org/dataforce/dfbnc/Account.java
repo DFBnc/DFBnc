@@ -104,6 +104,18 @@ public final class Account implements UserSocketWatcher {
     }
 
     /**
+     * Get the Server name that the BNC should use when dealing with this account.
+     *
+     * @return Server name that the BNC Uses
+     */
+    public String getServerName() {
+        if (getConnectionHandler() != null && getConnectionHandler().getServerName() != null) {
+            return getConnectionHandler().getServerName();
+        }
+        return DFBnc.getBNC().getDefaultServerName();
+    }
+
+    /**
      * Called when a new UserSocket is opened on an account that this class is
      * linked to.
      *
@@ -184,7 +196,8 @@ public final class Account implements UserSocketWatcher {
             sb.append("\"");
         }
 
-        sb.append(")");
+        sb.append("): ");
+        sb.append(user.getCloseReason());
 
         for (UserSocket socket : myUserSockets) {
             if (user != socket) {
@@ -294,6 +307,40 @@ public final class Account implements UserSocketWatcher {
      * @return true/false depending on successful match
      */
     public boolean checkPassword(final String subclient, final String password) {
+        final String passwordKey = "password" + ((subclient != null && subclient.length() > 0) ? "." + subclient.toLowerCase() : "");
+        final StringBuilder hashedPassword = new StringBuilder(myName.toLowerCase());
+        final boolean hasSubClientPassword = subclient != null && config.hasOption("user", passwordKey);
+        if (hasSubClientPassword) {
+            hashedPassword.append(subclient.toLowerCase());
+        }
+        if (caseSensitivePasswords) {
+            hashedPassword.append(password);
+        } else {
+            hashedPassword.append(password.toLowerCase());
+        }
+        hashedPassword.append(salt);
+
+        final String check = hasSubClientPassword ? config.getOption("user", passwordKey, "...") : config.getOption("user", "password", "...");
+
+        return Util.md5(hashedPassword.toString()).equals(check);
+    }
+
+    /**
+     * Change the password of this account
+     *
+     * @param password New password
+     */
+    public void setPassword(final String password) {
+        setPassword(null, password);
+    }
+
+    /**
+     * Change the password of this account
+     *
+     * @param subclient Subclient to set password for, null for none.
+     * @param password New password
+     */
+    public void setPassword(final String subclient, final String password) {
         StringBuilder hashedPassword = new StringBuilder(myName.toLowerCase());
         if (subclient != null) {
             hashedPassword.append(subclient.toLowerCase());
@@ -307,33 +354,7 @@ public final class Account implements UserSocketWatcher {
 
         final String passwordKey = "password" + ((subclient != null && subclient.length() > 0) ? "." + subclient.toLowerCase() : "");
 
-        // Logger.debug3("Real MD5: " + config.getOption("user", passwordKey, ""));
-        // Logger.debug3("Check MD5: " + Util.md5(hashedPassword.toString()));
-
-        String check = config.getOption("user", passwordKey, "...");
-        if (check.equals("...")) {
-            check = config.getOption("user", "password", "...");
-        }
-
-        return Util.md5(hashedPassword.toString()).equals(check);
-    }
-
-    /**
-     * Change the password of this account
-     *
-     * @param password New password
-     */
-    public void setPassword(final String password) {
-        StringBuilder hashedPassword = new StringBuilder(myName.toLowerCase());
-        if (caseSensitivePasswords) {
-            hashedPassword.append(password);
-        } else {
-            hashedPassword.append(password.toLowerCase());
-        }
-        hashedPassword.append(salt);
-
-        config.setOption("user", "password", Util.md5(hashedPassword.toString()));
-        Logger.debug3("Setting MD5 for " + getName() + " to " + config.getOption("user", "password", ""));
+        config.setOption("user", passwordKey, Util.md5(hashedPassword.toString()));
         config.save();
     }
 
@@ -358,12 +379,28 @@ public final class Account implements UserSocketWatcher {
     /**
      * Delete this account
      */
-    public void delete() {
+    public void delete() throws IOException {
+        // Suspend so that reconnecting doesn't work.
+        config.setBoolOption("user", "suspended", true);
+        config.setOption("user", "suspendReason", "Account deleted.");
+
+        // Disconnect all users and the connection handler
         for (UserSocket socket : myUserSockets) {
-            socket.sendLine(":%s NOTICE :Connection terminating (Account Deleted)", Util.getServerName(socket.getAccount()));
-            socket.close();
+            socket.close("Account deleted.");
         }
-        myConnectionHandler.shutdown("Account Deleted");
+        if (myConnectionHandler != null) {
+            myConnectionHandler.shutdown("Account Deleted");
+        }
+
+        final File confDir = new File(DFBnc.getConfigDirName(), getName());
+        if (confDir.exists()) {
+            if (!Util.deleteFolder(confDir)) {
+                throw new IOException("Unable to delete config directory.");
+            }
+        }
+
+        // Now remove the account.
+        AccountManager.remove(getName());
     }
 
     /**
@@ -379,8 +416,7 @@ public final class Account implements UserSocketWatcher {
             config.setOption("user", "suspendReason", suspendReason);
 
             for (UserSocket socket : myUserSockets) {
-                socket.sendLine(":%s NOTICE :Connection terminating - Account Suspended (%s)", Util.getServerName(socket.getAccount()), suspendReason);
-                socket.close();
+                socket.close("Account Suspended (" + suspendReason + ")");
             }
             myConnectionHandler.shutdown("Account Suspended");
         }
@@ -549,7 +585,7 @@ public final class Account implements UserSocketWatcher {
                 // Only disconnect users if they have had a 001.
                 if (socket.getPost001()) {
                     socket.sendLine("ERROR : " + reason, false);
-                    socket.close();
+                    socket.closeSocket("Error from server: " + reason);
                 } else {
                     socket.sendBotMessage("Disconnected from server: " + reason);
                 }

@@ -27,6 +27,7 @@ import com.dmdirc.parser.common.CallbackNotFoundException;
 import com.dmdirc.parser.common.ChannelListModeItem;
 import com.dmdirc.parser.common.MyInfo;
 import com.dmdirc.parser.common.ParserError;
+import com.dmdirc.parser.irc.CapabilityState;
 import com.dmdirc.parser.irc.IRCParser;
 import com.dmdirc.parser.irc.IRCChannelInfo;
 import com.dmdirc.parser.irc.IRCClientInfo;
@@ -41,11 +42,13 @@ import com.dmdirc.parser.interfaces.callbacks.ServerReadyListener;
 import com.dmdirc.parser.interfaces.callbacks.NickChangeListener;
 import com.dmdirc.parser.interfaces.callbacks.NumericListener;
 import com.dmdirc.parser.interfaces.callbacks.MotdEndListener;
+import com.dmdirc.parser.interfaces.callbacks.ChannelJoinListener;
 import com.dmdirc.parser.interfaces.callbacks.ChannelSelfJoinListener;
 import com.dmdirc.parser.interfaces.callbacks.ConnectErrorListener;
 import com.dmdirc.parser.interfaces.callbacks.ErrorInfoListener;
 import com.dmdirc.parser.interfaces.callbacks.SocketCloseListener;
 
+import com.dmdirc.parser.irc.IRCChannelClientInfo;
 import com.dmdirc.parser.irc.ServerType;
 import com.dmdirc.parser.irc.ServerTypeGroup;
 import java.net.URI;
@@ -82,7 +85,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         UserSocketWatcher, DataInListener, DataOutListener, NickChangeListener,
         ServerReadyListener, NumericListener, MotdEndListener,
         SocketCloseListener, ChannelSelfJoinListener, ConnectErrorListener,
-        ErrorInfoListener, ConfigChangedListener {
+        ErrorInfoListener, ConfigChangedListener, ChannelJoinListener {
 
     /** Account that this IRCConnectionHandler is for. */
     private final Account myAccount;
@@ -322,10 +325,12 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                                 itemNumber = 367;
                                                 listName = "Channel Ban List";
                                             } else if (modechar == 'q' && owner386) {
-                                                itemNumber = 386;
+                                                itemNumber = 387;
+                                                backwardsList = true;
                                                 listName = "Channel Owner List";
                                             } else if (modechar == 'a') {
-                                                itemNumber = 388;
+                                                itemNumber = 389;
+                                                backwardsList = true;
                                                 listName = "Channel Protected List";
                                             } else if (modechar == 'e') {
                                                 itemNumber = 348;
@@ -336,25 +341,27 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                             } else if (modechar == 'R') {
                                                 itemNumber = 344;
                                                 listName = "Channel Reop List";
+                                            } else if (modechar == 'w') {
+                                                itemNumber = 910;
+                                                listName = "Channel Access List";
+                                            } else if (modechar == 'X') {
+                                                itemNumber = 954;
+                                                backwardsList = true;
+                                                listName = "channel exemptchanops list";
                                             } else if (modechar == 'g') {
                                                 itemNumber = 941;
                                                 backwardsList = true;
-                                                listName = "Channel Reop List";
+                                                listName = "Channel spamfilter List";
                                             } else if (isListmode && !serverSupportsListmode) {
                                                 // Well bugger. Client wants LISTMODE, we don't know how to handle the
                                                 // mode ourself and the underlying server doesn't support it.
                                                 // This is not ideal, so let the user know, then they can report it as
                                                 // an issue if they wish.
-                                                user.sendBotMessage("Unable to fulfil LISTMODE request for %s (Mode: %s) - This should be reported.", channel, modechar);
+                                                user.sendBotMessage("Unable to fulfil LISTMODE request for %s (Mode: %s) - This should be reported. See: https://github.com/ShaneMcC/DFBnc/issues", channel, modechar);
                                                 continue;
                                             } else {
-                                                if (outData.length() == 0) {
-                                                    outData.append(line[0].toUpperCase()).append(' ').append(channelName).append(' ');
-                                                }
-                                                outData.append(modeCharList.charAt(i));
-                                                resetOutData = true;
-                                                allowLine(channel, Integer.toString(itemNumber));
-                                                allowLine(channel, Integer.toString(itemNumber + 1));
+                                                // Erm, this won't work, just error instead.
+                                                user.sendBotMessage("Unable to fulfil MODE request for %s (Mode: %s) - This should be reported.  See: https://github.com/ShaneMcC/DFBnc/issues", channel, modechar);
                                                 continue;
                                             }
                                             String prefix = "";
@@ -529,6 +536,20 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                         allowLine(channel, "344");
                                         allowLine(channel, "345");
                                     }
+
+                                    if (((IRCParser)myParser).getServerType() == ServerType.INSPIRCD) {
+                                        if (modechar == 'w') {
+                                            allowLine(channel, "910");
+                                            allowLine(channel, "911");
+                                        } else if (modechar == 'g') {
+                                            allowLine(channel, "940");
+                                            allowLine(channel, "941");
+                                        } else if (modechar == 'X') {
+                                            allowLine(channel, "954");
+                                            allowLine(channel, "953");
+                                        }
+                                    }
+
                                 }
                             }
                         } else {
@@ -696,6 +717,31 @@ public class IRCConnectionHandler implements ConnectionHandler,
 
         myAccount.getConfig().addListener(this);
         channel.getMap().put("backbufferList", new RollingList<BackbufferMessage>(myAccount.getConfig().getIntOption("server", "backbuffer", 0)));
+
+        // Fake a join.
+        onChannelJoin(parser, date, channel, channel.getChannelClient(parser.getLocalClient()));
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void onChannelJoin(final Parser parser, final Date date, final ChannelInfo channel, final ChannelClientInfo client) {
+        // Fake a join to connected clients.
+        // We do this rather than passing the "JOIN" through in onDataIn so that
+        // we can deal with "extended-join" where possible.
+        final ClientInfo ci = client.getClient();
+        final String accountName = ci.getAccountName() == null ? "*" : ci.getAccountName();
+
+        for (UserSocket socket : myAccount.getUserSockets()) {
+            if (socket.syncCompleted()) {
+                if (!socket.allowedChannel(channel.getName())) { continue; }
+
+                if (socket.getCapabilityState("extended-join") == CapabilityState.ENABLED) {
+                    socket.sendLine(":%s JOIN %s %s :%s", ci.toString(), channel.getName(), accountName, ci.getRealname());
+                } else {
+                    socket.sendLine(":%s JOIN %s", ci.toString(), channel.getName());
+                }
+            }
+        }
     }
 
     /** {@inheritDoc} */
@@ -773,6 +819,14 @@ public class IRCConnectionHandler implements ConnectionHandler,
             return;
         }
 
+        // Don't forward CAP from the server
+        if (bits[1].equals("CAP")) { return; }
+
+        // Don't forward JOINs from the server (We fake them in the appropriate
+        // onchannel(self)join callbacks - we need the parser to process them
+        // first.
+        if (bits[1].equals("JOIN")) { return; }
+
         if (bits[1].equals("PRIVMSG")) {
             final ChannelInfo channel = parser.getChannel(bits[2]);
             if (channel != null) {
@@ -802,11 +856,16 @@ public class IRCConnectionHandler implements ConnectionHandler,
             }
             switch (numeric) {
                 case 324: // Channel Modes
+                case 332: // Topic
                 case 367: // Ban List
                 case 348: // Exception List
                 case 346: // Invite List
+                case 387: // Owner List
+                case 389: // Protected List
                 case 344: // Reop List
-                case 332: // Topic
+                case 910: // Access List
+                case 954: // ExemptChanOps List
+                case 941: // Spamfilter List
                     forwardLine = checkAllowLine(channel, bits[1]);
                     break;
 
@@ -818,11 +877,23 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 case 368: // Ban List End
                 case 349: // Exception List End
                 case 347: // Invite List End
-                case 345: // Reop List End
+                case 345: // Reop List
+                case 911: // Reop List
                     forwardLine = checkAllowLine(channel, bits[1]);
                     if (forwardLine) {
                         disallowLine(channel, bits[1]);
                         disallowLine(channel, Integer.toString(numeric - 1));
+                    }
+                    break;
+
+                case 386: // Owner List (Backwards List)
+                case 388: // Protected List (Backwards List)
+                case 953: // ExemptChanOps List (Backwards List)
+                case 940: // Spamfilter List (Backwards List)
+                    forwardLine = checkAllowLine(channel, bits[1]);
+                    if (forwardLine) {
+                        disallowLine(channel, bits[1]);
+                        disallowLine(channel, Integer.toString(numeric + 1));
                     }
                     break;
 
@@ -859,7 +930,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
                     }
                     break;
             }
-        } catch (NumberFormatException nfe) {
+        } catch (final NumberFormatException nfe) {
+            /* Non-Numeric Line. */
         }
 
         if (forwardLine) {
@@ -908,9 +980,17 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 // Add our own 005.
                 // * Show support for advanced LISTMODE (http://shane.dmdirc.com/listmodes.php)
                 // * Show that this is a BNC Connection
-                final String my005 = ":" + getServerName() + " 005 " + myParser.getLocalClient().getNickname() + " LISTMODE=997 BNC=DFBNC TIMESTAMPEDIRC :are supported by this server";
+                final String my005 = ":" + getServerName() + " 005 " + myParser.getLocalClient().getNickname() + " LISTMODE=997 BNC=DFBNC :are supported by this server";
+                final String ts005 = ":" + getServerName() + " 005 " + myParser.getLocalClient().getNickname() + " TIMESTAMPEDIRC :are supported by this server";
+
                 for (UserSocket socket : myAccount.getUserSockets()) {
                     socket.sendLine(my005);
+
+                    // Allow support for old-style TSIRC if it isn't already
+                    // enabled.
+                    if (socket.getCapabilityState("dfbnc.com/tsirc") != CapabilityState.ENABLED) {
+                        socket.sendLine(ts005);
+                    }
                 }
                 connectionLines.add(my005);
                 hacked005 = true;
@@ -991,6 +1071,11 @@ public class IRCConnectionHandler implements ConnectionHandler,
                     user.sendLine(Util.joinString(bits, " ", 0, 0));
                 }
             }
+            // And hack in a tsirc 005 if TSIRC has not already been enabled
+            // with CAP.
+            if (user.getCapabilityState("dfbnc.com/tsirc") != CapabilityState.ENABLED) {
+                user.sendLine(":" + getServerName() + " 005 " + user.getNickname() + " TIMESTAMPEDIRC :are supported by this server");
+            }
             user.setPost001(true);
             // Now, if the parser has recieved an end of MOTD Line, we should send our own MOTD and User Host info
             if (hasMOTDEnd) {
@@ -1027,7 +1112,12 @@ public class IRCConnectionHandler implements ConnectionHandler,
 
                         for (final ChannelInfo channel : channels) {
                             if (!user.allowedChannel(channel.getName())) { continue; }
-                            user.sendLine(":%s JOIN %s", me, channel);
+
+                            if (user.getCapabilityState("extended-join") == CapabilityState.ENABLED) {
+                                user.sendLine(":%s JOIN %s %s :%s", me, channel, (me.getAccountName() == null ? "*" : me.getAccountName()), me.getRealname());
+                            } else {
+                                user.sendLine(":%s JOIN %s", me, channel);
+                            }
 
                             sendTopic(user, channel);
                             sendNames(user, channel);
@@ -1078,13 +1168,26 @@ public class IRCConnectionHandler implements ConnectionHandler,
      */
     public void sendNames(final UserSocket user, final ChannelInfo channel) {
         final int maxLength = 500 - (":" + getServerName() + " 353 " + myParser.getLocalClient(). getNickname() + " = " + channel + " :").length();
-        StringBuilder names = new StringBuilder();
+        final StringBuilder names = new StringBuilder();
+        final StringBuilder name = new StringBuilder();
         for (ChannelClientInfo cci : channel.getChannelClients()) {
-            if (cci.toString().length() > (maxLength - names.length())) {
-                user.sendIRCLine(353, myParser.getLocalClient().getNickname() + " = " + channel, names.toString().trim());
-                names = new StringBuilder();
+            name.setLength(0);
+            if (user.getCapabilityState("multi-prefix") == CapabilityState.ENABLED) {
+                name.append(cci.getAllModesPrefix());
+            } else {
+                name.append(cci.getImportantModePrefix());
             }
-            names.append(cci.toString()).append(" ");
+            if (user.getCapabilityState("userhost-in-names") == CapabilityState.ENABLED) {
+                name.append(cci.getClient().toString());
+            } else {
+                name.append(cci.getClient().getNickname());
+            }
+
+            if (name.toString().length() > (maxLength - names.length())) {
+                user.sendIRCLine(353, myParser.getLocalClient().getNickname() + " = " + channel, names.toString().trim());
+                names.setLength(0);
+            }
+            names.append(name.toString()).append(" ");
         }
         if (names.length() > 0) {
             user.sendIRCLine(353, myParser.getLocalClient().getNickname() + " = " + channel, names.toString().trim());
@@ -1122,7 +1225,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         for (BackbufferMessage message : backbufferList) {
             final String line;
 
-            if (user.getTimestampedIRC()) {
+            if (user.getCapabilityState("dfbnc.com/tsirc") == CapabilityState.ENABLED) {
                 line = "@" + Long.toString(message.getTime()) + "@" + message.getMessage();
             } else {
                 final String date = "    [" + sdf.format(message.getTime()) + "]";
@@ -1130,8 +1233,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 // If it's a CTCP (like an action), insert the timestamp before
                 // the trailing 0x01
                 if (message.getMessage().endsWith("\001")) {
-                    line = message.getMessage().substring(0, message.getMessage().length() - 1)
-                            + date + "\001";
+                    line = message.getMessage().substring(0, message.getMessage().length() - 1) + date + "\001";
                 } else {
                     line = message.getMessage() + date;
                 }
@@ -1211,7 +1313,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
             user.sendLine(":%s!bot@%s PART %s :My work here is done...", Util.getBotName(), Util.getServerName(myAccount), channel.getName());
             */
 
-            user.sendLine(":%s KICK %s %s :Socket Closed: %s", Util.getServerName(myAccount), channel.getName(), user.getNickname(), reason);
+            user.sendLine(":%s KICK %s %s :Socket Closed: %s", myAccount.getServerName(), channel.getName(), user.getNickname(), reason);
         }
     }
 

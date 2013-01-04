@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
@@ -109,6 +110,7 @@ public class DFBnc {
     private void init(final String[] args) {
         Logger.setLevel(LogLevel.INFO);
         loadVersionInfo();
+
         if (DFBncDaemon.canFork() && daemon.isDaemonized()) {
             Logger.setTag("(" + DFBncDaemon.getPID() + ") Child");
         } else {
@@ -121,11 +123,19 @@ public class DFBnc {
             System.exit(0);
         }
 
+        cli.parseArgs(args, true);
+
+        if (cli.paramGiven("-version")) {
+            for (Entry<String, String> e : DFBnc.getVersions().entrySet()) {
+                Logger.info(e.getKey() + " version: " + e.getValue());
+            }
+
+            System.exit(0);
+        }
+
         Logger.info("Adding shutdown hook");
         shutdownHook = new ShutdownHook(this);
         Runtime.getRuntime().addShutdownHook(shutdownHook);
-
-        cli.parseArgs(args, true);
 
         setupLogging();
 
@@ -141,9 +151,9 @@ public class DFBnc {
                 e.printStackTrace();
                 System.exit(1);
             }
-        } else if (!DFBncDaemon.canFork() && cli.getParamNumber("-background") > 0) {
+        } else if (!DFBncDaemon.canFork() && !cli.paramGiven("-foreground")) {
             Logger.error("Forking is not possible on the current OS (" +  System.getProperty("os.name") + ").");
-        } else if (DFBncDaemon.canFork() && cli.getParamNumber("-background") > 0) {
+        } else if (DFBncDaemon.canFork() && !cli.paramGiven("-foreground")) {
             try {
                 Logger.info("Forking to background...");
                 Logger.info(null);
@@ -169,7 +179,7 @@ public class DFBnc {
             }
         }
 
-        if (cli.getParamNumber("-silent") > 0) {
+        if (cli.paramGiven("-silent")) {
             Logger.setLevel(LogLevel.SILENT);
         } else if (cli.getParamNumber("-debug") >= 9) {
             Logger.info("Enabling Stupidly Advanced Debugging Information (DEBUG9).");
@@ -200,7 +210,7 @@ public class DFBnc {
             Logger.setLevel(LogLevel.DEBUG);
         }
 
-        if (cli.getParamNumber("-config") > 0) { configDirectory = cli.getParam("-config").getStringValue(); }
+        if (cli.paramGiven("-config")) { configDirectory = cli.getParam("-config").getStringValue(); }
         Logger.info("Loading Config..");
 
         try {
@@ -235,7 +245,7 @@ public class DFBnc {
 
         Logger.info("Running!");
         if (config.getBoolOption("debugging", "autocreate", false)) {
-            Logger.warning("/-----------------------------------------------------\\");
+            Logger.warning(".-----------------------------------------------------,");
             Logger.warning("|                       WARNING                       |");
             Logger.warning("|-----------------------------------------------------|");
             Logger.warning("| AutoCreate mode is enabled!                         |");
@@ -331,12 +341,12 @@ public class DFBnc {
                 listenSockets.add(new ListenSocket(listenhost));
                 count++;
             } catch (IOException e) {
-                Logger.error("Unable to open socket: "+e.getMessage());
+                Logger.error("Unable to open socket (" + listenhost +"): "+e.getMessage());
             }
-            if (count == 0) {
-                Logger.info("No sockets could be opened, Terminating");
-                System.exit(1);
-            }
+        }
+        if (count == 0) {
+            Logger.info("No sockets could be opened, Terminating");
+            System.exit(1);
         }
     }
 
@@ -520,16 +530,19 @@ public class DFBnc {
     private static void setupCLIParser() {
         cli.clear();
         cli.add(new BooleanParam('h', "help", "Show Help"));
+        cli.add(new BooleanParam('v', "version", "Show version information."));
         cli.add(new BooleanParam('d', "debug", "Enable extra debugging. (Use multiple times for more)"));
         cli.add(new BooleanParam('s', "silent", "Disable all output"));
         cli.add(new StringParam('c', "config", "Alternative config directory to use"));
         cli.add(new BooleanParam((char)0, "enableDebugOptions", "Enable 'debugging.*' config settings"));
         if (DFBncDaemon.canFork()) {
-            cli.add(new BooleanParam((char)0, "background", "Fork into background (EXPERIMENTAL)"));
+            cli.add(new BooleanParam('f', "foreground", "Don't Fork into background"));
+            cli.add(new BooleanParam((char)0, "background", "Exists for backwards compatability..."));
             cli.add(new StringParam((char)0, "pidfile", "Change pidfile location (Default: ./dfbnc.pid)"));
         } else {
-            cli.add(new BooleanParam((char)0, "background", "Fork into background (EXPERIMENTAL) [UNSUPPORTED ON THIS OS]"));
-            cli.add(new StringParam((char)0, "pidfile", "Change pidfile location (Default: ./dfbnc.pid) [UNSUPPORTED ON THIS OS]"));
+            cli.add(new BooleanParam('f', "foreground", "Don't Fork into background"));
+            cli.add(new BooleanParam((char)0, "background", "Exists for backwards compatability... [UNSUPPORTED ON THIS OS]"));
+            cli.add(new StringParam((char)0, "pidfile", "Change pidfile location (Default: ./dfbnc.pid)"));
         }
         cli.add(new StringParam((char)0, "logfile", "Log file to use for console output. (Default: none)"));
         cli.setHelp(cli.getParam("-help"));
@@ -581,6 +594,15 @@ public class DFBnc {
      */
     public Config getConfig() {
         return config;
+    }
+
+    /**
+     * Get the default server name to use.
+     *
+     * @return Default server name to use.
+     */
+    public String getDefaultServerName() {
+        return getConfig().getOption("general", "ServerName", "DFBnc.Server");
     }
 
     /**
