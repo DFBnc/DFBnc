@@ -226,6 +226,7 @@ public class DFBnc {
         Logger.info("Setting up Default User Command Manager");
         userCommandManager.addCommand(new ServerTypeCommand(userCommandManager));
         userCommandManager.addCommand(new ShowCommand(userCommandManager));
+        userCommandManager.addCommand(new DebugCommand(userCommandManager));
         userCommandManager.addCommand(new HelpCommand(userCommandManager));
         userCommandManager.addCommand(new PasswordCommand(userCommandManager));
         userCommandManager.addCommand(new SaveCommand(userCommandManager));
