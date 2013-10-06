@@ -21,14 +21,9 @@
  */
 package uk.org.dataforce.dfbnc.commands.debug;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Map;
-import java.util.Map.Entry;
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
-import uk.org.dataforce.dfbnc.DFBnc;
 
 /**
  * This file represents the 'debug raw' command
