@@ -1221,12 +1221,15 @@ public class IRCConnectionHandler implements ConnectionHandler,
 
         user.sendBotChat(channel.getName(), "NOTICE", "Beginning backbuffer...");
         final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        final SimpleDateFormat servertime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
         for (BackbufferMessage message : backbufferList) {
             final String line;
 
             if (user.getCapabilityState("dfbnc.com/tsirc") == CapabilityState.ENABLED) {
                 line = "@" + Long.toString(message.getTime()) + "@" + message.getMessage();
+            } else if (user.getCapabilityState("server-time") == CapabilityState.ENABLED) {
+                line = "@time=" + servertime.format(message.getTime()) + " " + message.getMessage();
             } else {
                 final String date = "    [" + sdf.format(message.getTime()) + "]";
 

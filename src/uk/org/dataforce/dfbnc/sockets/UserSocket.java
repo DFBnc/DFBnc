@@ -156,6 +156,7 @@ public class UserSocket extends ConnectedSocket {
             capabilities.put("multi-prefix", CapabilityState.DISABLED);
             capabilities.put("extended-join", CapabilityState.DISABLED);
             capabilities.put("dfbnc.com/tsirc", CapabilityState.DISABLED);
+            capabilities.put("server-time", CapabilityState.DISABLED);
         }
     }
 
