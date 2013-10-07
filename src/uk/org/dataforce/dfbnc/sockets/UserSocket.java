@@ -114,6 +114,9 @@ public class UserSocket extends ConnectedSocket {
     /** Map of capabilities and their state. */
     private final Map<String, CapabilityState> capabilities = new HashMap<String, CapabilityState>();
 
+    /** Map of objects associated with this UserSocket. */
+    private final static HashMap<Object, Object> myMap = new HashMap<Object, Object>();
+
     /**
      * Create a new UserSocket.
      *
@@ -157,6 +160,8 @@ public class UserSocket extends ConnectedSocket {
             capabilities.put("extended-join", CapabilityState.DISABLED);
             capabilities.put("dfbnc.com/tsirc", CapabilityState.DISABLED);
             capabilities.put("server-time", CapabilityState.DISABLED);
+            capabilities.put("batch", CapabilityState.DISABLED);
+            capabilities.put("dfbnc.com/channelhistory", CapabilityState.DISABLED);
         }
     }
 
@@ -265,6 +270,16 @@ public class UserSocket extends ConnectedSocket {
                 capabilities.put(capability.toLowerCase(), state);
             }
         }
+    }
+
+    /**
+     * Retrieves a {@link Map} which can be used to store arbitrary data
+     * about the user socket.
+     *
+     * @return A map used for storing arbitrary data
+     */
+    public Map<Object, Object> getMap() {
+        return myMap;
     }
 
     /**
@@ -637,6 +652,7 @@ public class UserSocket extends ConnectedSocket {
 
                 final StringBuilder caps = new StringBuilder();
                 for (final String cap : capabilities.keySet()) {
+                    if (cap.contains(" ")) { continue; } // Spaces are invalid in capability names, used for internal capabilities.
                     if (onlyEnabled && getCapabilityState(cap) != CapabilityState.ENABLED) {
                         continue;
                     }

@@ -159,7 +159,7 @@ public abstract class ConnectedSocket implements SelectedSocketHandler {
      * @param line Line to send
      */
     public final void sendLine(final String line) {
-        mySocketWrapper.sendLine(new IRCLine(line));
+        mySocketWrapper.sendLine(line);
     }
 
     /**
@@ -169,8 +169,8 @@ public abstract class ConnectedSocket implements SelectedSocketHandler {
      * @param lines Lines to send
      */
     public final void sendLine(final IRCLine... lines) {
-        for (IRCLine line : lines) {
-            mySocketWrapper.sendLine(line);
+        for (final IRCLine line : lines) {
+            mySocketWrapper.sendLine(line.toString());
         }
     }
 

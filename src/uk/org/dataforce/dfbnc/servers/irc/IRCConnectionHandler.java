@@ -48,7 +48,6 @@ import com.dmdirc.parser.interfaces.callbacks.ConnectErrorListener;
 import com.dmdirc.parser.interfaces.callbacks.ErrorInfoListener;
 import com.dmdirc.parser.interfaces.callbacks.SocketCloseListener;
 
-import com.dmdirc.parser.irc.IRCChannelClientInfo;
 import com.dmdirc.parser.irc.ServerType;
 import com.dmdirc.parser.irc.ServerTypeGroup;
 import java.net.URI;
@@ -59,6 +58,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Random;
 import java.util.Timer;
@@ -106,10 +106,12 @@ public class IRCConnectionHandler implements ConnectionHandler,
     private List<String> connectionLines = new ArrayList<String>();
     /** This stores tokens not related to a channel that we want to temporarily allow to come via onDataIn */
     private List<String> allowTokens = new ArrayList<String>();
-    /** This stores lines that need to be processed at a later date. */
+    /** This stores client-sent lines that need to be processed at a later date. */
     private final List<RequeueLine> requeueList = new ArrayList<RequeueLine>();
     /** This timer handles re-processing of items in the requeueList */
     private Timer requeueTimer = new Timer("requeueTimer");
+    /** This stores a list of user sockets that we want to requeue all lines from and for temporarily. */
+    private final List<UserSocket> forceRequeueList = new ArrayList<UserSocket>();
 
     /**
      * Create a new IRCConnectionHandler
@@ -229,6 +231,42 @@ public class IRCConnectionHandler implements ConnectionHandler,
     }
 
     /**
+     * Start a BATCH output.
+     *
+     * @param user Socket to start BATCHing for
+     * @param batchIdentifier BATCH identifier.
+     */
+    public void startBatch(final UserSocket user, final String batchIdentifier) {
+        forceRequeueList.add(user);
+        if (user.getCapabilityState("batch") == CapabilityState.ENABLED) {
+            user.sendLine("BATCH " + batchIdentifier);
+        }
+        user.getMap().put("requeue", new LinkedList<String>());
+    }
+
+    /**
+     * End a BATCH output and send any queued lines from the server.
+     * The normal requeue timer will deal with lines that were sent by the
+     * client during the batch period.
+     *
+     * @param user Socket to stop BATCHing for
+     * @param batchIdentifier BATCH identifier.
+     */
+    public void endBatch(final UserSocket user, final String batchIdentifier) {
+        if (user.getCapabilityState("batch") == CapabilityState.ENABLED) {
+            user.sendLine("BATCH -" + batchIdentifier);
+        }
+        if (user.getMap().containsKey("requeue")) {
+            final List<String> lines = ((List<String>)user.getMap().get("requeue"));
+            user.getMap().remove("requeue");
+            for (final String line : lines) {
+                user.sendLine(line);
+            }
+        }
+        forceRequeueList.remove(user);
+    }
+
+    /**
      * Called when data is recieved on the user socket.
      * This intercepts topic/mode/names requests and handles them itself where possible
      * unless the -f parameter is passed (ie /mode -f #channel)
@@ -255,6 +293,14 @@ public class IRCConnectionHandler implements ConnectionHandler,
      * @param times Number of times this line has been sent through the processor (used by requeue)
      */
     public void processDataRecieved(final UserSocket user, final String data, final String[] line, final int times) {
+        if (forceRequeueList.contains(user)) {
+            // Add the line back into the requeue list to try again later.
+            // Subtract 1 from `times` so that lines don't expire due to the
+            // user having everything forcibly requeued.
+            requeueList.add(new RequeueLine(user, data, times - 1));
+            return;
+        }
+
         StringBuilder outData = new StringBuilder();
         boolean resetOutData = false;
 
@@ -941,7 +987,11 @@ public class IRCConnectionHandler implements ConnectionHandler,
             for (UserSocket socket : myAccount.getUserSockets()) {
                 if (socket.syncCompleted()) {
                     if (channelName != null && !socket.allowedChannel(channelName)) { continue; }
-                    socket.sendLine(data);
+                    if (forceRequeueList.contains(socket) && socket.getMap().containsKey("requeue")) {
+                        ((List<String>)socket.getMap().get("requeue")).add(data);
+                    } else {
+                        socket.sendLine(data);
+                    }
                 }
             }
         }
@@ -1130,6 +1180,11 @@ public class IRCConnectionHandler implements ConnectionHandler,
                             }
                         }
                         user.setSyncCompleted();
+                        // Immediately process the requeue list.
+                        final List<RequeueLine> list = getRequeueList();
+                        for (RequeueLine line : list) {
+                            line.reprocess(IRCConnectionHandler.this);
+                        }
 
                         if (myAccount.getUserSockets().size() == 1) {
                             List<String> myList = new ArrayList<String>();
@@ -1218,20 +1273,30 @@ public class IRCConnectionHandler implements ConnectionHandler,
      */
     private void sendBackbuffer(final UserSocket user, final ChannelInfo channel, final RollingList<BackbufferMessage> backbufferList) {
         if (backbufferList.isEmpty()) {
-            user.sendBotChat(channel.getName(), "NOTICE", "This channel has no current backbuffer.");
+            if (user.getCapabilityState("dfbnc.com/channelhistory") == CapabilityState.ENABLED) {
+                user.sendServerLine("EMPTYHISTORY", channel.getName());
+            } else {
+                user.sendBotChat(channel.getName(), "NOTICE", "This channel has no current backbuffer.");
+            }
             return;
         }
 
-        user.sendBotChat(channel.getName(), "NOTICE", "Beginning backbuffer...");
+        final String batchIdentifier = "backbuffer_" + channel.getName() + "_" + System.currentTimeMillis();
+        startBatch(user, batchIdentifier);
+
+        if (user.getCapabilityState("dfbnc.com/channelhistory") == CapabilityState.ENABLED) {
+            user.sendServerLine("BEGINHISTORY", channel.getName());
+        } else {
+            user.sendBotChat(channel.getName(), "NOTICE", "Beginning backbuffer...");
+        }
         final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         final SimpleDateFormat servertime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
         for (BackbufferMessage message : backbufferList) {
             final String line;
-            Map<String,String> messageTags = null;
+            final Map<String,String> messageTags = new HashMap<String,String>();
 
             if (user.getCapabilityState("server-time") == CapabilityState.ENABLED) {
-                messageTags = new HashMap<String,String>();
                 messageTags.put("time", servertime.format(message.getTime()));
                 line = message.getMessage();
             } else if (user.getCapabilityState("dfbnc.com/tsirc") == CapabilityState.ENABLED) {
@@ -1246,6 +1311,10 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 } else {
                     line = message.getMessage() + date;
                 }
+            }
+
+            if (user.getCapabilityState("dfbnc.com/channelhistory") == CapabilityState.ENABLED) {
+                messageTags.put("dfbnc.com/channelhistory", null);
             }
 
             final int maxLength = 510;
@@ -1273,7 +1342,14 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 }
             }
         }
-        user.sendBotChat(channel.getName(), "NOTICE", "End of backbuffer.");
+
+        if (user.getCapabilityState("dfbnc.com/channelhistory") == CapabilityState.ENABLED) {
+            user.sendServerLine("ENDHISTORY", channel.getName());
+        } else {
+            user.sendBotChat(channel.getName(), "NOTICE", "End of backbuffer.");
+        }
+
+        endBatch(user, batchIdentifier);
     }
 
     /**

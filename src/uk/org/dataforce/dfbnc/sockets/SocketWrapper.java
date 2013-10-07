@@ -128,7 +128,7 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
      *
      * @param line Line to send
      */
-    public final void sendLine(final IRCLine line) {
+    public final void sendLine(final String line) {
         if (mySocketChannel == null) {
             Logger.error("Null mySocketChannel -> " + line);
             return;
@@ -151,7 +151,7 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
             }
         }
 
-        outbuffer.addData(line.toString(), "\r\n");
+        outbuffer.addData(line, "\r\n");
 
         try {
             key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);

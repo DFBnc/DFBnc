@@ -51,7 +51,7 @@ public class SaveCommand extends Command {
      */
     @Override
     public String[] handles() {
-        return new String[]{"saveconfig", "save", "*sc"};
+        return new String[]{"saveconfig", "*sc"};
     }
 
     /**
