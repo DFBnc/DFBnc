@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.util.concurrent.CountDownLatch;
 
+import uk.org.dataforce.dfbnc.IRCLine;
 import uk.org.dataforce.libs.logger.Logger;
 
 /**
@@ -158,7 +159,19 @@ public abstract class ConnectedSocket implements SelectedSocketHandler {
      * @param line Line to send
      */
     public final void sendLine(final String line) {
-        mySocketWrapper.sendLine(line);
+        mySocketWrapper.sendLine(new IRCLine(line));
+    }
+
+    /**
+     * Used to send line(s) of data to this socket.
+     * This adds the lines to the buffer.
+     *
+     * @param lines Lines to send
+     */
+    public final void sendLine(final IRCLine... lines) {
+        for (IRCLine line : lines) {
+            mySocketWrapper.sendLine(line);
+        }
     }
 
     /**

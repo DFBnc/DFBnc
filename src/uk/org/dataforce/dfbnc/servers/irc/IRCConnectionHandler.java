@@ -58,6 +58,8 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -66,6 +68,7 @@ import uk.org.dataforce.dfbnc.BackbufferMessage;
 import uk.org.dataforce.dfbnc.ConnectionHandler;
 import uk.org.dataforce.dfbnc.Account;
 import uk.org.dataforce.dfbnc.Consts;
+import uk.org.dataforce.dfbnc.IRCLine;
 import uk.org.dataforce.dfbnc.RollingList;
 import uk.org.dataforce.dfbnc.config.ConfigChangedListener;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
@@ -1225,11 +1228,14 @@ public class IRCConnectionHandler implements ConnectionHandler,
 
         for (BackbufferMessage message : backbufferList) {
             final String line;
+            Map<String,String> messageTags = null;
 
-            if (user.getCapabilityState("dfbnc.com/tsirc") == CapabilityState.ENABLED) {
+            if (user.getCapabilityState("server-time") == CapabilityState.ENABLED) {
+                messageTags = new HashMap<String,String>();
+                messageTags.put("time", servertime.format(message.getTime()));
+                line = message.getMessage();
+            } else if (user.getCapabilityState("dfbnc.com/tsirc") == CapabilityState.ENABLED) {
                 line = "@" + Long.toString(message.getTime()) + "@" + message.getMessage();
-            } else if (user.getCapabilityState("server-time") == CapabilityState.ENABLED) {
-                line = "@time=" + servertime.format(message.getTime()) + " " + message.getMessage();
             } else {
                 final String date = "    [" + sdf.format(message.getTime()) + "]";
 
@@ -1262,7 +1268,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
 
                 for (int i = 0; i < lastBit.length(); i += allowed) {
                     sendLine.append(lastBit.substring(i, Math.min(i + allowed, lastBit.length())));
-                    user.sendLine(sendLine.toString());
+                    user.sendLine(new IRCLine(sendLine.toString(), messageTags));
                     sendLine = new StringBuilder(startBits);
                 }
             }

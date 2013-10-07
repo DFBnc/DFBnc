@@ -36,6 +36,7 @@ import java.nio.charset.CharacterCodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import uk.org.dataforce.dfbnc.IRCLine;
 import uk.org.dataforce.libs.logger.Logger;
 
 /**
@@ -127,7 +128,7 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
      *
      * @param line Line to send
      */
-    public final void sendLine(final String line) {
+    public final void sendLine(final IRCLine line) {
         if (mySocketChannel == null) {
             Logger.error("Null mySocketChannel -> " + line);
             return;
@@ -150,7 +151,7 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
             }
         }
 
-        outbuffer.addData(line, "\r\n");
+        outbuffer.addData(line.toString(), "\r\n");
 
         try {
             key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
