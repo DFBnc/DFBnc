@@ -50,6 +50,13 @@ import com.dmdirc.parser.interfaces.callbacks.SocketCloseListener;
 
 import com.dmdirc.parser.irc.ServerType;
 import com.dmdirc.parser.irc.ServerTypeGroup;
+import com.dmdirc.parser.irc.outputqueue.OutputQueue;
+import com.dmdirc.parser.irc.outputqueue.PriorityQueueHandler;
+import com.dmdirc.parser.irc.outputqueue.QueueFactory;
+import com.dmdirc.parser.irc.outputqueue.QueueHandler;
+import com.dmdirc.parser.irc.outputqueue.QueueItem;
+import com.dmdirc.parser.irc.outputqueue.SimpleRateLimitedQueueHandler;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
@@ -64,6 +71,7 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import java.util.concurrent.BlockingQueue;
 import uk.org.dataforce.dfbnc.BackbufferMessage;
 import uk.org.dataforce.dfbnc.ConnectionHandler;
 import uk.org.dataforce.dfbnc.Account;
@@ -181,7 +189,66 @@ public class IRCConnectionHandler implements ConnectionHandler,
         allowLine(null, "221");
 
         myParser.connect();
+        myAccount.getConfig().addListener(this);
         ((IRCParser)myParser).getControlThread().setName("IRC Parser - " + myAccount.getName() + " - <server>");
+    }
+
+    /**
+     * Configure the output queue according to the user settings.
+     */
+    private void setupOutputQueue() {
+        // We can only set a queue on an IRC Parser that is ready.
+        if (myParser == null || !(myParser instanceof IRCParser) || !parserReady) { return; }
+
+        final IRCParser irc = ((IRCParser)myParser);
+        final OutputQueue out = irc.getOutputQueue();
+
+        // Does the user want the rate limiting queue?
+        if (myAccount.getConfig().getBoolOption("irc", "ratelimit", false)) {
+
+            // Set a factory that will produce a queue with the settings the
+            // user wants.
+            out.setQueueFactory(new QueueFactory() {
+                /** {@inheritDoc} */
+                @Override
+                public QueueHandler getQueueHandler(final OutputQueue outputQueue, final BlockingQueue<QueueItem> queue, final PrintWriter out) {
+                    final SimpleRateLimitedQueueHandler q = new SimpleRateLimitedQueueHandler(outputQueue, queue, out);
+                    q.setLimitTime(myAccount.getConfig().getIntOption("irc", "ratelimittime", 4000));
+                    q.setItems(myAccount.getConfig().getIntOption("irc", "ratelimititems", 4));
+                    q.setWaitTime(myAccount.getConfig().getIntOption("irc", "ratelimitwaittime", 3000));
+                    return q;
+                }
+            });
+
+            // If we are not currently using the SimpleRateLimitedQueueHandler
+            // (ie, we are not just changing the rates) then disable the current
+            // queuehandler.
+            if (!(out.getQueueHandler() instanceof SimpleRateLimitedQueueHandler)) {
+                out.setQueueEnabled(false);
+            }
+            // We want output queueing.
+            out.setQueueEnabled(true);
+
+            // If we currently have a SimpleRateLimitedQueueHandler output
+            // queue, then reconfigure it with the new settings.
+            if (out.getQueueHandler() instanceof SimpleRateLimitedQueueHandler) {
+                final SimpleRateLimitedQueueHandler q = (SimpleRateLimitedQueueHandler)out.getQueueHandler();
+                q.setLimitTime(myAccount.getConfig().getIntOption("irc", "ratelimittime", 4000));
+                q.setItems(myAccount.getConfig().getIntOption("irc", "ratelimititems", 4));
+                q.setWaitTime(myAccount.getConfig().getIntOption("irc", "ratelimitwaittime", 3000));
+            }
+        } else {
+            // Default to the basic priority queue.
+            out.setQueueFactory(PriorityQueueHandler.getFactory());
+            // If we are not already using the PriorityQueue then disable the
+            // old one.
+            if (!(out.getQueueHandler() instanceof PriorityQueueHandler)) {
+                out.setQueueEnabled(false);
+            }
+            // Yay, Queuing.
+            out.setQueueEnabled(true);
+        }
+
     }
 
     /**
@@ -764,7 +831,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
         allowLine(channel, "332");
         allowLine(channel, "333");
 
-        myAccount.getConfig().addListener(this);
         channel.getMap().put("backbufferList", new RollingList<BackbufferMessage>(myAccount.getConfig().getIntOption("server", "backbuffer", 0)));
 
         // Fake a join.
@@ -803,6 +869,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 final RollingList<BackbufferMessage> myList = (RollingList<BackbufferMessage>)channel.getMap().get("backbufferList");
                 myList.setCapacity(size);
             }
+        } else if (domain.equalsIgnoreCase("irc") && setting.toLowerCase().startsWith("ratelimit")) {
+            setupOutputQueue();
         }
     }
 
@@ -1053,6 +1121,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         // The parser no longer has separate calls before and after 005..
         if (numeric == 1) {
             parserReady = true;
+            setupOutputQueue();
             for (UserSocket socket : myAccount.getUserSockets()) {
                 socket.setPost001(true);
                 socket.setNickname(parser.getLocalClient().getNickname());

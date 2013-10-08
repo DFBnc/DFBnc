@@ -56,22 +56,27 @@ public class IRCSetCommand extends AbstractSetCommand {
         validParams.put("username", new ParamInfo("Username to use on IRC", ParamType.WORD));
 
         validParams.put("bindip", new ParamInfo("IP Address to bind to for new connections", ParamType.WORD));
-        
-        
+
+        validParams.put("ratelimit", new ParamInfo("Enable Simple Outbound Rate limiting queue?", ParamType.BOOL));
+        validParams.put("ratelimittime", new ParamInfo("How long before resetting the item count (in ms)?", ParamType.POSITIVEINT));
+        validParams.put("ratelimititems", new ParamInfo("How many items in queue before activating rate limiting?", ParamType.POSITIVEINT));
+        validParams.put("ratelimitwaittime", new ParamInfo("How much time to wait between lines (in ms)?", ParamType.POSITIVEINT));
+
         // Currently unimplemented.
-        validParams.put("keepnick", new ParamInfo("When there is no users connected, try to keep our nickname (offline if set, else primary).", ParamType.BOOL));
-        validParams.put("offlinenickname", new ParamInfo("Nickname to change to when offline", ParamType.WORD));
-        
-        validParams.put("offlineawayreason", new ParamInfo("Away reason to set when all users disconnect and we are not away", ParamType.STRING));
-        validParams.put("offlineawayalways", new ParamInfo("Always use the offlineawayreaso even if an away reason is alreasy set", ParamType.BOOL));
-        
+        validParams.put("bindipv6", new ParamInfo("[Not Implemented] IPv6 Address to bind to for new connections", ParamType.WORD));
+        validParams.put("keepnick", new ParamInfo("[Not Implemented] When there is no users connected, try to keep our nickname (offline if set, else primary).", ParamType.BOOL));
+        validParams.put("offlinenickname", new ParamInfo("[Not Implemented] Nickname to change to when offline", ParamType.WORD));
+
+        validParams.put("offlineawayreason", new ParamInfo("[Not Implemented] Away reason to set when all users disconnect and we are not away", ParamType.STRING));
+        validParams.put("offlineawayalways", new ParamInfo("[Not Implemented] Always use the offlineawayreason even if an away reason is already set", ParamType.BOOL));
+
         // Stupid annoying thing that people do...
-        validParams.put("partondetach", new ParamInfo("Part from all channels on detach then rejoin on attach", ParamType.BOOL));
-        
+        validParams.put("partondetach", new ParamInfo("[Not Implemented] Part from all channels on detach then rejoin on attach", ParamType.BOOL));
+
         // Not sure of the point in this one..
-        validParams.put("offlineversion", new ParamInfo("reply to use for CTCP VERSION queries when no users are connected", ParamType.STRING));
-        
-        validParams.put("rememberchannels", new ParamInfo("Remember active channels between server connections", ParamType.STRING));
+        validParams.put("offlineversion", new ParamInfo("[Not Implemented] reply to use for CTCP VERSION queries when no users are connected", ParamType.STRING));
+
+        validParams.put("rememberchannels", new ParamInfo("[Not Implemented] Remember active channels between server connections", ParamType.STRING));
     }
 
     /**
