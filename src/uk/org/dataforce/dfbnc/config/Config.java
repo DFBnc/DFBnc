@@ -22,6 +22,9 @@
 
 package uk.org.dataforce.dfbnc.config;
 
+import com.dmdirc.util.collections.WeakList;
+import com.dmdirc.util.io.ConfigFile;
+import com.dmdirc.util.io.InvalidConfigFileException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -30,7 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import uk.org.dataforce.libs.logger.Logger;
-import com.dmdirc.util.collections.WeakList;
 
 /**
  * Configuration Files.

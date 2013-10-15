@@ -22,6 +22,7 @@
 
 package uk.org.dataforce.dfbnc;
 
+import com.dmdirc.util.io.InvalidConfigFileException;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -30,10 +31,8 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
-
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.config.Config;
-import uk.org.dataforce.dfbnc.config.InvalidConfigFileException;
 import uk.org.dataforce.dfbnc.servers.ServerType;
 import uk.org.dataforce.dfbnc.servers.ServerTypeNotFound;
 import uk.org.dataforce.dfbnc.sockets.UnableToConnectException;

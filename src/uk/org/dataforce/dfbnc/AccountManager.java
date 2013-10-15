@@ -23,7 +23,7 @@
 
 package uk.org.dataforce.dfbnc;
 
-import uk.org.dataforce.dfbnc.config.InvalidConfigFileException;
+import com.dmdirc.util.io.InvalidConfigFileException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,8 +32,8 @@ import java.util.HashMap;
 import java.util.Random;
 import uk.org.dataforce.dfbnc.servers.ServerType;
 import uk.org.dataforce.dfbnc.sockets.UnableToConnectException;
-import uk.org.dataforce.libs.logger.Logger;
 import uk.org.dataforce.libs.logger.LogLevel;
+import uk.org.dataforce.libs.logger.Logger;
 
 /**
  * Manages the list of accounts.

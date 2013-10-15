@@ -22,6 +22,7 @@
 
 package uk.org.dataforce.dfbnc.config;
 
+import com.dmdirc.util.io.InvalidConfigFileException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
@@ -37,7 +38,7 @@ public class BlackHoleConfig extends Config {
     private BlackHoleConfig() throws IOException, InvalidConfigFileException {
         super(new ByteArrayInputStream("".getBytes()));
     }
-    
+
     /**
      * Create a new BlackHole config.
      */
