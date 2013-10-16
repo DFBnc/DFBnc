@@ -8,131 +8,158 @@ package uk.org.dataforce.dfbnc.config;
 
 import com.dmdirc.util.io.ConfigFile;
 import com.dmdirc.util.io.InvalidConfigFileException;
+import com.dmdirc.util.validators.PermissiveValidator;
 import com.dmdirc.util.validators.Validator;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class ReadOnlyConfig implements Config {
 
-    public ReadOnlyConfig(ConfigFile configFile) {
+    private final ConfigFile config;
+    private final Validator<String> permissiveValidator;
 
+    public ReadOnlyConfig(ConfigFile config) {
+        this.config = config;
+        permissiveValidator = new PermissiveValidator<>();
     }
 
     @Override
     public String getOption(String domain, String option) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return getOption(domain, option, permissiveValidator);
     }
 
     @Override
     public void setOption(String domain, String option, String value) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("This config is read only.");
     }
 
     @Override
     public String getOption(String domain, String option, Validator<String> validator) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        String value = config.getKeyDomain(domain).get(option);
+
+        if (validator.validate(value).isFailure()) {
+            value = null;
+        }
+        return value;
     }
 
     @Override
     public void setOption(String domain, String option, String value, Validator<String> validator) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("This config is read only.");
     }
 
     @Override
     public Boolean getOptionBool(String domain, String option) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return Boolean.valueOf(getOption(domain, option));
     }
 
     @Override
     public List<String> getOptionList(String domain, String option, Validator<String> validator) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        final List<String> res = new ArrayList<>();
+
+        for (String line : getOption(domain, option, validator).split("\n")) {
+            if (!line.isEmpty()) {
+                res.add(line);
+            }
+        }
+
+        return res;
     }
 
     @Override
     public void setOption(String domain, String option, List<String> value) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("This config is read only.");
     }
 
     @Override
     public List<String> getOptionList(String domain, String option) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return getOptionList(domain, option, permissiveValidator);
     }
 
     @Override
     public Integer getOptionInt(String domain, String option, Validator<String> validator) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        final String value = getOption(domain, option, validator);
+        Integer intVal;
+        try {
+            intVal = Integer.parseInt(value);
+        } catch (NumberFormatException ex) {
+            intVal = null;
+        }
+        return intVal;
     }
 
     @Override
     public Integer getOptionInt(String domain, String option) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return getOptionInt(domain, option, permissiveValidator);
     }
 
     @Override
     public boolean hasOption(String domain, String option, Validator<String> validator) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        String value = config.getKeyDomain(domain).get(option);
+        return value != null && !validator.validate(value).isFailure();
     }
 
     @Override
     public boolean hasOption(String domain, String option) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return hasOption(domain, option, permissiveValidator);
     }
 
     @Override
     public Map<String, String> getOptions(String domain) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return config.getKeyDomain(domain);
     }
 
     @Override
     public Set<String> getDomains() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return config.getKeyDomains().keySet();
     }
 
     @Override
     public void addChangeListener(String domain, ConfigChangeListener listener) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("This config is read only.");
     }
 
     @Override
     public void addChangeListener(String domain, String key, ConfigChangeListener listener) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("This config is read only.");
     }
 
     @Override
     public void removeListener(ConfigChangeListener listener) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("This config is read only.");
     }
 
     @Override
     public void save() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("This config is read only.");
     }
 
     @Override
     public void init() throws IOException, InvalidConfigFileException {
-        throw new UnsupportedOperationException("Not supported yet.");
+        config.read();
     }
 
     @Override
     public void setOption(String domain, String option, boolean value) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("This config is read only.");
     }
 
     @Override
     public void setOption(String domain, String option, int value) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("This config is read only.");
     }
 
     @Override
     public void setOption(String domain, String option, float value) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("This config is read only.");
     }
 
     @Override
     public void addChangeListener(ConfigChangeListener listener) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("This config is read only.");
     }
 
 }
