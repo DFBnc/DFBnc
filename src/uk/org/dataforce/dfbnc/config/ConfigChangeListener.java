@@ -26,6 +26,6 @@ package uk.org.dataforce.dfbnc.config;
  *
  * @author shane
  */
-public interface ConfigChangedListener {
+public interface ConfigChangeListener {
     void configChanged(final String domain, final String setting);
 }

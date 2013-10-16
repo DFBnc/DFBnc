@@ -191,7 +191,7 @@ public class AccountManager {
                  Account acc = new Account(file.getName());
                  accounts.put(acc.getName(), acc);
 
-                 if (acc.getConfig().getBoolOption("server", "autoconnect", false)) {
+                  if (acc.getConfig().getOptionBool("server", "autoconnect")) {
                      final ServerType type = acc.getServerType();
                      if (type != null) {
                          try {
