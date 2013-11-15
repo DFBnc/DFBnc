@@ -21,11 +21,10 @@
  */
 package uk.org.dataforce.dfbnc.commands;
 
-import uk.org.dataforce.dfbnc.sockets.UserSocket;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import uk.org.dataforce.dfbnc.sockets.UserSocket;
 
 /**
  * This file represents a listedit command.
@@ -164,7 +163,7 @@ public abstract class AbstractListEditCommand extends Command {
                 return;
             }
             List<String> myList = new ArrayList<String>();
-            myList = user.getAccount().getConfig().getListOption(getDomainName(listParamName), getPropertyName(listParamName), myList);
+            myList = user.getAccount().getConfig().getOptionList(getDomainName(listParamName), getPropertyName(listParamName));
             if (actualParams[commandParam].equalsIgnoreCase("list")) {
                 if (myList.size() > 0) {
                     user.sendBotMessage("You currently have the following items in your " + getListName(listParamName) + ":");
@@ -245,7 +244,7 @@ public abstract class AbstractListEditCommand extends Command {
                 user.sendBotMessage("Invalid subcommand: " + actualParams[commandParam]);
                 user.sendBotMessage("For assistance, please try: /dfbnc " + actualParams[0]);
             }
-            user.getAccount().getConfig().setListOption(getDomainName(listParamName), getPropertyName(listParamName), myList);
+            user.getAccount().getConfig().setOption(getDomainName(listParamName), getPropertyName(listParamName), myList);
         } else if (hasSubList && actualParams.length == 1) {
             user.sendBotMessage("You must specify a sublist to edit eg:");
             user.sendBotMessage("  /dfbnc " + actualParams[0] + " <sublist> <command>");
