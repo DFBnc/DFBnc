@@ -22,6 +22,8 @@
 package uk.org.dataforce.dfbnc.commands;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
+import uk.org.dataforce.libs.logger.Logger;
+import uk.org.dataforce.dfbnc.sockets.UserSocket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,8 +33,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import uk.org.dataforce.dfbnc.DFBnc;
-import uk.org.dataforce.dfbnc.sockets.UserSocket;
-import uk.org.dataforce.libs.logger.Logger;
 
 /**
  * DFBNC Command Manager.
@@ -278,7 +278,7 @@ public final class CommandManager {
 
         Logger.debug5("No exact match found.");
 
-        if (DFBnc.getBNC().getConfig().getOptionBool("general", "allowshortcommands")) {
+        if (DFBnc.getBNC().getConfig().getBoolOption("general", "allowshortcommands", true)) {
             Logger.debug5("Short commands enabled.");
             // Find a matching command.
             final Map<String, Command> cmds = new TreeMap<String, Command>(getAllCommands(name, allowAdmin));

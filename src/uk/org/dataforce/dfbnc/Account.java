@@ -22,8 +22,6 @@
 
 package uk.org.dataforce.dfbnc;
 
-import com.dmdirc.util.io.ConfigFile;
-import com.dmdirc.util.io.InvalidConfigFileException;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -32,9 +30,10 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
+
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.config.Config;
-import uk.org.dataforce.dfbnc.config.DefaultsConfig;
+import uk.org.dataforce.dfbnc.config.InvalidConfigFileException;
 import uk.org.dataforce.dfbnc.servers.ServerType;
 import uk.org.dataforce.dfbnc.servers.ServerTypeNotFound;
 import uk.org.dataforce.dfbnc.sockets.UnableToConnectException;
@@ -89,9 +88,7 @@ public final class Account implements UserSocketWatcher {
                 throw new IOException("Unable to create config directory.");
             }
         }
-        config = new DefaultsConfig(
-                new ConfigFile(new File(confDir, username + ".conf")),
-                new ConfigFile(DFBnc.class.getResourceAsStream("/uk/org/dataforce/dfbnc/defaults.config")));
+        config = new Config(new File(confDir, username + ".conf"));
 
         // Enable global commands.
         myCommandManager.addSubCommandManager(DFBnc.getUserCommandManager());
@@ -235,7 +232,7 @@ public final class Account implements UserSocketWatcher {
      * @return The ServerType for this account (or null if not defined, or invalid)
      */
     public ServerType getServerType() {
-        final String currentType = config.getOption("server", "servertype");
+        final String currentType = config.getOption("server", "servertype", "");
         if (!currentType.isEmpty()) {
             try {
                 return DFBnc.getServerTypeManager().getServerType(currentType);
@@ -322,7 +319,7 @@ public final class Account implements UserSocketWatcher {
         }
         hashedPassword.append(salt);
 
-        final String check = hasSubClientPassword ? config.getOption("user", passwordKey) : config.getOption("user", "password");
+        final String check = hasSubClientPassword ? config.getOption("user", passwordKey, "...") : config.getOption("user", "password", "...");
 
         return Util.md5(hashedPassword.toString()).equals(check);
     }
@@ -383,7 +380,7 @@ public final class Account implements UserSocketWatcher {
      */
     public void delete() throws IOException {
         // Suspend so that reconnecting doesn't work.
-        config.setOption("user", "suspended", true);
+        config.setBoolOption("user", "suspended", true);
         config.setOption("user", "suspendReason", "Account deleted.");
 
         // Disconnect all users and the connection handler
@@ -412,7 +409,7 @@ public final class Account implements UserSocketWatcher {
      * @param reason Reason for account suspension
      */
     public void setSuspended(final boolean value, final String reason) {
-        config.setOption("user", "suspended", value);
+        config.setBoolOption("user", "suspended", value);
         if (value) {
             final String suspendReason = (reason != null && !reason.isEmpty()) ? reason : "No reason specified";
             config.setOption("user", "suspendReason", suspendReason);
@@ -430,7 +427,7 @@ public final class Account implements UserSocketWatcher {
      * @return Is the account suspended?
      */
     public boolean isSuspended() {
-        return config.getOptionBool("user", "suspended");
+        return config.getBoolOption("user", "suspended", false);
     }
 
     /**
@@ -440,7 +437,7 @@ public final class Account implements UserSocketWatcher {
      */
     public String getSuspendReason() {
         if (isSuspended()) {
-            return config.getOption("user", "suspendReason");
+            return config.getOption("user", "suspendReason", "");
         } else {
             return "";
         }
@@ -460,7 +457,7 @@ public final class Account implements UserSocketWatcher {
                 myCommandManager.delSubCommandManager(DFBnc.getAdminCommandManager());
             }
         }
-        config.setOption("user", "admin", value);
+        config.setBoolOption("user", "admin", value);
     }
 
     /**
@@ -469,7 +466,7 @@ public final class Account implements UserSocketWatcher {
      * @return Is the account an admin?
      */
     public boolean isAdmin() {
-        return config.getOptionBool("user", "admin");
+        return config.getBoolOption("user", "admin", false);
     }
 
     /**
@@ -478,7 +475,7 @@ public final class Account implements UserSocketWatcher {
      * @param value true/false for new value of isFirst
      */
     public void setFirst(final boolean value) {
-        config.setOption("user", "first", value);
+        config.setBoolOption("user", "first", value);
     }
 
     /**
@@ -487,7 +484,7 @@ public final class Account implements UserSocketWatcher {
      * @return the value of isFirst
      */
     public boolean isFirst() {
-        return config.getOptionBool("user", "first");
+        return config.getBoolOption("user", "first", true);
     }
 
     /**
@@ -505,7 +502,7 @@ public final class Account implements UserSocketWatcher {
      * @return value for contactMethod
      */
     public String getContactMethod() {
-        return config.getOption("user", "contactMethod");
+        return config.getOption("user", "contactMethod", "NOTICE");
     }
 
     /**
@@ -551,7 +548,7 @@ public final class Account implements UserSocketWatcher {
     public void handlerDisconnected(final String reason) {
         final ConnectionHandler oldHandler = myConnectionHandler;
         myConnectionHandler = null;
-        if (!disconnectWanted && config.getOptionBool("server", "reconnect")) {
+        if (!disconnectWanted && config.getBoolOption("server", "reconnect", false)) {
             reconnectTimer = new Timer("Reconnect Timer - " + getName());
 
             reconnectTimer.schedule(new TimerTask(){
@@ -582,7 +579,7 @@ public final class Account implements UserSocketWatcher {
             }, 5000);
         }
 
-        if (config.getOptionBool("server", "userdisconnect")) {
+        if (config.getBoolOption("server", "userdisconnect", true)) {
             for (UserSocket socket : getUserSockets()) {
                 // Only disconnect users if they have had a 001.
                 if (socket.getPost001()) {
@@ -617,9 +614,7 @@ public final class Account implements UserSocketWatcher {
      * @param type Human-Friendly type of exception.
      */
     public void reportException(final Throwable t,  final String type) {
-        if (!getConfig().getOptionBool("server", "reporterrors") || t == null) {
-            return;
-        }
+        if (!getConfig().getBoolOption("server", "reporterrors", false) || t == null) { return; }
 
         final StringWriter writer = new StringWriter();
         t.printStackTrace(new PrintWriter(writer));

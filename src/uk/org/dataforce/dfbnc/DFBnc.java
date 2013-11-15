@@ -21,9 +21,11 @@
  */
 package uk.org.dataforce.dfbnc;
 
-import com.dmdirc.util.io.ConfigFile;
-import com.dmdirc.util.io.InvalidConfigFileException;
 import java.io.BufferedWriter;
+import uk.org.dataforce.dfbnc.config.Config;
+import uk.org.dataforce.dfbnc.sockets.ListenSocket;
+import uk.org.dataforce.dfbnc.sockets.UserSocket;
+import uk.org.dataforce.dfbnc.config.InvalidConfigFileException;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -39,12 +41,8 @@ import java.util.TimerTask;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
 import uk.org.dataforce.dfbnc.commands.admin.*;
 import uk.org.dataforce.dfbnc.commands.user.*;
-import uk.org.dataforce.dfbnc.config.Config;
-import uk.org.dataforce.dfbnc.config.DefaultsConfig;
-import uk.org.dataforce.dfbnc.config.ReadOnlyConfig;
+import uk.org.dataforce.dfbnc.config.BlackHoleConfig;
 import uk.org.dataforce.dfbnc.servers.ServerTypeManager;
-import uk.org.dataforce.dfbnc.sockets.ListenSocket;
-import uk.org.dataforce.dfbnc.sockets.UserSocket;
 import uk.org.dataforce.libs.cliparser.BooleanParam;
 import uk.org.dataforce.libs.cliparser.CLIParam;
 import uk.org.dataforce.libs.cliparser.CLIParser;
@@ -60,7 +58,7 @@ public class DFBnc {
     private static DFBnc me = null;
 
     /** Version Config File */
-    private static Config versionConfig;
+    private static Config versionConfig = BlackHoleConfig.createInstance();
 
     /** The CLIParser */
     private static CLIParser cli = CLIParser.getCLIParser();
@@ -216,8 +214,7 @@ public class DFBnc {
         Logger.info("Loading Config..");
 
         try {
-            config = new DefaultsConfig(new ConfigFile(new File(getConfigDirName(), getConfigFileName())),
-                    new ConfigFile(DFBnc.class.getResourceAsStream("/uk/org/dataforce/dfbnc/defaults.config")));
+            config = createDefaultConfig();
         } catch (IOException ex) {
             Logger.error("Error loading config: " + configDirectory + " (" + ex.getMessage() + "). Exiting");
             System.exit(1);
@@ -248,7 +245,7 @@ public class DFBnc {
         myServerTypeManager.init();
 
         Logger.info("Running!");
-        if (config.getOptionBool("debugging", "autocreate")) {
+        if (config.getBoolOption("debugging", "autocreate", false)) {
             Logger.warning(".-----------------------------------------------------,");
             Logger.warning("|                       WARNING                       |");
             Logger.warning("|-----------------------------------------------------|");
@@ -271,8 +268,8 @@ public class DFBnc {
         // threshold of THRESHOLD.
         // This will cause sockets to send an initial PING once the threshold has been hit
         final Timer socketChecker = new Timer("Socket Checker Timer", true);
-        final int pingThreshold = config.getOptionInt("timeout", "threshold");
-        final int pingFrequency = config.getOptionInt("timeout", "frequency") * 1000;
+        final int pingThreshold = config.getIntOption("timeout", "threshold", 1);
+        final int pingFrequency = config.getIntOption("timeout", "frequency", 120) * 1000;
 
         socketChecker.scheduleAtFixedRate(new TimerTask(){
             @Override
@@ -335,7 +332,10 @@ public class DFBnc {
     public void openListenSockets() {
         Logger.info("Opening Listen Sockets..");
         int count = 0;
-        final List<String> listenhosts = config.getOptionList("general", "listenhost");
+        final List<String> defaulthosts = new ArrayList<String>();
+        defaulthosts.add("0.0.0.0:33262");
+        defaulthosts.add("0.0.0.0:+33263");
+        final List<String> listenhosts = config.getListOption("general", "listenhost", defaulthosts);
 
         for (String listenhost : listenhosts) {
             try {
@@ -358,7 +358,7 @@ public class DFBnc {
         final InputStream version = DFBnc.class.getResourceAsStream("/uk/org/dataforce/dfbnc/version.config");
         if (version != null) {
             try {
-                versionConfig = new ReadOnlyConfig(new ConfigFile(version));
+                versionConfig = new Config(version);
             } catch (final Exception e) { /** Oh well, default it is. */ }
         }
     }
@@ -379,7 +379,7 @@ public class DFBnc {
      * @return Component Version.
      */
     public static String getVersion(final String component) {
-        return versionConfig.getOption("versions", component);
+        return versionConfig.getOption("versions", component, "Unknown");
     }
 
     /**
@@ -388,7 +388,7 @@ public class DFBnc {
      * @return Component Versions Map.
      */
     public static Map<String,String> getVersions() {
-        return versionConfig.getOptions("versions");
+        return versionConfig.getOptionDomain("versions");
     }
 
     /**
@@ -559,6 +559,36 @@ public class DFBnc {
     }
 
     /**
+     * Get the default settings.
+     *
+     * @return Defaults config settings
+     *
+     * @throws IOException If an error occurred loading the config
+     * @throws InvalidConfigFileException If the config was invalid
+     */
+    public static Config createDefaultConfig() throws IOException, InvalidConfigFileException {
+        final File directory = new File(configDirectory);
+        final File file = new File(directory, configFile);
+        if (!directory.exists()) {
+            if (!directory.mkdirs()) {
+                throw new IOException("Unable to create config directory.");
+            }
+        }
+        final Config defaults = new Config(file);
+        if (!defaults.hasOption("general", "listenhost")) {
+            final List<String> defaultListenHosts = new ArrayList<String>();
+            defaultListenHosts.add("0.0.0.0:33262");
+            defaultListenHosts.add("0.0.0.0:+33263");
+            defaults.setListOption("general", "listenhost", defaultListenHosts);
+        }
+        if (!defaults.hasOption("general", "serverName")) {
+            defaults.setOption("general", "serverName", "DFBnc.Server");
+        }
+
+        return defaults;
+    }
+
+    /**
      * Returns the global config.
      *
      * @return Global config
@@ -573,7 +603,7 @@ public class DFBnc {
      * @return Default server name to use.
      */
     public String getDefaultServerName() {
-        return getConfig().getOption("general", "ServerName");
+        return getConfig().getOption("general", "ServerName", "DFBnc.Server");
     }
 
     /**

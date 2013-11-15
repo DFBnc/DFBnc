@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2013 Shane Mc Cormack
+ * Copyright (c) 2006-2013 Chris Smith, Shane Mc Cormack, Gregory Holmes
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,13 +19,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 package uk.org.dataforce.dfbnc.config;
 
-
 /**
- *
- * @author shane
+ * Thrown to indicate that a config file is invalid.
+ * @author chris
  */
-public interface ConfigChangeListener {
-    void configChanged(final String domain, final String setting);
+public class InvalidConfigFileException extends Exception {
+
+    /**
+     * A version number for this class. It should be changed whenever the class
+     * structure is changed (or anything else that would prevent serialized
+     * objects being unserialized with the new class).
+     */
+    private static final long serialVersionUID = 1;
+
+    /**
+     * Creates a new InvalidConfigFileException.
+     * 
+     * @param string A description of the exception that occured.
+     */
+    public InvalidConfigFileException(String string) {
+        super(string);
+    }
 }

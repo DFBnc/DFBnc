@@ -145,7 +145,7 @@ public abstract class Command {
      * @return List of matching params.
      */
     public List<String> getParamMatch(final String param, final Collection<String> params) {
-        if (!DFBnc.getBNC().getConfig().getOptionBool("general", "allowshortcommands")) {
+        if (!DFBnc.getBNC().getConfig().getBoolOption("general", "allowshortcommands", true)) {
             return Arrays.asList(param);
         }
         final String sw = param.toLowerCase();
