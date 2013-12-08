@@ -21,24 +21,23 @@
  */
 package uk.org.dataforce.dfbnc.sockets;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManagerFactory;
-import java.io.IOException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.security.KeyStore;
-import java.security.SecureRandom;
-import java.security.KeyStoreException;
-import java.io.FileNotFoundException;
-import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.security.NoSuchAlgorithmException;
-import java.security.KeyManagementException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
 import uk.org.dataforce.dfbnc.DFBnc;
 
 /**
@@ -88,9 +87,9 @@ public class SecureSocket extends SocketWrapper {
      */
     public static synchronized SSLContext getSSLContext() throws IllegalArgumentException, KeyStoreException, FileNotFoundException, NoSuchAlgorithmException, KeyManagementException, UnrecoverableKeyException, IOException, CertificateException {
         if (sslContext == null) {
-            String storePassword =  DFBnc.getBNC().getConfig().getOption("ssl", "storepass", "");
-            String keyPassword =  DFBnc.getBNC().getConfig().getOption("ssl", "keypass", "");
-            String keyStore =  DFBnc.getBNC().getConfig().getOption("ssl", "keystore", "");
+            String storePassword =  DFBnc.getBNC().getConfig().getOption("ssl", "storepass");
+            String keyPassword =  DFBnc.getBNC().getConfig().getOption("ssl", "keypass");
+            String keyStore =  DFBnc.getBNC().getConfig().getOption("ssl", "keystore");
 
             if (keyStore.isEmpty()) { throw new IllegalArgumentException("No keystore sepcified in config ('ssl.keystore')"); }
             else if (keyPassword.isEmpty()) { throw new IllegalArgumentException("No key password sepcified in config ('ssl.keypass')"); }

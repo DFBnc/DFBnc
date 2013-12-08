@@ -23,13 +23,12 @@ package uk.org.dataforce.dfbnc.commands.user;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
+import uk.org.dataforce.dfbnc.DFBnc;
 import uk.org.dataforce.dfbnc.commands.Command;
 import uk.org.dataforce.dfbnc.commands.CommandManager;
-import uk.org.dataforce.dfbnc.sockets.UserSocket;
-import uk.org.dataforce.dfbnc.DFBnc;
 import uk.org.dataforce.dfbnc.servers.ServerType;
 import uk.org.dataforce.dfbnc.servers.ServerTypeNotFound;
+import uk.org.dataforce.dfbnc.sockets.UserSocket;
 
 /**
  * This file represents the 'ServerType' command
@@ -84,17 +83,13 @@ public class ServerTypeCommand extends Command {
             }
         } else if (actualParams.length > 1 && actualParams[1].equalsIgnoreCase("help")) {
             user.sendBotMessage("This command allows you to set the servertype for this account.");
-            final String currentType = user.getAccount().getConfig().getOption("server", "servertype", "");
-            if (currentType.equals("")) {
-                user.sendBotMessage("You currently do not have a servertype selected.");
-            } else {
-                String info = "";
-                final ServerType st = user.getAccount().getServerType();
-                if (st == null) {
-                    info = " (Currently not available)";
-                }
-                user.sendBotMessage("Your current servertype is: "+currentType+info);
+            final String currentType = user.getAccount().getConfig().getOption("server", "servertype");
+            String info = "";
+            final ServerType st = user.getAccount().getServerType();
+            if (st == null) {
+                info = " (Currently not available)";
             }
+            user.sendBotMessage("Your current servertype is: "+currentType+info);
             user.sendBotMessage("");
             user.sendBotMessage("You can set your type using the command: /dfbnc "+actualParams[0]+" settype <type>");
             user.sendBotMessage("A list of available types can be seen by ommiting the <type> param");

@@ -67,7 +67,7 @@ public final class Util {
      * @return Bot name that the BNC Uses
      */
     public static String getBotName() {
-        return DFBnc.getBNC().getConfig().getOption("general", "BotName", "-BNC");
+        return DFBnc.getBNC().getConfig().getOption("general", "BotName");
     }
 
     /**
