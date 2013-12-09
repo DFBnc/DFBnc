@@ -43,7 +43,7 @@ import com.dfbnc.DFBnc;
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandNotFoundException;
 import uk.org.dataforce.libs.logger.Logger;
-import uk.org.dataforce.libs.util.Util;
+import com.dfbnc.Util;
 
 /**
  * This socket handles actual clients connected to the bnc.

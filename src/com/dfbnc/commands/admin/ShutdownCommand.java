@@ -28,7 +28,7 @@ import com.dfbnc.DFBnc;
 import com.dfbnc.commands.AdminCommand;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.sockets.UserSocket;
-import uk.org.dataforce.libs.util.Util;
+import com.dfbnc.Util;
 
 /**
  * This file represents the 'Shutdown' command

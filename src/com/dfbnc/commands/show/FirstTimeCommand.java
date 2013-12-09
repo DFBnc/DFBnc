@@ -26,7 +26,7 @@ import java.util.List;
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.sockets.UserSocket;
-import uk.org.dataforce.libs.util.Util;
+import com.dfbnc.Util;
 
 /**
  * This file represents the 'FirstTime' command
