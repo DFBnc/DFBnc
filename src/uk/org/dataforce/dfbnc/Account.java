@@ -611,7 +611,8 @@ public final class Account implements UserSocketWatcher {
     }
 
     /**
-     * Report an exception to the console and any connected user.
+     * Report an exception to the console and any connected user only if
+     * server.reporterrors is set to true.
      *
      * @param t Throwable to report.
      * @param type Human-Friendly type of exception.
@@ -621,6 +622,17 @@ public final class Account implements UserSocketWatcher {
             return;
         }
 
+        forceReportException(t, type);
+    }
+
+    /**
+     * Report an exception to the console and any connected user, regardless of
+     * the value of server.reporterrors.
+     *
+     * @param t Throwable to report.
+     * @param type Human-Friendly type of exception.
+     */
+    public void forceReportException(final Throwable t,  final String type) {
         final StringWriter writer = new StringWriter();
         t.printStackTrace(new PrintWriter(writer));
 
