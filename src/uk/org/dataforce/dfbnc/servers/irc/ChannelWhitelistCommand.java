@@ -79,6 +79,12 @@ public class ChannelWhitelistCommand extends AbstractListEditCommand {
 
     /** {@inheritDoc} */
     @Override
+    public boolean isDynamicList() {
+        return true;
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public String validSubList(final String command) {
         return command.toLowerCase();
     }

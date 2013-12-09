@@ -21,8 +21,8 @@
  */
 package uk.org.dataforce.dfbnc.sockets;
 
+import com.dmdirc.parser.irc.CapabilityState;
 import com.dmdirc.parser.irc.IRCParser;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
@@ -35,9 +35,6 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.SortedMap;
 import java.util.TreeMap;
-
-import com.dmdirc.parser.irc.CapabilityState;
-
 import uk.org.dataforce.dfbnc.Account;
 import uk.org.dataforce.dfbnc.AccountManager;
 import uk.org.dataforce.dfbnc.ConnectionHandler;
@@ -791,6 +788,8 @@ public class UserSocket extends ConnectedSocket {
             }
         } else if (line[0].equals("TIMESTAMPEDIRC") || line[0].equals("TSIRC")) {
             setCapabilityState("dfbnc.com/tsirc", CapabilityState.ENABLED);
+        } else if (line[0].equals("PONG")) {
+            return;
         } else {
             sendIRCLine(Consts.ERR_NOTREGISTERED, line[0], "You must login first.");
         }
@@ -799,7 +798,7 @@ public class UserSocket extends ConnectedSocket {
             final String[] bits = username.split("\\+");
             username = bits[0];
             clientID = (bits.length > 1) ? bits[1].toLowerCase() : null;
-            if (AccountManager.count() == 0 || (DFBnc.getBNC().getConfig().getBoolOption("debugging", "autocreate", false) && !AccountManager.exists(username))) {
+            if (AccountManager.count() == 0 || (DFBnc.getBNC().allowAutoCreate() && !AccountManager.exists(username))) {
                 Account acc = AccountManager.createAccount(username, password);
                     if (AccountManager.count() == 1) {
                         acc.setAdmin(true);
@@ -959,7 +958,7 @@ public class UserSocket extends ConnectedSocket {
                 myAccount.getCommandManager().handle(this, bits);
             }
         } catch (CommandNotFoundException c) {
-            if (DFBnc.getBNC().getConfig().getBoolOption("general", "allowshortcommands", true) && bits.length > 0) {
+            if (DFBnc.getBNC().getConfig().getOptionBool("general", "allowshortcommands") && bits.length > 0) {
                 final SortedMap<String, Command> cmds = new TreeMap<String, Command>(myAccount.getCommandManager().getAllCommands(bits[0], myAccount.isAdmin()));
                 if (cmds.size() > 0) {
                     if (cmds.size() == 1) {

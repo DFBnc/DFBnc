@@ -22,7 +22,6 @@
 package uk.org.dataforce.dfbnc.commands;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import uk.org.dataforce.dfbnc.sockets.UserSocket;
 
@@ -58,14 +57,14 @@ public abstract class AbstractSetCommand extends Command {
                 user.sendBotMessage("Valid settings are:");
                 for (String param : validParams.keySet()) {
                     String description = validParams.get(param).getDescription();
-                    String value = user.getAccount().getConfig().getOption(setDomain, param, "");
+                    String value = user.getAccount().getConfig().getOption(setDomain, param);
                     user.sendBotMessage(String.format("  %15s - %s [Current: %s]", param, description, value));
                 }
                 return;
             }
 
             // Get the current value
-            final String currentValue = user.getAccount().getConfig().getOption(setDomain, actualParams[1], "");
+            final String currentValue = user.getAccount().getConfig().getOption(setDomain, actualParams[1]);
             // And the type of this param
             final ParamType paramType = validParams.get(actualParams[1].toLowerCase()).getType();
             // Check if user wants to change it
@@ -90,7 +89,7 @@ public abstract class AbstractSetCommand extends Command {
                             user.sendBotMessage("Sorry, '" + newValue + "' is not a valid value for '" + actualParams[1] + "'");
                             return;
                         } else {
-                            user.getAccount().getConfig().setIntOption(setDomain, actualParams[1], newValueInt);
+                            user.getAccount().getConfig().setOption(setDomain, actualParams[1], newValueInt);
                         }
                     } catch (NumberFormatException nfe) {
                         user.sendBotMessage("Sorry, '" + newValue + "' is not a valid value for '" + actualParams[1] + "'");
@@ -103,7 +102,7 @@ public abstract class AbstractSetCommand extends Command {
                             user.sendBotMessage("Sorry, '" + newValue + "' is not a valid value for '" + actualParams[1] + "'");
                             return;
                         } else {
-                            user.getAccount().getConfig().setFloatOption(setDomain, actualParams[1], newValueFloat);
+                            user.getAccount().getConfig().setOption(setDomain, actualParams[1], newValueFloat);
                         }
                     } catch (NumberFormatException nfe) {
                         user.sendBotMessage("Sorry, '" + newValue + "' is not a valid value for '" + actualParams[1] + "'");
@@ -111,10 +110,10 @@ public abstract class AbstractSetCommand extends Command {
                     }
                 } else if (paramType == ParamType.BOOL) {
                     if (newValue.equalsIgnoreCase("true") || newValue.equalsIgnoreCase("yes") || newValue.equalsIgnoreCase("on") || newValue.equalsIgnoreCase("1")) {
-                        user.getAccount().getConfig().setBoolOption(setDomain, actualParams[1], true);
+                        user.getAccount().getConfig().setOption(setDomain, actualParams[1], true);
                         newValue = "True";
                     } else {
-                        user.getAccount().getConfig().setBoolOption(setDomain, actualParams[1], false);
+                        user.getAccount().getConfig().setOption(setDomain, actualParams[1], false);
                         newValue = "False";
                     }
                 } else {
@@ -131,7 +130,7 @@ public abstract class AbstractSetCommand extends Command {
             user.sendBotMessage("Valid settings are:");
             for (String param : validParams.keySet()) {
                 String description = validParams.get(param).getDescription();
-                String value = user.getAccount().getConfig().getOption(setDomain, param, "");
+                String value = user.getAccount().getConfig().getOption(setDomain, param);
                 user.sendBotMessage(String.format("  %15s - %s [Current: %s]", param, description, value));
             }
             user.sendBotMessage("Syntax: /dfbnc " + actualParams[0] + " <param> [value]");

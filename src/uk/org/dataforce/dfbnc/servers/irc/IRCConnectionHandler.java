@@ -27,27 +27,26 @@ import com.dmdirc.parser.common.CallbackNotFoundException;
 import com.dmdirc.parser.common.ChannelListModeItem;
 import com.dmdirc.parser.common.MyInfo;
 import com.dmdirc.parser.common.ParserError;
-import com.dmdirc.parser.irc.CapabilityState;
-import com.dmdirc.parser.irc.IRCParser;
-import com.dmdirc.parser.irc.IRCChannelInfo;
-import com.dmdirc.parser.irc.IRCClientInfo;
-import com.dmdirc.parser.interfaces.Parser;
-import com.dmdirc.parser.interfaces.ClientInfo;
 import com.dmdirc.parser.interfaces.ChannelClientInfo;
 import com.dmdirc.parser.interfaces.ChannelInfo;
+import com.dmdirc.parser.interfaces.ClientInfo;
+import com.dmdirc.parser.interfaces.Parser;
 import com.dmdirc.parser.interfaces.callbacks.CallbackInterface;
-import com.dmdirc.parser.interfaces.callbacks.DataInListener;
-import com.dmdirc.parser.interfaces.callbacks.DataOutListener;
-import com.dmdirc.parser.interfaces.callbacks.ServerReadyListener;
-import com.dmdirc.parser.interfaces.callbacks.NickChangeListener;
-import com.dmdirc.parser.interfaces.callbacks.NumericListener;
-import com.dmdirc.parser.interfaces.callbacks.MotdEndListener;
 import com.dmdirc.parser.interfaces.callbacks.ChannelJoinListener;
 import com.dmdirc.parser.interfaces.callbacks.ChannelSelfJoinListener;
 import com.dmdirc.parser.interfaces.callbacks.ConnectErrorListener;
+import com.dmdirc.parser.interfaces.callbacks.DataInListener;
+import com.dmdirc.parser.interfaces.callbacks.DataOutListener;
 import com.dmdirc.parser.interfaces.callbacks.ErrorInfoListener;
+import com.dmdirc.parser.interfaces.callbacks.MotdEndListener;
+import com.dmdirc.parser.interfaces.callbacks.NickChangeListener;
+import com.dmdirc.parser.interfaces.callbacks.NumericListener;
+import com.dmdirc.parser.interfaces.callbacks.ServerReadyListener;
 import com.dmdirc.parser.interfaces.callbacks.SocketCloseListener;
-
+import com.dmdirc.parser.irc.CapabilityState;
+import com.dmdirc.parser.irc.IRCChannelInfo;
+import com.dmdirc.parser.irc.IRCClientInfo;
+import com.dmdirc.parser.irc.IRCParser;
 import com.dmdirc.parser.irc.ServerType;
 import com.dmdirc.parser.irc.ServerTypeGroup;
 import com.dmdirc.parser.irc.outputqueue.OutputQueue;
@@ -60,27 +59,26 @@ import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
-
 import java.util.concurrent.BlockingQueue;
+import uk.org.dataforce.dfbnc.Account;
 import uk.org.dataforce.dfbnc.BackbufferMessage;
 import uk.org.dataforce.dfbnc.ConnectionHandler;
-import uk.org.dataforce.dfbnc.Account;
 import uk.org.dataforce.dfbnc.Consts;
 import uk.org.dataforce.dfbnc.IRCLine;
 import uk.org.dataforce.dfbnc.RollingList;
-import uk.org.dataforce.dfbnc.config.ConfigChangedListener;
-import uk.org.dataforce.dfbnc.sockets.UserSocket;
+import uk.org.dataforce.dfbnc.config.ConfigChangeListener;
 import uk.org.dataforce.dfbnc.sockets.UnableToConnectException;
+import uk.org.dataforce.dfbnc.sockets.UserSocket;
 import uk.org.dataforce.dfbnc.sockets.UserSocketWatcher;
 import uk.org.dataforce.libs.logger.Logger;
 import uk.org.dataforce.libs.util.Util;
@@ -96,7 +94,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         UserSocketWatcher, DataInListener, DataOutListener, NickChangeListener,
         ServerReadyListener, NumericListener, MotdEndListener,
         SocketCloseListener, ChannelSelfJoinListener, ConnectErrorListener,
-        ErrorInfoListener, ConfigChangedListener, ChannelJoinListener {
+        ErrorInfoListener, ConfigChangeListener, ChannelJoinListener {
 
     /** Account that this IRCConnectionHandler is for. */
     private final Account myAccount;
@@ -132,13 +130,17 @@ public class IRCConnectionHandler implements ConnectionHandler,
         myAccount = acc;
         myServerNum = serverNum;
         MyInfo me = new MyInfo();
-        me.setNickname(myAccount.getConfig().getOption("irc", "nickname", myAccount.getName()));
-        me.setAltNickname(myAccount.getConfig().getOption("irc", "altnickname", "_" + me.getNickname()));
-        me.setRealname(myAccount.getConfig().getOption("irc", "realname", myAccount.getName()));
-        me.setUsername(myAccount.getConfig().getOption("irc", "username", myAccount.getName()));
+        me.setNickname(myAccount.getConfig().getOption("irc", "nickname"));
+        if (myAccount.getConfig().getOption("irc", "altnickname").isEmpty()) {
+            me.setAltNickname("_" + me.getNickname());
+        } else {
+            me.setAltNickname(myAccount.getConfig().getOption("irc", "altnickname"));
+        }
+        me.setRealname(myAccount.getConfig().getOption("irc", "realname"));
+        me.setUsername(myAccount.getConfig().getOption("irc", "username"));
 
-        List<String> serverList = new ArrayList<String>();
-        serverList = acc.getConfig().getListOption("irc", "serverlist", serverList);
+        List<String> serverList = new ArrayList<>();
+        serverList = acc.getConfig().getOptionList("irc", "serverlist");
 
         if (serverList.isEmpty()) {
             throw new UnableToConnectException("No servers found");
@@ -177,13 +179,13 @@ public class IRCConnectionHandler implements ConnectionHandler,
 
         acc.sendBotMessage("Using server: " + serverInfo[3]);
 
-        final String bindIP = myAccount.getConfig().getOption("irc", "bindip", "");
+        final String bindIP = myAccount.getConfig().getOption("irc", "bindip");
         if (!bindIP.isEmpty()) {
             myParser.setBindIP(bindIP);
             acc.sendBotMessage("Trying to bind to: " + bindIP);
         }
 
-        final String bindIPv6 = myAccount.getConfig().getOption("irc", "bindipv6", "");
+        final String bindIPv6 = myAccount.getConfig().getOption("irc", "bindipv6");
         if (!bindIPv6.isEmpty()) {
             // TODO: Waiting on: http://gerrit.dmdirc.com/#/c/2970/
             // myParser.setBindIPv6(bindIPv6);
@@ -196,7 +198,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         allowLine(null, "221");
 
         myParser.connect();
-        myAccount.getConfig().addListener(this);
+        myAccount.getConfig().addChangeListener(this);
         ((IRCParser)myParser).getControlThread().setName("IRC Parser - " + myAccount.getName() + " - <server>");
     }
 
@@ -211,7 +213,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         final OutputQueue out = irc.getOutputQueue();
 
         // Does the user want the rate limiting queue?
-        if (myAccount.getConfig().getBoolOption("irc", "ratelimit", false)) {
+        if (myAccount.getConfig().getOptionBool("irc", "ratelimit")) {
 
             // Set a factory that will produce a queue with the settings the
             // user wants.
@@ -220,9 +222,9 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 @Override
                 public QueueHandler getQueueHandler(final OutputQueue outputQueue, final BlockingQueue<QueueItem> queue, final PrintWriter out) {
                     final SimpleRateLimitedQueueHandler q = new SimpleRateLimitedQueueHandler(outputQueue, queue, out);
-                    q.setLimitTime(myAccount.getConfig().getIntOption("irc", "ratelimittime", 4000));
-                    q.setItems(myAccount.getConfig().getIntOption("irc", "ratelimititems", 4));
-                    q.setWaitTime(myAccount.getConfig().getIntOption("irc", "ratelimitwaittime", 3000));
+                    q.setLimitTime(myAccount.getConfig().getOptionInt("irc", "ratelimittime"));
+                    q.setItems(myAccount.getConfig().getOptionInt("irc", "ratelimititems"));
+                    q.setWaitTime(myAccount.getConfig().getOptionInt("irc", "ratelimitwaittime"));
                     return q;
                 }
             });
@@ -240,9 +242,9 @@ public class IRCConnectionHandler implements ConnectionHandler,
             // queue, then reconfigure it with the new settings.
             if (out.getQueueHandler() instanceof SimpleRateLimitedQueueHandler) {
                 final SimpleRateLimitedQueueHandler q = (SimpleRateLimitedQueueHandler)out.getQueueHandler();
-                q.setLimitTime(myAccount.getConfig().getIntOption("irc", "ratelimittime", 4000));
-                q.setItems(myAccount.getConfig().getIntOption("irc", "ratelimititems", 4));
-                q.setWaitTime(myAccount.getConfig().getIntOption("irc", "ratelimitwaittime", 3000));
+                q.setLimitTime(myAccount.getConfig().getOptionInt("irc", "ratelimittime"));
+                q.setItems(myAccount.getConfig().getOptionInt("irc", "ratelimititems"));
+                q.setWaitTime(myAccount.getConfig().getOptionInt("irc", "ratelimitwaittime"));
             }
         } else {
             // Default to the basic priority queue.
@@ -863,7 +865,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         allowLine(channel, "332");
         allowLine(channel, "333");
 
-        channel.getMap().put("backbufferList", new RollingList<BackbufferMessage>(myAccount.getConfig().getIntOption("server", "backbuffer", 0)));
+        channel.getMap().put("backbufferList", new RollingList<BackbufferMessage>(myAccount.getConfig().getOptionInt("server", "backbuffer")));
 
         // Fake a join.
         onChannelJoin(parser, date, channel, channel.getChannelClient(parser.getLocalClient()));
@@ -898,7 +900,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
     @SuppressWarnings("unchecked")
     public void configChanged(final String domain, final String setting) {
         if (domain.equalsIgnoreCase("server") && setting.equalsIgnoreCase("backbuffer")) {
-            final int size = myAccount.getConfig().getIntOption("server", "backbuffer", 0);
+            final int size = myAccount.getConfig().getOptionInt("server", "backbuffer");
             for (ChannelInfo channel : myParser.getChannels()) {
                 final RollingList<BackbufferMessage> myList = (RollingList<BackbufferMessage>)channel.getMap().get("backbufferList");
                 myList.setCapacity(size);
@@ -1132,7 +1134,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
 
         hasMOTDEnd = true;
         List<String> myList = new ArrayList<String>();
-        myList = myAccount.getConfig().getListOption("irc", "perform.connect", myList);
+        myList = myAccount.getConfig().getOptionList("irc", "perform.connect");
         Logger.debug3("Connected. Handling performs");
         for (String line : myList) {
             myParser.sendRawMessage(filterPerformLine(line));
@@ -1140,7 +1142,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         }
         if (myAccount.getUserSockets().isEmpty()) {
             myList = new ArrayList<String>();
-            myList = myAccount.getConfig().getListOption("irc", "perform.lastdetach", myList);
+            myList = myAccount.getConfig().getOptionList("irc", "perform.lastdetach");
             for (String line : myList) {
                 myParser.sendRawMessage(filterPerformLine(line));
             }
@@ -1230,7 +1232,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         Logger.error("\tLast line received: " + errorInfo.getLastLine());
         errorInfo.getException().printStackTrace();
 
-        if (myAccount.getConfig().getBoolOption("server", "reporterrors", false)) {
+        if (myAccount.getConfig().getOptionBool("server", "reporterrors")) {
             myAccount.sendBotMessage("Parser error occurred: %s", errorInfo.getData());
             myAccount.sendBotMessage("    Last line received: %s", errorInfo.getLastLine());
         }
@@ -1306,7 +1308,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                             sendTopic(user, channel);
                             sendNames(user, channel);
 
-                            if (myAccount.getConfig().getIntOption("server", "backbuffer", 0) > 0) {
+                            if (myAccount.getConfig().getOptionInt("server", "backbuffer") > 0) {
                                 sendBackbuffer(user, channel);
                             }
                         }
@@ -1319,7 +1321,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
 
                         if (myAccount.getUserSockets().size() == 1) {
                             List<String> myList = new ArrayList<String>();
-                            myList = myAccount.getConfig().getListOption("irc", "perform.firstattach", myList);
+                            myList = myAccount.getConfig().getOptionList("irc", "perform.firstattach");
                             for (String line : myList) {
                                 myParser.sendRawMessage(filterPerformLine(line));
                             }
@@ -1494,7 +1496,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         if (parserReady) {
             if (myAccount.getUserSockets().isEmpty()) {
                 List<String> myList = new ArrayList<String>();
-                myList = myAccount.getConfig().getListOption("irc", "perform.lastdetach", myList);
+                myList = myAccount.getConfig().getOptionList("irc", "perform.lastdetach");
                 for (String line : myList) {
                     myParser.sendRawMessage(filterPerformLine(line));
                 }
@@ -1543,7 +1545,12 @@ public class IRCConnectionHandler implements ConnectionHandler,
     public boolean allowedChannel(final UserSocket user, final String channel) {
         // TODO: This whole method needs optimising really... Allowed channels
         //       need caching etc.
-        final List<String> validChannelList = user.getAccount().getConfig().getListOption("irc",  "channelwhitelist." + user.getClientID(), new ArrayList<String>());
+        if (user.getClientID() == null || !user.getAccount().getConfig().hasOption("irc", "channelwhitelist." + user.getClientID())) {
+            // By default, we are allowed to see everywhere.
+            return true;
+        }
+
+        final List<String> validChannelList = user.getAccount().getConfig().getOptionList("irc", "channelwhitelist." + user.getClientID());
 
         if (validChannelList.isEmpty()) {
             return true;
