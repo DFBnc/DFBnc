@@ -63,6 +63,12 @@ public class DefaultsConfig implements Config {
         permissiveValidator = new PermissiveValidator<>();
         this.defaults = defaults;
         this.config = config;
+
+        if (config.getFile() != null && !config.getFile().exists()) {
+            if (!config.getFile().createNewFile()) {
+                throw new IOException("Unable to create config file.");
+            }
+        }
         init();
     }
 
