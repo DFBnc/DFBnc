@@ -45,8 +45,10 @@ public class ServerTypeCommand extends Command {
     public void handle(final UserSocket user, final String[] params) {
         String[] actualParams = params;
 
-        actualParams[1] = getFullParam(user, actualParams, 1, Arrays.asList("settype", "help"));
-        if (actualParams[1] == null) { return; }
+        if (actualParams.length > 1) {
+            actualParams[1] = getFullParam(user, actualParams, 1, Arrays.asList("settype", "help"));
+            if (actualParams[1] == null) { return; }
+        }
 
         if (actualParams.length > 1 && actualParams[1].equalsIgnoreCase("settype")) {
             if (actualParams.length > 2) {
