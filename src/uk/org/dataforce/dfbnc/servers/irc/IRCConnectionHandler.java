@@ -183,6 +183,13 @@ public class IRCConnectionHandler implements ConnectionHandler,
             acc.sendBotMessage("Trying to bind to: " + bindIP);
         }
 
+        final String bindIPv6 = myAccount.getConfig().getOption("irc", "bindipv6", "");
+        if (!bindIPv6.isEmpty()) {
+            // TODO: Waiting on: http://gerrit.dmdirc.com/#/c/2970/
+            // myParser.setBindIPv6(bindIPv6);
+            acc.sendBotMessage("Trying to bind to: " + bindIPv6);
+        }
+
         // Reprocess queued items every 5 seconds.
         requeueTimer.scheduleAtFixedRate(new RequeueTimerTask(this), 0, 5000);
         // Allow the initial usermode line through to the user
