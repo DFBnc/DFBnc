@@ -272,6 +272,27 @@ public class IRCConnectionHandler implements ConnectionHandler,
         }
     }
 
+    /**
+     * Check that this parser is the correct parser.
+     * If it isn't, remove the callbacks, kill the parser
+     *
+     * @param parser Parser to check.
+     * @return True if we are the correct parser, else false.
+     */
+    public boolean checkParser(final Parser parser) {
+        if (parser == myParser) {
+            return true;
+        } else {
+            parser.getCallbackManager().delAllCallback(this);
+            parser.disconnect("Killing orphaned parser...");
+            myAccount.sendBotMessage("Orphan parser found and killed. (%s)", parser);
+            myAccount.sendBotMessage("This really shouldn't happen...");
+            myAccount.forceReportException(new Exception("Orphan Parser Detected"), "Orphan Parser");
+
+            return false;
+        }
+    }
+
     /** {@inheritDoc} */
     @Override
     public ConnectionHandler newInstance() throws UnableToConnectException {
@@ -743,6 +764,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /** {@inheritDoc} */
     @Override
     public void onNickChanged(final Parser parser, final Date date, final ClientInfo client, final String oldNick) {
+        if (!checkParser(parser)) { return; }
+
         if (client == parser.getLocalClient()) {
             for (UserSocket socket : myAccount.getUserSockets()) {
                 socket.setNickname(parser.getLocalClient().getNickname());
@@ -830,6 +853,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /** {@inheritDoc} */
     @Override
     public void onChannelSelfJoin(final Parser parser, final Date date, final ChannelInfo channel) {
+        if (!checkParser(parser)) { return; }
+
         // Allow Names Through
         allowLine(channel, "353");
         allowLine(channel, "366");
@@ -847,6 +872,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /** {@inheritDoc} */
     @Override
     public void onChannelJoin(final Parser parser, final Date date, final ChannelInfo channel, final ChannelClientInfo client) {
+        if (!checkParser(parser)) { return; }
+
         // Fake a join to connected clients.
         // We do this rather than passing the "JOIN" through in onDataIn so that
         // we can deal with "extended-join" where possible.
@@ -923,6 +950,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /** {@inheritDoc} */
     @Override
     public void onDataOut(final Parser parser, final Date date, final String data, final boolean fromParser) {
+        if (!checkParser(parser)) { return; }
+
         final String[] bits = IRCParser.tokeniseLine(data);
         if (bits[0].equals("PRIVMSG") && bits.length > 1) {
             final ChannelInfo channel = parser.getChannel(bits[1]);
@@ -935,6 +964,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /** {@inheritDoc} */
     @Override
     public void onDataIn(final Parser parser, final Date date, final String data) {
+        if (!checkParser(parser)) { return; }
+
         boolean forwardLine = true;
         String channelName = null;
         final String[] bits = IRCParser.tokeniseLine(data);
@@ -1075,6 +1106,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /** {@inheritDoc} */
     @Override
     public void onServerReady(final Parser parser, final Date date) {
+        if (!checkParser(parser)) { return; }
+
         //hasPost005 = true;
         // We no longer need this callback, so lets remove it
         myParser.getCallbackManager().delCallback(NumericListener.class, this);
@@ -1083,6 +1116,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /** {@inheritDoc} */
     @Override
     public void onMOTDEnd(final Parser parser, final Date date, final boolean noMOTD, final String data) {
+        if (!checkParser(parser)) { return; }
+
         hasMOTDEnd = true;
         List<String> myList = new ArrayList<String>();
         myList = myAccount.getConfig().getListOption("irc", "perform.connect", myList);
@@ -1103,6 +1138,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /** {@inheritDoc} */
     @Override
     public void onNumeric(final Parser parser, final Date date, final int numeric, final String[] token) {
+        if (!checkParser(parser)) { return; }
+
         if (numeric > 1 && numeric < 6) {
             if (numeric == 5 && !hacked005) {
                 // Add our own 005.
@@ -1139,6 +1176,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /** {@inheritDoc} */
     @Override
     public void onSocketClosed(final Parser parser, final Date date) {
+        if (!checkParser(parser)) { return; }
+
         requeueTimer.cancel();
         myAccount.handlerDisconnected("Remote connection closed.");
     }
@@ -1146,6 +1185,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /** {@inheritDoc} */
     @Override
     public void onConnectError(final Parser parser, final Date date, final ParserError errorInfo) {
+        if (!checkParser(parser)) { return; }
+
         String description;
         if (errorInfo.getException() == null) {
             description = errorInfo.getData();
@@ -1171,6 +1212,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /** {@inheritDoc} */
     @Override
     public void onErrorInfo(final Parser parser, final Date date, final ParserError errorInfo) {
+        if (!checkParser(parser)) { return; }
+
         Logger.error("Parser error occurred: " + errorInfo.getData());
         Logger.error("\tLast line received: " + errorInfo.getLastLine());
         errorInfo.getException().printStackTrace();
