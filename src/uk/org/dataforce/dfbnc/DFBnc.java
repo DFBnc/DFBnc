@@ -81,7 +81,7 @@ public class DFBnc {
     private static ServerTypeManager myServerTypeManager = new ServerTypeManager();
 
     /** The arraylist of listenSockets */
-    private static ArrayList<ListenSocket> listenSockets = new ArrayList<ListenSocket>();
+    private static ArrayList<ListenSocket> listenSockets = new ArrayList<>();
 
     /** The time that the BNC was started at */
     public static final Long startTime = System.currentTimeMillis();
@@ -216,12 +216,18 @@ public class DFBnc {
         Logger.info("Loading Config..");
 
         try {
-            config = new DefaultsConfig(new ConfigFile(new File(getConfigDirName(), getConfigFileName())),
-                    new ConfigFile(DFBnc.class.getResourceAsStream("/uk/org/dataforce/dfbnc/defaults.config")));
-        } catch (IOException ex) {
+            final File directory = new File(getConfigDirName());
+            final File file = new File(directory, getConfigFileName());
+            if (!directory.exists()) {
+                if (!directory.mkdirs()) {
+                    throw new IOException("Unable to create config directory.");
+                }
+            }
+            config = new DefaultsConfig(new ConfigFile(new File(getConfigDirName(), getConfigFileName())), new ConfigFile(DFBnc.class.getResourceAsStream("/uk/org/dataforce/dfbnc/defaults.config")));
+        } catch (final IOException ex) {
             Logger.error("Error loading config: " + configDirectory + " (" + ex.getMessage() + "). Exiting");
             System.exit(1);
-        } catch (InvalidConfigFileException ex) {
+        } catch (final InvalidConfigFileException ex) {
             Logger.error("Error loading config (" + ex.getMessage() + "). Exiting");
             System.exit(1);
         }
@@ -248,7 +254,7 @@ public class DFBnc {
         myServerTypeManager.init();
 
         Logger.info("Running!");
-        if (config.getOptionBool("debugging", "autocreate")) {
+        if (allowAutoCreate()) {
             Logger.warning(".-----------------------------------------------------,");
             Logger.warning("|                       WARNING                       |");
             Logger.warning("|-----------------------------------------------------|");
@@ -584,5 +590,14 @@ public class DFBnc {
     public static void main(String[] args) {
         me = new DFBnc();
         me.init(args);
+    }
+
+    /**
+     * Are we allowing autocreation of users?
+     *
+     * @return True if autocreate is enabled.
+     */
+    public boolean allowAutoCreate() {
+        return cli.paramGiven("-enableDebugOptions") && config.getOptionBool("debugging", "autocreate");
     }
 }

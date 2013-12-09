@@ -21,23 +21,24 @@ public class ReadOnlyConfig implements Config {
     private final ConfigFile config;
     private final Validator<String> permissiveValidator;
 
-    public ReadOnlyConfig(ConfigFile config) {
+    public ReadOnlyConfig(final ConfigFile config) throws IOException, InvalidConfigFileException {
         this.config = config;
+        config.read();
         permissiveValidator = new PermissiveValidator<>();
     }
 
     @Override
-    public String getOption(String domain, String option) {
+    public String getOption(final String domain, final String option) {
         return getOption(domain, option, permissiveValidator);
     }
 
     @Override
-    public void setOption(String domain, String option, String value) {
+    public void setOption(final String domain, final String option, final String value) {
         throw new UnsupportedOperationException("This config is read only.");
     }
 
     @Override
-    public String getOption(String domain, String option, Validator<String> validator) {
+    public String getOption(final String domain, final String option, final Validator<String> validator) {
         String value = config.getKeyDomain(domain).get(option);
 
         if (validator.validate(value).isFailure()) {
@@ -47,17 +48,17 @@ public class ReadOnlyConfig implements Config {
     }
 
     @Override
-    public void setOption(String domain, String option, String value, Validator<String> validator) {
+    public void setOption(final String domain, final String option, final String value, final Validator<String> validator) {
         throw new UnsupportedOperationException("This config is read only.");
     }
 
     @Override
-    public Boolean getOptionBool(String domain, String option) {
+    public Boolean getOptionBool(final String domain, final String option) {
         return Boolean.valueOf(getOption(domain, option));
     }
 
     @Override
-    public List<String> getOptionList(String domain, String option, Validator<String> validator) {
+    public List<String> getOptionList(final String domain, final String option, final Validator<String> validator) {
         final List<String> res = new ArrayList<>();
 
         for (String line : getOption(domain, option, validator).split("\n")) {
@@ -70,17 +71,17 @@ public class ReadOnlyConfig implements Config {
     }
 
     @Override
-    public void setOption(String domain, String option, List<String> value) {
+    public void setOption(final String domain, final String option, final List<String> value) {
         throw new UnsupportedOperationException("This config is read only.");
     }
 
     @Override
-    public List<String> getOptionList(String domain, String option) {
+    public List<String> getOptionList(final String domain, final String option) {
         return getOptionList(domain, option, permissiveValidator);
     }
 
     @Override
-    public Integer getOptionInt(String domain, String option, Validator<String> validator) {
+    public Integer getOptionInt(final String domain, final String option, final Validator<String> validator) {
         final String value = getOption(domain, option, validator);
         Integer intVal;
         try {
@@ -92,23 +93,23 @@ public class ReadOnlyConfig implements Config {
     }
 
     @Override
-    public Integer getOptionInt(String domain, String option) {
+    public Integer getOptionInt(final String domain, final String option) {
         return getOptionInt(domain, option, permissiveValidator);
     }
 
     @Override
-    public boolean hasOption(String domain, String option, Validator<String> validator) {
+    public boolean hasOption(final String domain, final String option, final Validator<String> validator) {
         String value = config.getKeyDomain(domain).get(option);
         return value != null && !validator.validate(value).isFailure();
     }
 
     @Override
-    public boolean hasOption(String domain, String option) {
+    public boolean hasOption(final String domain, final String option) {
         return hasOption(domain, option, permissiveValidator);
     }
 
     @Override
-    public Map<String, String> getOptions(String domain) {
+    public Map<String, String> getOptions(final String domain) {
         return config.getKeyDomain(domain);
     }
 
@@ -118,17 +119,17 @@ public class ReadOnlyConfig implements Config {
     }
 
     @Override
-    public void addChangeListener(String domain, ConfigChangeListener listener) {
+    public void addChangeListener(final String domain, final ConfigChangeListener listener) {
         throw new UnsupportedOperationException("This config is read only.");
     }
 
     @Override
-    public void addChangeListener(String domain, String key, ConfigChangeListener listener) {
+    public void addChangeListener(final String domain, final String key, final ConfigChangeListener listener) {
         throw new UnsupportedOperationException("This config is read only.");
     }
 
     @Override
-    public void removeListener(ConfigChangeListener listener) {
+    public void removeListener(final ConfigChangeListener listener) {
         throw new UnsupportedOperationException("This config is read only.");
     }
 
@@ -143,22 +144,22 @@ public class ReadOnlyConfig implements Config {
     }
 
     @Override
-    public void setOption(String domain, String option, boolean value) {
+    public void setOption(final String domain, final String option, final boolean value) {
         throw new UnsupportedOperationException("This config is read only.");
     }
 
     @Override
-    public void setOption(String domain, String option, int value) {
+    public void setOption(final String domain, final String option, final int value) {
         throw new UnsupportedOperationException("This config is read only.");
     }
 
     @Override
-    public void setOption(String domain, String option, float value) {
+    public void setOption(final String domain, final String option, final float value) {
         throw new UnsupportedOperationException("This config is read only.");
     }
 
     @Override
-    public void addChangeListener(ConfigChangeListener listener) {
+    public void addChangeListener(final ConfigChangeListener listener) {
         throw new UnsupportedOperationException("This config is read only.");
     }
 

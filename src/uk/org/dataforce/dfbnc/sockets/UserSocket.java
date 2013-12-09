@@ -788,6 +788,8 @@ public class UserSocket extends ConnectedSocket {
             }
         } else if (line[0].equals("TIMESTAMPEDIRC") || line[0].equals("TSIRC")) {
             setCapabilityState("dfbnc.com/tsirc", CapabilityState.ENABLED);
+        } else if (line[0].equals("PONG")) {
+            return;
         } else {
             sendIRCLine(Consts.ERR_NOTREGISTERED, line[0], "You must login first.");
         }
@@ -796,7 +798,7 @@ public class UserSocket extends ConnectedSocket {
             final String[] bits = username.split("\\+");
             username = bits[0];
             clientID = (bits.length > 1) ? bits[1].toLowerCase() : null;
-            if (AccountManager.count() == 0 || (DFBnc.getBNC().getConfig().getOptionBool("debugging", "autocreate") && !AccountManager.exists(username))) {
+            if (AccountManager.count() == 0 || (DFBnc.getBNC().allowAutoCreate() && !AccountManager.exists(username))) {
                 Account acc = AccountManager.createAccount(username, password);
                     if (AccountManager.count() == 1) {
                         acc.setAdmin(true);

@@ -1479,6 +1479,11 @@ public class IRCConnectionHandler implements ConnectionHandler,
     public boolean allowedChannel(final UserSocket user, final String channel) {
         // TODO: This whole method needs optimising really... Allowed channels
         //       need caching etc.
+        if (user.getClientID() == null || !user.getAccount().getConfig().hasOption("irc", "channelwhitelist." + user.getClientID())) {
+            // By default, we are allowed to see everywhere.
+            return true;
+        }
+
         final List<String> validChannelList = user.getAccount().getConfig().getOptionList("irc", "channelwhitelist." + user.getClientID());
 
         if (validChannelList.isEmpty()) {

@@ -58,30 +58,38 @@ public class DefaultsConfig implements Config {
     /**
      * Creates a new configuration file, creating the file is needed.
      */
-    public DefaultsConfig(final ConfigFile config,
-            final ConfigFile defaults)
-            throws IOException, InvalidConfigFileException {
+    public DefaultsConfig(final ConfigFile config, final ConfigFile defaults) throws IOException, InvalidConfigFileException {
         listeners = new MapList<>();
         permissiveValidator = new PermissiveValidator<>();
         this.defaults = defaults;
         this.config = config;
+        init();
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public String getOption(final String domain, final String option,
-            final Validator<String> validator) {
-        String value = config.getKeyDomain(domain).get(option);
+    public String getOption(final String domain, final String option, final Validator<String> validator) {
+        String value = null;
+        try {
+            value = config.getKeyDomain(domain).get(option);
+        } catch (final Exception e) { /** Option not found in this config. */ }
 
         if (validator.validate(value).isFailure()) {
             value = null;
         }
 
         if (value == null) {
-            value = defaults.getKeyDomain(domain).get(option);
+            try {
+                value = defaults.getKeyDomain(domain).get(option);
+            } catch (final Exception e) { /** Option not found in this config either. */ }
         }
+
+        if (value == null) {
+            throw new NullPointerException("No such config option: " + domain + "." + option);
+        }
+
         return value;
     }
 
@@ -89,7 +97,7 @@ public class DefaultsConfig implements Config {
      * {@inheritDoc}
      */
     @Override
-    public void setOption(String domain, String option, final String value) {
+    public void setOption(final String domain, final String option, final String value) {
         config.getKeyDomain(domain).put(option, value);
         if (listeners.containsKey(domain)) {
             for (ConfigChangeListener listener : listeners.get(domain)) {
@@ -112,8 +120,7 @@ public class DefaultsConfig implements Config {
      * {@inheritDoc}
      */
     @Override
-    public void setOption(String domain, String option, final String value,
-            final Validator<String> validator) {
+    public void setOption(final String domain, final String option, final String value, final Validator<String> validator) {
         if (!validator.validate(value).isFailure()) {
             setOption(domain, option, value);
         }
@@ -123,7 +130,7 @@ public class DefaultsConfig implements Config {
      * {@inheritDoc}
      */
     @Override
-    public void setOption(String domain, String option, boolean value) {
+    public void setOption(final String domain, final String option, final boolean value) {
         setOption(domain, option, Boolean.toString(value));
     }
 
@@ -131,7 +138,7 @@ public class DefaultsConfig implements Config {
      * {@inheritDoc}
      */
     @Override
-    public void setOption(String domain, String option, int value) {
+    public void setOption(final String domain, final String option, final int value) {
         setOption(domain, option, Integer.toString(value));
     }
 
@@ -139,7 +146,7 @@ public class DefaultsConfig implements Config {
      * {@inheritDoc}
      */
     @Override
-    public void setOption(String domain, String option, float value) {
+    public void setOption(final String domain, final String option, final float value) {
         setOption(domain, option, Float.toString(value));
     }
 
@@ -147,7 +154,7 @@ public class DefaultsConfig implements Config {
      * {@inheritDoc}
      */
     @Override
-    public Boolean getOptionBool(String domain, String option) {
+    public Boolean getOptionBool(final String domain, final String option) {
         return Boolean.valueOf(getOption(domain, option));
     }
 
@@ -163,8 +170,7 @@ public class DefaultsConfig implements Config {
      * {@inheritDoc}
      */
     @Override
-    public List<String> getOptionList(final String domain, final String option,
-            final Validator<String> validator) {
+    public List<String> getOptionList(final String domain, final String option, final Validator<String> validator) {
         final List<String> res = new ArrayList<>();
 
         for (String line : getOption(domain, option, validator).split("\n")) {
@@ -180,7 +186,7 @@ public class DefaultsConfig implements Config {
      * {@inheritDoc}
      */
     @Override
-    public void setOption(String domain, String option, List<String> value) {
+    public void setOption(final String domain, final String option, final List<String> value) {
         final StringBuilder temp = new StringBuilder();
         for (String part : value) {
             temp.append('\n');
@@ -193,8 +199,7 @@ public class DefaultsConfig implements Config {
      * {@inheritDoc}
      */
     @Override
-    public Integer getOptionInt(final String domain, final String option,
-            final Validator<String> validator) {
+    public Integer getOptionInt(final String domain, final String option, final Validator<String> validator) {
         final String value = getOption(domain, option, validator);
         Integer intVal;
         try {
@@ -275,8 +280,7 @@ public class DefaultsConfig implements Config {
      * {@inheritDoc}
      */
     @Override
-    public void addChangeListener(final String domain, final String key,
-            final ConfigChangeListener listener) {
+    public void addChangeListener(final String domain, final String key, final ConfigChangeListener listener) {
         listeners.add(domain + "." + key, listener);
     }
 
