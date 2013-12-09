@@ -187,8 +187,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
 
         final String bindIPv6 = myAccount.getConfig().getOption("irc", "bindipv6");
         if (!bindIPv6.isEmpty()) {
-            // TODO: Waiting on: http://gerrit.dmdirc.com/#/c/2970/
-            // myParser.setBindIPv6(bindIPv6);
+            myParser.setBindIPv6(bindIPv6);
             acc.sendBotMessage("Trying to bind to: " + bindIPv6);
         }
 
