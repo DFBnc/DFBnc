@@ -120,6 +120,15 @@ public abstract class AbstractListEditCommand extends Command {
     }
 
     /**
+     * Does this command create lists on-the-fly?
+     *
+     * @return If this list can be added to.
+     */
+    public boolean isDynamicList() {
+        return false;
+    }
+
+    /**
      * Is the given parameter a valid sublist? If so, return the name of the
      * sublist, else return null.
      *
@@ -162,8 +171,14 @@ public abstract class AbstractListEditCommand extends Command {
                 user.sendBotMessage("Please try /dfbnc '" + actualParams[0] + "' for more information");
                 return;
             }
-            List<String> myList = new ArrayList<String>();
-            myList = user.getAccount().getConfig().getOptionList(getDomainName(listParamName), getPropertyName(listParamName));
+            List<String> myList = new ArrayList<>();
+            if (user.getAccount().getConfig().hasOption(getDomainName(listParamName), getPropertyName(listParamName))) {
+                myList = user.getAccount().getConfig().getOptionList(getDomainName(listParamName), getPropertyName(listParamName));
+            } else if (!isDynamicList()) {
+                user.sendBotMessage("There is no list to modify using '" + listParamName + "'");
+                user.sendBotMessage("Please try /dfbnc '" + actualParams[0] + "' for more information");
+                return;
+            }
             if (actualParams[commandParam].equalsIgnoreCase("list")) {
                 if (myList.size() > 0) {
                     user.sendBotMessage("You currently have the following items in your " + getListName(listParamName) + ":");
@@ -244,7 +259,16 @@ public abstract class AbstractListEditCommand extends Command {
                 user.sendBotMessage("Invalid subcommand: " + actualParams[commandParam]);
                 user.sendBotMessage("For assistance, please try: /dfbnc " + actualParams[0]);
             }
-            user.getAccount().getConfig().setOption(getDomainName(listParamName), getPropertyName(listParamName), myList);
+            if (isDynamicList()) {
+                if (!myList.isEmpty() || user.getAccount().getConfig().hasOption(getDomainName(listParamName), getPropertyName(listParamName))) {
+                    // Only save lists that actually have something, or existed before.
+                    user.getAccount().getConfig().setOption(getDomainName(listParamName), getPropertyName(listParamName), myList);
+
+                    // TODO: Remove dynamic lists that are empty.
+                }
+            } else {
+                user.getAccount().getConfig().setOption(getDomainName(listParamName), getPropertyName(listParamName), myList);
+            }
         } else if (hasSubList && actualParams.length == 1) {
             user.sendBotMessage("You must specify a sublist to edit eg:");
             user.sendBotMessage("  /dfbnc " + actualParams[0] + " <sublist> <command>");

@@ -39,7 +39,7 @@ public interface Config {
      * <p/>
      * @return The value of the option, or null if no matching values exist
      */
-    public String getOption(String domain, String option);
+    public String getOption(final String domain, final String option);
 
     /**
      * Sets the specified option in this configuration to the specified value.
@@ -48,7 +48,7 @@ public interface Config {
      * @param option The name of the option
      * @param value The new value for the option
      */
-    public void setOption(String domain, String option, final String value);
+    public void setOption(final String domain, final String option, final String value);
 
     /**
      * Retrieves the first value for the specified option that matches the
@@ -60,8 +60,7 @@ public interface Config {
      * <p/>
      * @return The value of the option, or null if no matching values exist
      */
-    public String getOption(String domain, String option,
-            Validator<String> validator);
+    public String getOption(final String domain, final String option, Validator<String> validator);
 
     /**
      * Sets the specified option in this configuration to the specified value.
@@ -71,28 +70,7 @@ public interface Config {
      * @param value The new value for the option
      * @param validator The validator to verify the setting against
      */
-    public void setOption(String domain, String option, final String value,
-            Validator<String> validator);
-
-    public void setOption(String domain, String option, boolean value);
-
-    public void setOption(String domain, String option, int value);
-
-    public void setOption(String domain, String option, float value);
-
-    public Boolean getOptionBool(String domain, String option);
-
-    /**
-     * Retrieves the first value for the specified option that matches the
-     * specified validator.
-     *
-     * @param domain The domain of the option
-     * @param option The name of the option
-     * @param validator The validator to use to check legal values
-     * <p/>
-     * @return The value of the option, or null if no matching values exist
-     */
-    public List<String> getOptionList(String domain, String option, Validator<String> validator);
+    public void setOption(final String domain, final String option, final String value, Validator<String> validator);
 
     /**
      * Sets the specified option in this configuration to the specified value.
@@ -101,17 +79,36 @@ public interface Config {
      * @param option The name of the option
      * @param value The new value for the option
      */
-    public void setOption(String domain, String option, List<String> value);
+    public void setOption(final String domain, final String option, final boolean value);
 
     /**
-     * Retrieves the first value for the specified option.
+     * Sets the specified option in this configuration to the specified value.
+     *
+     * @param domain The domain of the option
+     * @param option The name of the option
+     * @param value The new value for the option
+     */
+    public void setOption(final String domain, final String option, final int value);
+
+    /**
+     * Sets the specified option in this configuration to the specified value.
+     *
+     * @param domain The domain of the option
+     * @param option The name of the option
+     * @param value The new value for the option
+     */
+    public void setOption(final String domain, final String option, final float value);
+
+    /**
+     * Retrieves the first value for the specified option and returns it as a
+     * boolean.
      *
      * @param domain The domain of the option
      * @param option The name of the option
      * <p/>
-     * @return The value of the option, or null if no matching values exist
+     * @return The value of the option, or false if no matching values exist
      */
-    public List<String> getOptionList(String domain, String option);
+    public Boolean getOptionBool(final String domain, final String option);
 
     /**
      * Retrieves the first value for the specified option that matches the
@@ -123,7 +120,16 @@ public interface Config {
      * <p/>
      * @return The value of the option, or null if no matching values exist
      */
-    public Integer getOptionInt(String domain, String option, Validator<String> validator);
+    public List<String> getOptionList(final String domain, final String option, final Validator<String> validator);
+
+    /**
+     * Sets the specified option in this configuration to the specified value.
+     *
+     * @param domain The domain of the option
+     * @param option The name of the option
+     * @param value The new value for the option
+     */
+    public void setOption(final String domain, final String option, final List<String> value);
 
     /**
      * Retrieves the first value for the specified option.
@@ -133,7 +139,29 @@ public interface Config {
      * <p/>
      * @return The value of the option, or null if no matching values exist
      */
-    public Integer getOptionInt(String domain, String option);
+    public List<String> getOptionList(final String domain, final String option);
+
+    /**
+     * Retrieves the first value for the specified option that matches the
+     * specified validator.
+     *
+     * @param domain The domain of the option
+     * @param option The name of the option
+     * @param validator The validator to use to check legal values
+     * <p/>
+     * @return The value of the option, or null if no matching values exist
+     */
+    public Integer getOptionInt(final String domain, final String option, final Validator<String> validator);
+
+    /**
+     * Retrieves the first value for the specified option.
+     *
+     * @param domain The domain of the option
+     * @param option The name of the option
+     * <p/>
+     * @return The value of the option, or null if no matching values exist
+     */
+    public Integer getOptionInt(final String domain, final String option);
 
     /**
      * Determines if this source has a value for the specified option which
@@ -145,8 +173,7 @@ public interface Config {
      * <p/>
      * @return True iff a matching option exists, false otherwise.
      */
-    public boolean hasOption(String domain, String option,
-            Validator<String> validator);
+    public boolean hasOption(final String domain, final String option, final Validator<String> validator);
 
     /**
      * Determines if this source has a value for the specified option.
@@ -156,7 +183,7 @@ public interface Config {
      * <p/>
      * @return True iff a matching option exists, false otherwise.
      */
-    public boolean hasOption(String domain, String option);
+    public boolean hasOption(final String domain, final String option);
 
     /**
      * Returns the name of all the options in the specified domain. If the
@@ -166,7 +193,7 @@ public interface Config {
      * <p/>
      * @return A list of options in the specified domain
      */
-    public Map<String, String> getOptions(String domain);
+    public Map<String, String> getOptions(final String domain);
 
     /**
      * Returns the name of all domains known by this manager.
@@ -181,15 +208,14 @@ public interface Config {
      * @param domain The domain to be monitored
      * @param listener The listener to register
      */
-    public void addChangeListener(String domain,
-            ConfigChangeListener listener);
+    public void addChangeListener(final String domain, final ConfigChangeListener listener);
 
     /**
      * Adds a change listener for the specified domain.
      *
      * @param listener The listener to register
      */
-    public void addChangeListener(ConfigChangeListener listener);
+    public void addChangeListener(final ConfigChangeListener listener);
 
     /**
      * Adds a change listener for the specified domain and key.
@@ -198,15 +224,14 @@ public interface Config {
      * @param key The option to be monitored
      * @param listener The listener to register
      */
-    public void addChangeListener(String domain, String key,
-            ConfigChangeListener listener);
+    public void addChangeListener(final String domain, final String key, final ConfigChangeListener listener);
 
     /**
      * Removes the specified listener for all domains and options.
      *
      * @param listener The listener to be removed
      */
-    public void removeListener(ConfigChangeListener listener);
+    public void removeListener(final ConfigChangeListener listener);
 
     /**
      * Saves this configuration to disk.

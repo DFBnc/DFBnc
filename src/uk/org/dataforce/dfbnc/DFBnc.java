@@ -385,7 +385,7 @@ public class DFBnc {
      * @return Component Version.
      */
     public static String getVersion(final String component) {
-        return versionConfig.getOption("versions", component);
+        return versionConfig.hasOption("versions", component) ? versionConfig.getOption("versions", component) : "Unknown";
     }
 
     /**

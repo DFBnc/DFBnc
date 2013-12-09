@@ -236,8 +236,7 @@ public class DefaultsConfig implements Config {
      * {@inheritDoc}
      */
     @Override
-    public boolean hasOption(final String domain, final String option,
-            final Validator<String> validator) {
+    public boolean hasOption(final String domain, final String option, final Validator<String> validator) {
         String value = config.getKeyDomain(domain).get(option);
         return value != null && !validator.validate(value).isFailure();
     }

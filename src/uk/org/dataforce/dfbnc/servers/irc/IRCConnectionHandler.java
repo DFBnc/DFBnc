@@ -131,11 +131,15 @@ public class IRCConnectionHandler implements ConnectionHandler,
         myServerNum = serverNum;
         MyInfo me = new MyInfo();
         me.setNickname(myAccount.getConfig().getOption("irc", "nickname"));
-        me.setAltNickname(myAccount.getConfig().getOption("irc", "altnickname"));
+        if (myAccount.getConfig().getOption("irc", "altnickname").isEmpty()) {
+            me.setAltNickname("_" + me.getNickname());
+        } else {
+            me.setAltNickname(myAccount.getConfig().getOption("irc", "altnickname"));
+        }
         me.setRealname(myAccount.getConfig().getOption("irc", "realname"));
         me.setUsername(myAccount.getConfig().getOption("irc", "username"));
 
-        List<String> serverList = new ArrayList<String>();
+        List<String> serverList = new ArrayList<>();
         serverList = acc.getConfig().getOptionList("irc", "serverlist");
 
         if (serverList.isEmpty()) {
