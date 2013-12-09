@@ -25,7 +25,7 @@ import java.io.File;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import uk.org.dataforce.dfbnc.DFBnc;
+import com.dfbnc.DFBnc;
 
 /**
  * This file stores various useful functions

@@ -18,7 +18,7 @@
 	<!-- Custom user properties should go in a file called build.properties -->
 	<property file="build.properties"/>
 	<!-- Default Properties -->
-	<property name="main.class" value="uk.org.dataforce.dfbnc.DFBnc"/>
+	<property name="main.class" value="com.dfbnc.DFBnc"/>
 	<property name="dist.dir" value="dist"/>
 	<property name="dist.jar" value="${dist.dir}/dfbnc.jar"/>
 	<property name="javadoc.dir" value="${dist.dir}/javadoc"/>
@@ -194,7 +194,7 @@
 	<!--
 	  Add Versioning
 	  -->
-	<property name="version.config" value="build/classes/uk/org/dataforce/dfbnc/version.config"/>
+	<property name="version.config" value="build/classes/com/dfbnc/version.config"/>
 	<available file=".git" property="is.git"/>
 	<target name="-write-all-version" depends="-write-version, -write-parser-version, -write-akuma-version, -write-util-version"/>
 	<target name="-write-version" depends="-write-version-header, -add-version"/>
