@@ -969,6 +969,13 @@ public class IRCConnectionHandler implements ConnectionHandler,
         boolean forwardLine = true;
         String channelName = null;
         final String[] bits = IRCParser.tokeniseLine(data);
+        if (bits.length == 1) {
+            // Something is wrong, the server sent us a line that only includes
+            // it's name?
+            myAccount.sendBotMessage("Invalid looking line from server, ignored: %s", data);
+            return;
+        }
+
         // Don't forward pings or pongs from the server
         if (bits[1].equals("PONG") || bits[0].equals("PONG") || bits[1].equals("PING") || bits[0].equals("PING")) {
             return;
@@ -982,13 +989,13 @@ public class IRCConnectionHandler implements ConnectionHandler,
         // first.
         if (bits[1].equals("JOIN")) { return; }
 
-        if (bits[1].equals("PRIVMSG")) {
+        if (bits.length > 2 && bits[1].equals("PRIVMSG")) {
             final ChannelInfo channel = parser.getChannel(bits[2]);
             if (channel != null) {
                 channelName = channel.getName();
                 this.addBackbufferMessage(channel, System.currentTimeMillis(), data);
             }
-        } else if (parser.isValidChannelName(bits[2])) {
+        } else if (bits.length > 2 && parser.isValidChannelName(bits[2])) {
             channelName = bits[2];
         }
 
@@ -1025,8 +1032,13 @@ public class IRCConnectionHandler implements ConnectionHandler,
                     break;
 
                 case 353: // Names
-                    channelName = bits[4];
-                    forwardLine = checkAllowLine(myParser.getChannel(bits[4]), bits[1]);
+                    if (bits.length > 4) {
+                        channelName = bits[4];
+                        forwardLine = checkAllowLine(myParser.getChannel(bits[4]), bits[1]);
+                    } else {
+                        myAccount.sendBotMessage("Invalid 353 Response: %s", data);
+                        return;
+                    }
                     break;
 
                 case 368: // Ban List End
