@@ -109,15 +109,15 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /** Have we hacked in our own 005? (Shows support for LISTMODE) */
     private boolean hacked005 = false;
     /** This stores the 002-005 lines which are sent to users who connect after we receive them  */
-    private List<String> connectionLines = new ArrayList<String>();
+    private List<String> connectionLines = new ArrayList<>();
     /** This stores tokens not related to a channel that we want to temporarily allow to come via onDataIn */
-    private List<String> allowTokens = new ArrayList<String>();
+    private List<String> allowTokens = new ArrayList<>();
     /** This stores client-sent lines that need to be processed at a later date. */
-    private final List<RequeueLine> requeueList = new ArrayList<RequeueLine>();
+    private final List<RequeueLine> requeueList = new ArrayList<>();
     /** This timer handles re-processing of items in the requeueList */
     private Timer requeueTimer = new Timer("requeueTimer");
     /** This stores a list of user sockets that we want to requeue all lines from and for temporarily. */
-    private final List<UserSocket> forceRequeueList = new ArrayList<UserSocket>();
+    private final List<UserSocket> forceRequeueList = new ArrayList<>();
 
     /**
      * Create a new IRCConnectionHandler
@@ -440,7 +440,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                         continue;
                                     }
                                     // Make sure we don't send the same thing twice. A list is probably overkill for this, but meh
-                                    final List<Character> alreadySent = new ArrayList<Character>();
+                                    final List<Character> alreadySent = new ArrayList<>();
                                     final String modeCharList = (isListmode && line[2].equals("*")) ? myParser.getListChannelModes() : line[2];
 
                                     for (int i = 0; i < modeCharList.length(); ++i) {
@@ -617,7 +617,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
     List<RequeueLine> getRequeueList() {
         List<RequeueLine> result;
         synchronized (requeueList) {
-            result = new ArrayList<RequeueLine>(requeueList);
+            result = new ArrayList<>(requeueList);
             requeueList.clear();
         }
         return result;
@@ -789,7 +789,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         if (channel != null) {
             tokens = (List<String>) ((IRCChannelInfo) channel).getMap().get("AllowedTokens");
             if (tokens == null) {
-                tokens = new ArrayList<String>();
+                tokens = new ArrayList<>();
             }
         } else {
             tokens = allowTokens;
@@ -816,7 +816,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         if (channel != null) {
             tokens = (List<String>) ((IRCChannelInfo) channel).getMap().get("AllowedTokens");
             if (tokens == null) {
-                tokens = new ArrayList<String>();
+                tokens = new ArrayList<>();
             }
         } else {
             tokens = allowTokens;
@@ -842,7 +842,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         if (channel != null) {
             tokens = (List<String>) ((IRCChannelInfo) channel).getMap().get("AllowedTokens");
             if (tokens == null) {
-                tokens = new ArrayList<String>();
+                tokens = new ArrayList<>();
             }
         } else {
             tokens = allowTokens;
@@ -945,7 +945,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
             }
         }
 
-        return new RollingList<BackbufferMessage>(0);
+        return new RollingList<>(0);
     }
 
     /** {@inheritDoc} */
@@ -984,6 +984,9 @@ public class IRCConnectionHandler implements ConnectionHandler,
 
         // Don't forward CAP from the server
         if (bits[1].equals("CAP")) { return; }
+
+        // Don't nick-in-use from the server before 001.
+        if (bits[1].equals("433") && !parserReady) { return; }
 
         // Don't forward JOINs from the server (We fake them in the appropriate
         // onchannel(self)join callbacks - we need the parser to process them
@@ -1132,7 +1135,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         if (!checkParser(parser)) { return; }
 
         hasMOTDEnd = true;
-        List<String> myList = new ArrayList<String>();
+        List<String> myList = new ArrayList<>();
         myList = myAccount.getConfig().getOptionList("irc", "perform.connect");
         Logger.debug3("Connected. Handling performs");
         for (String line : myList) {
@@ -1140,7 +1143,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
             Logger.debug3("Sending perform line: " + line);
         }
         if (myAccount.getUserSockets().isEmpty()) {
-            myList = new ArrayList<String>();
+            myList = new ArrayList<>();
             myList = myAccount.getConfig().getOptionList("irc", "perform.lastdetach");
             for (String line : myList) {
                 myParser.sendRawMessage(filterPerformLine(line));
@@ -1319,7 +1322,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                         }
 
                         if (myAccount.getUserSockets().size() == 1) {
-                            List<String> myList = new ArrayList<String>();
+                            List<String> myList = new ArrayList<>();
                             myList = myAccount.getConfig().getOptionList("irc", "perform.firstattach");
                             for (String line : myList) {
                                 myParser.sendRawMessage(filterPerformLine(line));
@@ -1426,7 +1429,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
 
         for (BackbufferMessage message : backbufferList) {
             final String line;
-            final Map<String,String> messageTags = new HashMap<String,String>();
+            final Map<String,String> messageTags = new HashMap<>();
 
             if (user.getCapabilityState("server-time") == CapabilityState.ENABLED) {
                 messageTags.put("time", servertime.format(message.getTime()));
@@ -1494,7 +1497,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
     public void userDisconnected(final UserSocket user) {
         if (parserReady) {
             if (myAccount.getUserSockets().isEmpty()) {
-                List<String> myList = new ArrayList<String>();
+                List<String> myList = new ArrayList<>();
                 myList = myAccount.getConfig().getOptionList("irc", "perform.lastdetach");
                 for (String line : myList) {
                     myParser.sendRawMessage(filterPerformLine(line));
