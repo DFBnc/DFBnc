@@ -97,7 +97,9 @@ public class DFBncDaemon extends Daemon {
     private static boolean checkCanFork() {
         try {
             JavaVMArguments.of(getPID());
-            return true;
+            // If we got here, we can fork, but only allow it when running
+            // from a jar.
+            return DFBncDaemon.class.getResource("DFBncDaemon.class").getProtocol().equalsIgnoreCase("jar");
         } catch (final Throwable t) {
             // A few known errors can occur here, all of which mean we can't
             // fork, but also, if this gives ANY error then theres no point
