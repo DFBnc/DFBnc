@@ -237,7 +237,13 @@ public class DefaultsConfig implements Config {
      */
     @Override
     public boolean hasOption(final String domain, final String option, final Validator<String> validator) {
-        String value = config.getKeyDomain(domain).get(option);
+        String value = config.hasDomain(domain) ? config.getKeyDomain(domain).get(option) : null;
+
+        if (value == null) {
+            // Try defaults.
+            value = defaults.hasDomain(domain) ? defaults.getKeyDomain(domain).get(option) : null;
+        }
+
         return value != null && !validator.validate(value).isFailure();
     }
 
