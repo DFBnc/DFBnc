@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.dfbnc;
+package com.dfbnc.util;
 
 import java.util.LinkedList;
 import java.util.Collection;

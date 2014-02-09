@@ -36,7 +36,7 @@ import java.nio.charset.CharacterCodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import com.dfbnc.IRCLine;
+import com.dfbnc.util.IRCLine;
 import uk.org.dataforce.libs.logger.Logger;
 
 /**

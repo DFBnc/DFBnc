@@ -21,6 +21,10 @@
  */
 package com.dfbnc.servers.irc;
 
+import com.dfbnc.servers.irc.commands.ServerListCommand;
+import com.dfbnc.servers.irc.commands.PerformCommand;
+import com.dfbnc.servers.irc.commands.IRCSetCommand;
+import com.dfbnc.servers.irc.commands.ChannelWhitelistCommand;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.servers.ServerType;
 import com.dfbnc.servers.ServerTypeManager;

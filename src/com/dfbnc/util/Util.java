@@ -19,8 +19,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.dfbnc;
+package com.dfbnc.util;
 
+import com.dfbnc.DFBnc;
 import java.io.File;
 import java.math.BigInteger;
 import java.security.MessageDigest;

@@ -26,7 +26,7 @@ import java.util.List;
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.sockets.UserSocket;
-import com.dfbnc.Util;
+import com.dfbnc.util.Util;
 
 /**
  * This file represents the 'FirstTime' command

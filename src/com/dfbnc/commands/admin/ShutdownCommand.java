@@ -28,7 +28,7 @@ import com.dfbnc.DFBnc;
 import com.dfbnc.commands.AdminCommand;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.sockets.UserSocket;
-import com.dfbnc.Util;
+import com.dfbnc.util.Util;
 
 /**
  * This file represents the 'Shutdown' command

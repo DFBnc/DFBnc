@@ -71,17 +71,17 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 import com.dfbnc.Account;
-import com.dfbnc.BackbufferMessage;
+import com.dfbnc.util.BackbufferMessage;
 import com.dfbnc.ConnectionHandler;
 import com.dfbnc.Consts;
-import com.dfbnc.IRCLine;
-import com.dfbnc.RollingList;
+import com.dfbnc.util.IRCLine;
+import com.dfbnc.util.RollingList;
 import com.dfbnc.config.ConfigChangeListener;
 import com.dfbnc.sockets.UnableToConnectException;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.sockets.UserSocketWatcher;
 import uk.org.dataforce.libs.logger.Logger;
-import com.dfbnc.Util;
+import com.dfbnc.util.Util;
 
 
 /**

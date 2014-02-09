@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package com.dfbnc.servers.irc;
+package com.dfbnc.servers.irc.commands;
 
 import com.dfbnc.commands.AbstractSetCommand;
 import com.dfbnc.commands.CommandManager;

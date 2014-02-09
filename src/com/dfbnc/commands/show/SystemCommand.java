@@ -32,7 +32,7 @@ import com.dfbnc.DFBnc;
 import com.dfbnc.DFBncDaemon;
 import uk.org.dataforce.libs.cliparser.CLIParam;
 import uk.org.dataforce.libs.cliparser.CLIParser;
-import com.dfbnc.Util;
+import com.dfbnc.util.Util;
 
 /**
  * This file represents the 'system' command

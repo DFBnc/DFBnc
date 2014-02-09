@@ -22,6 +22,7 @@
 
 package com.dfbnc.sockets;
 
+import com.dfbnc.sockets.secure.SecureSocket;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.ServerSocketChannel;

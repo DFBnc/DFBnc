@@ -19,15 +19,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.dfbnc.servers.irc;
+package com.dfbnc.servers.irc.commands;
 
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.AbstractListEditCommand;
+import com.dfbnc.commands.ListOption;
+import com.dfbnc.servers.irc.IRCServerType;
 
 /**
- * This file represents the Perform-related commands
+ * This file represents the 'ServerList' command
  */
-public class PerformCommand extends AbstractListEditCommand {
+public class ServerListCommand extends AbstractListEditCommand {
     /**
      * Get the name of the property to store the list in.
      *
@@ -35,16 +37,7 @@ public class PerformCommand extends AbstractListEditCommand {
      * @return The name of the property to store the list in.
      */
     @Override
-    public String getPropertyName(final String command) {
-        if (command.equalsIgnoreCase("cperform")) {
-            return "perform.connect";
-        } else if (command.equalsIgnoreCase("dperform")) {
-            return "perform.lastdetach";
-        } else if (command.equalsIgnoreCase("aperform")) {
-            return "perform.firstattach";
-        }
-        return "";
-    };
+    public String getPropertyName(final String command) { return "serverlist"; };
 
     /**
      * Get the name of the domain to store the list in.
@@ -63,15 +56,20 @@ public class PerformCommand extends AbstractListEditCommand {
      * @return The name of the list
      */
     @Override
-    public String getListName(final String command) {
-        if (command.equalsIgnoreCase("cperform")) {
-            return "onConnect Perform";
-        } else if (command.equalsIgnoreCase("dperform")) {
-            return "onLastDetach Perform";
-        } else if (command.equalsIgnoreCase("aperform")) {
-            return "onFirstAttach Perform";
-        }
-        return "";
+    public String getListName(final String command) { return "Server list"; }
+
+    /**
+     * Check an item.
+     * This should return a ListOption for the given input.
+     *
+     * @param command The command passed as param[0]
+     * @param input The input to validate
+     * @return ListOption for this parameter.
+     */
+    @Override
+    public ListOption checkItem(final String command, final String input) {
+        String[] inputBits = IRCServerType.parseServerString(input);
+        return new ListOption(true, inputBits[3], null);
     }
 
     /**
@@ -83,11 +81,17 @@ public class PerformCommand extends AbstractListEditCommand {
     @Override
     public String[] getUsageOutput(final String command) {
         if (command.equalsIgnoreCase("add")) {
-            return new String[]{"You must specify something to add to the perform"};
+            return new String[]{"You must specify a server to add in the format: <server>[:port] [password]",
+                                "Prefixing the port with + signifies an SSL connection"
+                               };
         } else if (command.equalsIgnoreCase("edit")) {
-            return new String[]{"You must specify a position number to edit, and something to use in the perform"};
+            return new String[]{"You must specify a position number to edit, and a server to add in the format: <number> <server>[:[+]port] [password]",
+                                "Prefixing the port with + signifies an SSL connection"
+                               };
         } else if (command.equalsIgnoreCase("ins")) {
-            return new String[]{"You must specify a position to insert this item, and something to use in the perform"};
+            return new String[]{"You must specify a position to insert this item, and a server to add in the format: <number> <server>[:[+]port] [password]",
+                                "Prefixing the port with + signifies an SSL connection"
+                               };
         } else {
             return new String[]{""};
         }
@@ -100,26 +104,7 @@ public class PerformCommand extends AbstractListEditCommand {
      */
     @Override
     public String getAddUsageSyntax() {
-        return "<perform item>";
-    }
-
-    /**
-     * Get the output to give for /dfbnc <command> on its own.
-     * Returning null gives default output.
-     *
-     * @param command Command to get output for
-     * @return The output to give
-     */
-    @Override
-    public String[] getHelpOutput(final String command) {
-        if (command.equalsIgnoreCase("perform")) {
-            return new String[]{"DFBnc provides 3 types of perform.",
-                                "    * On Connect (cperform) - When the BNC Connects to the IRC Server, with or without the user connected",
-                                "    * On First Attach (aperform) - When the first user connects to the bnc whilst connected to a server",
-                                "    * On Last Detach (dperform) - When the last user disconnects from the bnc whilst connected to a server (Also after cperform if no user is connected)"
-                               };
-        }
-        return null;
+        return "<Server>[:[+]Port] [password]";
     }
 
     /**
@@ -139,7 +124,7 @@ public class PerformCommand extends AbstractListEditCommand {
      */
     @Override
     public String[] handles() {
-        return new String[]{"perform", "cperform", "dperform", "aperform"};
+        return new String[]{"serverlist", "*sl"};
     }
 
     /**
@@ -147,7 +132,7 @@ public class PerformCommand extends AbstractListEditCommand {
      *
      * @param manager CommandManager that is in charge of this Command
      */
-    public PerformCommand (final CommandManager manager) { super(manager); }
+    public ServerListCommand (final CommandManager manager) { super(manager); }
 
     /**
      * Get a description of what this command does
@@ -158,14 +143,6 @@ public class PerformCommand extends AbstractListEditCommand {
      */
     @Override
     public String getDescription(final String command) {
-        if (command.equalsIgnoreCase("cperform")) {
-            return "This command lets you manipulate the onConnect Perform";
-        } else if (command.equalsIgnoreCase("dperform")) {
-            return "This command lets you manipulate the onLastDetach Perform";
-        } else if (command.equalsIgnoreCase("aperform")) {
-            return "This command lets you manipulate the onFirstAttach Perform";
-        } else {
-            return "This command gives you information on the types of Perform DFBnc provides";
-        }
+        return "This command lets you manipulate the irc server list";
     }
 }

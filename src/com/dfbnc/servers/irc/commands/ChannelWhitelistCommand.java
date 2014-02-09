@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.dfbnc.servers.irc;
+package com.dfbnc.servers.irc.commands;
 
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.AbstractListEditCommand;

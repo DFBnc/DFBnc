@@ -19,8 +19,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.dfbnc.sockets;
+package com.dfbnc.sockets.secure;
 
+import com.dfbnc.sockets.secure.SSLByteChannel;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -39,6 +40,8 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManagerFactory;
 import com.dfbnc.DFBnc;
+import com.dfbnc.sockets.ConnectedSocket;
+import com.dfbnc.sockets.SocketWrapper;
 import javax.net.ssl.SSLException;
 
 /**

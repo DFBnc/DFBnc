@@ -21,6 +21,8 @@
  */
 package com.dfbnc;
 
+import com.dfbnc.util.BackbufferMessage;
+import com.dfbnc.util.RollingList;
 import com.dfbnc.sockets.UnableToConnectException;
 
 import com.dfbnc.sockets.UserSocket;

@@ -22,6 +22,7 @@
 
 package com.dfbnc;
 
+import com.dfbnc.util.Util;
 import com.dmdirc.util.io.ConfigFile;
 import com.dmdirc.util.io.InvalidConfigFileException;
 import java.io.File;

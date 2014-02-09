@@ -20,46 +20,29 @@
  * SOFTWARE.
  */
 
-package com.dfbnc;
+package com.dfbnc.sockets.plain;
+
+import com.dfbnc.sockets.ConnectedSocket;
+import com.dfbnc.sockets.SocketWrapper;
+import java.nio.channels.SocketChannel;
+import java.io.IOException;
+import java.nio.channels.SelectionKey;
 
 /**
- * This class stores a Backbuffer Message
- *
- * @author shane
+ * This defines a Plain (non-ssl) Socket.
+ * SocketWrapper handles everything for this.
  */
-public class BackbufferMessage {
-    /** The timestamp for this message. */
-    private final long time;
-
-    /** The message. */
-    private final String message;
+public class PlainSocket extends SocketWrapper {
 
     /**
-     * Create a new BackbufferMessage.
+     * Create a new PlainSocket
      *
-     * @param time Timestamp.
-     * @param message Message.
+     * @param channel Channel to Wrap.
+     * @param owner ConnectedSocket that owns this.
+     * @param key The selection key corresponding to the channel's registration
+     * @throws IOException If there is a problem creating the socket
      */
-    public BackbufferMessage(final long time, final String message) {
-        this.time = time;
-        this.message = message;
-    }
-
-    /**
-     * Get the message for this message.
-     *
-     * @return Message for this message
-     */
-    public String getMessage() {
-        return message;
-    }
-
-    /**
-     * Get the time for this message.
-     *
-     * @return Time for this message
-     */
-    public long getTime() {
-        return time;
+    public PlainSocket (final SocketChannel channel, final ConnectedSocket owner, final SelectionKey key) throws IOException {
+        super(channel, owner, key);
     }
 }

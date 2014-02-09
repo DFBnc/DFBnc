@@ -22,12 +22,14 @@
 
 package com.dfbnc.sockets;
 
+import com.dfbnc.sockets.secure.SecureSocket;
+import com.dfbnc.sockets.plain.PlainSocket;
 import java.nio.channels.SocketChannel;
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.util.concurrent.CountDownLatch;
 
-import com.dfbnc.IRCLine;
+import com.dfbnc.util.IRCLine;
 import uk.org.dataforce.libs.logger.Logger;
 
 /**
