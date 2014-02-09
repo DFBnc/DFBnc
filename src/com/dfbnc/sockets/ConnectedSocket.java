@@ -88,7 +88,7 @@ public abstract class ConnectedSocket implements SelectedSocketHandler {
     public final void closeSocket(final String reason) {
         closeReason = reason;
         if (isClosed) { return; }
-        Logger.info("Connected Socket closing ("+socketID+")");
+        Logger.info("Connected Socket closing ("+socketID+") - " + reason);
         isClosed = true;
 
         // Close the actual socket
@@ -198,7 +198,13 @@ public abstract class ConnectedSocket implements SelectedSocketHandler {
     /** {@inheritDoc} */
     @Override
     public void processSelectionKey(final SelectionKey selKey) throws IOException {
-        getSocketWrapper().processSelectionKey(selKey);
+        try {
+            getSocketWrapper().handleSelectionKey(selKey);
+        } catch (final IOException ioe) {
+            if (getSocketWrapper().handleIOException(ioe)) {
+                closeSocket("IOException on socket: " + ioe);
+            }
+        }
     }
 
 }

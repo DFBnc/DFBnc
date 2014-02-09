@@ -42,11 +42,11 @@ import uk.org.dataforce.libs.logger.Logger;
 /**
  * This defines a basic SocketWrapper
  */
-public abstract class SocketWrapper implements SelectedSocketHandler {
+public abstract class SocketWrapper {
     /** Used to hold incoming data. */
     private ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
     /** Used to process incoming data. */
-    private StringBuilder lineBuffer = new StringBuilder();
+    private ByteBuffer lineBuffer = ByteBuffer.allocate(1024);
 
     /** Lines to be sent to the user go into this buffer. */
     protected final OutputBuffer outbuffer = new OutputBuffer();
@@ -70,7 +70,7 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
     protected boolean isClosing = false;
 
     /** The charsets list used when trying to decode messages. */
-    private final ArrayList<Charset> myCharsets = new ArrayList<Charset>();
+    private final ArrayList<Charset> myCharsets = new ArrayList<>();
 
     /**
      * Create a new SocketWrapper
@@ -358,9 +358,13 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
         throw firstException;
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public final void processSelectionKey(final SelectionKey selKey) throws IOException {
+    /**
+     * Handles events from the socket.
+     *
+     * @param selKey SelectionKey from socket selector
+     * @throws IOException If there is a problem processing the key
+     */
+    public final void handleSelectionKey(final SelectionKey selKey) throws IOException {
         final SocketChannel channel = (SocketChannel) selKey.channel();
 
         if (channel != mySocketChannel) {
@@ -373,8 +377,6 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
         }
 
         if (selKey.isValid() && selKey.isReadable()) {
-            // Clear the buffer and read bytes from socket
-            buffer.clear();
             int numBytesRead = 0;
             do {
                 buffer.clear();
@@ -387,18 +389,18 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
                     Logger.info("Socket got closed.");
                     myOwner.closeSocket("EOF from client.");
                     break;
-                } else {
+                } else if (numBytesRead != 0) {
                     buffer.flip();
-                    final CharBuffer charBuffer = getCharBuffer(buffer);
 
-                    char c;
-                    for (int i = 0; i < charBuffer.limit(); ++i) {
-                        c = charBuffer.get();
-                        if (c == '\n') {
-                            myOwner.processLine(lineBuffer.toString());
-                            lineBuffer = new StringBuilder();
-                        } else if (c != '\r') {
-                            lineBuffer.append(c);
+                    byte b;
+                    for (int i = 0; i < buffer.limit(); ++i) {
+                        b = buffer.get();
+                        if (b == '\n') {
+                            lineBuffer.flip();
+                            myOwner.processLine(getCharBuffer(lineBuffer).toString());
+                            lineBuffer = ByteBuffer.allocate(1024);
+                        } else if (b != '\r') {
+                            lineBuffer.put(b);
                         }
                     }
                 }
@@ -423,5 +425,16 @@ public abstract class SocketWrapper implements SelectedSocketHandler {
                 myOwner.closeSocket("IOException on socket: " + ioe);
             }
         }
+    }
+
+    /**
+     * Handle an IOException from the socket.
+     *
+     * @param selKey SelectionKey we were given.
+     * @param ioe Exception to handle.
+     * @return Boolean, true if socket should be closed.
+     */
+    public boolean handleIOException(final IOException ioe) {
+        return true;
     }
 }

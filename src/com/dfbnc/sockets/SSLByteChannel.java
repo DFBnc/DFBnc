@@ -100,7 +100,9 @@ public class SSLByteChannel implements ByteChannel {
         if (socketOpen) {
             try {
                 myEngine.closeOutbound();
-                sslLoop(wrap());
+                try {
+                    sslLoop(wrap());
+                } catch (ClosedChannelException cce) { /* Duh.. ? */ }
                 myChannel.close();
             } finally {
                 socketOpen = false;
@@ -130,10 +132,11 @@ public class SSLByteChannel implements ByteChannel {
         // Try and get the data.
         if (isOpen()) {
             try {
-                sslLoop(unwrap());
-            } catch (SSLException se) {
-                throw new IOException("Problem with SSL: "+se.getMessage(), se);
-            } catch (ClosedChannelException e) {
+                final SSLEngineResult r = sslLoop(unwrap());
+                if (r.getStatus() == SSLEngineResult.Status.BUFFER_UNDERFLOW && r.getHandshakeStatus() == SSLEngineResult.HandshakeStatus.NEED_UNWRAP) {
+                    throw new SSLException("Unrecognized SSL data, plaintext connection?");
+                }
+            } catch (final ClosedChannelException e) {
                 close();
             }
         }
@@ -179,7 +182,7 @@ public class SSLByteChannel implements ByteChannel {
         if (isOpen()) {
             try {
                 while(true) {
-                    SSLEngineResult r = sslLoop(wrap());
+                    final SSLEngineResult r = sslLoop(wrap());
                     if (r.bytesConsumed() == 0 && r.bytesProduced() == 0) {
                         break;
                     }
@@ -201,23 +204,23 @@ public class SSLByteChannel implements ByteChannel {
      * @throws IOException If there was problems manipulating the ByteBuffers
      * @throws SSLException If there was a problem processing the SSL Stream
      */
-    private SSLEngineResult unwrap() throws IOException, SSLException {
+    private WrapResult unwrap() throws IOException, SSLException {
         // Read in as much data as we can
         int count = 0;
+        int total = 0;
         do {
             count = myChannel.read(inNetData);
-            // Don't use 100% cpu when processing...
-            try { Thread.sleep(100); } catch (final InterruptedException ie) { /* Who cares. */ }
+            total += count;
         } while (count > 0);
 
         if (count < 0) { throw new ClosedChannelException(); }
 
         // Unwrap it into the buffer
         inNetData.flip();
-        SSLEngineResult ser = myEngine.unwrap(inNetData, inAppData);
+        final SSLEngineResult ser = myEngine.unwrap(inNetData, inAppData);
         inNetData.compact();
 
-        return ser;
+        return new WrapResult(ser, total);
     }
 
     /**
@@ -227,7 +230,7 @@ public class SSLByteChannel implements ByteChannel {
      * @throws IOException If there was problems manipulating the ByteBuffers
      * @throws SSLException If there was a problem processing the SSL Stream
      */
-    private SSLEngineResult wrap() throws IOException, SSLException {
+    private WrapResult wrap() throws IOException, SSLException {
         // Wrap the data
         outAppData.flip();
         SSLEngineResult ser = myEngine.wrap(outAppData,  outNetData);
@@ -235,35 +238,42 @@ public class SSLByteChannel implements ByteChannel {
 
         // Write it out
         outNetData.flip();
+        int total = 0;
         while (outNetData.hasRemaining()) {
-            myChannel.write(outNetData);
+            total += myChannel.write(outNetData);
         }
         outNetData.compact();
 
-        return ser;
+        return new WrapResult(ser, total);
     }
 
     /**
      * This handles handshaking if needed
      *
-     * @param inputResult SSLEngineResult to work on (This lets us know if we need
-     *                    to handshake again or not.
+     * @param inputResult SSLEngineResult to work on (This lets us know if we
+     *                    need to handshake again or not.)
      * @return Last SSLEngineResult from tasks
      * @throws SSLException If there is a problem with the SSL Tasks
      * @throws IOException If there is a problem with the socket
      */
-    private SSLEngineResult sslLoop(final SSLEngineResult inputResult) throws SSLException, IOException {
+    private SSLEngineResult sslLoop(final WrapResult inputResult) throws SSLException, IOException {
         if (inputResult == null) { return null; }
 
-        SSLEngineResult result = inputResult;
+        WrapResult wrapResult = inputResult;
 
+        // Standard Underflow allowance.
         final int underflowLimit = 5;
         int underflowCount = 0;
 
+        // Task Underflow allowance.
+        final int taskUnderflowLimit = 5000;
+        int taskUnderflowCount = 0;
+
         // Handshake if needed.
-        HandshakeStatus hsStatus = result.getHandshakeStatus();
+        HandshakeStatus hsStatus = wrapResult.ser.getHandshakeStatus();
+        boolean isTask = hsStatus == HandshakeStatus.NEED_TASK;
         while (hsStatus != HandshakeStatus.FINISHED && hsStatus != HandshakeStatus.NOT_HANDSHAKING) {
-            hsStatus = result.getHandshakeStatus();
+            hsStatus = wrapResult.ser.getHandshakeStatus();
             switch (hsStatus) {
                 case NEED_TASK:
                     // Sometimes the sslEngine decides it needs todo a potentially blocking
@@ -273,14 +283,18 @@ public class SSLByteChannel implements ByteChannel {
                     while ((task = myEngine.getDelegatedTask()) != null) {
                         task.run();
                     }
-                    result = wrap();
+                    wrapResult = wrap();
                     break;
                 case NEED_WRAP:
-                    result = wrap();
+                    wrapResult = wrap();
                     break;
                 case NEED_UNWRAP:
-                    result = unwrap();
+                    wrapResult = unwrap();
                     break;
+            }
+
+            if (!isTask && hsStatus == HandshakeStatus.NEED_UNWRAP && wrapResult.bytes == 0) {
+                break;
             }
 
             // Catch "bad" sockets.
@@ -288,18 +302,24 @@ public class SSLByteChannel implements ByteChannel {
             // anything, then break to allow something else to happen,
             // otherwise we loop forever doing nothing and stop any other
             // socket processing happening.
-            if (result.getStatus() == SSLEngineResult.Status.BUFFER_UNDERFLOW && result.bytesConsumed() == 0 && result.bytesProduced() == 0) {
+            // In theory, neither of these underflow limits should ever be hit.
+            if (!isTask && wrapResult.ser.getStatus() == SSLEngineResult.Status.BUFFER_UNDERFLOW && wrapResult.ser.bytesConsumed() == 0 && wrapResult.ser.bytesProduced() == 0) {
                 underflowCount++;
-            } else if (result.getStatus() == SSLEngineResult.Status.CLOSED) {
+            } else if (isTask && wrapResult.ser.getStatus() == SSLEngineResult.Status.BUFFER_UNDERFLOW && wrapResult.ser.bytesConsumed() == 0 && wrapResult.ser.bytesProduced() == 0) {
+                taskUnderflowCount++;
+            } else if (wrapResult.ser.getStatus() == SSLEngineResult.Status.CLOSED) {
                 break;
-            } else { underflowCount = 0; }
-            if (underflowCount > underflowLimit) {
+            } else {
+                underflowCount = 0;
+                taskUnderflowCount = 0;
+            }
+            if (underflowCount > underflowLimit || taskUnderflowCount > taskUnderflowLimit) {
                 break;
             }
         }
 
         // Check if the socket was closed.
-        switch(result.getStatus()) {
+        switch(wrapResult.ser.getStatus()) {
             case CLOSED:
                 try {
                     myChannel.close();
@@ -309,6 +329,16 @@ public class SSLByteChannel implements ByteChannel {
                 break;
         }
 
-        return result;
+        return wrapResult.ser;
+    }
+
+    private class WrapResult {
+        public final SSLEngineResult ser;
+        public final int bytes;
+
+        public WrapResult(final SSLEngineResult ser, final int bytes) {
+            this.ser = ser;
+            this.bytes = bytes;
+        }
     }
 }

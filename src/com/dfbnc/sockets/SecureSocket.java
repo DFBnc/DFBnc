@@ -39,6 +39,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManagerFactory;
 import com.dfbnc.DFBnc;
+import javax.net.ssl.SSLException;
 
 /**
  * This defines a Secure (ssl) Socket.
@@ -67,7 +68,7 @@ public class SecureSocket extends SocketWrapper {
             sslEngine.beginHandshake();
 
             myByteChannel = new SSLByteChannel(channel, sslEngine);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new IOException("Error setting up SSL Socket: "+e.getMessage(), e);
         }
     }
@@ -116,5 +117,19 @@ public class SecureSocket extends SocketWrapper {
         }
 
         return sslContext;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean handleIOException(final IOException ioe) {
+        if (ioe instanceof SSLException) {
+            if (ioe.getMessage().contains("plaintext connection?")) {
+                // Downgrade the socket so that the user sees our error message.
+                myByteChannel = null;
+            }
+            this.sendLine("Closing socket due to SSL Error: " + ioe.getMessage());
+        }
+
+        return true;
     }
 }

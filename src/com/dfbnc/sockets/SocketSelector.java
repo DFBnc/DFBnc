@@ -138,13 +138,13 @@ public final class SocketSelector implements Runnable {
             while (it.hasNext()) {
                 final SelectionKey selKey = it.next();
                 it.remove();
-
                 try {
                     ((SelectedSocketHandler) selKey.attachment()).processSelectionKey(selKey);
-                } catch (IOException e) {
+                } catch (final IOException ioe) {
+                    Logger.error("IOException while processing selected keys: " + ioe);
                     selKey.cancel();
                     break;
-                } catch (Exception ex) {
+                } catch (final Exception ex) {
                     Logger.error("Unexpected exception while processing selected keys");
 
                     final StringWriter writer = new StringWriter();

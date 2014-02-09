@@ -50,7 +50,7 @@ import com.dfbnc.Util;
  */
 public class UserSocket extends ConnectedSocket {
     /** Known sockets are referenced in this HashMap. */
-    private final static HashMap<String, UserSocket> knownSockets = new HashMap<String, UserSocket>();
+    private final static HashMap<String, UserSocket> knownSockets = new HashMap<>();
 
     /** This sockets ID in the HashMap. */
     private final String myID;
@@ -372,7 +372,7 @@ public class UserSocket extends ConnectedSocket {
                 if (socket.inactiveCounter == threshold) {
                     socket.sendLine("PING :%d", System.currentTimeMillis());
                 } else if (socket.inactiveCounter > threshold * 2) {
-                    socket.close("Socket inactivity counter threshold exceeded.");
+                    socket.close("Socket inactivity counter threshold exceeded. (" + socket.inactiveCounter + " > " + threshold * 2 + ")");
                 }
             }
         }
@@ -606,132 +606,145 @@ public class UserSocket extends ConnectedSocket {
 
         newLine[0] = newLine[0].toUpperCase();
 
-        // Handle QUIT requests here, don't bother processing them
-        if (newLine[0].equals("QUIT")) {
-            close("Client Quit: " + (newLine.length > 1 ? newLine[newLine.length - 1] : "No reason given."));
-            return;
-        }
-
-        // Is this a CTCP Reply to the bot? (used for versioning)
-        if (newLine[0].equalsIgnoreCase("NOTICE") && newLine.length > 2 && newLine[1].equalsIgnoreCase(Util.getBotName()) && newLine[2].charAt(0) == (char)1 && newLine[2].charAt(newLine[2].length() - 1) == (char)1) {
-            final String[] version = newLine[2].split(" ", 2);
-            if (version.length > 1) {
-                clientVersion = version[1].substring(0, version[1].length() - 1);
+        // Handle a few requests here where being authenticated or not doesn't
+        // matter
+        switch (newLine[0]) {
+            case "QUIT":
+                close("Client Quit: " + (newLine.length > 1 ? newLine[newLine.length - 1] : "No reason given."));
                 return;
-            }
-        }
-
-        // Capability negotiation: http://www.leeh.co.uk/draft-mitchell-irc-capabilities-02.html
-        // This should only happen pre-registration, but we will handle it here
-        // incase the client sends some lines during negotiation that need to be
-        // handled by the authenticated handler rather than the non-authenticated
-        // handler.
-        if (newLine[0].equals("CAP")) {
-            if (!checkParamCount(newLine, 2)) { return; }
-
-            newLine[1] = newLine[1].toUpperCase();
-
-            if (!isNegotiating && myAccount == null) {
-                isNegotiating = true;
-                negotiationLines.clear();
-            }
-
-            // LS shows all capabilities
-            // LIST shows all enabled capabilities
-            // CLEAR disables and shows all capabilities
-            if (newLine[1].equals("LS") || newLine[1].equals("LIST") || newLine[1].equals("CLEAR")) {
-                final boolean onlyEnabled = newLine[1].equals("LIST") || newLine[1].equals("CLEAR");
-                final boolean clearing = newLine[1].equals("CLEAR");
-
-                // Respond with our capabilities, or the enabled capabilities
-                // as requested.
-                final String prefix = String.format(":%s CAP %s %s ", getServerName(), (nickname == null) ? '*' : nickname, newLine[1]);
-
-                final StringBuilder caps = new StringBuilder();
-                for (final String cap : capabilities.keySet()) {
-                    if (cap.contains(" ")) { continue; } // Spaces are invalid in capability names, used for internal capabilities.
-                    if (onlyEnabled && getCapabilityState(cap) != CapabilityState.ENABLED) {
-                        continue;
-                    }
-                    if (clearing) { setCapabilityState(cap, CapabilityState.DISABLED); }
-
-                    // 500 is a safe limit for the line length, allowing for
-                    // extra characters.
-                    if (prefix.length() + caps.length() > 500) {
-                        sendLine(prefix + "* :" + caps.toString().trim());
-                        caps.setLength(0);
-                    }
-
-                    caps.append(" ");
-                    if (clearing) { caps.append(CapabilityState.DISABLED.getModifier()); }
-                    caps.append(cap);
+            case "PING":
+                if (newLine.length > 1) {
+                    sendLine(":%s PONG %1$s :%s", getServerName(), newLine[1]);
+                } else {
+                    sendLine(":%s PONG %1$s :%s", getServerName(), System.currentTimeMillis());
                 }
-
-                sendLine(prefix + ":" + caps.toString().trim());
-            } else if (newLine[1].equals("REQ")) {
-                // Client requests capablities
-                final Map<String, CapabilityState> goodCaps = new HashMap<String, CapabilityState>();
-                final String[] caps = newLine[newLine.length - 1].toLowerCase().split(" ");
-                for (String capability : caps) {
-                    if (capability.length() == 0) { continue; }
-                    final String cap;
-                    // Check for modifier
-                    char modifier = capability.charAt(0);
-                    // Check modifier is valid
-                    if (CapabilityState.fromModifier(modifier) != CapabilityState.INVALID) {
-                        if (capability.length() == 1) { continue; }
-                        cap = capability.substring(1);
-                    } else {
-                        modifier = '+';
-                        cap = capability;
-                    }
-
-                    // We have to accept the capabilities wholesale, or not at
-                    // all (stupid), so check to see if we can accept this one
-                    // and store it for a second round of processing...
-                    if (capabilities.containsKey(cap)) {
-                        goodCaps.put(cap, CapabilityState.fromModifier(modifier));
-                    } else {
-                        // Reject the lot, stupid standard.
-                        sendLine(":%s CAP %s NAK :%s", getServerName(), (nickname == null) ? '*' : nickname, newLine[newLine.length - 1]);
-
-                        sendLine(":%s CAP_DEBUG %s NAK :%s (%s)", getServerName(), (nickname == null) ? '*' : nickname, cap, modifier);
+                return;
+            case "PONG":
+                return;
+            case "NOTICE":
+                // Is this a CTCP Reply to the bot? (used for versioning)
+                if (newLine.length > 2 && newLine[1].equalsIgnoreCase(Util.getBotName()) && newLine[2].charAt(0) == (char)1 && newLine[2].charAt(newLine[2].length() - 1) == (char)1) {
+                    final String[] version = newLine[2].split(" ", 2);
+                    if (version.length > 1) {
+                        clientVersion = version[1].substring(0, version[1].length() - 1);
                         return;
                     }
                 }
+                break;
+            case "CAP":
+                if (!checkParamCount(newLine, 2)) { return; }
 
-                // Ok, if we are here, check what CAPs were requested and do as
-                // requested.
-                for (Entry<String, CapabilityState> e : goodCaps.entrySet()) {
-                    setCapabilityState(e.getKey(), e.getValue());
+                newLine[1] = newLine[1].toUpperCase();
 
-                    if (e.getKey().equals("dfbnc.com/tsirc")) {
-                        // Send the TSIRC timestamp.
-                        sendLine(":%s TSIRC %s %s :%s", getServerName(), "1", (System.currentTimeMillis()), "Timestamped IRC Enabled");
-                    }
-                }
-
-                // Acknowledge the caps.
-                sendLine(":%s CAP %s ACK :%s", getServerName(), (nickname == null) ? '*' : nickname, newLine[newLine.length - 1]);
-            } else if (newLine[1].equals("ACK")) {
-                // Client acknowledges capabilities
-                // None of our capabilities require acking currently, so this
-                // is a noop.
-            } else if (newLine[1].equals("END")) {
-                // Client is done with the negotiation.
-                if (isNegotiating) {
-                    isNegotiating = false;
-                    for (final String negLine : negotiationLines) {
-                        processLine(negLine);
-                    }
+                if (!isNegotiating && myAccount == null) {
+                    isNegotiating = true;
                     negotiationLines.clear();
                 }
-            } else {
-                sendIRCLine(Consts.ERR_BADCAP, newLine[1], "Invalid CAP subcommand");
-            }
 
-            return;
-        } else if (isNegotiating) {
+                // LS shows all capabilities
+                // LIST shows all enabled capabilities
+                // CLEAR disables and shows all capabilities
+                switch (newLine[1]) {
+                    case "LS":
+                    case "LIST":
+                    case "CLEAR":
+                        final boolean onlyEnabled = newLine[1].equals("LIST") || newLine[1].equals("CLEAR");
+                        final boolean clearing = newLine[1].equals("CLEAR");
+
+                        // Respond with our capabilities, or the enabled capabilities
+                        // as requested.
+                        final String prefix = String.format(":%s CAP %s %s ", getServerName(), (nickname == null) ? '*' : nickname, newLine[1]);
+
+                        final StringBuilder caps = new StringBuilder();
+                        for (final String cap : capabilities.keySet()) {
+                            if (cap.contains(" ")) { continue; } // Spaces are invalid in capability names, used for internal capabilities.
+                            if (onlyEnabled && getCapabilityState(cap) != CapabilityState.ENABLED) {
+                                continue;
+                            }
+                            if (clearing) { setCapabilityState(cap, CapabilityState.DISABLED); }
+
+                            // 500 is a safe limit for the line length, allowing for
+                            // extra characters.
+                            if (prefix.length() + caps.length() > 500) {
+                                sendLine(prefix + "* :" + caps.toString().trim());
+                                caps.setLength(0);
+                            }
+
+                            caps.append(" ");
+                            if (clearing) { caps.append(CapabilityState.DISABLED.getModifier()); }
+                            caps.append(cap);
+                        }
+
+                        sendLine(prefix + ":" + caps.toString().trim());
+                        return;
+                    case "REQ":
+                        // Client requests capablities
+                        final Map<String, CapabilityState> goodCaps = new HashMap<>();
+                        final String[] reqCaps = newLine[newLine.length - 1].toLowerCase().split(" ");
+                        for (String capability : reqCaps) {
+                            if (capability.length() == 0) { continue; }
+                            final String cap;
+                            // Check for modifier
+                            char modifier = capability.charAt(0);
+                            // Check modifier is valid
+                            if (CapabilityState.fromModifier(modifier) != CapabilityState.INVALID) {
+                                if (capability.length() == 1) { continue; }
+                                cap = capability.substring(1);
+                            } else {
+                                modifier = '+';
+                                cap = capability;
+                            }
+
+                            // We have to accept the capabilities wholesale, or not at
+                            // all (stupid), so check to see if we can accept this one
+                            // and store it for a second round of processing...
+                            if (capabilities.containsKey(cap)) {
+                                goodCaps.put(cap, CapabilityState.fromModifier(modifier));
+                            } else {
+                                // Reject the lot, stupid standard.
+                                sendLine(":%s CAP %s NAK :%s", getServerName(), (nickname == null) ? '*' : nickname, newLine[newLine.length - 1]);
+
+                                sendLine(":%s CAP_DEBUG %s NAK :%s (%s)", getServerName(), (nickname == null) ? '*' : nickname, cap, modifier);
+                                return;
+                            }
+                        }
+
+                        // Ok, if we are here, check what CAPs were requested and do as
+                        // requested.
+                        for (Entry<String, CapabilityState> e : goodCaps.entrySet()) {
+                            setCapabilityState(e.getKey(), e.getValue());
+
+                            if (e.getKey().equals("dfbnc.com/tsirc")) {
+                                // Send the TSIRC timestamp.
+                                sendLine(":%s TSIRC %s %s :%s", getServerName(), "1", (System.currentTimeMillis()), "Timestamped IRC Enabled");
+                            }
+                        }
+
+                        // Acknowledge the caps.
+                        sendLine(":%s CAP %s ACK :%s", getServerName(), (nickname == null) ? '*' : nickname, newLine[newLine.length - 1]);
+                        return;
+                    case "ACK":
+                        // Client acknowledges capabilities
+                        // None of our capabilities require acking currently,
+                        // so this is a noop.
+                        return;
+                    case "END":
+                        // Client is done with the negotiation.
+                        if (isNegotiating) {
+                            isNegotiating = false;
+                            for (final String negLine : negotiationLines) {
+                                processLine(negLine);
+                            }
+                            negotiationLines.clear();
+                        }
+                        return;
+                    default:
+                        sendIRCLine(Consts.ERR_BADCAP, newLine[1], "Invalid CAP subcommand");
+                        return;
+                }
+        }
+
+        if (isNegotiating) {
             // This will only be true if we are pre-authentication, and is used
             // to suspend authentication.
             // If we are in the middle of negotiating capabilities, and this
@@ -759,41 +772,46 @@ public class UserSocket extends ConnectedSocket {
             return;
         }
 
-        if (line[0].equals("USER")) {
-            // Username may be given in PASS so check that it hasn't before assigning
-            if (username == null) { username = line[1]; }
-            realname = line[line.length-1];
-            if (nickname != null && password == null) {
-                sendBotMessage("Please enter your password.");
-                sendBotMessage("This can be done using either: ");
-                sendBotMessage("    /QUOTE PASS [<username>:]<password>");
-                sendBotMessage("    /RAW PASS [<username>:]<password>");
-            }
-        } else if (line[0].equals("NICK")) {
-            nickname = line[1];
-            if (realname != null && password == null) {
-                sendBotMessage("Please enter your password.");
-                sendBotMessage("This can be done using either: ");
-                sendBotMessage("    /QUOTE PASS [<username>:]<password");
-                sendBotMessage("    /RAW PASS [<username>:]<password>");
-            }
-            sendBotLine("PRIVMSG", (char)1 + "VERSION" + (char)1);
-        } else if (line[0].equals("PASS")) {
-            final String[] bits = line[line.length-1].split(":",2);
-            if (bits.length == 2) {
-                username = bits[0];
-                password = bits[1];
-            } else {
-                password = bits[0];
-            }
-        } else if (line[0].equals("TIMESTAMPEDIRC") || line[0].equals("TSIRC")) {
-            setCapabilityState("dfbnc.com/tsirc", CapabilityState.ENABLED);
-        } else if (line[0].equals("PONG")) {
-            return;
-        } else {
-            sendIRCLine(Consts.ERR_NOTREGISTERED, line[0], "You must login first.");
+        switch (line[0]) {
+            case "USER":
+                // Username may be given in PASS so check that it hasn't before assigning
+                if (username == null) { username = line[1]; }
+                realname = line[line.length-1];
+                if (nickname != null && password == null) {
+                    sendBotMessage("Please enter your password.");
+                    sendBotMessage("This can be done using either: ");
+                    sendBotMessage("    /QUOTE PASS [<username>:]<password>");
+                    sendBotMessage("    /RAW PASS [<username>:]<password>");
+                }
+                break;
+            case "NICK":
+                nickname = line[1];
+                if (realname != null && password == null) {
+                    sendBotMessage("Please enter your password.");
+                    sendBotMessage("This can be done using either: ");
+                    sendBotMessage("    /QUOTE PASS [<username>:]<password");
+                    sendBotMessage("    /RAW PASS [<username>:]<password>");
+                }
+                sendBotLine("PRIVMSG", (char)1 + "VERSION" + (char)1);
+                break;
+            case "PASS":
+                final String[] bits = line[line.length-1].split(":",2);
+                if (bits.length == 2) {
+                    username = bits[0];
+                    password = bits[1];
+                } else {
+                    password = bits[0];
+                }
+                break;
+            case "TIMESTAMPEDIRC":
+            case "TSIRC":
+                setCapabilityState("dfbnc.com/tsirc", CapabilityState.ENABLED);
+                break;
+            default:
+                sendIRCLine(Consts.ERR_NOTREGISTERED, line[0], "You must login first.");
         }
 
+        // After every message, check if we have everything we need...
         if (realname != null && password != null && nickname != null) {
             final String[] bits = username.split("\\+");
             username = bits[0];
@@ -888,56 +906,54 @@ public class UserSocket extends ConnectedSocket {
         // The bnc accepts commands as either:
         // /msg -BNC This is a command
         // or /DFBNC This is a command (not there is no : used to separate arguments anywhere)
-        if ((line[0].equalsIgnoreCase("PRIVMSG") || line[0].equalsIgnoreCase("NOTICE")) && line.length > 2) {
-            if (line[1].equalsIgnoreCase(Util.getBotName())) {
-                handleBotCommand(line[2].split(" "));
-                return;
-            } else {
-                final String myHost = (this.getAccount().getConnectionHandler() != null) ? this.getAccount().getConnectionHandler().getMyHost() : this.getNickname()+"!user@host" ;
-                if (myHost != null) {
-                    sendAllChannel(line[1], String.format(":%s %s", myHost, normalLine), true);
+        switch (line[0]) {
+            case "PRIVMSG":
+            case "NOTICE":
+                if (line.length > 2) {
+                    if (line[1].equalsIgnoreCase(Util.getBotName())) {
+                        handleBotCommand(line[2].split(" "));
+                        return;
+                    } else {
+                        final String myHost = (this.getAccount().getConnectionHandler() != null) ? this.getAccount().getConnectionHandler().getMyHost() : this.getNickname()+"!user@host" ;
+                        if (myHost != null) {
+                            sendAllChannel(line[1], String.format(":%s %s", myHost, normalLine), true);
+                        }
+                    }
                 }
-            }
-        } else if (line[0].equalsIgnoreCase("DFBNC")) {
-            String[] bits;
-            if (line.length > 1) {
-                String[] lineBits = normalLine.split(" ");
-                bits = new String[lineBits.length-1];
-                System.arraycopy(lineBits, 1, bits, 0, lineBits.length-1);
-            } else {
-                bits = new String[0];
-            }
-            handleBotCommand(bits);
-            return;
-        } else if (line[0].equalsIgnoreCase("PING")) {
-            if (line.length > 1) {
-                sendLine(":%s PONG %1$s :%s", getServerName(), line[1]);
-            } else {
-                sendLine(":%s PONG %1$s :%s", getServerName(), System.currentTimeMillis());
-            }
-            return;
-        } else if (line[0].equalsIgnoreCase("PONG")) {
-            return;
-        } else if (line[0].equalsIgnoreCase("WHOIS")) {
-            if (line[1].equalsIgnoreCase(Util.getBotName())) {
-                sendIRCLine(Consts.RPL_WHOISUSER, nickname+" "+Util.getBotName()+" bot "+getServerName()+" *", "DFBnc Pseudo Client");
-                sendIRCLine(Consts.RPL_WHOISSERVER, nickname+" "+Util.getBotName()+" DFBNC.Server", "DFBnc Pseudo Server");
-                sendIRCLine(Consts.RPL_WHOISIDLE, nickname+" "+Util.getBotName()+" 0 "+(DFBnc.getStartTime()/1000), "seconds idle, signon time");
-                sendIRCLine(Consts.RPL_ENDOFWHOIS, nickname+" "+Util.getBotName(), "End of /WHOIS list");
+                break;
+            case "DFBNC":
+                String[] bits;
+                if (line.length > 1) {
+                    String[] lineBits = normalLine.split(" ");
+                    bits = new String[lineBits.length-1];
+                    System.arraycopy(lineBits, 1, bits, 0, lineBits.length-1);
+                } else {
+                    bits = new String[0];
+                }
+                handleBotCommand(bits);
                 return;
-            }
-        } else if (line[0].equals("TIMESTAMPEDIRC") || line[0].equals("TSIRC")) {
-            if (line.length < 2 && line[1].equalsIgnoreCase("OFF")) {
-                setCapabilityState("dfbnc.com/tsirc", CapabilityState.DISABLED);
-                sendLine(":%s TSIRC %s %s :%s", getServerName(), "0", (System.currentTimeMillis()), "Timestamped IRC Disabled");
-            } else if (line.length < 2 || line[1].equalsIgnoreCase("ON")) {
-                setCapabilityState("dfbnc.com/tsirc", CapabilityState.ENABLED);
-                sendLine(":%s TSIRC %s %s :%s", getServerName(), "1", (System.currentTimeMillis()), "Timestamped IRC Enabled");
-            }
-            return;
+            case "WHOIS":
+                if (line[1].equalsIgnoreCase(Util.getBotName())) {
+                    sendIRCLine(Consts.RPL_WHOISUSER, nickname+" "+Util.getBotName()+" bot "+getServerName()+" *", "DFBnc Pseudo Client");
+                    sendIRCLine(Consts.RPL_WHOISSERVER, nickname+" "+Util.getBotName()+" DFBNC.Server", "DFBnc Pseudo Server");
+                    sendIRCLine(Consts.RPL_WHOISIDLE, nickname+" "+Util.getBotName()+" 0 "+(DFBnc.getStartTime()/1000), "seconds idle, signon time");
+                    sendIRCLine(Consts.RPL_ENDOFWHOIS, nickname+" "+Util.getBotName(), "End of /WHOIS list");
+                    return;
+                }
+                break;
+            case "TIMESTAMPEDIRC":
+            case "TSIRC":
+                if (line.length < 2 && line[1].equalsIgnoreCase("OFF")) {
+                    setCapabilityState("dfbnc.com/tsirc", CapabilityState.DISABLED);
+                    sendLine(":%s TSIRC %s %s :%s", getServerName(), "0", (System.currentTimeMillis()), "Timestamped IRC Disabled");
+                } else if (line.length < 2 || line[1].equalsIgnoreCase("ON")) {
+                    setCapabilityState("dfbnc.com/tsirc", CapabilityState.ENABLED);
+                    sendLine(":%s TSIRC %s %s :%s", getServerName(), "1", (System.currentTimeMillis()), "Timestamped IRC Enabled");
+                }
+                return;
         }
 
-        // We don't handle this ourselves, send it to the ConnectionHandler
+        // We didn't handle this ourselves, send it to the ConnectionHandler
         ConnectionHandler myConnectionHandler = myAccount.getConnectionHandler();
         if (myConnectionHandler != null) {
             myConnectionHandler.dataRecieved(this, normalLine, line);
@@ -959,7 +975,7 @@ public class UserSocket extends ConnectedSocket {
             }
         } catch (CommandNotFoundException c) {
             if (DFBnc.getBNC().getConfig().getOptionBool("general", "allowshortcommands") && bits.length > 0) {
-                final SortedMap<String, Command> cmds = new TreeMap<String, Command>(myAccount.getCommandManager().getAllCommands(bits[0], myAccount.isAdmin()));
+                final SortedMap<String, Command> cmds = new TreeMap<>(myAccount.getCommandManager().getAllCommands(bits[0], myAccount.isAdmin()));
                 if (cmds.size() > 0) {
                     if (cmds.size() == 1) {
                         final String req = (bits.length > 0 ? bits[0] : "");
