@@ -27,6 +27,7 @@ import com.dfbnc.Account;
 import com.dfbnc.AccountManager;
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
+import com.dfbnc.commands.CommandOutput;
 import com.dfbnc.sockets.UserSocket;
 
 /**
@@ -39,9 +40,10 @@ public class PasswordCommand extends Command {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
+     * @param output CommandOutput where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
         final Account account;
         final String password;
         final String username;
@@ -59,22 +61,22 @@ public class PasswordCommand extends Command {
                 password = params[2];
                 account = AccountManager.get(username);
             } else {
-                user.sendBotMessage("Error: Only admins can set the password for other users.");
+                output.sendBotMessage("Error: Only admins can set the password for other users.");
                 return;
             }
         } else {
             if (user.getAccount().isAdmin()) {
-                user.sendBotMessage("%s [user[+subclient]] newpasswd", params[0]);
+                output.sendBotMessage("%s [user[+subclient]] newpasswd", params[0]);
             } else {
-                user.sendBotMessage("%s [%s[+subclient]] newpasswd", params[0], user.getAccount().getName());
+                output.sendBotMessage("%s [%s[+subclient]] newpasswd", params[0], user.getAccount().getName());
             }
             return;
         }
         if (account == null) {
-            user.sendBotMessage("Account %s doesnt exist", username);
+            output.sendBotMessage("Account %s doesnt exist", username);
         } else {
             account.setPassword(subclient, password);
-            user.sendBotMessage("Password successfully changed to: %s", password);
+            output.sendBotMessage("Password successfully changed to: %s", password);
         }
     }
 

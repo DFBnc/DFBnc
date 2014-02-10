@@ -26,6 +26,7 @@ import com.dfbnc.Account;
 import com.dfbnc.AccountManager;
 import com.dfbnc.commands.AdminCommand;
 import com.dfbnc.commands.CommandManager;
+import com.dfbnc.commands.CommandOutput;
 import com.dfbnc.sockets.UserSocket;
 
 /**
@@ -44,9 +45,9 @@ public class ListUsersCommand extends AdminCommand {
 
     /** {@inheritDoc} */
     @Override
-    public void handle(final UserSocket user, final String[] params) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
         final Collection<Account> accounts = AccountManager.getAccounts();
-        user.sendBotMessage("This BNC has " + accounts.size() + " users: ");
+        output.sendBotMessage("This BNC has " + accounts.size() + " users: ");
         for (Account account : accounts) {
             final StringBuilder sb = new StringBuilder("    ");
 
@@ -68,7 +69,7 @@ public class ListUsersCommand extends AdminCommand {
                 sb.append("  (Currently connected)");
             }
 
-            user.sendBotMessage(sb.toString());
+            output.sendBotMessage(sb.toString());
         }
     }
 

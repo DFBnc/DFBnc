@@ -26,6 +26,7 @@ import java.util.Map.Entry;
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.CommandNotFoundException;
+import com.dfbnc.commands.CommandOutput;
 import com.dfbnc.sockets.UserSocket;
 
 
@@ -38,9 +39,10 @@ public class HelpCommand extends Command {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
+     * @param output CommandOutput where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
 
         final String command = (params.length > 1) ? params[1] : "";
 
@@ -53,32 +55,32 @@ public class HelpCommand extends Command {
                     final String[] help = cmd.getHelp(params);
                     if (help != null) {
                         for (String line : help) {
-                            user.sendBotMessage(line);
+                            output.sendBotMessage(line);
                         }
                     } else {
-                        user.sendBotMessage("The command '%s' has no detailed help available.", e.getKey());
+                        output.sendBotMessage("The command '%s' has no detailed help available.", e.getKey());
                     }
                 } catch (CommandNotFoundException e) {
                     final Map<String, Command> allCommands = user.getAccount().getCommandManager().getAllCommands(command, user.getAccount().isAdmin());
                     if (allCommands.size() > 0) {
-                        user.sendBotMessage("Multiple possible matches were found for '"+command+"': ");
+                        output.sendBotMessage("Multiple possible matches were found for '"+command+"': ");
                         for (final String p : allCommands.keySet()) {
-                            user.sendBotMessage("    " + (p.charAt(0) == '*' ? p.substring(1) : p));
+                            output.sendBotMessage("    " + (p.charAt(0) == '*' ? p.substring(1) : p));
                         }
                         return;
                     } else {
-                        user.sendBotMessage("The command '%s' does not exist.", command);
+                        output.sendBotMessage("The command '%s' does not exist.", command);
                         return;
                     }
                 }
             }
         } else {
             //try to execute showcommands, else tell user to do so
-            user.sendBotMessage("You need to specify a command to get help for.");
+            output.sendBotMessage("You need to specify a command to get help for.");
             try {
-                user.getAccount().getCommandManager().getCommand("showcommands").handle(user, new String[]{"showcommands"});
+                user.getAccount().getCommandManager().getCommand("showcommands").handle(user, new String[]{"showcommands"}, output);
             } catch (CommandNotFoundException ex) {
-                user.sendBotMessage("You need to specify a command to get help for, try 'showcommands' to see all the commands");
+                output.sendBotMessage("You need to specify a command to get help for, try 'showcommands' to see all the commands");
             }
         }
     }

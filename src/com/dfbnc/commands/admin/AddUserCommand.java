@@ -25,6 +25,7 @@ import com.dfbnc.Account;
 import com.dfbnc.AccountManager;
 import com.dfbnc.commands.AdminCommand;
 import com.dfbnc.commands.CommandManager;
+import com.dfbnc.commands.CommandOutput;
 import com.dfbnc.sockets.UserSocket;
 
 /**
@@ -36,23 +37,24 @@ public class AddUserCommand extends AdminCommand {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
+     * @param output CommandOutput where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
         if (params.length == 1) {
-            user.sendBotMessage("You need to specify a username to add.");
+            output.sendBotMessage("You need to specify a username to add.");
         } else {
             final String account = params[1];
             if (AccountManager.exists(account)) {
-                user.sendBotMessage("An account with the name '%s' already exists.", account);
+                output.sendBotMessage("An account with the name '%s' already exists.", account);
             } else {
-                user.sendBotMessage("Creating account '%s'...", account);
+                output.sendBotMessage("Creating account '%s'...", account);
                 final String password = AccountManager.makePassword();
                 Account acc = AccountManager.createAccount(account, password);
                 if (acc != null) {
-                    user.sendBotMessage("Account created. Password has been set to '%s'", password);
+                    output.sendBotMessage("Account created. Password has been set to '%s'", password);
                 } else {
-                    user.sendBotMessage("There was an error creating the account.");
+                    output.sendBotMessage("There was an error creating the account.");
                 }
             }
         }

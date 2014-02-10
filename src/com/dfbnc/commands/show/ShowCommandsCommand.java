@@ -23,6 +23,7 @@ package com.dfbnc.commands.show;
 
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
+import com.dfbnc.commands.CommandOutput;
 import com.dfbnc.sockets.UserSocket;
 
 import java.util.TreeMap;
@@ -40,48 +41,55 @@ public class ShowCommandsCommand extends Command {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
+     * @param output CommandOutput where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
         // This stores the output for any admin commands we run across, these are
         // displayed at the end after the normal-user commands.
-        ArrayList<String> adminCommands = new ArrayList<String>();
+        ArrayList<String> adminCommands = new ArrayList<>();
 
-        final String commandsType = getFullParam(user, params, 2, Arrays.asList("all", "admin", "user", ""));
+        final String commandsType = getFullParam(output, params, 2, Arrays.asList("all", "admin", "user", ""));
         if (commandsType == null) { return; }
 
         if (commandsType.equals("") || commandsType.equalsIgnoreCase("all") || commandsType.equalsIgnoreCase("user")) {
-            user.sendBotMessage("The following commands are available to you:");
-            user.sendBotMessage("");
-            CommandManager cmdmgr = user.getAccount().getCommandManager();
-            SortedMap<String, Command> commands = new TreeMap<String, Command>(cmdmgr.getAllCommands(user.getAccount().isAdmin()));
-            for (Entry<String, Command> entry : commands.entrySet()) {
-                if (entry.getKey().charAt(0) == '*') { continue; }
-                final Command command = entry.getValue();
-                if (command.isAdminOnly()) {
-                    adminCommands.add(String.format("%-20s - %s", entry.getKey(), command.getDescription(entry.getKey())));
-                } else {
-                    user.sendBotMessage(String.format("%-20s - %s", entry.getKey(), command.getDescription(entry.getKey())));
-                }
+            output.sendBotMessage("The following commands are available to you:");
+            output.sendBotMessage("");
+        }
+
+        CommandManager cmdmgr = user.getAccount().getCommandManager();
+        SortedMap<String, Command> commands = new TreeMap<>(cmdmgr.getAllCommands(user.getAccount().isAdmin()));
+        for (Entry<String, Command> entry : commands.entrySet()) {
+            if (entry.getKey().charAt(0) == '*') { continue; }
+            final Command command = entry.getValue();
+            if (command.isAdminOnly()) {
+                adminCommands.add(String.format("%-20s - %s", entry.getKey(), command.getDescription(entry.getKey())));
+            } else if (commandsType.equals("") || commandsType.equalsIgnoreCase("all") || commandsType.equalsIgnoreCase("user")) {
+                output.sendBotMessage(String.format("%-20s - %s", entry.getKey(), command.getDescription(entry.getKey())));
             }
         }
+
 
         if (commandsType.equals("") || commandsType.equalsIgnoreCase("all") || commandsType.equalsIgnoreCase("admin")) {
             if (user.getAccount().isAdmin()) {
                 if (adminCommands.size() > 0) {
-                    user.sendBotMessage("");
+                    if (commandsType.equals("") || commandsType.equalsIgnoreCase("all") || commandsType.equalsIgnoreCase("user")) {
+                        output.sendBotMessage("");
+                    }
                     if (commandsType.equalsIgnoreCase("admin")) {
-                        user.sendBotMessage("The following admin-only commands are available to you:");
+                        output.sendBotMessage("The following admin-only commands are available to you:");
                     } else {
-                        user.sendBotMessage("The following admin-only commands are also available to you:");
+                        output.sendBotMessage("The following admin-only commands are also available to you:");
                     }
-                    user.sendBotMessage("");
-                    for (String output : adminCommands) {
-                        user.sendBotMessage(output);
+                    output.sendBotMessage("");
+                    for (final String out : adminCommands) {
+                        output.sendBotMessage(out);
                     }
+                } else {
+                    output.sendBotMessage("There are no admin-only commands available to you.");
                 }
             } else if (commandsType.equalsIgnoreCase("admin")) {
-                user.sendBotMessage("Admin commands are not available to you.");
+                output.sendBotMessage("Admin commands are not available to you.");
             }
         }
     }

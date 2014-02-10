@@ -404,9 +404,10 @@ public final class CommandManager {
      *
      * @param user UserSocket that issued the command
      * @param params Params for command (param0 is the command name)
+     * @param output CommandOutput where output from this command should go.
      * @throws CommandNotFoundException exception if no commands exists to handle the line
      */
-    public void handle(final UserSocket user, final String[] params) throws CommandNotFoundException {
+    public void handle(final UserSocket user, final String[] params, final CommandOutput output) throws CommandNotFoundException {
         if (params.length == 0 || params[0] == null || params[0].isEmpty()) {
             throw new CommandNotFoundException("No valid command given.");
         }
@@ -420,7 +421,7 @@ public final class CommandManager {
             if (commandHandler.isAdminOnly() && !user.getAccount().isAdmin()) {
                 throw new CommandNotFoundException("No command is known by "+params[0]);
             } else {
-                commandHandler.handle(user, handleParams);
+                commandHandler.handle(user, handleParams, output);
             }
         } catch (Exception ex) {
             Logger.error("There has been an error with the command '"+params[0]+"'");

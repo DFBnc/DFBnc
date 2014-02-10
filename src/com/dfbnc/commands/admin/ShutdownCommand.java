@@ -27,6 +27,7 @@ import com.dfbnc.AccountManager;
 import com.dfbnc.DFBnc;
 import com.dfbnc.commands.AdminCommand;
 import com.dfbnc.commands.CommandManager;
+import com.dfbnc.commands.CommandOutput;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.util.Util;
 
@@ -39,11 +40,12 @@ public class ShutdownCommand extends AdminCommand {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
+     * @param output CommandOutput where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
         if (!user.getAccount().isAdmin()) {
-            user.sendBotMessage("Access Denied");
+            output.sendBotMessage("Access Denied");
             return;
         }
         final String message;

@@ -26,6 +26,7 @@ import com.dfbnc.commands.CommandManager;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.Account;
 import com.dfbnc.AccountManager;
+import com.dfbnc.commands.CommandOutput;
 
 /**
  * This file represents the 'Suspend' command
@@ -36,27 +37,28 @@ public class SuspendCommand extends AdminCommand {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
+     * @param output CommandOutput where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
         if (params.length == 1) {
-            user.sendBotMessage("You need to specify a username to suspend.");
+            output.sendBotMessage("You need to specify a username to suspend.");
         } else {
             final String account = params[1];
             if (!AccountManager.exists(account)) {
-                user.sendBotMessage("No account with the name '%s' exists.", account);
+                output.sendBotMessage("No account with the name '%s' exists.", account);
             } else {
                 final Account acc = AccountManager.get(account);
                 if (acc == user.getAccount()) {
-                    user.sendBotMessage("You can't suspend yourself.");
+                    output.sendBotMessage("You can't suspend yourself.");
                 } else if (acc.isSuspended()) {
-                    user.sendBotMessage("The Account '%s' is already suspended (%s).", account, acc.getSuspendReason());
+                    output.sendBotMessage("The Account '%s' is already suspended (%s).", account, acc.getSuspendReason());
                 } else {
                     final StringBuilder reason = new StringBuilder();
                     for (int i = 2; i < params.length; i++) { reason.append(params[i]); }
-                    user.sendBotMessage("Suspending Account '%s'..", account);
+                    output.sendBotMessage("Suspending Account '%s'..", account);
                     acc.setSuspended(true, reason.toString());
-                    user.sendBotMessage("Account suspended with reason: %s", acc.getSuspendReason());
+                    output.sendBotMessage("Account suspended with reason: %s", acc.getSuspendReason());
                 }
             }
         }

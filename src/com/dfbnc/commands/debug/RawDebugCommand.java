@@ -23,6 +23,7 @@ package com.dfbnc.commands.debug;
 
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
+import com.dfbnc.commands.CommandOutput;
 import com.dfbnc.sockets.UserSocket;
 
 /**
@@ -34,19 +35,20 @@ public class RawDebugCommand extends Command {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
+     * @param output CommandOutput where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
         if (params.length > 2) {
             final StringBuilder rawLine = new StringBuilder();
             for (int i = 2; i < params.length; i++) {
                 if (i > 2) { rawLine.append(' '); }
                 rawLine.append(params[i]);
             }
-            user.sendBotMessage("Sending raw command: %s", rawLine.toString());
+            output.sendBotMessage("Sending raw command: %s", rawLine.toString());
             user.sendLine(rawLine.toString());
         } else {
-            user.sendBotMessage("You need to specify a line to send.");
+            output.sendBotMessage("You need to specify a line to send.");
         }
     }
 

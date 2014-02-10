@@ -30,6 +30,7 @@ import com.dfbnc.commands.CommandManager;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.DFBnc;
 import com.dfbnc.DFBncDaemon;
+import com.dfbnc.commands.CommandOutput;
 import uk.org.dataforce.libs.cliparser.CLIParam;
 import uk.org.dataforce.libs.cliparser.CLIParser;
 import com.dfbnc.util.Util;
@@ -43,53 +44,54 @@ public class SystemCommand extends AdminCommand {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
+     * @param output CommandOutput where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
         final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-        user.sendBotMessage("----------------------------------------");
-        user.sendBotMessage("DFBnc System nformation");
-        user.sendBotMessage("----------------------------------------");
-        user.sendBotMessage("Started At: " + sdf.format(new Date(DFBnc.startTime)));
+        output.sendBotMessage("----------------------------------------");
+        output.sendBotMessage("DFBnc System nformation");
+        output.sendBotMessage("----------------------------------------");
+        output.sendBotMessage("Started At: " + sdf.format(new Date(DFBnc.startTime)));
         final long upSeconds = (System.currentTimeMillis() - DFBnc.startTime) / 1000;
-        user.sendBotMessage("Uptime: " + DateUtils.formatDuration((int)upSeconds));
-        user.sendBotMessage("----------------------------------------");
-        user.sendBotMessage("Startup Information:");
-        user.sendBotMessage("--------------------");
-        user.sendBotMessage("Forking Supported: " + (DFBncDaemon.canFork() ? "Yes" : "No"));
+        output.sendBotMessage("Uptime: " + DateUtils.formatDuration((int)upSeconds));
+        output.sendBotMessage("----------------------------------------");
+        output.sendBotMessage("Startup Information:");
+        output.sendBotMessage("--------------------");
+        output.sendBotMessage("Forking Supported: " + (DFBncDaemon.canFork() ? "Yes" : "No"));
         if (DFBncDaemon.canFork()) {
-            user.sendBotMessage("Forked: " + (DFBnc.daemon.isDaemonized() ? "Yes" : "No"));
-            user.sendBotMessage("Current PID: " + DFBncDaemon.getPID());
-            user.sendBotMessage("Run Args: " + Util.joinString(DFBncDaemon.getArgs().toArray(new String[0]), " ", 0, 0));
+            output.sendBotMessage("Forked: " + (DFBnc.daemon.isDaemonized() ? "Yes" : "No"));
+            output.sendBotMessage("Current PID: " + DFBncDaemon.getPID());
+            output.sendBotMessage("Run Args: " + Util.joinString(DFBncDaemon.getArgs().toArray(new String[0]), " ", 0, 0));
         }
 
         final CLIParser cli = CLIParser.getCLIParser();
-        user.sendBotMessage("CLI Parser Args: " + Util.joinString(cli.getLastArgs(), " ", 0, 0));
-        user.sendBotMessage("CLI Params:");
+        output.sendBotMessage("CLI Parser Args: " + Util.joinString(cli.getLastArgs(), " ", 0, 0));
+        output.sendBotMessage("CLI Params:");
         for (final CLIParam p : cli.getParamList()) {
-            user.sendBotMessage("    " + (p.getChr() != 0 ? p.getChr() : "") + "/" + p.getString() + " - " + p.getNumber() + " = " + p.getStringValue());
+            output.sendBotMessage("    " + (p.getChr() != 0 ? p.getChr() : "") + "/" + p.getString() + " - " + p.getNumber() + " = " + p.getStringValue());
         }
-        user.sendBotMessage("Redundant:");
+        output.sendBotMessage("Redundant:");
         for (final String s : cli.getRedundant()) {
-            user.sendBotMessage("    " + s);
+            output.sendBotMessage("    " + s);
         }
 
-        user.sendBotMessage("----------------------------------------");
-        user.sendBotMessage("Host Information:");
-        user.sendBotMessage("--------------------");
+        output.sendBotMessage("----------------------------------------");
+        output.sendBotMessage("Host Information:");
+        output.sendBotMessage("--------------------");
         for (Entry<Object, Object> e : System.getProperties().entrySet()) {
-            user.sendBotMessage("    %s: %s", (String)e.getKey(), (String)e.getValue());
+            output.sendBotMessage("    %s: %s", (String)e.getKey(), (String)e.getValue());
         }
-        user.sendBotMessage("----------------------------------------");
-        user.sendBotMessage("Component Versions:");
-        user.sendBotMessage("--------------------");
+        output.sendBotMessage("----------------------------------------");
+        output.sendBotMessage("Component Versions:");
+        output.sendBotMessage("--------------------");
         for (Entry<String, String> e : DFBnc.getVersions().entrySet()) {
-            user.sendBotMessage("    %s: %s", e.getKey(), e.getValue());
+            output.sendBotMessage("    %s: %s", e.getKey(), e.getValue());
         }
-        user.sendBotMessage("----------------------------------------");
-        user.sendBotMessage("Sessions:");
-        user.sendBotMessage("--------------------");
+        output.sendBotMessage("----------------------------------------");
+        output.sendBotMessage("Sessions:");
+        output.sendBotMessage("--------------------");
         int count = 0;
         for (final UserSocket u : UserSocket.getUserSockets()) {
             count++;
@@ -108,10 +110,10 @@ public class SystemCommand extends AdminCommand {
             sb.append("     (");
             sb.append(u.toString());
             sb.append(")");
-            user.sendBotMessage(sb.toString());
+            output.sendBotMessage(sb.toString());
         }
-        user.sendBotMessage("      (%d current sessions)", count);
-        user.sendBotMessage("----------------------------------------");
+        output.sendBotMessage("      (%d current sessions)", count);
+        output.sendBotMessage("----------------------------------------");
 
     }
 

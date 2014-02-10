@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
+import com.dfbnc.commands.CommandOutput;
 import com.dfbnc.sockets.UserSocket;
 
 /**
@@ -36,21 +37,22 @@ public class SessionsCommand extends Command {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
+     * @param output CommandOutput where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
         final List<String> validParams = Arrays.asList("all", "authenticated", "unauthenticated", "account", "");
-        final String optionString = getFullParam(user, params, 2, validParams);
+        final String optionString = getFullParam(output, params, 2, validParams);
         if (optionString == null) { return; }
 
         if (!validParams.contains(optionString)) {
-            user.sendBotMessage("Unknown session type: %s", optionString);
+            output.sendBotMessage("Unknown session type: %s", optionString);
             return;
         }
 
         if (user.getAccount().isAdmin() && !optionString.equalsIgnoreCase("")) {
-            user.sendBotMessage("Currently connected sockets (Type: %s):", optionString);
-            user.sendBotMessage("");
+            output.sendBotMessage("Currently connected sockets (Type: %s):", optionString);
+            output.sendBotMessage("");
             int count = 0;
             int matched = 0;
             for (final UserSocket u : UserSocket.getUserSockets()) {
@@ -85,14 +87,14 @@ public class SessionsCommand extends Command {
                 sb.append(u.toString());
                 sb.append(")");
 
-                user.sendBotMessage(sb.toString());
+                output.sendBotMessage(sb.toString());
                 matched++;
             }
-            user.sendBotMessage("----------");
-            user.sendBotMessage("Matched: %d    Total: %d", matched, count);
+            output.sendBotMessage("----------");
+            output.sendBotMessage("Matched: %d    Total: %d", matched, count);
         } else {
-            user.sendBotMessage("Currently connected sockets for this account:");
-            user.sendBotMessage("");
+            output.sendBotMessage("Currently connected sockets for this account:");
+            output.sendBotMessage("");
             int count = 0;
             for (final UserSocket u : user.getAccount().getUserSockets()) {
                 count++;
@@ -109,10 +111,10 @@ public class SessionsCommand extends Command {
                     sb.append("\"");
                 }
 
-                user.sendBotMessage(sb.toString());
+                output.sendBotMessage(sb.toString());
             }
-            user.sendBotMessage("----------");
-            user.sendBotMessage("Total: %d", count);
+            output.sendBotMessage("----------");
+            output.sendBotMessage("Total: %d", count);
         }
     }
 

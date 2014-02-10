@@ -26,6 +26,7 @@ import com.dfbnc.commands.AdminCommand;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.AccountManager;
+import com.dfbnc.commands.CommandOutput;
 
 /**
  * This file represents the 'DelUser' command
@@ -36,33 +37,34 @@ public class DelUserCommand extends AdminCommand {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
+     * @param output CommandOutput where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
         if (params.length == 1) {
-            user.sendBotMessage("You need to specify a username to delete.");
+            output.sendBotMessage("You need to specify a username to delete.");
         } else {
             final String account = params[1];
             if (AccountManager.exists(account)) {
                 if (params.length == 2) {
                     final String deleteCode = AccountManager.makePassword(15);
                     AccountManager.get(account).setDeleteCode(deleteCode);
-                    user.sendBotMessage("Deleting an account will remove all settings for the account.");
-                    user.sendBotMessage("Are you sure you want to continue?");
-                    user.sendBotMessage("To continue please enter /raw dfbnc %s %s %s", params[0], account, deleteCode);
+                    output.sendBotMessage("Deleting an account will remove all settings for the account.");
+                    output.sendBotMessage("Are you sure you want to continue?");
+                    output.sendBotMessage("To continue please enter /raw dfbnc %s %s %s", params[0], account, deleteCode);
                 } else if (!params[2].equals(AccountManager.get(account).getDeleteCode())) {
-                    user.sendBotMessage("Invalid Delete code specified.");
+                    output.sendBotMessage("Invalid Delete code specified.");
                 } else {
-                    user.sendBotMessage("Deleting account '%s'", account);
+                    output.sendBotMessage("Deleting account '%s'", account);
                     try {
                         AccountManager.get(account).delete();
-                        user.sendBotMessage("Account '%s' deleted.", account);
+                        output.sendBotMessage("Account '%s' deleted.", account);
                     } catch (final IOException ioe) {
-                        user.sendBotMessage("Deleting account '%s' failed: %s", account, ioe);
+                        output.sendBotMessage("Deleting account '%s' failed: %s", account, ioe);
                     }
                 }
             } else {
-                user.sendBotMessage("An account with the name '%s' does not exist.", account);
+                output.sendBotMessage("An account with the name '%s' does not exist.", account);
             }
         }
     }

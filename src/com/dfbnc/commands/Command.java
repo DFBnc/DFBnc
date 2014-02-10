@@ -49,12 +49,13 @@ public abstract class Command {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
+     * @param output CommandOutput where output from this command should go.
      */
-    public abstract void handle(final UserSocket user, final String[] params);
+    public abstract void handle(final UserSocket user, final String[] params, final CommandOutput output);
 
     /**
      * What does this Command handle.
-         * Aliases should be prefixed with * to hide from showcommands
+     * Aliases should be prefixed with * to hide from showcommands
      *
      * @return String[] with the names of the tokens we handle.
      */
@@ -127,9 +128,6 @@ public abstract class Command {
      * From a given list of possible params, and a given param, find any
      * possible matching params.
      *
-     * The returned list will ALWAYS contain at least 1 item (which may or
-     * may not be empty)
-     *
      * - If allowshortcommands is off, then the given param is returned
      *   (regardless of whether it is null or empty.)
      * - If an exact match is found, it is returned.
@@ -138,13 +136,13 @@ public abstract class Command {
      * - If param is not null or empty then any params from the list that start
      *   case-insentiviely with param are returned (although the actual case of
      *   the param in the list is used in the result);
-     * - If there are no matches, the given param is returned
+     * - If there are no matches, an empty list is returned
      *
      * @param param Param given
      * @param params Collection of params to check against
      * @return List of matching params.
      */
-    public List<String> getParamMatch(final String param, final Collection<String> params) {
+    public static List<String> getParamMatch(final String param, final Collection<String> params) {
         if (!DFBnc.getBNC().getConfig().getOptionBool("general", "allowshortcommands")) {
             return Arrays.asList(param);
         }
@@ -152,10 +150,10 @@ public abstract class Command {
 
         if (params.contains(param)) {
             return Arrays.asList(param);
-        } else if(param == null || param.isEmpty() || param.equals("?")) {
-            return new ArrayList<String>(params);
+        } else if (param == null || param.isEmpty() || param.equals("?")) {
+            return new ArrayList<>(params);
         } else {
-            final List<String> result = new ArrayList<String>();
+            final List<String> result = new ArrayList<>();
             for (String p : params) {
                 p = p.toLowerCase();
                 if (!result.contains(p) && p.startsWith(sw)) {
@@ -164,7 +162,7 @@ public abstract class Command {
             }
 
             if (result.isEmpty()) {
-                result.add(param);
+                // result.add(param);
             }
 
             return result;
@@ -179,30 +177,35 @@ public abstract class Command {
      * otherwise return the full version of the parameter if it matches, or the
      * input the user gave.
      *
-     * @param user User to send possible matches to
+     * @param output CommandOutput to send possible matches to
      * @param params Parameters for the command
      * @param position Position to check
      * @param options Options to look for
      * @return null or a string containing the full param or the input param.
      */
-    public final String getFullParam(final UserSocket user, final String[] params, final int position, final Collection<String> options) {
+    public final String getFullParam(final CommandOutput output, final String[] params, final int position, final Collection<String> options) {
         String result = (params.length > position) ? params[position] : "";
-        final List<String> paramMatch = getParamMatch(result, options);
+        final List<String> paramMatch = Command.getParamMatch(result, options);
         boolean hasEmpty = false;
         if (paramMatch.size() > 1) {
-            user.sendBotMessage("Multiple possible matches were found for '"+result+"': ");
+            output.sendBotMessage("Multiple possible matches were found for '"+result+"': ");
             for (String p : paramMatch) {
                 if (p.isEmpty()) {
                     hasEmpty = true;
                 } else {
-                    user.sendBotMessage("    " + p);
+                    output.sendBotMessage("    " + p);
                 }
             }
             if (hasEmpty) {
-                user.sendBotMessage("    <cr>");
+                output.sendBotMessage("    <cr>");
             }
             return null;
-        } else { result = paramMatch.get(0); }
+        } else if (paramMatch.size() == 1) {
+            result = paramMatch.get(0);
+        } else {
+            output.sendBotMessage("No valid matches were found for '"+result+"': ");
+            return null;
+        }
 
         return result;
     }

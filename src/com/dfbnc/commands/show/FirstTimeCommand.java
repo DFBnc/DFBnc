@@ -22,9 +22,9 @@
 package com.dfbnc.commands.show;
 
 import java.util.Arrays;
-import java.util.List;
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
+import com.dfbnc.commands.CommandOutput;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.util.Util;
 
@@ -37,53 +37,54 @@ public class FirstTimeCommand extends Command {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
+     * @param output CommandOutput where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params) {
-        final String option = getFullParam(user, params, 2, Arrays.asList("admin", "user", ""));
+    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
+        final String option = getFullParam(output, params, 2, Arrays.asList("admin", "user", ""));
         if (option == null) { return; }
 
         if (params.length > 2 && option.equalsIgnoreCase("admin")) {
             if (user.getAccount().isAdmin()) {
-                user.sendBotMessage("As an admin of this BNC you have addional commands available to you");
-                user.sendBotMessage("You can see what these are by using:");
-                user.sendBotMessage("    /dfbnc show commands admin");
-                user.sendBotMessage(" or");
-                user.sendBotMessage("    /dfbnc show commands all");
-                user.sendBotMessage("----");
-                user.sendBotMessage("You may view this again at anytime by issuing: /dfbnc show firsttime admin");
+                output.sendBotMessage("As an admin of this BNC you have addional commands available to you");
+                output.sendBotMessage("You can see what these are by using:");
+                output.sendBotMessage("    /dfbnc show commands admin");
+                output.sendBotMessage(" or");
+                output.sendBotMessage("    /dfbnc show commands all");
+                output.sendBotMessage("----");
+                output.sendBotMessage("You may view this again at anytime by issuing: /dfbnc show firsttime admin");
             } else {
-                user.sendBotMessage("You do not have permission to access this command.");
+                output.sendBotMessage("You do not have permission to access this command.");
             }
         } else {
-            user.sendBotMessage("Welcome to DFBnc. It seems that this is your first time using this account.");
-            user.sendBotMessage("With DFBnc you can issue commands to the BNC using /dfbnc (or /raw dfbnc or /quote dfbnc depending on your client)");
-            user.sendBotMessage("For example to see what commands are available you would use:");
-            user.sendBotMessage("    /dfbnc show commands");
-            user.sendBotMessage("Some commands are only available when the corresponding servertype is in use, and as such will not be displayed if not available.");
-            user.sendBotMessage("----");
-            user.sendBotMessage("The first thing you will want to do is setup a server connection type, this can be done using:");
-            user.sendBotMessage("    /dfbnc servertype settype <type>");
-            user.sendBotMessage("The available types can be found out by omiting the <type> parameter.");
-            user.sendBotMessage("Each account can only use one servertype at a time, however changing the servertype will not remove the settings associated with the old type");
-            user.sendBotMessage("----");
-            user.sendBotMessage("Once you have set the servertype the command:");
-            user.sendBotMessage("    /dfbnc servertype help");
-            user.sendBotMessage("Will give you more specific information about the servertype currently in use.");
-            user.sendBotMessage("----");
-            user.sendBotMessage("Most server types will provide a 'serverlist' command you can use to add a server to connect to:");
-            user.sendBotMessage("    /dfbnc serverlist add irc.quakenet.org:6667");
-            user.sendBotMessage("----");
-            user.sendBotMessage("Once you have your servertype setup correctly and servers added, you can use");
-            user.sendBotMessage("    /dfbnc connect");
-            user.sendBotMessage("To connect the bnc to the server");
-            user.sendBotMessage("----");
-            user.sendBotMessage("You may view this again at anytime by issuing: /dfbnc show firsttime");
-            user.sendBotMessage("----");
-            user.sendBotMessage("In all cases /dfbnc can be substituted for /msg "+Util.getBotName()+". Example:");
-            user.sendBotMessage("    /msg "+Util.getBotName()+" show commands");
-            user.sendBotMessage(" will do the same as:");
-            user.sendBotMessage("    /dfbnc show commands");
+            output.sendBotMessage("Welcome to DFBnc. It seems that this is your first time using this account.");
+            output.sendBotMessage("With DFBnc you can issue commands to the BNC using /dfbnc (or /raw dfbnc or /quote dfbnc depending on your client)");
+            output.sendBotMessage("For example to see what commands are available you would use:");
+            output.sendBotMessage("    /dfbnc show commands");
+            output.sendBotMessage("Some commands are only available when the corresponding servertype is in use, and as such will not be displayed if not available.");
+            output.sendBotMessage("----");
+            output.sendBotMessage("The first thing you will want to do is setup a server connection type, this can be done using:");
+            output.sendBotMessage("    /dfbnc servertype settype <type>");
+            output.sendBotMessage("The available types can be found out by omiting the <type> parameter.");
+            output.sendBotMessage("Each account can only use one servertype at a time, however changing the servertype will not remove the settings associated with the old type");
+            output.sendBotMessage("----");
+            output.sendBotMessage("Once you have set the servertype the command:");
+            output.sendBotMessage("    /dfbnc servertype help");
+            output.sendBotMessage("Will give you more specific information about the servertype currently in use.");
+            output.sendBotMessage("----");
+            output.sendBotMessage("Most server types will provide a 'serverlist' command you can use to add a server to connect to:");
+            output.sendBotMessage("    /dfbnc serverlist add irc.quakenet.org:6667");
+            output.sendBotMessage("----");
+            output.sendBotMessage("Once you have your servertype setup correctly and servers added, you can use");
+            output.sendBotMessage("    /dfbnc connect");
+            output.sendBotMessage("To connect the bnc to the server");
+            output.sendBotMessage("----");
+            output.sendBotMessage("You may view this again at anytime by issuing: /dfbnc show firsttime");
+            output.sendBotMessage("----");
+            output.sendBotMessage("In all cases /dfbnc can be substituted for /msg "+Util.getBotName()+". Example:");
+            output.sendBotMessage("    /msg "+Util.getBotName()+" show commands");
+            output.sendBotMessage(" will do the same as:");
+            output.sendBotMessage("    /dfbnc show commands");
         }
         user.getAccount().setFirst(false);
     }

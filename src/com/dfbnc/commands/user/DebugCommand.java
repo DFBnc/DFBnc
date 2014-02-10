@@ -28,6 +28,7 @@ import java.util.Map.Entry;
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.CommandNotFoundException;
+import com.dfbnc.commands.CommandOutput;
 import com.dfbnc.commands.debug.*;
 import com.dfbnc.sockets.UserSocket;
 
@@ -42,9 +43,10 @@ public class DebugCommand extends Command {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
+     * @param output CommandOutput where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
         String[] actualParams = params;
 
         if (actualParams.length > 1) {
@@ -55,32 +57,32 @@ public class DebugCommand extends Command {
             } catch (CommandNotFoundException cnfe) {
                 final Map<String, Command> allCommands = debugManager.getAllCommands(actualParams[1], user.getAccount().isAdmin());
                 if (allCommands.size() > 0) {
-                    user.sendBotMessage("Multiple possible matches were found for '"+actualParams[1]+"': ");
+                    output.sendBotMessage("Multiple possible matches were found for '"+actualParams[1]+"': ");
                     for (String p : allCommands.keySet()) {
                         if (p.charAt(0) == '*') { continue; }
-                        user.sendBotMessage("    " + p);
+                        output.sendBotMessage("    " + p);
                     }
                     return;
                 } else {
-                    user.sendBotMessage("There were no matches for '"+actualParams[1]+"'.");
-                    user.sendBotMessage("Try: /dfbnc " + actualParams[0] + " ?");
+                    output.sendBotMessage("There were no matches for '"+actualParams[1]+"'.");
+                    output.sendBotMessage("Try: /dfbnc " + actualParams[0] + " ?");
                     return;
                 }
             }
 
             // Show something!.
-            matchingCommand.getValue().handle(user, actualParams);
+            matchingCommand.getValue().handle(user, actualParams, output);
 
         } else {
-            user.sendBotMessage("You need to choose a debug command to run.");
-            user.sendBotMessage("Valid options are:");
+            output.sendBotMessage("You need to choose a debug command to run.");
+            output.sendBotMessage("Valid options are:");
             for (Entry<String, Command> e : debugManager.getAllCommands(user.getAccount().isAdmin()).entrySet()) {
                 if (e.getKey().charAt(0) != '*') {
                     final String description = e.getValue().getDescription(e.getKey());
-                    user.sendBotMessage(String.format("%-20s - %s", e.getKey(), description));
+                    output.sendBotMessage(String.format("%-20s - %s", e.getKey(), description));
                 }
             }
-            user.sendBotMessage("Syntax: /dfbnc " + actualParams[0] + " <item> [params]");
+            output.sendBotMessage("Syntax: /dfbnc " + actualParams[0] + " <item> [params]");
         }
     }
 

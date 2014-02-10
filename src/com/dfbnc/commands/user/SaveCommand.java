@@ -25,6 +25,7 @@ package com.dfbnc.commands.user;
 
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
+import com.dfbnc.commands.CommandOutput;
 import com.dfbnc.sockets.UserSocket;
 
 /**
@@ -37,10 +38,11 @@ public class SaveCommand extends Command {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
+     * @param output CommandOutput where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params) {
-        user.sendBotMessage("Saving config files...");
+    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
+        output.sendBotMessage("Saving config files...");
         user.getAccount().getConfig().save();
     }
 
