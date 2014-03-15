@@ -335,7 +335,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
     public void startBatch(final UserSocket user, final String batchIdentifier) {
         forceRequeueList.add(user);
         if (user.getCapabilityState("batch") == CapabilityState.ENABLED) {
-            user.sendLine("BATCH " + batchIdentifier);
+            user.sendLine("BATCH " + batchIdentifier + " generic");
         }
         user.getMap().put("requeue", new LinkedList<String>());
     }
@@ -1430,6 +1430,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
         for (BackbufferMessage message : backbufferList) {
             final String line;
             final Map<String,String> messageTags = new HashMap<>();
+
+            messageTags.put("batch", batchIdentifier);
 
             if (user.getCapabilityState("server-time") == CapabilityState.ENABLED) {
                 messageTags.put("time", servertime.format(message.getTime()));
