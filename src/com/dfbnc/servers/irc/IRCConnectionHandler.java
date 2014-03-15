@@ -1455,7 +1455,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
             final int maxLength = 510;
 
             if (line.length() <= maxLength) {
-                user.sendLine(line);
+                user.sendLine(new IRCLine(line, messageTags));
             } else {
                 // Line is longer than 510...
                 // We need to split it and send it in bits.
