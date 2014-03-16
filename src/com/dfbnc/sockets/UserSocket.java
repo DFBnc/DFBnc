@@ -107,6 +107,9 @@ public class UserSocket extends ConnectedSocket {
     /** Is this socket in the middle of capability negotiation? */
     private boolean isNegotiating = false;
 
+    /** Is this socket in the middle of quitting? */
+    private boolean isQuitting = false;
+
     /** Lines buffered during negotiation. */
     private List<String> negotiationLines = new LinkedList<String>();
 
@@ -599,6 +602,9 @@ public class UserSocket extends ConnectedSocket {
         // Reset the inactive counter.
         this.inactiveCounter = 0;
 
+        // Don't process any more lines if we are quitting.
+        if (isQuitting) { return; }
+
         // Tokenise the line
         final String[] newLine = IRCParser.tokeniseLine(line);
 
@@ -612,6 +618,7 @@ public class UserSocket extends ConnectedSocket {
         // matter
         switch (newLine[0]) {
             case "QUIT":
+                isQuitting = true;
                 close("Client Quit: " + (newLine.length > 1 ? newLine[newLine.length - 1] : "No reason given."));
                 return;
             case "PING":
