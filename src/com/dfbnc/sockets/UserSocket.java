@@ -861,9 +861,7 @@ public class UserSocket extends ConnectedSocket {
                 passwordTries++;
                 final StringBuilder message = new StringBuilder("Password incorrect, or account not found.");
                 message.append(" You have ");
-                /* Maximum password attempts.
-      This should be changed to a config setting at some point.
-     */
+                // TODO: make this a config setting
                 int maxPasswordTries = 3;
                 message.append(maxPasswordTries - passwordTries);
                 message.append(" attempt(s) left.");
