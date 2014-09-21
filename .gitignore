@@ -3,4 +3,6 @@ nbproject/private
 dist
 build
 /DFBnc
+/lib
+.idea
 keystore.ks
