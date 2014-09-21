@@ -30,12 +30,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
+
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.admin.*;
 import com.dfbnc.commands.user.*;
@@ -217,7 +219,6 @@ public class DFBnc {
 
         try {
             final File directory = new File(getConfigDirName());
-            final File file = new File(directory, getConfigFileName());
             if (!directory.exists()) {
                 if (!directory.mkdirs()) {
                     throw new IOException("Unable to create config directory.");
@@ -385,7 +386,12 @@ public class DFBnc {
      * @return Component Version.
      */
     public static String getVersion(final String component) {
-        return versionConfig.hasOption("versions", component) ? versionConfig.getOption("versions", component) : "Unknown";
+        if (versionConfig == null) {
+            return "Unknown";
+        }
+        return versionConfig.hasOption("versions", component)
+                ? versionConfig.getOption("versions", component)
+                : "Unknown";
     }
 
     /**
@@ -394,6 +400,9 @@ public class DFBnc {
      * @return Component Versions Map.
      */
     public static Map<String,String> getVersions() {
+        if (versionConfig == null) {
+            return Collections.EMPTY_MAP;
+        }
         return versionConfig.getOptions("versions");
     }
 
