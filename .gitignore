@@ -4,5 +4,6 @@ dist
 build
 /DFBnc
 /lib
-.idea
+.idea/workspace.xml
+.idea/tasks.xml
 keystore.ks

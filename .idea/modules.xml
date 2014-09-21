@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/akuma.iml" filepath="$PROJECT_DIR$/.idea/modules/akuma.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/dfbnc.iml" filepath="$PROJECT_DIR$/.idea/modules/dfbnc.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/parser.iml" filepath="$PROJECT_DIR$/.idea/modules/parser.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/util.iml" filepath="$PROJECT_DIR$/.idea/modules/util.iml" />
+    </modules>
+  </component>
+</project>
+

@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="DMDirc" pattern="src[util]:*..*||src[parser]:*..*||test[parser]:*..*||test[util]:*..*" />
+</component>
