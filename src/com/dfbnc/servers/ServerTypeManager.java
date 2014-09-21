@@ -22,10 +22,11 @@
 package com.dfbnc.servers;
 
 import java.util.ArrayList;
-import com.dfbnc.servers.irc.IRCServerType;
-import uk.org.dataforce.libs.logger.Logger;
 import java.util.Collection;
 import java.util.HashMap;
+
+import com.dfbnc.servers.irc.IRCServerType;
+import uk.org.dataforce.libs.logger.Logger;
 
 /**
  * DFBNC ServerType Manager.
@@ -36,7 +37,7 @@ import java.util.HashMap;
  */
 public final class ServerTypeManager {
     /** HashMap used to store the different types of ServerType known. */
-    private HashMap<String,ServerType> knownServerTypes = new HashMap<String,ServerType>();
+    private HashMap<String,ServerType> knownServerTypes = new HashMap<>();
 
     /**
      * Constructor to create a ServerTypeManager
@@ -81,12 +82,12 @@ public final class ServerTypeManager {
         Logger.debug("Adding ServerType: "+serverType.getName());
 
         try {
-            for (int i = 0; i < names.length; ++i) {
-                if (knownServerTypes.containsKey(names[i].toLowerCase())) {
-                    knownServerTypes.remove(names[i].toLowerCase());
+            for (String name : names) {
+                if (knownServerTypes.containsKey(name.toLowerCase())) {
+                    knownServerTypes.remove(name.toLowerCase());
                 }
-                Logger.debug2("\t Added ServerType for: "+names[i]);
-                knownServerTypes.put(names[i].toLowerCase(), serverType);
+                Logger.debug2("\t Added ServerType for: "+name);
+                knownServerTypes.put(name.toLowerCase(), serverType);
             }
         } catch (Exception e) {
             Logger.error("Error adding ServerType '"+serverType.toString()+"': "+e.getMessage());
@@ -105,7 +106,7 @@ public final class ServerTypeManager {
         for (String elementName : knownServerTypes.keySet()) {
             Logger.debug2("\t Checking handler for: "+elementName);
             testServerType = knownServerTypes.get(elementName);
-            if (testServerType.getName().equalsIgnoreCase(serverType.getName())) {
+            if (testServerType != null && testServerType.getName().equalsIgnoreCase(serverType.getName())) {
                 Logger.debug2("\t Removed handler for: "+elementName);
                 knownServerTypes.remove(elementName);
             }
@@ -133,7 +134,7 @@ public final class ServerTypeManager {
      * @return Valid ServerTypes as a collection
      */
     public Collection<ServerType> getServerTypes() {
-        return new ArrayList<ServerType>(knownServerTypes.values());
+        return new ArrayList<>(knownServerTypes.values());
     }
 
     /**
@@ -142,7 +143,7 @@ public final class ServerTypeManager {
      * @return Valid ServerType Names as a collection
      */
     public Collection<String> getServerTypeNames() {
-        return new ArrayList<String>(knownServerTypes.keySet());
+        return new ArrayList<>(knownServerTypes.keySet());
     }
 }
 

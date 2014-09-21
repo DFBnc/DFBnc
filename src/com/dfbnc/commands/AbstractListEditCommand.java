@@ -112,7 +112,6 @@ public abstract class AbstractListEditCommand extends Command {
      * This also changes which parameter is passed to canAdd, getListName etc.
      * (They will get the sublist name, not the command name!)
      *
-     * @param command Command to get output for
      * @return If this list can be added to.
      */
     public boolean hasSubList() {

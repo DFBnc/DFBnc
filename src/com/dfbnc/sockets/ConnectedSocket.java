@@ -22,13 +22,13 @@
 
 package com.dfbnc.sockets;
 
-import com.dfbnc.sockets.secure.SecureSocket;
-import com.dfbnc.sockets.plain.PlainSocket;
-import java.nio.channels.SocketChannel;
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
+import java.nio.channels.SocketChannel;
 import java.util.concurrent.CountDownLatch;
 
+import com.dfbnc.sockets.plain.PlainSocket;
+import com.dfbnc.sockets.secure.SecureSocket;
 import com.dfbnc.util.IRCLine;
 import uk.org.dataforce.libs.logger.Logger;
 
@@ -197,7 +197,6 @@ public abstract class ConnectedSocket implements SelectedSocketHandler {
     protected void socketClosed(final boolean userRequested) {
     }
 
-    /** {@inheritDoc} */
     @Override
     public void processSelectionKey(final SelectionKey selKey) throws IOException {
         try {

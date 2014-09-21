@@ -133,7 +133,7 @@ public class SSLByteChannel implements ByteChannel {
         if (isOpen()) {
             try {
                 final SSLEngineResult r = sslLoop(unwrap());
-                if (r.getStatus() == SSLEngineResult.Status.BUFFER_UNDERFLOW && r.getHandshakeStatus() == SSLEngineResult.HandshakeStatus.NEED_UNWRAP) {
+                if (r != null && (r.getStatus() == SSLEngineResult.Status.BUFFER_UNDERFLOW && r.getHandshakeStatus() == SSLEngineResult.HandshakeStatus.NEED_UNWRAP)) {
                     throw new SSLException("Unrecognized SSL data, plaintext connection?");
                 }
             } catch (final ClosedChannelException e) {
@@ -206,7 +206,7 @@ public class SSLByteChannel implements ByteChannel {
      */
     private WrapResult unwrap() throws IOException, SSLException {
         // Read in as much data as we can
-        int count = 0;
+        int count;
         int total = 0;
         do {
             count = myChannel.read(inNetData);

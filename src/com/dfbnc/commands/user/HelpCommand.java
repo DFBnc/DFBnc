@@ -67,10 +67,8 @@ public class HelpCommand extends Command {
                         for (final String p : allCommands.keySet()) {
                             output.sendBotMessage("    " + (p.charAt(0) == '*' ? p.substring(1) : p));
                         }
-                        return;
                     } else {
                         output.sendBotMessage("The command '%s' does not exist.", command);
-                        return;
                     }
                 }
             }

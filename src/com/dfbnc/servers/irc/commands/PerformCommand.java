@@ -44,7 +44,7 @@ public class PerformCommand extends AbstractListEditCommand {
             return "perform.firstattach";
         }
         return "";
-    };
+    }
 
     /**
      * Get the name of the domain to store the list in.
@@ -53,7 +53,7 @@ public class PerformCommand extends AbstractListEditCommand {
      * @return The name of the domain to store the list in.
      */
     @Override
-    public String getDomainName(final String command) { return "irc"; };
+    public String getDomainName(final String command) { return "irc"; }
 
     /**
      * Get the name of the list.

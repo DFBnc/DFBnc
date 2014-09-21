@@ -22,7 +22,6 @@
 
 package com.dfbnc;
 
-import com.dfbnc.util.Util;
 import com.dmdirc.util.io.ConfigFile;
 import com.dmdirc.util.io.InvalidConfigFileException;
 import java.io.File;
@@ -33,6 +32,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
+
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.config.Config;
 import com.dfbnc.config.DefaultsConfig;
@@ -41,6 +41,7 @@ import com.dfbnc.servers.ServerTypeNotFound;
 import com.dfbnc.sockets.UnableToConnectException;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.sockets.UserSocketWatcher;
+import com.dfbnc.util.Util;
 import uk.org.dataforce.libs.logger.Logger;
 
 /**
@@ -63,7 +64,7 @@ public final class Account implements UserSocketWatcher {
     /** ConnectionHandler for this account */
     private ConnectionHandler myConnectionHandler = null;
     /** List of all sockets that are part of this account. */
-    private List<UserSocket> myUserSockets = new CopyOnWriteArrayList<UserSocket>();
+    private List<UserSocket> myUserSockets = new CopyOnWriteArrayList<>();
     /** Account config file. */
     private Config config;
     /** Reconnect Timer. */
@@ -135,7 +136,7 @@ public final class Account implements UserSocketWatcher {
         }
 
         new Timer().schedule(new TimerTask() {
-            /** {@inheritDoc} */
+
             @Override
             public void run() {
                 synchronized (user) {

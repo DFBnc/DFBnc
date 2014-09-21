@@ -42,7 +42,7 @@ public class AccountManager {
 
     /** List of loaded Accounts */
     private static final HashMap<String, Account> accounts =
-            new HashMap<String, Account>();
+            new HashMap<>();
 
     /** Prevent instantiation of AccountManager. */
     private AccountManager() {
@@ -54,7 +54,7 @@ public class AccountManager {
      * @return Returns a collection of accounts
      */
     public static Collection<Account> getAccounts() {
-        return new ArrayList<Account>(accounts.values());
+        return new ArrayList<>(accounts.values());
     }
 
     /**
@@ -139,9 +139,7 @@ public class AccountManager {
                 Logger.debug2("Creating new account: "+accountName);
                 try {
                     acc = new Account(accountName);
-                } catch (IOException ex) {
-                    Logger.error("Error creating account: " + ex.getMessage());
-                } catch (InvalidConfigFileException ex) {
+                } catch (IOException | InvalidConfigFileException ex) {
                     Logger.error("Error creating account: " + ex.getMessage());
                 }
                 if (acc != null) {
@@ -172,7 +170,7 @@ public class AccountManager {
     public static String makePassword(final int length) {
         final String validChars =
                 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!£$%^&*()_-+={}[]@~'#<>?/.,\\|\"";
-        final StringBuffer password = new StringBuffer();
+        final StringBuilder password = new StringBuilder();
         final Random r = new Random();
         for (int i = 0; i < length; i++) {
             password.append(validChars.charAt(r.nextInt(validChars.length())));
@@ -185,7 +183,11 @@ public class AccountManager {
      */
     public static void loadAccounts() {
         final File directory = new File(DFBnc.getConfigDirName());
-        for (File file : directory.listFiles()) {
+        final File[] directories = directory.listFiles();
+        if (directories == null) {
+            return;
+        }
+        for (File file : directories) {
             if (!DFBnc.getConfigFileName().equals(file.getName())) {
               try {
                  Account acc = new Account(file.getName());
@@ -202,11 +204,9 @@ public class AccountManager {
                          }
                      }
                  }
-             } catch (IOException ex) {
+             } catch (IOException | InvalidConfigFileException ex) {
                      Logger.error("Unable to load account: " + file.getName() + "(" + ex.getMessage() + ")");
-             } catch (InvalidConfigFileException ex) {
-                    Logger.error("Unable to load account: " + file.getName() + "(" + ex.getMessage() + ")");
-                }
+             }
             }
         }
     }

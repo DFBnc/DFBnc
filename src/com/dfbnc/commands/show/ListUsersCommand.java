@@ -43,7 +43,6 @@ public class ListUsersCommand extends AdminCommand {
         super(manager);
     }
 
-    /** {@inheritDoc} */
     @Override
     public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
         final Collection<Account> accounts = AccountManager.getAccounts();
@@ -73,13 +72,11 @@ public class ListUsersCommand extends AdminCommand {
         }
     }
 
-    /** {@inheritDoc} */
     @Override
     public String[] handles() {
         return new String[]{"users",};
     }
 
-    /** {@inheritDoc} */
     @Override
     public String getDescription(String command) {
         return "Lists the list of known users.";

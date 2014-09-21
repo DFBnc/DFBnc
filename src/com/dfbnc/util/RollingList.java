@@ -87,7 +87,6 @@ public class RollingList<T> extends LinkedList<T> {
     // Below are implementations of any method that adds anything to this list.
     //=========================================================================
 
-    /** {@inheritDoc} */
     @Override
     public boolean add(final T element) {
         super.add(element);
@@ -95,7 +94,6 @@ public class RollingList<T> extends LinkedList<T> {
         return true;
     }
 
-    /** {@inheritDoc} */
     @Override
     public boolean addAll(final Collection<? extends T> c) {
         super.addAll(c);
@@ -103,14 +101,12 @@ public class RollingList<T> extends LinkedList<T> {
         return true;
     }
 
-    /** {@inheritDoc} */
     @Override
     public void add(final int index, final T element) {
         super.add(index, element);
         pruneList(capacity);
     }
 
-    /** {@inheritDoc} */
     @Override
     public boolean addAll(final int index, Collection<? extends T> c) {
         super.addAll(index, c);
@@ -118,21 +114,18 @@ public class RollingList<T> extends LinkedList<T> {
         return true;
     }
 
-    /** {@inheritDoc} */
     @Override
     public void addFirst(final T e) {
         super.addFirst(e);
         pruneList(capacity);
     }
 
-    /** {@inheritDoc} */
     @Override
     public void addLast(final T e) {
         super.addLast(e);
         pruneList(capacity);
     }
 
-    /** {@inheritDoc} */
     @Override
     public boolean offer(final T e) {
         super.offer(e);
@@ -140,7 +133,6 @@ public class RollingList<T> extends LinkedList<T> {
         return true;
     }
 
-    /** {@inheritDoc} */
     @Override
     public boolean offerFirst(final T e) {
         super.offerFirst(e);
@@ -148,7 +140,6 @@ public class RollingList<T> extends LinkedList<T> {
         return true;
     }
 
-    /** {@inheritDoc} */
     @Override
     public boolean offerLast(final T e) {
         super.offerLast(e);

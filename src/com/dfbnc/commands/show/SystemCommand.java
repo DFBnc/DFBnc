@@ -24,16 +24,18 @@ package com.dfbnc.commands.show;
 import com.dmdirc.util.DateUtils;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Map.Entry;
-import com.dfbnc.commands.AdminCommand;
-import com.dfbnc.commands.CommandManager;
-import com.dfbnc.sockets.UserSocket;
+
 import com.dfbnc.DFBnc;
 import com.dfbnc.DFBncDaemon;
+import com.dfbnc.commands.AdminCommand;
+import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.sockets.UserSocket;
+import com.dfbnc.util.Util;
 import uk.org.dataforce.libs.cliparser.CLIParam;
 import uk.org.dataforce.libs.cliparser.CLIParser;
-import com.dfbnc.util.Util;
 
 /**
  * This file represents the 'system' command
@@ -63,7 +65,8 @@ public class SystemCommand extends AdminCommand {
         if (DFBncDaemon.canFork()) {
             output.sendBotMessage("Forked: " + (DFBnc.daemon.isDaemonized() ? "Yes" : "No"));
             output.sendBotMessage("Current PID: " + DFBncDaemon.getPID());
-            output.sendBotMessage("Run Args: " + Util.joinString(DFBncDaemon.getArgs().toArray(new String[0]), " ", 0, 0));
+            final List<String> var = DFBncDaemon.getArgs();
+            output.sendBotMessage("Run Args: " + Util.joinString(var.toArray(new String[var.size()]), " ", 0, 0));
         }
 
         final CLIParser cli = CLIParser.getCLIParser();
@@ -81,7 +84,7 @@ public class SystemCommand extends AdminCommand {
         output.sendBotMessage("Host Information:");
         output.sendBotMessage("--------------------");
         for (Entry<Object, Object> e : System.getProperties().entrySet()) {
-            output.sendBotMessage("    %s: %s", (String)e.getKey(), (String)e.getValue());
+            output.sendBotMessage("    %s: %s", e.getKey(), e.getValue());
         }
         output.sendBotMessage("----------------------------------------");
         output.sendBotMessage("Component Versions:");

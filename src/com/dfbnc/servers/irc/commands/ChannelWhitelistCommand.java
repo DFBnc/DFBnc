@@ -29,25 +29,21 @@ import com.dfbnc.commands.ListOption;
  * This file represents the 'ChannelWhitelist' command
  */
 public class ChannelWhitelistCommand extends AbstractListEditCommand {
-    /** {@inheritDoc} */
-    @Override
-    public String getPropertyName(final String command) { return "channelwhitelist." + command; };
 
-    /** {@inheritDoc} */
     @Override
-    public String getDomainName(final String command) { return "irc"; };
+    public String getPropertyName(final String command) { return "channelwhitelist." + command; }
 
-    /** {@inheritDoc} */
+    @Override
+    public String getDomainName(final String command) { return "irc"; }
+
     @Override
     public String getListName(final String command) { return "Channel White List (For Sub-Client: " + command + ")"; }
 
-    /** {@inheritDoc} */
     @Override
     public ListOption checkItem(final String command, final String input) {
         return new ListOption(true, input, null);
     }
 
-    /** {@inheritDoc} */
     @Override
     public String[] getUsageOutput(final String command) {
         if (command.equalsIgnoreCase("add")) {
@@ -61,35 +57,29 @@ public class ChannelWhitelistCommand extends AbstractListEditCommand {
         }
     }
 
-    /** {@inheritDoc} */
     @Override
     public String getAddUsageSyntax() {
         return "<channel>";
     }
 
-    /** {@inheritDoc} */
     @Override
     public boolean canAdd(final String command) { return true; }
 
-    /** {@inheritDoc} */
     @Override
     public boolean hasSubList() {
         return true;
     }
 
-    /** {@inheritDoc} */
     @Override
     public boolean isDynamicList() {
         return true;
     }
 
-    /** {@inheritDoc} */
     @Override
     public String validSubList(final String command) {
         return command.toLowerCase();
     }
 
-    /** {@inheritDoc} */
     @Override
     public String[] handles() {
         return new String[]{"channelwhitelist", "*cwl"};
@@ -102,7 +92,6 @@ public class ChannelWhitelistCommand extends AbstractListEditCommand {
      */
     public ChannelWhitelistCommand (final CommandManager manager) { super(manager); }
 
-    /** {@inheritDoc} */
     @Override
     public String getDescription(final String command) {
         return "This command lets you manipulate the channel white list";

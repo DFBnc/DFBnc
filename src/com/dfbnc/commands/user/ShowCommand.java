@@ -141,17 +141,14 @@ public class ShowCommand extends Command {
         showManager.addCommand(new SystemCommand(showManager));
         showManager.addCommand(new Command(showManager){
 
-            /** {@inheritDoc} */
             @Override
             public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
                    output.sendBotMessage("This is not the 'show' you are looking for... ;)");
             }
 
-            /** {@inheritDoc} */
             @Override
             public String[] handles() { return new String[]{"*running-config", "*startup-config"}; }
 
-            /** {@inheritDoc} */
             @Override
             public String getDescription(final String command) { return ""; }
         });

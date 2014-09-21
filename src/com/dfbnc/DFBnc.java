@@ -324,7 +324,7 @@ public class DFBnc {
                     bw.append(Logger.getTag());
                     bw.append("] ");
                 }
-                bw.append("Log file opened at: " + sdf.format(new Date(System.currentTimeMillis())));
+                bw.append("Log file opened at: ").append(sdf.format(new Date(System.currentTimeMillis())));
                 bw.append("\n");
                 bw.flush();
                 // We will never get to setting it here if it failed to write above!
@@ -401,7 +401,7 @@ public class DFBnc {
      */
     public static Map<String,String> getVersions() {
         if (versionConfig == null) {
-            return Collections.EMPTY_MAP;
+            return Collections.emptyMap();
         }
         return versionConfig.getOptions("versions");
     }
@@ -431,8 +431,7 @@ public class DFBnc {
         Logger.info("Shuting down.");
 
         Logger.info("Closing Listen Sockets");
-        for (int i = 0; i < listenSockets.size() ; ++i) {
-            final ListenSocket ls = listenSockets.get(i);
+        for (final ListenSocket ls : listenSockets) {
             ls.close();
         }
         listenSockets.clear();
@@ -468,7 +467,7 @@ public class DFBnc {
                     bw.append(Logger.getTag());
                     bw.append("] ");
                 }
-                bw.append("Log file closed at: " + sdf.format(new Date(System.currentTimeMillis())));
+                bw.append("Log file closed at: ").append(sdf.format(new Date(System.currentTimeMillis())));
                 bw.append("\n");
                 bw.flush();
                 bw.close();
@@ -540,8 +539,6 @@ public class DFBnc {
     /**
      * Setup the cli parser.
      * This clears the current CLIParser params and creates new ones.
-     *
-     * @return the CLIParser.
      */
     private static void setupCLIParser() {
         cli.clear();

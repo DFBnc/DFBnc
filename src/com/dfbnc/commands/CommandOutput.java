@@ -21,9 +21,10 @@
  */
 package com.dfbnc.commands;
 
-import com.dfbnc.sockets.UserSocket;
 import java.util.LinkedList;
 import java.util.List;
+
+import com.dfbnc.sockets.UserSocket;
 
 /**
  * Output from commands is buffered through CommandOutput objects, as this
@@ -68,8 +69,6 @@ public class CommandOutput {
 
     /**
      * Set the list of messages, should only be called by a filter.
-     *
-     * @return This will return a copy of the current messages list.
      */
     public void setMessages(final List<String> newMessages) {
         messages.clear();

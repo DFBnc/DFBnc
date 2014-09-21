@@ -57,7 +57,7 @@ public class ConnectCommand extends Command {
                 String reason = "BNC Disconnecting";
                 if (params.length > 1) {
                     StringBuilder sb = new StringBuilder();
-                    for (int i = 1; i < params.length; ++i) { sb.append(params[i]+" "); }
+                    for (int i = 1; i < params.length; ++i) { sb.append(params[i]).append(" "); }
                     reason = sb.toString().trim();
                 } else if (params[0].equalsIgnoreCase("reconnect")) {
                     reason = "Reconnecting";
@@ -92,7 +92,6 @@ public class ConnectCommand extends Command {
         return new String[]{"connect", "reconnect", "disconnect", "*quit"};
     }
 
-    /** {@inheritDoc} */
     @Override
     public boolean allowShort(final String handle) {
         // Only allow the connect command to be shortened.

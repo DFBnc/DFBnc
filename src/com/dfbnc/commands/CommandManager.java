@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+
 import com.dfbnc.DFBnc;
 import com.dfbnc.sockets.UserSocket;
 import uk.org.dataforce.libs.logger.Logger;
@@ -43,10 +44,10 @@ import uk.org.dataforce.libs.logger.Logger;
  */
 public final class CommandManager {
     /** HashMap used to store the different types of Command known. */
-    private HashMap<String,Command> knownCommands = new HashMap<String,Command>();
+    private HashMap<String,Command> knownCommands = new HashMap<>();
 
     /** List used to store sub command mamangers */
-    private List<CommandManager> subManagers = new ArrayList<CommandManager>();
+    private List<CommandManager> subManagers = new ArrayList<>();
 
     /** Nesting limit for calls to getCommand() */
     private final static int nestingLimit = 10;
@@ -130,18 +131,18 @@ public final class CommandManager {
 
         if (startsWith.isEmpty() || startsWith.equals("?")) {
             if (allowAdmin) {
-                result = new HashMap<String, Command>(knownCommands);
+                result = new HashMap<>(knownCommands);
             } else {
                 // For non-admins we actually need to check all the commands to
                 // see if we are allowed use it or not.
-                result = new HashMap<String, Command>();
-                for (Entry<String, Command> entry : new HashMap<String, Command>(knownCommands).entrySet()) {
+                result = new HashMap<>();
+                for (Entry<String, Command> entry : new HashMap<>(knownCommands).entrySet()) {
                     result.put(entry.getKey(), entry.getValue());
                 }
             }
         } else {
-            result = new HashMap<String, Command>();
-            for (Entry<String, Command> entry : new HashMap<String, Command>(knownCommands).entrySet()) {
+            result = new HashMap<>();
+            for (Entry<String, Command> entry : new HashMap<>(knownCommands).entrySet()) {
                 if (!result.containsKey(entry.getKey()) && (entry.getKey().startsWith(sw) || entry.getKey().startsWith("*" + sw)) && (allowAdmin || !entry.getValue().isAdminOnly())) {
                     result.put(entry.getKey(), entry.getValue());
                 }
@@ -245,7 +246,7 @@ public final class CommandManager {
         for (String elementName : knownCommands.keySet()) {
             Logger.debug2("\t Checking handler for: "+elementName);
             testCommand = knownCommands.get(elementName);
-            if (testCommand.getName().equalsIgnoreCase(command.getName())) {
+            if (testCommand != null && testCommand.getName().equalsIgnoreCase(command.getName())) {
                 Logger.debug2("\t Removed handler for: "+elementName);
                 knownCommands.remove(elementName);
             }
@@ -266,12 +267,12 @@ public final class CommandManager {
      * @throws CommandNotFoundException If the requested command doesn't exist in this or any sub managers
      */
     public Entry<String, Command> getMatchingCommand(final String name, final boolean allowAdmin) throws CommandNotFoundException {
-        CommandNotFoundException cnfe = null;
+        CommandNotFoundException cnfe;
 
         Logger.debug5("Looking for matching command: " + name);
 
         try {
-            return new SimpleImmutableEntry<String, Command>(name, getCommand(name, allowAdmin));
+            return new SimpleImmutableEntry<>(name, getCommand(name, allowAdmin));
         } catch (CommandNotFoundException p) {
             cnfe = p;
         }
@@ -281,8 +282,8 @@ public final class CommandManager {
         if (DFBnc.getBNC().getConfig().getOptionBool("general", "allowshortcommands")) {
             Logger.debug5("Short commands enabled.");
             // Find a matching command.
-            final Map<String, Command> cmds = new TreeMap<String, Command>(getAllCommands(name, allowAdmin));
-            final Set<Command> commands = new HashSet<Command>(cmds.values());
+            final Map<String, Command> cmds = new TreeMap<>(getAllCommands(name, allowAdmin));
+            final Set<Command> commands = new HashSet<>(cmds.values());
             Logger.debug5("Matching Handlers: " + cmds.size());
             Logger.debug5("Matching Commands: " + commands.size());
 
@@ -291,26 +292,25 @@ public final class CommandManager {
             // case of multiple matching handlers, are they actually just the
             // same command anyway?
             if (cmds.size() == 1 || commands.size() == 1) {
-                for (Entry<String, Command> entry : cmds.entrySet()) {
-                    Logger.debug5("Matching Handler: " + entry);
-                    // Don't match this command if the short form is not permitted.
-                    if (!entry.getValue().allowShort(entry.getKey())) {
-                        throw cnfe;
-                    }
+                final Entry<String, Command> entry = cmds.entrySet().iterator().next();
+                Logger.debug5("Matching Handler: " + entry);
+                // Don't match this command if the short form is not permitted.
+                if (!entry.getValue().allowShort(entry.getKey())) {
+                    throw cnfe;
+                }
 
-                    String handlerName = entry.getKey().charAt(0) == '*' ? entry.getKey().substring(1) : entry.getKey();
-                    if (cmds.size() > 1) {
-                        // Single command, but multiple handles. Use the
-                        // earliest one from the handles array.
-                        Logger.debug5("Multi handler match");
-                        for (String handle : entry.getValue().handles()) {
-                            if (handle.toLowerCase().startsWith(name.toLowerCase())) {
-                                handlerName = handle;
-                                break;
-                            }
+                String handlerName = entry.getKey().charAt(0) == '*' ? entry.getKey().substring(1) : entry.getKey();
+                if (cmds.size() > 1) {
+                // Single command, but multiple handles. Use the
+                // earliest one from the handles array.
+                Logger.debug5("Multi handler match");
+                    for (String handle : entry.getValue().handles()) {
+                        if (handle.toLowerCase().startsWith(name.toLowerCase())) {
+                            handlerName = handle;
+                            break;
                         }
                     }
-                    return new SimpleImmutableEntry<String, Command>(handlerName, entry.getValue());
+                    return new SimpleImmutableEntry<>(handlerName, entry.getValue());
                 }
             } else {
                 // Last ditch attempt, see if there is a single non-hidden
@@ -323,7 +323,7 @@ public final class CommandManager {
                         // otherwise, if we have already found one, then abort
                         // and forget about any we found.
                         if (unhidden == null) {
-                            unhidden = new SimpleImmutableEntry<String, Command>(entry);
+                            unhidden = new SimpleImmutableEntry<>(entry);
                         } else {
                             unhidden = null;
                             break;

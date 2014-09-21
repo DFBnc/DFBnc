@@ -21,8 +21,6 @@
  */
 package com.dfbnc.commands;
 
-import com.dfbnc.sockets.UserSocket;
-
 /**
  * This file represents a command
  */

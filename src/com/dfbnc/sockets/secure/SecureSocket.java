@@ -21,7 +21,6 @@
  */
 package com.dfbnc.sockets.secure;
 
-import com.dfbnc.sockets.secure.SSLByteChannel;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -38,19 +37,18 @@ import java.security.cert.CertificateException;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManagerFactory;
+
 import com.dfbnc.DFBnc;
 import com.dfbnc.sockets.ConnectedSocket;
 import com.dfbnc.sockets.SocketWrapper;
-import javax.net.ssl.SSLException;
 
 /**
  * This defines a Secure (ssl) Socket.
  */
 public class SecureSocket extends SocketWrapper {
 
-    /** SSLEngine used for this socket */
-    private final SSLEngine sslEngine;
     /** SSLContext in use by ssl sockets */
     private static SSLContext sslContext = null;
 
@@ -66,7 +64,8 @@ public class SecureSocket extends SocketWrapper {
         super(channel, owner, key);
 
         try {
-            sslEngine = getSSLContext().createSSLEngine();
+            /* SSLEngine used for this socket */
+            SSLEngine sslEngine = getSSLContext().createSSLEngine();
             sslEngine.setUseClientMode(false);
             sslEngine.beginHandshake();
 
@@ -122,7 +121,6 @@ public class SecureSocket extends SocketWrapper {
         return sslContext;
     }
 
-    /** {@inheritDoc} */
     @Override
     public boolean handleIOException(final IOException ioe) {
         if (ioe instanceof SSLException) {
