@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,6 +36,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.SortedMap;
 import java.util.TreeMap;
+
 import com.dfbnc.Account;
 import com.dfbnc.AccountManager;
 import com.dfbnc.ConnectionHandler;
@@ -43,9 +45,8 @@ import com.dfbnc.DFBnc;
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandNotFoundException;
 import com.dfbnc.commands.CommandOutput;
-import uk.org.dataforce.libs.logger.Logger;
 import com.dfbnc.util.Util;
-import java.util.Arrays;
+import uk.org.dataforce.libs.logger.Logger;
 
 /**
  * This socket handles actual clients connected to the bnc.
@@ -90,11 +91,6 @@ public class UserSocket extends ConnectedSocket {
     /** Counter for inactivity. */
     private int inactiveCounter = 0;
 
-    /** Maximum password attempts.
-     * This should be changed to a config setting at some point.
-     */
-    private final int maxPasswordTries = 3;
-
     /** IP Address of this socket */
     private String myIP = "0.0.0.0";
 
@@ -111,13 +107,13 @@ public class UserSocket extends ConnectedSocket {
     private boolean isQuitting = false;
 
     /** Lines buffered during negotiation. */
-    private List<String> negotiationLines = new LinkedList<String>();
+    private List<String> negotiationLines = new LinkedList<>();
 
     /** Map of capabilities and their state. */
-    private final Map<String, CapabilityState> capabilities = new HashMap<String, CapabilityState>();
+    private final Map<String, CapabilityState> capabilities = new HashMap<>();
 
     /** Map of objects associated with this UserSocket. */
-    private final static HashMap<Object, Object> myMap = new HashMap<Object, Object>();
+    private final static HashMap<Object, Object> myMap = new HashMap<>();
 
     /**
      * Create a new UserSocket.
@@ -313,11 +309,10 @@ public class UserSocket extends ConnectedSocket {
     /**
      * Get a List of all UserSockets.
      *
-     * @param account Account to check sockets against
      * @return a Collection of all UserSockets that are part of the given account
      */
     public static List<UserSocket> getUserSockets() {
-        return new ArrayList<UserSocket>(knownSockets.values());
+        return new ArrayList<>(knownSockets.values());
     }
 
     /**
@@ -327,7 +322,7 @@ public class UserSocket extends ConnectedSocket {
      * @return a Collection of all UserSockets that are part of the given account
      */
     public static List<UserSocket> getUserSockets(final Account account) {
-        final ArrayList<UserSocket> list = new ArrayList<UserSocket>();
+        final ArrayList<UserSocket> list = new ArrayList<>();
         synchronized (knownSockets) {
             for (UserSocket socket : knownSockets.values()) {
                 if (socket.getAccount() == account) {
@@ -503,7 +498,7 @@ public class UserSocket extends ConnectedSocket {
      * @return True if this socket is allowed, else false.
      */
     public boolean allowedChannel(final String channel) {
-        return (myAccount.getConnectionHandler() != null) ? myAccount.getConnectionHandler().allowedChannel(this, channel) : true;
+        return (myAccount.getConnectionHandler() == null) || myAccount.getConnectionHandler().allowedChannel(this, channel);
     }
 
     /**
@@ -864,8 +859,12 @@ public class UserSocket extends ConnectedSocket {
                 }
             } else {
                 passwordTries++;
-                final StringBuffer message = new StringBuffer("Password incorrect, or account not found.");
+                final StringBuilder message = new StringBuilder("Password incorrect, or account not found.");
                 message.append(" You have ");
+                /* Maximum password attempts.
+      This should be changed to a config setting at some point.
+     */
+                int maxPasswordTries = 3;
                 message.append(maxPasswordTries - passwordTries);
                 message.append(" attempt(s) left.");
                 sendIRCLine(Consts.ERR_PASSWDMISMATCH, line[0], message.toString());
@@ -1003,7 +1002,7 @@ public class UserSocket extends ConnectedSocket {
             }
 
             if (nextCommand) {
-                sections.add(thisSection.toArray(new String[0]));
+                sections.add(thisSection.toArray(new String[thisSection.size()]));
                 thisSection.clear();
                 nextCommand = false;
             }
@@ -1011,7 +1010,7 @@ public class UserSocket extends ConnectedSocket {
             thisSection.add(b);
         }
         if (!thisSection.isEmpty()) {
-            sections.add(thisSection.toArray(new String[0]));
+            sections.add(thisSection.toArray(new String[thisSection.size()]));
         }
 
         // for (String[] s : sections) { System.out.println(Arrays.toString(s)); }

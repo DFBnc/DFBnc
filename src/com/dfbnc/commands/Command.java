@@ -150,7 +150,7 @@ public abstract class Command {
 
         if (params.contains(param)) {
             return Arrays.asList(param);
-        } else if (param == null || param.isEmpty() || param.equals("?")) {
+        } else if (param.isEmpty() || param.equals("?")) {
             return new ArrayList<>(params);
         } else {
             final List<String> result = new ArrayList<>();
@@ -159,10 +159,6 @@ public abstract class Command {
                 if (!result.contains(p) && p.startsWith(sw)) {
                     result.add(p);
                 }
-            }
-
-            if (result.isEmpty()) {
-                // result.add(param);
             }
 
             return result;

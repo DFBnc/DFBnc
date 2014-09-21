@@ -139,8 +139,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         me.setRealname(myAccount.getConfig().getOption("irc", "realname"));
         me.setUsername(myAccount.getConfig().getOption("irc", "username"));
 
-        List<String> serverList = new ArrayList<>();
-        serverList = acc.getConfig().getOptionList("irc", "serverlist");
+        List<String> serverList = acc.getConfig().getOptionList("irc", "serverlist");
 
         if (serverList.isEmpty()) {
             throw new UnableToConnectException("No servers found");
@@ -206,7 +205,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
      */
     private void setupOutputQueue() {
         // We can only set a queue on an IRC Parser that is ready.
-        if (myParser == null || !(myParser instanceof IRCParser) || !parserReady) { return; }
+        if (!(myParser instanceof IRCParser) || !parserReady) { return; }
 
         final IRCParser irc = ((IRCParser)myParser);
         final OutputQueue out = irc.getOutputQueue();
@@ -565,7 +564,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                                     // In this case the actual 324 and the 329 from the server will get
                                     // through to the client
                                     if (((IRCChannelInfo) channel).getCreateTime() > 0) {
-                                        user.sendIRCLine(324, myParser.getLocalClient().getNickname() + " " + channel, ((IRCChannelInfo) channel).getModes(), false);
+                                        user.sendIRCLine(324, myParser.getLocalClient().getNickname() + " " + channel, channel.getModes(), false);
                                         user.sendIRCLine(329, myParser.getLocalClient().getNickname() + " " + channel, "" + ((IRCChannelInfo) channel).getCreateTime(), false);
                                     } else {
                                         allowLine(channel, "324");
@@ -787,7 +786,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
     private void allowLine(final ChannelInfo channel, final String token) {
         List<String> tokens;
         if (channel != null) {
-            tokens = (List<String>) ((IRCChannelInfo) channel).getMap().get("AllowedTokens");
+            tokens = (List<String>) channel.getMap().get("AllowedTokens");
             if (tokens == null) {
                 tokens = new ArrayList<>();
             }
@@ -798,7 +797,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
             tokens.add(token);
         }
         if (channel != null) {
-            ((IRCChannelInfo) channel).getMap().put("AllowedTokens", tokens);
+            channel.getMap().put("AllowedTokens", tokens);
         }
     }
 
@@ -814,7 +813,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
     private void disallowLine(final ChannelInfo channel, final String token) {
         List<String> tokens;
         if (channel != null) {
-            tokens = (List<String>) ((IRCChannelInfo) channel).getMap().get("AllowedTokens");
+            tokens = (List<String>) channel.getMap().get("AllowedTokens");
             if (tokens == null) {
                 tokens = new ArrayList<>();
             }
@@ -825,7 +824,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
             tokens.remove(token);
         }
         if (channel != null) {
-            ((IRCChannelInfo) channel).getMap().put("AllowedTokens", tokens);
+            channel.getMap().put("AllowedTokens", tokens);
         }
     }
 
@@ -840,7 +839,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
     private boolean checkAllowLine(final ChannelInfo channel, final String token) {
         List<String> tokens;
         if (channel != null) {
-            tokens = (List<String>) ((IRCChannelInfo) channel).getMap().get("AllowedTokens");
+            tokens = (List<String>) channel.getMap().get("AllowedTokens");
             if (tokens == null) {
                 tokens = new ArrayList<>();
             }
@@ -912,8 +911,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /**
      * Add a message to the backbuffer.
      *
-     * @param time
-     * @param message
+     * @param time    The time the message occurred
+     * @param message The message that occurred
      */
     @SuppressWarnings("unchecked")
     private void addBackbufferMessage(final ChannelInfo channel, final long time, final String message) {
@@ -1135,15 +1134,13 @@ public class IRCConnectionHandler implements ConnectionHandler,
         if (!checkParser(parser)) { return; }
 
         hasMOTDEnd = true;
-        List<String> myList = new ArrayList<>();
-        myList = myAccount.getConfig().getOptionList("irc", "perform.connect");
+        List<String> myList = myAccount.getConfig().getOptionList("irc", "perform.connect");
         Logger.debug3("Connected. Handling performs");
         for (String line : myList) {
             myParser.sendRawMessage(filterPerformLine(line));
             Logger.debug3("Sending perform line: " + line);
         }
         if (myAccount.getUserSockets().isEmpty()) {
-            myList = new ArrayList<>();
             myList = myAccount.getConfig().getOptionList("irc", "perform.lastdetach");
             for (String line : myList) {
                 myParser.sendRawMessage(filterPerformLine(line));
@@ -1279,7 +1276,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                     str302.append('*');
                 }
                 str302.append('=');
-                if (((IRCClientInfo) me).getAwayState() == AwayState.AWAY) {
+                if (me.getAwayState() == AwayState.AWAY) {
                     user.sendIRCLine(306, myParser.getLocalClient().getNickname(), "You have been marked as being away");
                     str302.append('-');
                 } else {
@@ -1322,8 +1319,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                         }
 
                         if (myAccount.getUserSockets().size() == 1) {
-                            List<String> myList = new ArrayList<>();
-                            myList = myAccount.getConfig().getOptionList("irc", "perform.firstattach");
+                            List<String> myList = myAccount.getConfig().getOptionList("irc", "perform.firstattach");
                             for (String line : myList) {
                                 myParser.sendRawMessage(filterPerformLine(line));
                             }
@@ -1499,8 +1495,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
     public void userDisconnected(final UserSocket user) {
         if (parserReady) {
             if (myAccount.getUserSockets().isEmpty()) {
-                List<String> myList = new ArrayList<>();
-                myList = myAccount.getConfig().getOptionList("irc", "perform.lastdetach");
+                List<String> myList = myAccount.getConfig().getOptionList("irc", "perform.lastdetach");
                 for (String line : myList) {
                     myParser.sendRawMessage(filterPerformLine(line));
                 }

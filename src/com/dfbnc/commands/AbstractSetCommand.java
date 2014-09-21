@@ -32,7 +32,7 @@ import com.dfbnc.sockets.UserSocket;
 public abstract class AbstractSetCommand extends Command {
 
     /** Valid Parameters. */
-    protected Map<String, ParamInfo> validParams = new HashMap<String, ParamInfo>();
+    protected Map<String, ParamInfo> validParams = new HashMap<>();
 
     /** Domain to set. */
     protected String setDomain = "misc";
@@ -163,7 +163,7 @@ public abstract class AbstractSetCommand extends Command {
         /** Single-Word String Param (ie Nickname) */
         WORD,
         /** Multi-Word String Param (ie Real Name) */
-        STRING;
+        STRING
     }
 
     /** ParamInfo */

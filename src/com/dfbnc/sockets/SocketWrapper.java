@@ -377,7 +377,7 @@ public abstract class SocketWrapper {
         }
 
         if (selKey.isValid() && selKey.isReadable()) {
-            int numBytesRead = 0;
+            int numBytesRead;
             do {
                 buffer.clear();
                 numBytesRead = read(buffer);
@@ -418,7 +418,6 @@ public abstract class SocketWrapper {
                         Logger.warning("Trying to switch back to read but key is cancelled");
                         myOwner.closeSocket("Read key cancelled.");
                     }
-                    return;
                 }
             } catch (final IOException ioe) {
                 Logger.info("Socket has been closed.");
@@ -430,7 +429,6 @@ public abstract class SocketWrapper {
     /**
      * Handle an IOException from the socket.
      *
-     * @param selKey SelectionKey we were given.
      * @param ioe Exception to handle.
      * @return Boolean, true if socket should be closed.
      */

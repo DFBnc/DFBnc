@@ -63,7 +63,7 @@ public final class Account implements UserSocketWatcher {
     /** ConnectionHandler for this account */
     private ConnectionHandler myConnectionHandler = null;
     /** List of all sockets that are part of this account. */
-    private List<UserSocket> myUserSockets = new CopyOnWriteArrayList<UserSocket>();
+    private List<UserSocket> myUserSockets = new CopyOnWriteArrayList<>();
     /** Account config file. */
     private Config config;
     /** Reconnect Timer. */

@@ -31,11 +31,11 @@ import com.dfbnc.commands.ListOption;
 public class ChannelWhitelistCommand extends AbstractListEditCommand {
     /** {@inheritDoc} */
     @Override
-    public String getPropertyName(final String command) { return "channelwhitelist." + command; };
+    public String getPropertyName(final String command) { return "channelwhitelist." + command; }
 
     /** {@inheritDoc} */
     @Override
-    public String getDomainName(final String command) { return "irc"; };
+    public String getDomainName(final String command) { return "irc"; }
 
     /** {@inheritDoc} */
     @Override

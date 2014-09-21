@@ -42,19 +42,19 @@ public class CLIParser {
      * Known arguments.
      * This hashmap stores the arguments with their flags as the key.
      */
-    private Map<String, CLIParam> params = new HashMap<String, CLIParam>();
+    private Map<String, CLIParam> params = new HashMap<>();
 
     /**
      * Known arguments.
      * This ArrayList stores every param type. (used for help)
      */
-    private List<CLIParam> paramList = new ArrayList<CLIParam>();
+    private List<CLIParam> paramList = new ArrayList<>();
 
     /**
      * Redundant Strings.
      * This ArrayList stores redundant strings found whilst parsing the params.
      */
-    private List<String> redundant = new ArrayList<String>();
+    private List<String> redundant = new ArrayList<>();
 
     /**
      * Last set of arguments parsed.
@@ -165,7 +165,7 @@ public class CLIParser {
      * @return list of redundant strings.
      */
     public List<String> getRedundant() {
-        final List<String> result = new ArrayList<String>();
+        final List<String> result = new ArrayList<>();
         for (String item : redundant) {
             result.add(item);
         }
@@ -248,7 +248,7 @@ public class CLIParser {
                 if (fullparam.equals("-")) {
                     allRedundant = true;
                 } else {
-                    final ArrayList<String> givenParams = new ArrayList<String>();
+                    final ArrayList<String> givenParams = new ArrayList<>();
                     if (arg.charAt(1) == '-') {
                         givenParams.add(fullparam);
                     } else {

@@ -37,7 +37,7 @@ public class ServerListCommand extends AbstractListEditCommand {
      * @return The name of the property to store the list in.
      */
     @Override
-    public String getPropertyName(final String command) { return "serverlist"; };
+    public String getPropertyName(final String command) { return "serverlist"; }
 
     /**
      * Get the name of the domain to store the list in.
@@ -46,7 +46,7 @@ public class ServerListCommand extends AbstractListEditCommand {
      * @return The name of the domain to store the list in.
      */
     @Override
-    public String getDomainName(final String command) { return "irc"; };
+    public String getDomainName(final String command) { return "irc"; }
 
     /**
      * Get the name of the list.
