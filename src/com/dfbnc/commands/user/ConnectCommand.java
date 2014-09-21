@@ -92,7 +92,6 @@ public class ConnectCommand extends Command {
         return new String[]{"connect", "reconnect", "disconnect", "*quit"};
     }
 
-    /** {@inheritDoc} */
     @Override
     public boolean allowShort(final String handle) {
         // Only allow the connect command to be shortened.

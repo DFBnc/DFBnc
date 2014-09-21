@@ -50,9 +50,6 @@ public class DFBncDaemon extends Daemon {
         if (pidFile != null) { writePidFile(pidFile); }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void closeDescriptors() throws IOException {
         super.closeDescriptors();

@@ -72,7 +72,6 @@ public class ShutdownCommand extends AdminCommand {
         return new String[]{"shutdown"};
     }
 
-    /** {@inheritDoc} */
     @Override
     public boolean allowShort(final String handle) {
         return false;

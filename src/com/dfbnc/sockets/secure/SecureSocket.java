@@ -121,7 +121,6 @@ public class SecureSocket extends SocketWrapper {
         return sslContext;
     }
 
-    /** {@inheritDoc} */
     @Override
     public boolean handleIOException(final IOException ioe) {
         if (ioe instanceof SSLException) {

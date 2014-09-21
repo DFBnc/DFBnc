@@ -216,7 +216,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
             // Set a factory that will produce a queue with the settings the
             // user wants.
             out.setQueueFactory(new QueueFactory() {
-                /** {@inheritDoc} */
+
                 @Override
                 public QueueHandler getQueueHandler(final OutputQueue outputQueue, final BlockingQueue<QueueItem> queue, final PrintWriter out) {
                     final SimpleRateLimitedQueueHandler q = new SimpleRateLimitedQueueHandler(outputQueue, queue, out);
@@ -293,7 +293,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
         }
     }
 
-    /** {@inheritDoc} */
     @Override
     public ConnectionHandler newInstance() throws UnableToConnectException {
         return new IRCConnectionHandler(myAccount, myServerNum);
@@ -751,7 +750,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
         return false;
     }
 
-    /** {@inheritDoc} */
     @Override
     public String getServerName() {
         if (parserReady) {
@@ -761,7 +759,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
         }
     }
 
-    /** {@inheritDoc} */
     @Override
     public void onNickChanged(final Parser parser, final Date date, final ClientInfo client, final String oldNick) {
         if (!checkParser(parser)) { return; }
@@ -850,7 +847,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
         return tokens.contains(token);
     }
 
-    /** {@inheritDoc} */
     @Override
     public void onChannelSelfJoin(final Parser parser, final Date date, final ChannelInfo channel) {
         if (!checkParser(parser)) { return; }
@@ -869,7 +865,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
         onChannelJoin(parser, date, channel, channel.getChannelClient(parser.getLocalClient()));
     }
 
-    /** {@inheritDoc} */
     @Override
     public void onChannelJoin(final Parser parser, final Date date, final ChannelInfo channel, final ChannelClientInfo client) {
         if (!checkParser(parser)) { return; }
@@ -893,7 +888,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
         }
     }
 
-    /** {@inheritDoc} */
     @Override
     @SuppressWarnings("unchecked")
     public void configChanged(final String domain, final String setting) {
@@ -922,7 +916,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
         }
     }
 
-    /** {@inheritDoc} */
     @Override
     public RollingList<BackbufferMessage> getBackbufferList(final String channel) {
         final ChannelInfo ci = myParser.getChannel(channel);
@@ -947,7 +940,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
         return new RollingList<>(0);
     }
 
-    /** {@inheritDoc} */
     @Override
     public void onDataOut(final Parser parser, final Date date, final String data, final boolean fromParser) {
         if (!checkParser(parser)) { return; }
@@ -961,7 +953,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
         }
     }
 
-    /** {@inheritDoc} */
     @Override
     public void onDataIn(final Parser parser, final Date date, final String data) {
         if (!checkParser(parser)) { return; }
@@ -1118,7 +1109,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
         }
     }
 
-    /** {@inheritDoc} */
     @Override
     public void onServerReady(final Parser parser, final Date date) {
         if (!checkParser(parser)) { return; }
@@ -1128,7 +1118,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
         myParser.getCallbackManager().delCallback(NumericListener.class, this);
     }
 
-    /** {@inheritDoc} */
     @Override
     public void onMOTDEnd(final Parser parser, final Date date, final boolean noMOTD, final String data) {
         if (!checkParser(parser)) { return; }
@@ -1148,7 +1137,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
         }
     }
 
-    /** {@inheritDoc} */
     @Override
     public void onNumeric(final Parser parser, final Date date, final int numeric, final String[] token) {
         if (!checkParser(parser)) { return; }
@@ -1186,7 +1174,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
         }
     }
 
-    /** {@inheritDoc} */
     @Override
     public void onSocketClosed(final Parser parser, final Date date) {
         if (!checkParser(parser)) { return; }
@@ -1195,7 +1182,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
         myAccount.handlerDisconnected("Remote connection closed.");
     }
 
-    /** {@inheritDoc} */
     @Override
     public void onConnectError(final Parser parser, final Date date, final ParserError errorInfo) {
         if (!checkParser(parser)) { return; }
@@ -1221,8 +1207,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
         myAccount.handlerDisconnected("Connection error: " + description);
     }
 
-
-    /** {@inheritDoc} */
     @Override
     public void onErrorInfo(final Parser parser, final Date date, final ParserError errorInfo) {
         if (!checkParser(parser)) { return; }
@@ -1239,7 +1223,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
         myAccount.reportException(errorInfo.getException());
     }
 
-    /** {@inheritDoc} */
     @Override
     public void userConnected(final UserSocket user) {
         Logger.debug2("IRC userConnected: Check for 001: " + parserReady);
@@ -1290,7 +1273,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 final Collection<? extends ChannelInfo> channels = myParser.getChannels();
 
                 new Timer().schedule(new TimerTask() {
-                    /** {@inheritDoc} */
+
                     @Override
                     public void run() {
                         if (!user.getSocketWrapper().isConnected()) { return; }
@@ -1516,7 +1499,6 @@ public class IRCConnectionHandler implements ConnectionHandler,
         return result;
     }
 
-    /** {@inheritDoc} */
     @Override
     public void cleanupUser(final UserSocket user, final String reason) {
         for (ChannelInfo channel : myParser.getChannels()) {

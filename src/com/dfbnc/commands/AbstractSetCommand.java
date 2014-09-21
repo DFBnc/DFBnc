@@ -139,7 +139,6 @@ public abstract class AbstractSetCommand extends Command {
         }
     }
 
-    /** {@inheritDoc} */
     public AbstractSetCommand(final CommandManager manager) {
         super(manager);
     }

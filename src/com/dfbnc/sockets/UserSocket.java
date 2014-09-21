@@ -388,7 +388,6 @@ public class UserSocket extends ConnectedSocket {
         this.closeSocket(reason);
     }
 
-    /** {@inheritDoc} */
     @Override
     public void socketOpened() {
         sendBotMessage("Welcome to DFBnc (" + DFBnc.getVersion() + ")");
@@ -557,7 +556,6 @@ public class UserSocket extends ConnectedSocket {
         sendLine(":%s %s %s :%s", getServerName(), type, nickname, String.format(data, args));
     }
 
-    /** {@inheritDoc} */
     @Override
     protected void socketClosed(final boolean userRequested) {
         if (!closeAll) {
@@ -591,7 +589,6 @@ public class UserSocket extends ConnectedSocket {
         return true;
     }
 
-    /** {@inheritDoc} */
     @Override
     protected void processLine(final String line) {
         // Reset the inactive counter.

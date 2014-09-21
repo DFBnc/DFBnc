@@ -22,14 +22,14 @@
 
 package com.dfbnc.sockets;
 
-import com.dfbnc.sockets.secure.SecureSocket;
-import java.net.InetSocketAddress;
-import java.nio.channels.SocketChannel;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SelectionKey;
 import java.io.IOException;
-
+import java.net.InetSocketAddress;
 import java.nio.channels.CancelledKeyException;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
+
+import com.dfbnc.sockets.secure.SecureSocket;
 import uk.org.dataforce.libs.logger.Logger;
 
 /**
@@ -118,7 +118,6 @@ public class ListenSocket implements SelectedSocketHandler {
         }
     }
 
-    /** {@inheritDoc} */
     @Override
     public void processSelectionKey(final SelectionKey selKey) {
         try {
