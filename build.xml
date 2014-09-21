@@ -37,7 +37,8 @@
 	<property name="build.classes.dir" value="${build.dir}/classes"/>
 	<property name="build.classes.excludes" value="**/*.java,**/*.sh"/>
 	<property name="main.src.dir" value="src"/>
-	<property name="parser.src.dir" value="modules/parser/src" />
+	<property name="parser-common.src.dir" value="modules/parser/common/src" />
+	<property name="parser-irc.src.dir" value="modules/parser/irc/src" />
 	<property name="akuma.src.dir" value="modules/akuma/src/main/java/" />
 	<property name="util.src.dir" value="modules/util/src/" />
 	<property name="libs.jars" value="libs/jna/jna.jar,libs/jna/platform.jar" />
@@ -55,7 +56,8 @@
 	<property name="javac.excludes" value="" />
 	<property name="test.src.dir" value="test"/>
 	<property name="test.libs.jars" value="libs/mockito/mockito-all-1.8.2.jar" />
-	<property name="parser.test.src.dir" value="modules/parser/test"/>
+	<property name="parser-common.test.src.dir" value="modules/parser/common/test"/>
+	<property name="parser-irc.test.src.dir" value="modules/parser/irc/test"/>
 	<property name="test.includes" value="**/*Test.java"/>
 	<property name="test.build.classes.excludes" value="**/*.java,**/*.sh"/>
 	<property name="test.build.classes.dir" value="${build.dir}/test/classes"/>
@@ -129,7 +131,7 @@
 	  Testing
 	  -->
 	<target name="compile-test" depends="init" description="Compile Project Tests">
-		<javac excludes="${javac.excludes}" sourcepath="" srcdir="${test.src.dir}:${parser.test.src.dir}" destdir="${test.build.classes.dir}" deprecation="${javac.deprecation}" includeantruntime="false" debug="${javac.debug}">
+		<javac excludes="${javac.excludes}" sourcepath="" srcdir="${test.src.dir}:${parser-common.test.src.dir}:${parser-irc.test.src.dir}" destdir="${test.build.classes.dir}" deprecation="${javac.deprecation}" includeantruntime="false" debug="${javac.debug}">
 			<classpath>
 				<path path="${test.classpath}"/>
 				<path path="${test.libs.jars}"/>
@@ -175,7 +177,7 @@
 	  Compile
 	  -->
 	<target name="compile" depends="init" description="Compile Project">
-		<javac excludes="${javac.excludes}" sourcepath="" srcdir="${main.src.dir}:${parser.src.dir}:${akuma.src.dir}:${util.src.dir}" destdir="${build.classes.dir}" deprecation="${javac.deprecation}" source="${javac.source}" target="${javac.target}" includeantruntime="false" debug="${javac.debug}">
+		<javac excludes="${javac.excludes}" sourcepath="" srcdir="${main.src.dir}:${parser-common.src.dir}:${parser-irc.src.dir}:${akuma.src.dir}:${util.src.dir}" destdir="${build.classes.dir}" deprecation="${javac.deprecation}" source="${javac.source}" target="${javac.target}" includeantruntime="false" debug="${javac.debug}">
 			<classpath>
 				<path path="${javac.classpath}"/>
 				<path path="${libs.classpath}"/>
@@ -185,7 +187,8 @@
 
 		<copy todir="${build.classes.dir}">
 			<fileset dir="${main.src.dir}" excludes="${build.classes.excludes}"/>
-			<fileset dir="${parser.src.dir}" excludes="${build.classes.excludes}"/>
+			<fileset dir="${parser-common.src.dir}" excludes="${build.classes.excludes}"/>
+			<fileset dir="${parser-irc.src.dir}" excludes="${build.classes.excludes}"/>
 			<fileset dir="${akuma.src.dir}" excludes="${build.classes.excludes}"/>
 			<fileset dir="${util.src.dir}" excludes="${build.classes.excludes}"/>
 		</copy>
