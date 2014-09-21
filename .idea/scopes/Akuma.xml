@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Akuma" pattern="src[akuma]:com.sun.akuma.*" />
+</component>
