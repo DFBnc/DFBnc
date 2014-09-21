@@ -201,7 +201,7 @@
 	  -->
 	<property name="version.config" value="build/classes/com/dfbnc/version.config"/>
 	<available file=".git" property="is.git"/>
-    <target name="write-version-config" depends="-write-all-version"/>
+	<target name="write-version-config" depends="-write-all-version"/>
 	<target name="-write-all-version" depends="-write-version, -write-parser-version, -write-akuma-version, -write-util-version"/>
 	<target name="-write-version" depends="-write-version-header, -add-version"/>
 	<target name="-write-version-header">
