@@ -141,7 +141,8 @@
 
 		<copy todir="${test.build.classes.dir}">
 			<fileset dir="${test.src.dir}" excludes="${test.build.classes.excludes}"/>
-			<fileset dir="${parser.test.src.dir}" excludes="${test.build.classes.excludes}"/>
+			<fileset dir="${parser-common.test.src.dir}" excludes="${test.build.classes.excludes}"/>
+			<fileset dir="${parser-irc.test.src.dir}" excludes="${test.build.classes.excludes}"/>
 		</copy>
 	</target>
 
@@ -149,7 +150,8 @@
 		<junit showoutput="true" fork="true" failureproperty="tests.failed" errorproperty="tests.failed">
 			<batchtest todir="${test.results.dir}">
 				<fileset dir="${test.src.dir}" includes="${test.includes}"/>
-				<fileset dir="${parser.test.src.dir}" includes="${test.includes}"/>
+				<fileset dir="${parser-common.test.src.dir}" includes="${test.includes}"/>
+				<fileset dir="${parser-irc.test.src.dir}" includes="${test.includes}"/>
 			</batchtest>
 			<classpath>
 				<path path="${test.classpath}"/>
