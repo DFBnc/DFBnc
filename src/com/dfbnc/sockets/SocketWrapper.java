@@ -22,21 +22,20 @@
 
 package com.dfbnc.sockets;
 
-import java.net.Socket;
-import java.nio.channels.SocketChannel;
-import java.nio.charset.Charset;
-import java.nio.CharBuffer;
-import java.nio.channels.SelectionKey;
 import java.io.IOException;
+import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.CancelledKeyException;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.SocketChannel;
 import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import com.dfbnc.util.IRCLine;
 import uk.org.dataforce.libs.logger.Logger;
 
 /**
@@ -206,9 +205,9 @@ public abstract class SocketWrapper {
         // Write any waiting data.
         //
         // This has the potential to cause some kind of breakage that I can't
-        // actualy remember right now related to writing at the wrong time.
+        // actually remember right now related to writing at the wrong time.
         // I don't think it matters because we are closing anyway and it only
-        // affects the broken socket, but here be potenially bad breaking code
+        // affects the broken socket, but here be potentially bad breaking code
         // and this should be the first port of call for any break-on-close
         // related bugs!
         //
@@ -329,8 +328,6 @@ public abstract class SocketWrapper {
      * @throws CharacterCodingException if we were unable to convert the charset
      */
     private CharBuffer getCharBuffer(final ByteBuffer buffer) throws CharacterCodingException {
-        CharBuffer charBuffer = null;
-
         CharacterCodingException firstException = null;
         synchronized (myCharsets) {
             if (myCharsets.isEmpty()) {
@@ -343,10 +340,9 @@ public abstract class SocketWrapper {
                 try {
                     Logger.debug4("Charset: " + c);
                     buffer.reset();
-                    charBuffer = c.newDecoder().decode(buffer);
-                    return charBuffer;
+                    return c.newDecoder().decode(buffer);
                 } catch (final CharacterCodingException cce) {
-                    if (firstException != null) {
+                    if (firstException == null) {
                         firstException = cce;
                     }
                 }

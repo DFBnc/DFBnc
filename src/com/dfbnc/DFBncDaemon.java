@@ -21,11 +21,14 @@
  */
 package com.dfbnc;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
-import java.io.IOException;
+
 import com.sun.akuma.Daemon;
 import com.sun.akuma.JavaVMArguments;
+
 import static com.sun.akuma.CLibrary.LIBC;
 
 /**
@@ -96,10 +99,11 @@ public class DFBncDaemon extends Daemon {
             JavaVMArguments.of(getPID());
             // If we got here, we can fork, but only allow it when running
             // from a jar.
-            return DFBncDaemon.class.getResource("DFBncDaemon.class").getProtocol().equalsIgnoreCase("jar");
+            final URL url = DFBncDaemon.class.getResource("DFBncDaemon.class");
+            return url != null && url.getProtocol().equalsIgnoreCase("jar");
         } catch (final Throwable t) {
             // A few known errors can occur here, all of which mean we can't
-            // fork, but also, if this gives ANY error then theres no point
+            // fork, but also, if this gives ANY error then there's no point
             // trying to fork.
             //
             // IOException - Technically we can fork, but we got an IO Error

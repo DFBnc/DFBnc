@@ -183,10 +183,11 @@ public class AccountManager {
      */
     public static void loadAccounts() {
         final File directory = new File(DFBnc.getConfigDirName());
-        if (directory != null) {
+        final File[] directories = directory.listFiles();
+        if (directories == null) {
             return;
         }
-        for (File file : directory.listFiles()) {
+        for (File file : directories) {
             if (!DFBnc.getConfigFileName().equals(file.getName())) {
               try {
                  Account acc = new Account(file.getName());

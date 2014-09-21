@@ -315,12 +315,10 @@ public class IRCConnectionHandler implements ConnectionHandler,
      */
     @Override
     public String getMyHost() {
-        if (myParser != null && myParser.getLocalClient() != null) {
+        if (myParser.getLocalClient() != null) {
             return myParser.getLocalClient().toString();
-        } else if (myParser != null) {
-            return String.format("%s!@", myParser.getLocalClient().getNickname());
         } else {
-            return null;
+            return String.format("%s!@", myAccount.getName());
         }
     }
 
