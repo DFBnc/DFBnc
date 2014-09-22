@@ -314,12 +314,15 @@ versions:
 			</classpath>
 			<sourcepath>
 				<pathelement location="${main.src.dir}"/>
-				<pathelement location="${parser.src.dir}"/>
+				<pathelement location="${parser-common.src.dir}"/>
+				<pathelement location="${parser-irc.src.dir}"/>
 			</sourcepath>
 			<packageset dir="${main.src.dir}" includes="*/**"/>
 			<fileset dir="${main.src.dir}" includes="*.java"/>
-			<packageset dir="${parser.src.dir}" includes="*/**"/>
-			<fileset dir="${parser.src.dir}" includes="*.java"/>
+			<packageset dir="${parser-common.src.dir}" includes="*/**"/>
+			<fileset dir="${parser-common.src.dir}" includes="*.java"/>
+			<packageset dir="${parser-irc.src.dir}" includes="*/**"/>
+			<fileset dir="${parser-irc.src.dir}" includes="*.java"/>
 		</javadoc>
 	</target>
 
