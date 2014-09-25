@@ -1408,7 +1408,9 @@ public class IRCConnectionHandler implements ConnectionHandler,
             final String line;
             final Map<String,String> messageTags = new HashMap<>();
 
-            messageTags.put("batch", batchIdentifier);
+            if (user.getCapabilityState("batch") == CapabilityState.ENABLED) {
+                messageTags.put("batch", batchIdentifier);
+            }
 
             if (user.getCapabilityState("server-time") == CapabilityState.ENABLED) {
                 messageTags.put("time", servertime.format(message.getTime()));
@@ -1430,6 +1432,12 @@ public class IRCConnectionHandler implements ConnectionHandler,
             if (user.getCapabilityState("dfbnc.com/channelhistory") == CapabilityState.ENABLED) {
                 messageTags.put("dfbnc.com/channelhistory", null);
             }
+
+            // FIXME: This isn't the best way to handle this.
+            //        IRCLine as a whole needs rewriting really at some point.
+            //        But for now this will do to ensure we don't accidentally
+            //        send tags to clients that don't understand them.
+            if (!user.allowTags()) { messageTags.clear(); }
 
             final int maxLength = 510;
 

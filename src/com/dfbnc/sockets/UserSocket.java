@@ -29,11 +29,13 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -112,6 +114,12 @@ public class UserSocket extends ConnectedSocket {
     /** Map of capabilities and their state. */
     private final Map<String, CapabilityState> capabilities = new HashMap<>();
 
+    /** Capabilities that enable tags. */
+    private final Set<String> tagCapabilities = new HashSet<>();
+
+    /** Are message tags allowed? */
+    private boolean allowTags = false;
+
     /** Map of objects associated with this UserSocket. */
     private final static HashMap<Object, Object> myMap = new HashMap<>();
 
@@ -160,6 +168,11 @@ public class UserSocket extends ConnectedSocket {
             capabilities.put("server-time", CapabilityState.DISABLED);
             capabilities.put("batch", CapabilityState.DISABLED);
             capabilities.put("dfbnc.com/channelhistory", CapabilityState.DISABLED);
+
+            // TODO: Handle this better.
+            tagCapabilities.add("server-time");
+            tagCapabilities.add("batch");
+            tagCapabilities.add("dfbnc.com/channelhistory");
         }
     }
 
@@ -266,8 +279,21 @@ public class UserSocket extends ConnectedSocket {
         synchronized (capabilities) {
             if (capabilities.containsKey(capability.toLowerCase())) {
                 capabilities.put(capability.toLowerCase(), state);
+                if (state == CapabilityState.ENABLED && tagCapabilities.contains(capability.toLowerCase())) {
+                    allowTags = true;
+                }
             }
         }
+    }
+
+    /**
+     * Does this socket support message tags?
+     *
+     * @return True if this socket has ever enabled a capability that is
+     *         delivered via message tags.
+     */
+    public boolean allowTags() {
+        return allowTags;
     }
 
     /**
