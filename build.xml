@@ -51,8 +51,8 @@
 	<property name="javac.compilerargs" value="-Xlint:all"/>
 	<property name="javac.deprecation" value="true"/>
 	<property name="javac.debug" value="true"/>
-	<property name="javac.source" value="1.7"/>
-	<property name="javac.target" value="1.7"/>
+	<property name="javac.source" value="1.8"/>
+	<property name="javac.target" value="1.8"/>
 	<property name="javac.excludes" value="" />
 	<property name="test.src.dir" value="test"/>
 	<property name="test.libs.jars" value="libs/mockito/mockito-all-1.8.2.jar" />
