@@ -55,16 +55,17 @@
 	<property name="javac.target" value="1.8"/>
 	<property name="javac.excludes" value="" />
 	<property name="test.src.dir" value="test"/>
-	<property name="test.libs.jars" value="libs/mockito/mockito-all-1.8.2.jar" />
+	<property name="test.libs.jars" value="${libs.jars},libs/mockito/mockito-all-1.10.17.jar,libs/junit/junit-4.11.jar" />
+        <propertyregex property="test.libs.classpath" input="${test.libs.jars}" regexp="," replace=":" global="true" />
 	<property name="parser-common.test.src.dir" value="modules/parser/common/test"/>
 	<property name="parser-irc.test.src.dir" value="modules/parser/irc/test"/>
 	<property name="test.includes" value="**/*Test.java"/>
 	<property name="test.build.classes.excludes" value="**/*.java,**/*.sh"/>
 	<property name="test.build.classes.dir" value="${build.dir}/test/classes"/>
 	<property name="test.results.dir" value="${build.dir}/test/results"/>
-	<property name="test.junit.path" value="libs/junit/junit-4.8.1.jar"/>
+	<property name="test.junit.path" value="libs/junit/junit-4.11.jar"/>
 	<property name="javac.test.compilerargs" value="${javac.compilerargs}"/>
-	<property name="test.classpath" value="${javac.classpath}:${build.classes.dir}:${test.build.classes.dir}:${test.junit.path}"/>
+	<property name="test.classpath" value="${javac.classpath}:${build.classes.dir}:${test.build.classes.dir}:${test.libs.classpath}"/>
 	<property name="test.reports" value="${build.dir}/test/report"/>
 
 	<!--
@@ -134,7 +135,7 @@
 		<javac excludes="${javac.excludes}" sourcepath="" srcdir="${test.src.dir}:${parser-common.test.src.dir}:${parser-irc.test.src.dir}" destdir="${test.build.classes.dir}" deprecation="${javac.deprecation}" includeantruntime="false" debug="${javac.debug}">
 			<classpath>
 				<path path="${test.classpath}"/>
-				<path path="${test.libs.jars}"/>
+				<path path="${test.libs.classpath}"/>
 			</classpath>
 			<compilerarg line="${javac.test.compilerargs}"/>
 		</javac>
