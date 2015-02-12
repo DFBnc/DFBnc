@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="mbassador-1.2.0">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/libs/mbassador/juel-api-2.2.7.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/mbassador/juel-impl-2.2.7.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/mbassador/mbassador-1.2.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

@@ -41,7 +41,7 @@
 	<property name="parser-irc.src.dir" value="modules/parser/irc/src" />
 	<property name="akuma.src.dir" value="modules/akuma/src/main/java/" />
 	<property name="util.src.dir" value="modules/util/src/" />
-	<property name="libs.jars" value="libs/jna/jna.jar,libs/jna/platform.jar" />
+	<property name="libs.jars" value="libs/jna/jna.jar,libs/jna/platform.jar,libs/dagger/dagger-1.2.2.jar,libs/dagger/dagger-compiler-1.2.2.jar,libs/dagger/javawriter-2.5.0.jar,libs/dagger/javax.inject-1.jar,libs/mbassador/juel-api-2.2.7.jar,libs/mbassador/juel-impl-2.2.7.jar,libs/mbassador/juel-spi-2.2.7.jar,libs/mbassador/mbassador-1.2.0.jar,libs/guava/guava-18.0.jar,libs/jsr305/jsr305-3.0.0.jar" />
 	<propertyregex property="libs.classpath" input="${libs.jars}" regexp="," replace=":" global="true" />
 	<!-- <property name="libs.jars" value="libs/jna/jna.jar:libs/jna/platform.jar" /> -->
 	<var name="mergelibs" value="true"/>
@@ -51,8 +51,8 @@
 	<property name="javac.compilerargs" value="-Xlint:all"/>
 	<property name="javac.deprecation" value="true"/>
 	<property name="javac.debug" value="true"/>
-	<property name="javac.source" value="1.7"/>
-	<property name="javac.target" value="1.7"/>
+	<property name="javac.source" value="1.8"/>
+	<property name="javac.target" value="1.8"/>
 	<property name="javac.excludes" value="" />
 	<property name="test.src.dir" value="test"/>
 	<property name="test.libs.jars" value="libs/mockito/mockito-all-1.8.2.jar" />
