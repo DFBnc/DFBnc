@@ -138,7 +138,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
         }
 
         myParser = new IRCParser(me, server);
-        myParser.getCallbackManager().subscribe(new SimpleNickInUseHandler(myAltNickname, '_'));
+        SimpleNickInUseHandler.install(myParser, myAltNickname, '_');
+        SimplePingFailureHandler.install(myParser);
 
         setupCallbacks();
 
