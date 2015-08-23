@@ -861,6 +861,9 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
                 final RollingList<BackbufferMessage> myList = (RollingList<BackbufferMessage>)channel.getMap().get("backbufferList");
                 myList.setCapacity(size);
             }
+        } else if (domain.equalsIgnoreCase("server") && setting.equalsIgnoreCase("privatebackbuffer")) {
+            final int size = myAccount.getConfig().getOptionInt("server", "privatebackbuffer");
+            privateBackbufferList.setCapacity(size);
         } else if (domain.equalsIgnoreCase("irc") && setting.toLowerCase().startsWith("ratelimit")) {
             setupOutputQueue();
         }
