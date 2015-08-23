@@ -220,7 +220,7 @@ public class SSLByteChannel implements ByteChannel {
         final SSLEngineResult ser = myEngine.unwrap(inNetData, inAppData);
         inNetData.compact();
 
-        return new WrapResult(ser, total);
+        return new WrapResult(ser, total, WrapResultType.UNWRAP);
     }
 
     /**
@@ -244,7 +244,7 @@ public class SSLByteChannel implements ByteChannel {
         }
         outNetData.compact();
 
-        return new WrapResult(ser, total);
+        return new WrapResult(ser, total, WrapResultType.WRAP);
     }
 
     /**
@@ -261,17 +261,9 @@ public class SSLByteChannel implements ByteChannel {
 
         WrapResult wrapResult = inputResult;
 
-        // Standard Underflow allowance.
-        final int underflowLimit = 5;
-        int underflowCount = 0;
-
-        // Task Underflow allowance.
-        final int taskUnderflowLimit = 5000;
-        int taskUnderflowCount = 0;
-
         // Handshake if needed.
         HandshakeStatus hsStatus = wrapResult.ser.getHandshakeStatus();
-        boolean isTask = hsStatus == HandshakeStatus.NEED_TASK;
+        boolean isTask = (hsStatus == HandshakeStatus.NEED_TASK);
         while (hsStatus != HandshakeStatus.FINISHED && hsStatus != HandshakeStatus.NOT_HANDSHAKING) {
             hsStatus = wrapResult.ser.getHandshakeStatus();
             switch (hsStatus) {
@@ -283,7 +275,7 @@ public class SSLByteChannel implements ByteChannel {
                     while ((task = myEngine.getDelegatedTask()) != null) {
                         task.run();
                     }
-                    wrapResult = wrap();
+                    wrapResult = (wrapResult.type == WrapResultType.WRAP) ? wrap() : unwrap();
                     break;
                 case NEED_WRAP:
                     wrapResult = wrap();
@@ -297,23 +289,7 @@ public class SSLByteChannel implements ByteChannel {
                 break;
             }
 
-            // Catch "bad" sockets.
-            // If we loop too many times without producing or consuming
-            // anything, then break to allow something else to happen,
-            // otherwise we loop forever doing nothing and stop any other
-            // socket processing happening.
-            // In theory, neither of these underflow limits should ever be hit.
-            if (!isTask && wrapResult.ser.getStatus() == SSLEngineResult.Status.BUFFER_UNDERFLOW && wrapResult.ser.bytesConsumed() == 0 && wrapResult.ser.bytesProduced() == 0) {
-                underflowCount++;
-            } else if (isTask && wrapResult.ser.getStatus() == SSLEngineResult.Status.BUFFER_UNDERFLOW && wrapResult.ser.bytesConsumed() == 0 && wrapResult.ser.bytesProduced() == 0) {
-                taskUnderflowCount++;
-            } else if (wrapResult.ser.getStatus() == SSLEngineResult.Status.CLOSED) {
-                break;
-            } else {
-                underflowCount = 0;
-                taskUnderflowCount = 0;
-            }
-            if (underflowCount > underflowLimit || taskUnderflowCount > taskUnderflowLimit) {
+            if (wrapResult.ser.getStatus() == SSLEngineResult.Status.CLOSED) {
                 break;
             }
         }
@@ -332,13 +308,16 @@ public class SSLByteChannel implements ByteChannel {
         return wrapResult.ser;
     }
 
+    private enum WrapResultType { WRAP, UNWRAP; }
     private class WrapResult {
         public final SSLEngineResult ser;
         public final int bytes;
+        public final WrapResultType type;
 
-        public WrapResult(final SSLEngineResult ser, final int bytes) {
+        public WrapResult(final SSLEngineResult ser, final int bytes, final WrapResultType type) {
             this.ser = ser;
             this.bytes = bytes;
+            this.type = type;
         }
     }
 }
