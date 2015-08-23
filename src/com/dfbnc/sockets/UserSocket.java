@@ -953,9 +953,15 @@ public class UserSocket extends ConnectedSocket {
      * @param line IRCTokenised version of Line to handle
      */
     private void processAuthenticated(final String normalLine, final String[] line) {
+
+        // We might change what we want to pass to the Connection Handler
+        // (eg in the case of tapchat workarounds). If we do, this will be
+        // non-null.
+        String alternativeSendLine = null;
+
         // The bnc accepts commands as either:
         // /msg -BNC This is a command
-        // or /DFBNC This is a command (not there is no : used to separate arguments anywhere)
+        // or /DFBNC This is a command (note there is no : used to separate arguments anywhere)
         switch (line[0]) {
             case "PRIVMSG":
             case "NOTICE":
@@ -966,9 +972,28 @@ public class UserSocket extends ConnectedSocket {
                         co.send();
                         return;
                     } else {
+                        if (getClientType() == ClientType.TapChat && line.length > 2 && (line[2].startsWith("./"))) {
+                            // Command from tapchat, we should handle it here.
+                            final String[] bits = line[2].split(" ", 2);
+                            if (bits[0].equalsIgnoreCase("./me")) {
+                                final char char1 = (char) 1;
+                                alternativeSendLine = (bits.length > 1) ? String.format("%s %s :%sACTION %s%s", line[0], line[1], char1, bits[1], char1) : "";
+                            } else if (bits[0].equalsIgnoreCase("./nick")) {
+                                alternativeSendLine = (bits.length > 1) ? "NICK :" + bits[1] : "";
+                                break;
+                            } else if (bits[0].equalsIgnoreCase("./away")) {
+                                alternativeSendLine = (bits.length > 1) ? "AWAY :" + bits[1] : "AWAY";
+                                break;
+                            }
+                        }
+
                         final String myHost = (this.getAccount().getConnectionHandler() != null) ? this.getAccount().getConnectionHandler().getMyHost() : this.getNickname()+"!user@host" ;
                         if (myHost != null) {
-                            sendAllChannel(line[1], String.format(":%s %s", myHost, normalLine), true);
+                            if (alternativeSendLine == null) {
+                                sendAllChannel(line[1], String.format(":%s %s", myHost, normalLine), true);
+                            } else {
+                                sendAllChannel(line[1], String.format(":%s %s", myHost, alternativeSendLine), true);
+                            }
                         }
                     }
                 }
@@ -1010,7 +1035,11 @@ public class UserSocket extends ConnectedSocket {
         // We didn't handle this ourselves, send it to the ConnectionHandler
         ConnectionHandler myConnectionHandler = myAccount.getConnectionHandler();
         if (myConnectionHandler != null) {
-            myConnectionHandler.dataRecieved(this, normalLine, line);
+            if (alternativeSendLine == null) {
+                myConnectionHandler.dataRecieved(this, normalLine, line);
+            } else if (!alternativeSendLine.isEmpty()) {
+                myConnectionHandler.dataRecieved(this, alternativeSendLine, IRCParser.tokeniseLine(alternativeSendLine));
+            }
         } else {
             sendIRCLine(Consts.ERR_UNKNOWNCOMMAND, line[0], "Unknown command");
         }
