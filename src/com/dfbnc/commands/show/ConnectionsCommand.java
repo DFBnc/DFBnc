@@ -159,7 +159,7 @@ public class ConnectionsCommand extends Command {
      */
     @Override
     public String[] handles() {
-        return new String[]{"connections"};
+        return new String[]{"connections", "*sessions"};
     }
 
     /**
