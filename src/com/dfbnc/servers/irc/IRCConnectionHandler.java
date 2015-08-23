@@ -921,6 +921,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
 
         boolean forwardLine = true;
         String channelName = null;
+        int numeric = 0;
+        boolean isNumeric = false;
         final String[] bits = IRCParser.tokeniseLine(event.getData());
         if (bits.length == 1) {
             // Something is wrong, the server sent us a line that only includes
@@ -956,7 +958,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
         }
 
         try {
-            final int numeric = Integer.parseInt(bits[1]);
+            numeric = Integer.parseInt(bits[1]);
+            isNumeric = true;
             if (myParser instanceof IRCParser) {
                 final IRCParser ircParser = ((IRCParser) myParser);
                 final boolean supportLISTMODE = ircParser.get005().containsKey("LISTMODE");
@@ -1059,13 +1062,17 @@ public class IRCConnectionHandler implements ConnectionHandler,
 
         if (forwardLine) {
             for (UserSocket socket : myAccount.getUserSockets()) {
-                if (socket.syncCompleted()) {
-                    if (channelName != null && !socket.allowedChannel(channelName)) { continue; }
-                    if (forceRequeueList.contains(socket) && socket.getMap().containsKey("requeue")) {
-                        ((List<String>)socket.getMap().get("requeue")).add(event.getData());
-                    } else {
-                        socket.sendLine(event.getData());
-                    }
+                if (channelName != null && !socket.allowedChannel(channelName)) { continue; }
+
+                boolean canSendMessage = socket.syncCompleted();
+                if (!socket.syncCompleted()) {
+                    // If this is unrelated to a channel, send it on to clients
+                    // regardless of sync status, unless it is 001-005.
+                    canSendMessage = (channelName == null && isNumeric && numeric > 5);
+                }
+
+                if (canSendMessage) {
+                    socket.sendLine(event.getData());
                 }
             }
         }
@@ -1225,6 +1232,10 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 str302.append('=');
                 if (me.getAwayState() == AwayState.AWAY) {
                     user.sendIRCLine(306, myParser.getLocalClient().getNickname(), "You have been marked as being away");
+                    if (user.getCapabilityState("away-notify") == CapabilityState.ENABLED && !me.getAwayReason().isEmpty()) {
+                        // Also send an actual AWAY message if we know it and the user has away-notify enabled.
+                        user.sendLine(":%s AWAY :%s", me, me.getAwayReason());
+                    }
                     str302.append('-');
                 } else {
                     str302.append('+');
