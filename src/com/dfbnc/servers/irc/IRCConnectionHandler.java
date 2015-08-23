@@ -1341,29 +1341,34 @@ public class IRCConnectionHandler implements ConnectionHandler,
      * @param backbufferList Backbuffer to send
      */
     private void sendBackbuffer(final UserSocket user, final ChannelInfo channel, final RollingList<BackbufferMessage> backbufferList) {
-        if (backbufferList.isEmpty()) {
-            if (user.getCapabilityState("dfbnc.com/channelhistory") == CapabilityState.ENABLED) {
-                user.sendServerLine("EMPTYHISTORY", channel.getName());
-            } else {
-                user.sendBotChat(channel.getName(), "NOTICE", "This channel has no current backbuffer.");
-            }
-            return;
-        }
-
         final String batchIdentifier = "backbuffer_" + channel.getName() + "_" + System.currentTimeMillis();
         startBatch(user, batchIdentifier);
 
-        if (user.getCapabilityState("dfbnc.com/channelhistory") == CapabilityState.ENABLED) {
-            user.sendServerLine("BEGINHISTORY", channel.getName());
+        boolean firstValid = true;
+        final long earliestTime;
+        if (myAccount.getConfig().hasOption("server", "backbuffertimeout") && myAccount.getConfig().hasOption("server", "backbuffertimeout")) {
+            earliestTime = System.currentTimeMillis() - (myAccount.getConfig().getOptionInt("server", "backbuffertimeout") * 1000);
         } else {
-            user.sendBotChat(channel.getName(), "NOTICE", "Beginning backbuffer...");
+            earliestTime = 0;
         }
+
         final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         final SimpleDateFormat servertime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
         for (BackbufferMessage message : backbufferList) {
             final String line;
             final Map<String,String> messageTags = new HashMap<>();
+
+            final boolean valid = (message.getTime() >= earliestTime);
+
+            if (valid && firstValid) {
+                firstValid = false;
+                if (user.getCapabilityState("dfbnc.com/channelhistory") == CapabilityState.ENABLED) {
+                    user.sendServerLine("BEGINHISTORY", channel.getName());
+                } else {
+                    user.sendBotChat(channel.getName(), "NOTICE", "Beginning backbuffer...");
+                }
+            }
 
             if (user.getCapabilityState("batch") == CapabilityState.ENABLED) {
                 messageTags.put("batch", batchIdentifier);
@@ -1396,6 +1401,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
             //        send tags to clients that don't understand them.
             if (!user.allowTags()) { messageTags.clear(); }
 
+            // TODO: Allow clients to specify a longer length to save us needing
+            //       to wrap things.
             final int maxLength = 510;
 
             if (line.length() <= maxLength) {
@@ -1422,10 +1429,21 @@ public class IRCConnectionHandler implements ConnectionHandler,
             }
         }
 
-        if (user.getCapabilityState("dfbnc.com/channelhistory") == CapabilityState.ENABLED) {
-            user.sendServerLine("ENDHISTORY", channel.getName());
+        if (firstValid) {
+            if (backbufferList.isEmpty()) {
+                if (user.getCapabilityState("dfbnc.com/channelhistory") == CapabilityState.ENABLED) {
+                    user.sendServerLine("EMPTYHISTORY", channel.getName());
+                } else {
+                    user.sendBotChat(channel.getName(), "NOTICE", "This channel has no current backbuffer.");
+                }
+                return;
+            }
         } else {
-            user.sendBotChat(channel.getName(), "NOTICE", "End of backbuffer.");
+            if (user.getCapabilityState("dfbnc.com/channelhistory") == CapabilityState.ENABLED) {
+                user.sendServerLine("ENDHISTORY", channel.getName());
+            } else {
+                user.sendBotChat(channel.getName(), "NOTICE", "End of backbuffer.");
+            }
         }
 
         endBatch(user, batchIdentifier);
