@@ -1389,7 +1389,6 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     private void sendBackbuffer(final UserSocket user, final ChannelInfo channel, final RollingList<BackbufferMessage> backbufferList) {
         final String backbufferID = (channel == null) ? "private" : channel.getName();
         final String batchIdentifier = "backbuffer_" + backbufferID + "_" + System.currentTimeMillis();
-        startBatch(user, batchIdentifier);
 
         boolean firstValid = true;
         final long timeout;
@@ -1417,6 +1416,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 
             if (firstValid) {
                 firstValid = false;
+                startBatch(user, batchIdentifier);
                 if (user.getCapabilityState("dfbnc.com/channelhistory") == CapabilityState.ENABLED) {
                     user.sendServerLine("BEGINHISTORY", backbufferID);
                 } else if (channel != null) {
@@ -1498,9 +1498,8 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
             } else if (channel != null) {
                 user.sendBotChat(channel.getName(), "NOTICE", "End of backbuffer.");
             }
+            endBatch(user, batchIdentifier);
         }
-
-        endBatch(user, batchIdentifier);
     }
 
     /**
