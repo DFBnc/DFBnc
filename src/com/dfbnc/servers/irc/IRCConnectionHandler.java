@@ -62,8 +62,7 @@ import uk.org.dataforce.libs.logger.LogLevel;
  * It handles parser callbacks, and proxies data between users and the server.
  * It also handles the performs.
  */
-public class IRCConnectionHandler implements ConnectionHandler,
-        UserSocketWatcher, ConfigChangeListener {
+public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatcher, ConfigChangeListener {
 
     /** Account that this IRCConnectionHandler is for. */
     private final Account myAccount;
@@ -78,15 +77,17 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /** Have we hacked in our own 005? (Shows support for LISTMODE) */
     private boolean hacked005 = false;
     /** This stores the 002-005 lines which are sent to users who connect after we receive them  */
-    private List<String> connectionLines = new ArrayList<>();
+    private final List<String> connectionLines = new ArrayList<>();
     /** This stores tokens not related to a channel that we want to temporarily allow to come via onDataIn */
-    private List<String> allowTokens = new ArrayList<>();
+    private final List<String> allowTokens = new ArrayList<>();
     /** This stores client-sent lines that need to be processed at a later date. */
     private final List<RequeueLine> requeueList = new ArrayList<>();
     /** This timer handles re-processing of items in the requeueList */
-    private Timer requeueTimer = new Timer("requeueTimer");
+    private final Timer requeueTimer = new Timer("requeueTimer");
     /** This stores a list of user sockets that we want to requeue all lines from and for temporarily. */
     private final List<UserSocket> forceRequeueList = new ArrayList<>();
+    /** Private backbuffer list. */
+    private final RollingList<BackbufferMessage> privateBackbufferList;
 
     /**
      * Create a new IRCConnectionHandler
@@ -163,6 +164,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         // Allow the initial usermode line through to the user
         allowLine(null, "221");
 
+        privateBackbufferList = new RollingList<>(myAccount.getConfig().getOptionInt("server", "privatebackbuffer"));
         myParser.connect();
         myAccount.getConfig().addChangeListener(this);
         ((IRCParser)myParser).getControlThread().setName("IRC Parser - " + myAccount.getName() + " - <server>");
@@ -875,6 +877,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
         if (channel != null) {
             final RollingList<BackbufferMessage> myList = (RollingList<BackbufferMessage>)channel.getMap().get("backbufferList");
             myList.add(new BackbufferMessage(time, message));
+        } else {
+            privateBackbufferList.add(new BackbufferMessage(time, message));
         }
     }
 
@@ -909,7 +913,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
         final String[] bits = IRCParser.tokeniseLine(event.getData());
         if (bits[0].equals("PRIVMSG") && bits.length > 1) {
             final ChannelInfo channel = event.getParser().getChannel(bits[1]);
-            if (channel != null) {
+            if (channel != null || !event.getParser().isValidChannelName(bits[1])) {
                 this.addBackbufferMessage(channel, System.currentTimeMillis(), String.format(":%s %s", this.getMyHost(), event.getData()));
             }
         }
@@ -951,6 +955,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
             final ChannelInfo channel = event.getParser().getChannel(bits[2]);
             if (channel != null) {
                 channelName = channel.getName();
+            }
+            if (channel != null || !event.getParser().isValidChannelName(bits[1])) {
                 this.addBackbufferMessage(channel, System.currentTimeMillis(), event.getData());
             }
         } else if (bits.length > 2 && event.getParser().isValidChannelName(bits[2])) {
@@ -1290,6 +1296,8 @@ public class IRCConnectionHandler implements ConnectionHandler,
                         }
                     }
                 }, 1500);
+
+                sendPrivateBackbuffer(user);
             }
         } else {
             // Make sure cliets get marked as sync completed.
@@ -1360,6 +1368,15 @@ public class IRCConnectionHandler implements ConnectionHandler,
     }
 
     /**
+     * Send the private backbuffer to the given user.
+     *
+     * @param user User to send private backbuffer to
+     */
+    public void sendPrivateBackbuffer(final UserSocket user) {
+        sendBackbuffer(user, null, privateBackbufferList);
+    }
+
+    /**
      * Send the given backbuffer to the given channel to the given user.
      *
      * @param user User to send backbuffer to
@@ -1367,16 +1384,21 @@ public class IRCConnectionHandler implements ConnectionHandler,
      * @param backbufferList Backbuffer to send
      */
     private void sendBackbuffer(final UserSocket user, final ChannelInfo channel, final RollingList<BackbufferMessage> backbufferList) {
-        final String batchIdentifier = "backbuffer_" + channel.getName() + "_" + System.currentTimeMillis();
+        final String backbufferID = (channel == null) ? "private" : channel.getName();
+        final String batchIdentifier = "backbuffer_" + backbufferID + "_" + System.currentTimeMillis();
         startBatch(user, batchIdentifier);
 
         boolean firstValid = true;
-        final long earliestTime;
-        if (myAccount.getConfig().hasOption("server", "backbuffertimeout") && myAccount.getConfig().hasOption("server", "backbuffertimeout")) {
-            earliestTime = System.currentTimeMillis() - (myAccount.getConfig().getOptionInt("server", "backbuffertimeout") * 1000);
+        final long timeout;
+        if (channel != null && myAccount.getConfig().hasOption("server", "backbuffertimeout")) {
+            timeout = myAccount.getConfig().getOptionInt("server", "backbuffertimeout") * 1000;
+        } else if (channel == null && myAccount.getConfig().hasOption("server", "privatebackbuffertimeout")) {
+            timeout = myAccount.getConfig().getOptionInt("server", "privatebackbuffertimeout") * 1000;
         } else {
-            earliestTime = 0;
+            timeout = 0;
         }
+        final long earliestTime = (timeout > 0) ? System.currentTimeMillis() - timeout : 0;
+        final boolean forceTimestamp = (channel == null) && myAccount.getConfig().getOptionBool("server", "privatebackbuffertimestamp");
 
         final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         final SimpleDateFormat servertime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
@@ -1385,13 +1407,16 @@ public class IRCConnectionHandler implements ConnectionHandler,
             final String line;
             final Map<String,String> messageTags = new HashMap<>();
 
-            final boolean valid = (message.getTime() >= earliestTime);
+            if (message.getTime() < earliestTime) {
+                // Message is too old.
+                continue;
+            }
 
-            if (valid && firstValid) {
+            if (firstValid) {
                 firstValid = false;
                 if (user.getCapabilityState("dfbnc.com/channelhistory") == CapabilityState.ENABLED) {
-                    user.sendServerLine("BEGINHISTORY", channel.getName());
-                } else {
+                    user.sendServerLine("BEGINHISTORY", backbufferID);
+                } else if (channel != null) {
                     user.sendBotChat(channel.getName(), "NOTICE", "Beginning backbuffer...");
                 }
             }
@@ -1400,10 +1425,10 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 messageTags.put("batch", batchIdentifier);
             }
 
-            if (user.getCapabilityState("server-time") == CapabilityState.ENABLED) {
+            if (!forceTimestamp && user.getCapabilityState("server-time") == CapabilityState.ENABLED) {
                 messageTags.put("time", servertime.format(message.getTime()));
                 line = message.getMessage();
-            } else if (user.getCapabilityState("dfbnc.com/tsirc") == CapabilityState.ENABLED) {
+            } else if (!forceTimestamp && user.getCapabilityState("dfbnc.com/tsirc") == CapabilityState.ENABLED) {
                 line = "@" + Long.toString(message.getTime()) + "@" + message.getMessage();
             } else {
                 final String date = "    [" + sdf.format(message.getTime()) + "]";
@@ -1459,15 +1484,15 @@ public class IRCConnectionHandler implements ConnectionHandler,
             if (backbufferList.isEmpty()) {
                 if (user.getCapabilityState("dfbnc.com/channelhistory") == CapabilityState.ENABLED) {
                     user.sendServerLine("EMPTYHISTORY", channel.getName());
-                } else {
+                } else if (channel != null) {
                     user.sendBotChat(channel.getName(), "NOTICE", "This channel has no current backbuffer.");
                 }
                 return;
             }
         } else {
             if (user.getCapabilityState("dfbnc.com/channelhistory") == CapabilityState.ENABLED) {
-                user.sendServerLine("ENDHISTORY", channel.getName());
-            } else {
+                user.sendServerLine("ENDHISTORY", backbufferID);
+            } else if (channel != null) {
                 user.sendBotChat(channel.getName(), "NOTICE", "End of backbuffer.");
             }
         }

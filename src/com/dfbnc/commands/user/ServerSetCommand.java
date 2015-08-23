@@ -55,6 +55,9 @@ public class ServerSetCommand extends AbstractSetCommand {
         validParams.put("autoconnect", new ParamInfo("Auto connect on startup.", ParamType.BOOL));
         validParams.put("backbuffer", new ParamInfo("Number of lines to store as backbuffer in each channel (0 to disable).", ParamType.INT));
         validParams.put("backbuffertimeout", new ParamInfo("How long in seconds to permit messages to be stored in the backbuffer (0 to disable).", ParamType.INT));
+        validParams.put("privatebackbuffer", new ParamInfo("Number of lines to store as backbuffer for private messages (0 to disable).", ParamType.INT));
+        validParams.put("privatebackbuffertimeout", new ParamInfo("How long in seconds to permit messages to be stored in the private message backbuffer (0 to disable).", ParamType.INT));
+        validParams.put("privatebackbuffertimestamp", new ParamInfo("Force timestamp prepends on private message backbuffers?", ParamType.BOOL));
         validParams.put("userdisconnect", new ParamInfo("Disconnect user if the server disconnects us.", ParamType.BOOL));
     }
 
