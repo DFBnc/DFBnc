@@ -34,6 +34,7 @@ import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.CommandOutput;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.util.Util;
+import java.util.Arrays;
 import uk.org.dataforce.libs.cliparser.CLIParam;
 import uk.org.dataforce.libs.cliparser.CLIParser;
 
@@ -53,7 +54,7 @@ public class SystemCommand extends AdminCommand {
         final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
         output.sendBotMessage("----------------------------------------");
-        output.sendBotMessage("DFBnc System nformation");
+        output.sendBotMessage("DFBnc System Information");
         output.sendBotMessage("----------------------------------------");
         output.sendBotMessage("Started At: " + sdf.format(new Date(DFBnc.startTime)));
         final long upSeconds = (System.currentTimeMillis() - DFBnc.startTime) / 1000;
@@ -89,33 +90,11 @@ public class SystemCommand extends AdminCommand {
         output.sendBotMessage("----------------------------------------");
         output.sendBotMessage("Component Versions:");
         output.sendBotMessage("--------------------");
-        for (Entry<String, String> e : DFBnc.getVersions().entrySet()) {
-            output.sendBotMessage("    %s: %s", e.getKey(), e.getValue());
-        }
+        try { myManager.getCommand("version").handle(user, new String[]{"version", "all"}, output); } catch (final Exception e) { }
         output.sendBotMessage("----------------------------------------");
-        output.sendBotMessage("Sessions:");
+        output.sendBotMessage("Connections:");
         output.sendBotMessage("--------------------");
-        int count = 0;
-        for (final UserSocket u : UserSocket.getUserSockets()) {
-            count++;
-            final StringBuilder sb = new StringBuilder();
-
-            sb.append(u.getInfo());
-            sb.append(" - ");
-            sb.append(u.getSocketID());
-            sb.append(" - ");
-            if (u.getAccount() == null) {
-                sb.append("UNAUTHENTICATED");
-            } else {
-                sb.append(u.getAccount().getName());
-                if (u.getAccount().isAdmin()) { sb.append('*'); }
-            }
-            sb.append("     (");
-            sb.append(u.toString());
-            sb.append(")");
-            output.sendBotMessage(sb.toString());
-        }
-        output.sendBotMessage("      (%d current sessions)", count);
+        try{ myManager.getCommand("connections").handle(user, new String[]{"connections", "full", "all"}, output); } catch (final Exception e) { }
         output.sendBotMessage("----------------------------------------");
 
     }
@@ -127,7 +106,7 @@ public class SystemCommand extends AdminCommand {
      */
     @Override
     public String[] handles() {
-        return new String[]{"system"};
+        return new String[]{"system", "*tech-support"};
     }
 
     /**

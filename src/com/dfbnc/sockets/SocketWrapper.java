@@ -23,6 +23,9 @@
 package com.dfbnc.sockets;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
@@ -84,6 +87,11 @@ public abstract class SocketWrapper {
         myOwner = owner;
         mySocketChannel = channel;
         mySocket = channel.socket();
+
+        // Trigger RDNS Lookups.
+        // TODO: Config var to allow disabling the lookups.
+        ((InetSocketAddress)mySocket.getRemoteSocketAddress()).getHostName();
+        ((InetSocketAddress)mySocket.getLocalSocketAddress()).getHostName();
     }
 
     /**
@@ -393,7 +401,15 @@ public abstract class SocketWrapper {
                         b = buffer.get();
                         if (b == '\n') {
                             lineBuffer.flip();
-                            myOwner.processLine(getCharBuffer(lineBuffer).toString());
+                            try {
+                                myOwner.processLine(getCharBuffer(lineBuffer).toString());
+                            } catch (final Exception ex) {
+                                Logger.error("Unexpected exception during processLine");
+
+                                final StringWriter writer = new StringWriter();
+                                ex.printStackTrace(new PrintWriter(writer));
+                                Logger.error("\tStack trace: " + writer.getBuffer());
+                            }
                             lineBuffer = ByteBuffer.allocate(1024);
                         } else if (b != '\r') {
                             lineBuffer.put(b);

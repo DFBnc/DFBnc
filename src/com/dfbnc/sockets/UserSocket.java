@@ -1061,7 +1061,7 @@ public class UserSocket extends ConnectedSocket {
         List<String> thisSection = new LinkedList<>();
         boolean nextCommand = false;
         for (String b : bits) {
-            if (b.charAt(0) == '|') {
+            if (b.length() > 0 && b.charAt(0) == '|') {
                 b = b.substring(1);
                 // Look for escaped |
                 if (b.isEmpty() || b.charAt(0) != '|') {

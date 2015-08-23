@@ -30,6 +30,7 @@ import java.util.concurrent.CountDownLatch;
 import com.dfbnc.sockets.plain.PlainSocket;
 import com.dfbnc.sockets.secure.SecureSocket;
 import com.dfbnc.util.IRCLine;
+import java.net.InetSocketAddress;
 import uk.org.dataforce.libs.logger.Logger;
 
 /**
@@ -47,7 +48,7 @@ public abstract class ConnectedSocket implements SelectedSocketHandler {
     /** Are we an SSL Socket? */
     protected final boolean isSSL;
     /** Lock for guarding read/writes to socket wrapper. Urgh. */
-    private CountDownLatch socketWrapperLock = new CountDownLatch(1);
+    private final CountDownLatch socketWrapperLock = new CountDownLatch(1);
     /** What was the reason that this socket closed? */
     private String closeReason = "Unknown reason.";
 
@@ -124,6 +125,33 @@ public abstract class ConnectedSocket implements SelectedSocketHandler {
             Logger.error("Thread interrupted while waiting to get socket wrapper");
             return null;
         }
+    }
+
+    /**
+     * Get Remote socket address.
+     *
+     * @return InetSocketAddress for remote socket.
+     */
+    public InetSocketAddress getRemoteSocketAddress() {
+        return (InetSocketAddress)getSocketWrapper().getRemoteSocketAddress();
+    }
+
+    /**
+     * Get Local socket address.
+     *
+     * @return InetSocketAddress for local socket.
+     */
+    public InetSocketAddress getLocalSocketAddress() {
+        return (InetSocketAddress)getSocketWrapper().getLocalSocketAddress();
+    }
+
+    /**
+     * Get Local socket address.
+     *
+     * @return InetSocketAddress for local socket.
+     */
+    public boolean isSSL() {
+        return (getSocketWrapper() instanceof SecureSocket);
     }
 
     /**

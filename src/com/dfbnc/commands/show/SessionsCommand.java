@@ -45,6 +45,8 @@ public class SessionsCommand extends Command {
         final String optionString = getFullParam(output, params, 2, validParams);
         if (optionString == null) { return; }
 
+        output.sendBotMessage("WARNING: This command is deprecated, please use 'show connections' instead.");
+
         if (!validParams.contains(optionString)) {
             output.sendBotMessage("Unknown session type: %s", optionString);
             return;
