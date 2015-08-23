@@ -301,17 +301,17 @@ public final class CommandManager {
 
                 String handlerName = entry.getKey().charAt(0) == '*' ? entry.getKey().substring(1) : entry.getKey();
                 if (cmds.size() > 1) {
-                // Single command, but multiple handles. Use the
-                // earliest one from the handles array.
-                Logger.debug5("Multi handler match");
+                    // Single command, but multiple handles. Use the
+                    // earliest one from the handles array.
+                    Logger.debug5("Multi handler match");
                     for (String handle : entry.getValue().handles()) {
                         if (handle.toLowerCase().startsWith(name.toLowerCase())) {
                             handlerName = handle;
                             break;
                         }
                     }
-                    return new SimpleImmutableEntry<>(handlerName, entry.getValue());
                 }
+                return new SimpleImmutableEntry<>(handlerName, entry.getValue());
             } else {
                 // Last ditch attempt, see if there is a single non-hidden
                 // command returned.
