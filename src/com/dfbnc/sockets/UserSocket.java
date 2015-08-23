@@ -82,6 +82,8 @@ public class UserSocket extends ConnectedSocket {
     private String clientID = null;
     /** Given client version */
     private String clientVersion = null;
+    /** Client Type (used for workarounds) */
+    private ClientType clientType = ClientType.getFromVersion("");
     /** Given realname */
     private String realname = null;
     /** Given nickname (post-authentication this is the nickname the client knows itself as) */
@@ -203,6 +205,15 @@ public class UserSocket extends ConnectedSocket {
      */
     public String getClientVersion() {
         return clientVersion;
+    }
+
+    /**
+     * Get the client type for this socket.
+     *
+     * @return The client Version for this socket.
+     */
+    public ClientType getClientType() {
+        return clientType;
     }
 
     /**
@@ -654,6 +665,11 @@ public class UserSocket extends ConnectedSocket {
                     final String[] version = newLine[2].split(" ", 2);
                     if (version.length > 1) {
                         clientVersion = version[1].substring(0, version[1].length() - 1);
+                        // If we haven't worked out the client type elsewhere
+                        // (eg from the username) then try to parse the version.
+                        if (clientType == ClientType.Generic) {
+                            clientType = ClientType.getFromVersion(clientVersion);
+                        }
                         return;
                     }
                 }
@@ -842,7 +858,10 @@ public class UserSocket extends ConnectedSocket {
         if (realname != null && password != null && nickname != null) {
             final String[] bits = username.split("\\+");
             username = bits[0];
-            clientID = (bits.length > 1) ? bits[1].toLowerCase() : null;
+            clientID = (bits.length > 1 && !bits[1].isEmpty()) ? bits[1].toLowerCase() : null;
+            if (bits.length > 2 && !bits[2].isEmpty()) {
+                clientType = ClientType.getFromName(bits[2].toLowerCase());
+            }
             if (AccountManager.count() == 0 || (DFBnc.getBNC().allowAutoCreate() && !AccountManager.exists(username))) {
                 Account acc = AccountManager.createAccount(username, password);
                     if (AccountManager.count() == 1) {

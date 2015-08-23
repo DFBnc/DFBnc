@@ -82,6 +82,8 @@ public class SessionsCommand extends Command {
                     sb.append(u.getClientVersion());
                     sb.append("\"");
                 }
+                sb.append(" - Client Type: ");
+                sb.append(u.getClientType());
 
                 sb.append("     (");
                 sb.append(u.toString());
@@ -110,6 +112,8 @@ public class SessionsCommand extends Command {
                     sb.append(u.getClientVersion());
                     sb.append("\"");
                 }
+                sb.append(" - Client Type: ");
+                sb.append(u.getClientType());
 
                 output.sendBotMessage(sb.toString());
             }
