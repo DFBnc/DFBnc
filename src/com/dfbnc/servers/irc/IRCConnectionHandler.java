@@ -53,6 +53,7 @@ import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
+import uk.org.dataforce.libs.logger.LogLevel;
 
 
 /**
@@ -1176,6 +1177,14 @@ public class IRCConnectionHandler implements ConnectionHandler,
         }
 
         myAccount.reportException(errorInfo.getException());
+    }
+
+    @Handler
+    public void onDebugInfo(final DebugInfoEvent event) {
+        if (!checkParser(event)) { return; }
+        if (!LogLevel.DEBUG5.isLoggable(Logger.getLevel())) { return; }
+
+        Logger.debug5("Parser Debug occurred: [ " + event.getLevel() + "] " + event.getData());
     }
 
     @Override

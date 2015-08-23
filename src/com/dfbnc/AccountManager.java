@@ -91,7 +91,7 @@ public class AccountManager {
      */
     public static boolean exists(final String username) {
         Logger.debug2("exists: Checking if user exists: " + username.replace('.', '_').toLowerCase());
-        if (Logger.getLevel().isLoggable(LogLevel.DEBUG2)) {
+        if (LogLevel.DEBUG3.isLoggable(Logger.getLevel())) {
             for (String a : accounts.keySet()) {
                 Logger.debug3("exists: Found acc: " + a);
             }
