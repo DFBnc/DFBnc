@@ -1073,6 +1073,12 @@ public class IRCConnectionHandler implements ConnectionHandler,
 
                 if (canSendMessage) {
                     socket.sendLine(event.getData());
+
+                    if (channelName != null && bits.length > 3 && bits[1].equals("PRIVMSG") && isHighlight(socket, bits[bits.length - 1])) {
+                        final ClientInfo client = event.getParser().getClient(bits[0]);
+                        final String truncatedMessage = bits[bits.length - 1].substring(0, Math.min(bits[bits.length - 1].length(), 200)) + (bits[bits.length - 1].length() > 200 ? "..." : "");
+                        socket.sendBotChat(channelName, "PRIVMSG", "<%s> %s (/cc %s)", client.getNickname(), truncatedMessage, socket.getNickname());
+                    }
                 }
             }
         }
@@ -1520,6 +1526,7 @@ public class IRCConnectionHandler implements ConnectionHandler,
     /**
      * Is this socket allowed to interact with the given channel name?
      *
+     * @param user UserSocket we are checking.
      * @param channel Channel Name
      * @return True if this socket is allowed, else false.
      */
@@ -1541,6 +1548,38 @@ public class IRCConnectionHandler implements ConnectionHandler,
                 if (c.equalsIgnoreCase(channel)) {
                     return true;
                 }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Does this line require a highlight for the given user?
+     *
+     * @param user UserSocket we are checking.
+     * @param line Line to match on
+     * @return True if this line matches a highlight for the given user.
+     */
+    public boolean isHighlight(final UserSocket user, final String line) {
+        // TODO: Look at how to optimise this, similar to above.
+        //       Caching of regex matchers would be useful.
+        if (user.getClientID() == null || !user.getAccount().getConfig().hasOption("irc", "highlight." + user.getClientID())) {
+            // By default, nothing highlights.
+            return false;
+        }
+
+        final List<String> highlightList = user.getAccount().getConfig().getOptionList("irc", "highlight." + user.getClientID());
+
+        if (highlightList.isEmpty()) {
+            return false;
+        } else {
+            for (final String h : highlightList) {
+                try {
+                    if (line.toLowerCase().matches(".*" + h.toLowerCase() + ".*")) {
+                        return true;
+                    }
+                } catch (final Exception e) { }
             }
         }
 

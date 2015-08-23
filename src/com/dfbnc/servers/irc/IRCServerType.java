@@ -25,6 +25,7 @@ import com.dfbnc.servers.irc.commands.ServerListCommand;
 import com.dfbnc.servers.irc.commands.PerformCommand;
 import com.dfbnc.servers.irc.commands.IRCSetCommand;
 import com.dfbnc.servers.irc.commands.ChannelWhitelistCommand;
+import com.dfbnc.servers.irc.commands.HighlightCommand;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.servers.ServerType;
 import com.dfbnc.servers.ServerTypeManager;
@@ -48,6 +49,7 @@ public class IRCServerType extends ServerType {
         super(manager);
         myCommandManager.addCommand(new ServerListCommand(myCommandManager));
         myCommandManager.addCommand(new ChannelWhitelistCommand(myCommandManager));
+        myCommandManager.addCommand(new HighlightCommand(myCommandManager));
         myCommandManager.addCommand(new IRCSetCommand(myCommandManager));
         myCommandManager.addCommand(new PerformCommand(myCommandManager));
     }
