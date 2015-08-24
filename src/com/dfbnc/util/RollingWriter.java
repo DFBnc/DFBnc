@@ -6,7 +6,6 @@
 package com.dfbnc.util;
 
 import java.io.IOException;
-import java.io.Writer;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -21,13 +20,10 @@ import java.util.ListIterator;
  *
  * @author Shane Mc Cormack <shanemcc@gmail.com>
  */
-public class RollingWriter extends Writer implements List<String> {
+public class RollingWriter extends ExtendableWriter implements List<String> {
 
     /** List of lines that have been written to this BufferedWriter. */
     private final RollingList<String> storedLines;
-
-    /** Current line we are in the process of adding. */
-    private final StringBuffer sb = new StringBuffer();
 
     /**
      * Create a new RollingdWriter with a given capacity.
@@ -35,6 +31,7 @@ public class RollingWriter extends Writer implements List<String> {
      * @param capacity Number of lines to allow
      */
     public RollingWriter(final int capacity) {
+        super();
         storedLines = new RollingList<>(capacity);
     }
 
@@ -57,30 +54,9 @@ public class RollingWriter extends Writer implements List<String> {
     }
 
     @Override
-    public void write(char[] cbuf, int off, int len) throws IOException {
-        // Add to stringbuilder
-        synchronized (sb) {
-            sb.append(cbuf, off, len);
-        }
+    public void addNewLine(final String line) throws IOException  {
+        storedLines.add(line);
     }
-
-    @Override
-    public void flush() throws IOException {
-        // Store lines.
-        synchronized (sb) {
-            final String[] bits = sb.toString().split("\n", -1);
-            for (int i = 0; i < bits.length-1; i++) {
-                storedLines.add(bits[i]);
-            }
-            sb.setLength(0);
-            if (bits[bits.length-1].length() > 0) {
-                sb.append(bits[bits.length-1]);
-            }
-        }
-    }
-
-    @Override
-    public void close() throws IOException { /* Nothing to do. */ }
 
     @Override
     public int size() { return storedLines.size(); }

@@ -444,6 +444,15 @@ public class DFBnc {
     }
 
     /**
+     * Get the multiwriter.
+     *
+     * @return the multi writer used for log files.
+     */
+    public MultiWriter getMultiWriter() {
+        return multiWriter;
+    }
+
+    /**
      * Handle shutdown
      */
     public void shutdown() {

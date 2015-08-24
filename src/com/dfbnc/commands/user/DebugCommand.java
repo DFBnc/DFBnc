@@ -105,6 +105,8 @@ public class DebugCommand extends Command {
         super(manager);
 
         debugManager.addCommand(new RawDebugCommand(debugManager));
+        debugManager.addCommand(new LoggingDebugCommand(debugManager));
+        debugManager.addCommand(new LogLevelDebugCommand(debugManager));
     }
 
 

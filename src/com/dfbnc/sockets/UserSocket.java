@@ -661,7 +661,7 @@ public class UserSocket extends ConnectedSocket {
                 return;
             case "NOTICE":
                 // Is this a CTCP Reply to the bot? (used for versioning)
-                if (newLine.length > 2 && newLine[1].equalsIgnoreCase(Util.getBotName()) && newLine[2].charAt(0) == (char)1 && newLine[2].charAt(newLine[2].length() - 1) == (char)1) {
+                if (newLine.length > 2 && newLine[1].toLowerCase().startsWith(Util.getBotName().toLowerCase()) && newLine[2].charAt(0) == (char)1 && newLine[2].charAt(newLine[2].length() - 1) == (char)1) {
                     final String[] version = newLine[2].split(" ", 2);
                     if (version.length > 1) {
                         clientVersion = version[1].substring(0, version[1].length() - 1);
@@ -966,7 +966,7 @@ public class UserSocket extends ConnectedSocket {
             case "PRIVMSG":
             case "NOTICE":
                 if (line.length > 2) {
-                    if (line[1].equalsIgnoreCase(Util.getBotName())) {
+                    if (line[1].toLowerCase().startsWith(Util.getBotName().toLowerCase())) {
                         final CommandOutput co = new CommandOutput(this);
                         handleBotCommand(line[2].split(" "), co);
                         co.send();
@@ -1012,11 +1012,11 @@ public class UserSocket extends ConnectedSocket {
                 co.send();
                 return;
             case "WHOIS":
-                if (line[1].equalsIgnoreCase(Util.getBotName())) {
-                    sendIRCLine(Consts.RPL_WHOISUSER, nickname+" "+Util.getBotName()+" bot "+getServerName()+" *", "DFBnc Pseudo Client");
-                    sendIRCLine(Consts.RPL_WHOISSERVER, nickname+" "+Util.getBotName()+" DFBNC.Server", "DFBnc Pseudo Server");
-                    sendIRCLine(Consts.RPL_WHOISIDLE, nickname+" "+Util.getBotName()+" 0 "+(DFBnc.getStartTime()/1000), "seconds idle, signon time");
-                    sendIRCLine(Consts.RPL_ENDOFWHOIS, nickname+" "+Util.getBotName(), "End of /WHOIS list");
+                if (line[1].toLowerCase().startsWith(Util.getBotName().toLowerCase())) {
+                    sendIRCLine(Consts.RPL_WHOISUSER, nickname+" "+line[1]+" bot "+getServerName()+" *", "DFBnc Pseudo Client");
+                    sendIRCLine(Consts.RPL_WHOISSERVER, nickname+" "+line[1]+" DFBNC.Server", "DFBnc Pseudo Server");
+                    sendIRCLine(Consts.RPL_WHOISIDLE, nickname+" "+line[1]+" 0 "+(DFBnc.getStartTime()/1000), "seconds idle, signon time");
+                    sendIRCLine(Consts.RPL_ENDOFWHOIS, nickname+" "+line[1], "End of /WHOIS list");
                     return;
                 }
                 break;
