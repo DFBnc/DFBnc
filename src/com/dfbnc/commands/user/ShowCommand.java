@@ -139,6 +139,7 @@ public class ShowCommand extends Command {
         showManager.addCommand(new FirstTimeCommand(showManager));
         showManager.addCommand(new ConnectionsCommand(showManager));
         showManager.addCommand(new SystemCommand(showManager));
+        showManager.addCommand(new LoggingCommand(showManager));
         showManager.addCommand(new Command(showManager){
 
             @Override

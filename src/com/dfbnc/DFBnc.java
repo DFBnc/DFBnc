@@ -47,6 +47,9 @@ import com.dfbnc.config.ReadOnlyConfig;
 import com.dfbnc.servers.ServerTypeManager;
 import com.dfbnc.sockets.ListenSocket;
 import com.dfbnc.sockets.UserSocket;
+import com.dfbnc.util.MultiWriter;
+import com.dfbnc.util.RollingWriter;
+import java.io.Writer;
 import uk.org.dataforce.libs.cliparser.BooleanParam;
 import uk.org.dataforce.libs.cliparser.CLIParam;
 import uk.org.dataforce.libs.cliparser.CLIParser;
@@ -100,6 +103,15 @@ public class DFBnc {
     /** PID File name. */
     static String pidFile = "";
 
+    /** MultiWriter for logger. */
+    final MultiWriter multiWriter = new MultiWriter();
+
+    /** Store log entries here to let the show logging command work. */
+    final RollingWriter rollingWriter = new RollingWriter(1000);
+
+    /** Log File Writer. */
+    Writer logFileWriter;
+
     /**
      * Create the BNC.
      */
@@ -112,7 +124,10 @@ public class DFBnc {
      * @param args CLI Arguments passed to application
      */
     private void init(final String[] args) {
+        Logger.setWriter(multiWriter);
+        multiWriter.addWriter(rollingWriter);
         Logger.setLevel(LogLevel.INFO);
+
         loadVersionInfo();
 
         if (DFBncDaemon.canFork() && daemon.isDaemonized()) {
@@ -233,6 +248,9 @@ public class DFBnc {
             System.exit(1);
         }
 
+        // Now that we have a config file, set the log buffer capacity correctly.
+        rollingWriter.setCapacity(getConfig().getOptionInt("general", "logBuffer"));
+
         Logger.info("Setting up Default User Command Manager");
         userCommandManager.addCommand(new ServerTypeCommand(userCommandManager));
         userCommandManager.addCommand(new ShowCommand(userCommandManager));
@@ -328,7 +346,8 @@ public class DFBnc {
                 bw.append("\n");
                 bw.flush();
                 // We will never get to setting it here if it failed to write above!
-                Logger.setWriter(bw);
+                logFileWriter = bw;
+                multiWriter.addWriter(logFileWriter);
                 Logger.info("Using log file: " + file);
             } catch (final IOException ex) {
                 Logger.error("Unable to write to log file: " + ex);
@@ -416,6 +435,15 @@ public class DFBnc {
     }
 
     /**
+     * Get the rolling log.
+     *
+     * @return the rolling writer used for log files.
+     */
+    public RollingWriter getRollingWriter() {
+        return rollingWriter;
+    }
+
+    /**
      * Handle shutdown
      */
     public void shutdown() {
@@ -456,10 +484,10 @@ public class DFBnc {
             }
         }
 
-        final BufferedWriter bw = Logger.getWriter();
+        final Writer bw = logFileWriter;
         if (bw != null) {
             Logger.info("Closing log file");
-            Logger.setWriter(null);
+            multiWriter.removeWriter(logFileWriter);
             try {
                 final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 if (!Logger.getTag().isEmpty()) {
@@ -471,6 +499,7 @@ public class DFBnc {
                 bw.append("\n");
                 bw.flush();
                 bw.close();
+                logFileWriter = null;
             } catch (final IOException ioe) { /** Oh well. */ }
         }
 

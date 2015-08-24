@@ -22,7 +22,9 @@
 
 package uk.org.dataforce.libs.logger;
 
-import java.io.BufferedWriter;
+import java.io.Writer;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * JISG Logger class.
@@ -34,8 +36,11 @@ public class Logger {
     /** Optional Tag for log entries. */
     private static String logTag = "";
 
-    /** Optional BufferedWriter to write output to in addition to console. */
-    private static BufferedWriter writer = null;
+    /** Optional Writer to write output to in addition to console. */
+    private static Writer writer = null;
+
+    /** Date format for logging entries. */
+    private final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     /**
      * Change the logTag for this logger.
@@ -64,16 +69,16 @@ public class Logger {
      *
      * @param newWriter New writer to use.
      */
-    public static void setWriter(final BufferedWriter newWriter) {
+    public static void setWriter(final Writer newWriter) {
         writer = newWriter;
     }
 
     /**
-     * Get the current bufferedwriter we are using.
+     * Get the current Writer we are using.
      *
      * @return The writer we are using.
      */
-    public static BufferedWriter getWriter() {
+    public static Writer getWriter() {
         return writer;
     }
 
@@ -85,7 +90,8 @@ public class Logger {
      */
     public static void log(final LogLevel level, final String data) {
         if (level.isLoggable(logLevel) && level != LogLevel.SILENT) {
-            final String output = data == null ? "" : String.format("[%s%s] %s", (logTag.isEmpty() ? "" : logTag + ":"), level, data);
+            final String timestamp = sdf.format(new Date(System.currentTimeMillis()));
+            final String output = (data == null) ? "" : String.format("<%s> [%s%s] %s", timestamp, (logTag.isEmpty() ? "" : logTag + ":"), level, data);
 
             System.out.println(output);
             if (writer != null) {

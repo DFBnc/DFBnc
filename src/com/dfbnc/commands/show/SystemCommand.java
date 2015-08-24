@@ -96,6 +96,10 @@ public class SystemCommand extends AdminCommand {
         output.sendBotMessage("--------------------");
         try{ myManager.getCommand("connections").handle(user, new String[]{"connections", "full", "all"}, output); } catch (final Exception e) { }
         output.sendBotMessage("----------------------------------------");
+        output.sendBotMessage("Logging:");
+        output.sendBotMessage("--------------------");
+        try{ myManager.getCommand("logging").handle(user, new String[]{"connections", "full", "all"}, output); } catch (final Exception e) { }
+        output.sendBotMessage("----------------------------------------");
 
     }
 
