@@ -82,6 +82,8 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     private final List<String> allowTokens = new ArrayList<>();
     /** This stores client-sent lines that need to be processed at a later date. */
     private final List<RequeueLine> requeueList = new ArrayList<>();
+    /** This stores server-sent lines that need to be sent later. */
+    private List<DataInEvent> serverRequeueList;
     /** This timer handles re-processing of items in the requeueList */
     private final Timer requeueTimer = new Timer("requeueTimer");
     /** This stores a list of user sockets that we want to requeue all lines from and for temporarily. */
@@ -296,7 +298,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         if (user.getCapabilityState("batch") == CapabilityState.ENABLED) {
             user.sendLine("BATCH " + batchIdentifier + " generic");
         }
-        user.getMap().put("requeue", new LinkedList<String>());
+        if (serverRequeueList == null) { serverRequeueList = new LinkedList<DataInEvent>(); }
     }
 
     /**
@@ -311,12 +313,10 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         if (user.getCapabilityState("batch") == CapabilityState.ENABLED) {
             user.sendLine("BATCH -" + batchIdentifier);
         }
-        if (user.getMap().containsKey("requeue")) {
-            final List<String> lines = ((List<String>)user.getMap().get("requeue"));
-            user.getMap().remove("requeue");
-            for (final String line : lines) {
-                user.sendLine(line);
-            }
+        if (serverRequeueList != null) {
+            final List<DataInEvent> events = serverRequeueList;
+            serverRequeueList = null;
+            serverRequeueList.stream().forEach((e) -> onDataIn(e));
         }
         forceRequeueList.remove(user);
     }
@@ -925,6 +925,9 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     @Handler
     public void onDataIn(final DataInEvent event) {
         if (!checkParser(event)) { return; }
+        if (serverRequeueList != null) {
+            serverRequeueList.add(event);
+        }
 
         boolean forwardLine = true;
         String channelName = null;
