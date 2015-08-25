@@ -240,7 +240,7 @@ public class DFBnc {
                     throw new IOException("Unable to create config directory.");
                 }
             }
-            config = new DefaultsConfig(new ConfigFileConfig(new ConfigFile(new File(getConfigDirName(), getConfigFileName()))), new ConfigFileConfig(new ConfigFile(DFBnc.class.getResourceAsStream("/com/dfbnc/defaults.config"))));
+            config = new DefaultsConfig(new ConfigFileConfig(new ConfigFile(new File(getConfigDirName(), getConfigFileName()).toPath())), new ConfigFileConfig(new ConfigFile(DFBnc.class.getResourceAsStream("/com/dfbnc/defaults.config"))));
         } catch (final IOException ex) {
             Logger.error("Error loading config: " + configDirectory + " (" + ex.getMessage() + "). Exiting");
             System.exit(1);

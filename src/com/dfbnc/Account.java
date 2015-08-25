@@ -98,7 +98,7 @@ public final class Account implements UserSocketWatcher {
         }
         // Load Main Config
         config = new DefaultsConfig(
-                new ConfigFileConfig(new ConfigFile(new File(confDir, username + ".conf"))),
+                new ConfigFileConfig(new ConfigFile(new File(confDir, username + ".conf").toPath())),
                 new ConfigFileConfig(new ConfigFile(DFBnc.class.getResourceAsStream("/com/dfbnc/defaults.config"))));
 
         // Find sub-client configs
@@ -111,7 +111,7 @@ public final class Account implements UserSocketWatcher {
             Logger.info("    Found sub-client: " + subName);
 
             try {
-                final Config subConfig = new DefaultsConfig(new ConfigFileConfig(new ConfigFile(sc)), config);
+                final Config subConfig = new DefaultsConfig(new ConfigFileConfig(new ConfigFile(sc.toPath())), config);
 
                 subClientConfigs.put(subName, subConfig);
             } catch (final InvalidConfigFileException icfe) {
@@ -583,7 +583,7 @@ public final class Account implements UserSocketWatcher {
             final File sc = new File(confDir, subName + ".scconf");
 
             try {
-                final Config subConfig = new DefaultsConfig(new ConfigFileConfig(new ConfigFile(sc)), config);
+                final Config subConfig = new DefaultsConfig(new ConfigFileConfig(new ConfigFile(sc.toPath())), config);
 
                 subClientConfigs.put(subName, subConfig);
             } catch (final InvalidConfigFileException icfe) {

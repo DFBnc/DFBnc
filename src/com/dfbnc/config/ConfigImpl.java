@@ -22,13 +22,15 @@
 
 package com.dfbnc.config;
 
-import com.dmdirc.util.collections.MapList;
 import com.dmdirc.util.io.InvalidConfigFileException;
 import com.dmdirc.util.validators.PermissiveValidator;
 import com.dmdirc.util.validators.Validator;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Single layer configuration
@@ -42,13 +44,13 @@ public abstract class ConfigImpl implements Config {
     /**
      * Configuration change listeners.
      */
-    private final MapList<String, ConfigChangeListener> listeners;
+    private final Map<String, List<ConfigChangeListener>> listeners;
 
     /**
      * Creates a new configuration file, creating the file is needed.
      */
     public ConfigImpl() throws IOException, InvalidConfigFileException {
-        listeners = new MapList<>();
+        listeners = new HashMap<>();
         permissiveValidator = new PermissiveValidator<>();
     }
 
@@ -136,22 +138,30 @@ public abstract class ConfigImpl implements Config {
 
     @Override
     public void addChangeListener(final String domain, final ConfigChangeListener listener) {
-        listeners.add(domain, listener);
+        addListener(domain, listener);
     }
 
     @Override
     public void addChangeListener(final ConfigChangeListener listener) {
-        listeners.add("", listener);
+        addListener("", listener);
     }
 
     @Override
     public void addChangeListener(final String domain, final String key, final ConfigChangeListener listener) {
-        listeners.add(domain + "." + key, listener);
+        addListener(domain + "." + key, listener);
+    }
+
+    protected void addListener(final String key, final ConfigChangeListener listener) {
+        if (!listeners.containsKey(key)) {
+            final List<ConfigChangeListener> l = new ArrayList<>();
+            listeners.put(key, l);
+        }
+        listeners.get(key).add(listener);
     }
 
     @Override
     public void removeListener(final ConfigChangeListener listener) {
-        listeners.removeFromAll(listener);
+        listeners.values().stream().forEach((list) -> list.remove(listener));
     }
 
     protected void callListeners(final String domain, final String option) {

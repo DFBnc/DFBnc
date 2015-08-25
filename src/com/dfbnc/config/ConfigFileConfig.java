@@ -46,10 +46,8 @@ public class ConfigFileConfig extends ConfigImpl {
         super();
         this.config = config;
 
-        if (config.getFile() != null && !config.getFile().exists()) {
-            if (!config.getFile().createNewFile()) {
-                throw new IOException("Unable to create config file.");
-            }
+        if (config.isWritable()) {
+            config.write();
         }
         init();
     }
