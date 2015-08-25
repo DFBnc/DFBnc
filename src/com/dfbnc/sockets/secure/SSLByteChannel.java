@@ -217,7 +217,14 @@ public class SSLByteChannel implements ByteChannel {
 
         // Unwrap it into the buffer
         inNetData.flip();
-        final SSLEngineResult ser = myEngine.unwrap(inNetData, inAppData);
+        final SSLEngineResult ser;
+        try {
+            ser = myEngine.unwrap(inNetData, inAppData);
+        } catch (final SSLException ex) {
+            throw ex;
+        } catch (final Exception ex) {
+            throw new SSLException(ex);
+        }
         inNetData.compact();
 
         return new WrapResult(ser, total, WrapResultType.UNWRAP);
@@ -233,7 +240,14 @@ public class SSLByteChannel implements ByteChannel {
     private WrapResult wrap() throws IOException, SSLException {
         // Wrap the data
         outAppData.flip();
-        SSLEngineResult ser = myEngine.wrap(outAppData,  outNetData);
+        final SSLEngineResult ser;
+        try {
+            ser = myEngine.wrap(outAppData,  outNetData);
+        } catch (final SSLException ex) {
+            throw ex;
+        } catch (final Exception ex) {
+            throw new SSLException(ex);
+        }
         outAppData.compact();
 
         // Write it out

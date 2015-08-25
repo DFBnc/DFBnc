@@ -35,6 +35,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.config.Config;
+import com.dfbnc.config.ConfigFileConfig;
 import com.dfbnc.config.DefaultsConfig;
 import com.dfbnc.servers.ServerType;
 import com.dfbnc.servers.ServerTypeNotFound;
@@ -42,6 +43,9 @@ import com.dfbnc.sockets.UnableToConnectException;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.sockets.UserSocketWatcher;
 import com.dfbnc.util.Util;
+import java.io.FilenameFilter;
+import java.util.HashMap;
+import java.util.Map;
 import uk.org.dataforce.libs.logger.Logger;
 
 /**
@@ -67,6 +71,8 @@ public final class Account implements UserSocketWatcher {
     private List<UserSocket> myUserSockets = new CopyOnWriteArrayList<>();
     /** Account config file. */
     private Config config;
+    /** SubClient configs. */
+    private Map<String,Config> subClientConfigs = new HashMap<>();
     /** Reconnect Timer. */
     private Timer reconnectTimer;
     /** Is the next disconnect intentional? */
@@ -83,16 +89,35 @@ public final class Account implements UserSocketWatcher {
      */
     public Account(final String username) throws IOException, InvalidConfigFileException {
         myName = username;
-
+        Logger.info("Loading Account: " + username);
         final File confDir = new File(DFBnc.getConfigDirName(), username);
         if (!confDir.exists()) {
             if (!confDir.mkdirs()) {
                 throw new IOException("Unable to create config directory.");
             }
         }
+        // Load Main Config
         config = new DefaultsConfig(
-                new ConfigFile(new File(confDir, username + ".conf")),
-                new ConfigFile(DFBnc.class.getResourceAsStream("/com/dfbnc/defaults.config")));
+                new ConfigFileConfig(new ConfigFile(new File(confDir, username + ".conf"))),
+                new ConfigFileConfig(new ConfigFile(DFBnc.class.getResourceAsStream("/com/dfbnc/defaults.config"))));
+
+        // Find sub-client configs
+        final File[] subConfigs = confDir.listFiles((final File dir, final String name) -> name.toLowerCase().endsWith(".scconf"));
+
+        // Load Sub-Client Configs
+        for (final File sc : subConfigs) {
+            // prints file and directory paths
+            final String subName = sc.getName().substring(0, sc.getName().lastIndexOf('.'));
+            Logger.info("    Found sub-client: " + subName);
+
+            try {
+                final Config subConfig = new DefaultsConfig(new ConfigFileConfig(new ConfigFile(sc)), config);
+
+                subClientConfigs.put(subName, subConfig);
+            } catch (final InvalidConfigFileException icfe) {
+                Logger.error("Unable to load sub-client config: " + sc.getName() + "(" + icfe.getMessage() + ")");
+            }
+         }
 
         // Enable global commands.
         myCommandManager.addSubCommandManager(DFBnc.getUserCommandManager());
@@ -280,6 +305,7 @@ public final class Account implements UserSocketWatcher {
      */
     public void save() {
         config.save();
+        subClientConfigs.values().stream().forEach((c) -> c.save());
     }
 
     /**
@@ -310,12 +336,8 @@ public final class Account implements UserSocketWatcher {
      * @return true/false depending on successful match
      */
     public boolean checkPassword(final String subclient, final String password) {
-        final String passwordKey = "password" + ((subclient != null && subclient.length() > 0) ? "." + subclient.toLowerCase() : "");
         final StringBuilder hashedPassword = new StringBuilder(myName.toLowerCase());
-        final boolean hasSubClientPassword = subclient != null && config.hasOption("user", passwordKey);
-        if (hasSubClientPassword) {
-            hashedPassword.append(subclient.toLowerCase());
-        }
+
         if (caseSensitivePasswords) {
             hashedPassword.append(password);
         } else {
@@ -323,9 +345,39 @@ public final class Account implements UserSocketWatcher {
         }
         hashedPassword.append(salt);
 
-        final String check = hasSubClientPassword ? config.getOption("user", passwordKey) : config.getOption("user", "password");
+        if (checkOldSubClientPassword(subclient, password)) {
+            Logger.info("Migrating old subclient password: " + getName() + "+" + subclient);
+            config.unsetOption("user", "password." + subclient.toLowerCase());
+            getSubConfig(subclient).setOption("user", "password", Util.md5(hashedPassword.toString()));
+        }
 
-        return Util.md5(hashedPassword.toString()).equals(check);
+        return Util.md5(hashedPassword.toString()).equals(getSubConfig(subclient).getOption("user", "password"));
+    }
+
+    /**
+     * Check if an old subclient password matches.
+     *
+     * @param subclient Subclient to check.
+     * @param password Password to check
+     * @return true/false depending on successful match
+     */
+    public boolean checkOldSubClientPassword(final String subclient, final String password) {
+        if (subclient == null) { return false; }
+
+        final String passwordKey = "password." + subclient.toLowerCase();
+        final StringBuilder hashedPassword = new StringBuilder(myName.toLowerCase());
+
+        if (!config.hasOption("user", passwordKey)) { return false; }
+
+        hashedPassword.append(subclient.toLowerCase());
+        if (caseSensitivePasswords) {
+            hashedPassword.append(password);
+        } else {
+            hashedPassword.append(password.toLowerCase());
+        }
+        hashedPassword.append(salt);
+
+        return Util.md5(hashedPassword.toString()).equals(config.getOption("user", passwordKey));
     }
 
     /**
@@ -344,10 +396,7 @@ public final class Account implements UserSocketWatcher {
      * @param password New password
      */
     public void setPassword(final String subclient, final String password) {
-        StringBuilder hashedPassword = new StringBuilder(myName.toLowerCase());
-        if (subclient != null) {
-            hashedPassword.append(subclient.toLowerCase());
-        }
+        final StringBuilder hashedPassword = new StringBuilder(myName.toLowerCase());
         if (caseSensitivePasswords) {
             hashedPassword.append(password);
         } else {
@@ -355,10 +404,8 @@ public final class Account implements UserSocketWatcher {
         }
         hashedPassword.append(salt);
 
-        final String passwordKey = "password" + ((subclient != null && subclient.length() > 0) ? "." + subclient.toLowerCase() : "");
-
-        config.setOption("user", passwordKey, Util.md5(hashedPassword.toString()));
-        config.save();
+        getSubConfig(subclient).setOption("user", "password", Util.md5(hashedPassword.toString()));
+        getSubConfig(subclient).save();
     }
 
     /**
@@ -516,6 +563,38 @@ public final class Account implements UserSocketWatcher {
      */
     public Config getConfig() {
         return config;
+    }
+
+    /**
+     * Returns the config for the given sub client.
+     * If a config does not exist for this subclient, then one will be
+     * created. If subName is null or empty, the default config will be
+     * returned.
+     *
+     * @param subName The name of the subclient to get the config for.
+     * @return Config for the given subclient.
+     */
+    public Config getSubConfig(final String subName) {
+        if (subName == null || subName.isEmpty()) { return getConfig(); }
+
+        if (!subClientConfigs.containsKey(subName)) {
+            Logger.info("Creating new sub-client config for client " + getName() + "+" + subName);
+            final File confDir = new File(DFBnc.getConfigDirName(), getName());
+            final File sc = new File(confDir, subName + ".scconf");
+
+            try {
+                final Config subConfig = new DefaultsConfig(new ConfigFileConfig(new ConfigFile(sc)), config);
+
+                subClientConfigs.put(subName, subConfig);
+            } catch (final InvalidConfigFileException icfe) {
+                Logger.error("Unable to load sub-client config: " + sc.getName() + "(" + icfe.getMessage() + ")");
+            } catch (final IOException ioe) {
+                // This should hopefully never happen.
+                // We're in trouble if it does.
+            }
+        }
+
+        return subClientConfigs.get(subName);
     }
 
     /**

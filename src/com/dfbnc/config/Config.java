@@ -51,6 +51,14 @@ public interface Config {
     public void setOption(final String domain, final String option, final String value);
 
     /**
+     * Unsets the specified option in this configuration.
+     *
+     * @param domain The domain of the option
+     * @param option The name of the option
+     */
+    public void unsetOption(final String domain, final String option);
+
+    /**
      * Retrieves the first value for the specified option that matches the
      * specified validator.
      *

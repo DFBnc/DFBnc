@@ -22,6 +22,7 @@
 
 package com.dfbnc.config;
 
+import com.dmdirc.util.io.ConfigFile;
 import com.dmdirc.util.io.InvalidConfigFileException;
 import com.dmdirc.util.validators.Validator;
 import java.io.IOException;
@@ -31,29 +32,25 @@ import java.util.Set;
 /**
  * Single layer configuration
  */
-public class DefaultsConfig extends ConfigImpl {
+public class ConfigFileConfig extends ConfigImpl {
 
     /**
      * User level configuration file, overrides defaults.
      */
-    private final Config config;
-    /**
-     * System level configuration file used for defaults.
-     */
-    private final Config defaults;
+    private final ConfigFile config;
 
     /**
      * Creates a new configuration file, creating the file is needed.
      */
-    public DefaultsConfig(final Config config, final Config defaults) throws IOException, InvalidConfigFileException {
+    public ConfigFileConfig(final ConfigFile config) throws IOException, InvalidConfigFileException {
         super();
-        this.defaults = defaults;
         this.config = config;
 
-        if (defaults == null || config == null) {
-            throw new InvalidConfigFileException("Null Config Given");
+        if (config.getFile() != null && !config.getFile().exists()) {
+            if (!config.getFile().createNewFile()) {
+                throw new IOException("Unable to create config file.");
+            }
         }
-
         init();
     }
 
@@ -61,13 +58,11 @@ public class DefaultsConfig extends ConfigImpl {
     public String getOption(final String domain, final String option, final Validator<String> validator) {
         String value = null;
         try {
-            value = config.getOption(domain, option, validator);
-        } catch (final NullPointerException npe) { }
+            value = config.getKeyDomain(domain).get(option);
+        } catch (final Exception e) { /** Option not found in this config. */ }
 
-        if (value == null) {
-            try {
-                value = defaults.getOption(domain, option, validator);
-            } catch (final NullPointerException npe) { }
+        if (validator.validate(value).isFailure()) {
+            value = null;
         }
 
         if (value == null) {
@@ -79,41 +74,53 @@ public class DefaultsConfig extends ConfigImpl {
 
     @Override
     public void setOption(final String domain, final String option, final String value) {
-        config.setOption(domain, option, value);
+        config.getKeyDomain(domain).put(option, value);
 
         callListeners(domain, option);
     }
 
     @Override
     public void unsetOption(final String domain, final String option) {
-        config.unsetOption(domain, option);
+        config.getKeyDomain(domain).remove(option);
 
         callListeners(domain, option);
     }
 
     @Override
     public boolean hasOption(final String domain, final String option, final Validator<String> validator) {
-        return config.hasOption(domain, option, validator) || defaults.hasOption(domain, option, validator);
+        String value = config.hasDomain(domain) ? config.getKeyDomain(domain).get(option) : null;
+
+        return value != null && !validator.validate(value).isFailure();
     }
 
      @Override
     public Map<String, String> getOptions(final String domain) {
-        return config.getOptions(domain);
+        return config.getKeyDomain(domain);
     }
 
     @Override
     public Set<String> getDomains() {
-        return config.getDomains();
+        return config.getKeyDomains().keySet();
     }
 
     @Override
     public void save() {
-        config.save();
+        try {
+            config.write();
+        } catch (IOException ex) {
+            //Oh shit.
+        }
     }
 
     /**
-     * Does nothing, ConfigFileConfig handles this.
+     * Initialises the config file.
+     * <p/>
+     * @throws IOException If the config file do not exist
+     * @throws InvalidConfigFileException If the config file is invalid
      */
     @Override
-    public void init() throws IOException, InvalidConfigFileException { }
+    public void init() throws IOException, InvalidConfigFileException {
+        config.read();
+        config.setAutomake(true);
+    }
 }

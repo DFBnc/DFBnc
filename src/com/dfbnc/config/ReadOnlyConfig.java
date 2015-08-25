@@ -38,6 +38,11 @@ public class ReadOnlyConfig implements Config {
     }
 
     @Override
+    public void unsetOption(final String domain, final String option) {
+        throw new UnsupportedOperationException("This config is read only.");
+    }
+
+    @Override
     public String getOption(final String domain, final String option, final Validator<String> validator) {
         String value = config.getKeyDomain(domain).get(option);
 

@@ -42,6 +42,7 @@ import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.admin.*;
 import com.dfbnc.commands.user.*;
 import com.dfbnc.config.Config;
+import com.dfbnc.config.ConfigFileConfig;
 import com.dfbnc.config.DefaultsConfig;
 import com.dfbnc.config.ReadOnlyConfig;
 import com.dfbnc.servers.ServerTypeManager;
@@ -239,7 +240,7 @@ public class DFBnc {
                     throw new IOException("Unable to create config directory.");
                 }
             }
-            config = new DefaultsConfig(new ConfigFile(new File(getConfigDirName(), getConfigFileName())), new ConfigFile(DFBnc.class.getResourceAsStream("/com/dfbnc/defaults.config")));
+            config = new DefaultsConfig(new ConfigFileConfig(new ConfigFile(new File(getConfigDirName(), getConfigFileName()))), new ConfigFileConfig(new ConfigFile(DFBnc.class.getResourceAsStream("/com/dfbnc/defaults.config"))));
         } catch (final IOException ex) {
             Logger.error("Error loading config: " + configDirectory + " (" + ex.getMessage() + "). Exiting");
             System.exit(1);
@@ -286,7 +287,6 @@ public class DFBnc {
         }
 
         // By now, we will have forked if required.
-
         Logger.info("Loading Accounts..");
         AccountManager.loadAccounts();
 

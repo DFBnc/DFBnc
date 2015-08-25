@@ -189,24 +189,24 @@ public class AccountManager {
         }
         for (File file : directories) {
             if (!DFBnc.getConfigFileName().equals(file.getName())) {
-              try {
-                 Account acc = new Account(file.getName());
-                 accounts.put(acc.getName(), acc);
+                try {
+                   Account acc = new Account(file.getName());
+                   accounts.put(acc.getName(), acc);
 
-                  if (acc.getConfig().getOptionBool("server", "autoconnect")) {
-                     final ServerType type = acc.getServerType();
-                     if (type != null) {
-                         try {
-                            final ConnectionHandler handler = type.newConnectionHandler(acc, -1);
-                            acc.setConnectionHandler(handler);
-                         }  catch (UnableToConnectException ex) {
-                             Logger.error("Unable to autoconnect account: " + file.getName());
-                         }
-                     }
-                 }
-             } catch (IOException | InvalidConfigFileException ex) {
-                     Logger.error("Unable to load account: " + file.getName() + "(" + ex.getMessage() + ")");
-             }
+                    if (acc.getConfig().getOptionBool("server", "autoconnect")) {
+                       final ServerType type = acc.getServerType();
+                       if (type != null) {
+                           try {
+                              final ConnectionHandler handler = type.newConnectionHandler(acc, -1);
+                              acc.setConnectionHandler(handler);
+                           }  catch (UnableToConnectException ex) {
+                               Logger.error("Unable to autoconnect account: " + file.getName());
+                           }
+                       }
+                   }
+               } catch (IOException | InvalidConfigFileException ex) {
+                   Logger.error("Unable to load account: " + file.getName() + "(" + ex.getMessage() + ")");
+               }
             }
         }
     }
