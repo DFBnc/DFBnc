@@ -240,7 +240,7 @@ public class DFBnc {
                     throw new IOException("Unable to create config directory.");
                 }
             }
-            config = new DefaultsConfig(new ConfigFileConfig(new ConfigFile(new File(getConfigDirName(), getConfigFileName()).toPath())), new ConfigFileConfig(new ConfigFile(DFBnc.class.getResourceAsStream("/com/dfbnc/defaults.config"))));
+            config = new DefaultsConfig(new ConfigFileConfig(new File(getConfigDirName(), getConfigFileName())), new ConfigFileConfig(DFBnc.class.getResourceAsStream("/com/dfbnc/defaults.config")));
         } catch (final IOException ex) {
             Logger.error("Error loading config: " + configDirectory + " (" + ex.getMessage() + "). Exiting");
             System.exit(1);
@@ -586,15 +586,13 @@ public class DFBnc {
         cli.add(new BooleanParam('s', "silent", "Disable all output"));
         cli.add(new StringParam('c', "config", "Alternative config directory to use"));
         cli.add(new BooleanParam((char)0, "enableDebugOptions", "Enable 'debugging.*' config settings"));
+        cli.add(new BooleanParam('f', "foreground", "Don't Fork into background"));
         if (DFBncDaemon.canFork()) {
-            cli.add(new BooleanParam('f', "foreground", "Don't Fork into background"));
             cli.add(new BooleanParam((char)0, "background", "Exists for backwards compatability..."));
-            cli.add(new StringParam((char)0, "pidfile", "Change pidfile location (Default: ./dfbnc.pid)"));
         } else {
-            cli.add(new BooleanParam('f', "foreground", "Don't Fork into background"));
             cli.add(new BooleanParam((char)0, "background", "Exists for backwards compatability... [UNSUPPORTED ON THIS OS]"));
-            cli.add(new StringParam((char)0, "pidfile", "Change pidfile location (Default: ./dfbnc.pid)"));
         }
+        cli.add(new StringParam((char)0, "pidfile", "Change pidfile location (Default: ./dfbnc.pid)"));
         cli.add(new StringParam((char)0, "logfile", "Log file to use for console output. (Default: none)"));
         cli.setHelp(cli.getParam("-help"));
     }

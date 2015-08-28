@@ -43,7 +43,6 @@ import com.dfbnc.sockets.UnableToConnectException;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.sockets.UserSocketWatcher;
 import com.dfbnc.util.Util;
-import java.io.FilenameFilter;
 import java.util.HashMap;
 import java.util.Map;
 import uk.org.dataforce.libs.logger.Logger;
@@ -98,8 +97,8 @@ public final class Account implements UserSocketWatcher {
         }
         // Load Main Config
         config = new DefaultsConfig(
-                new ConfigFileConfig(new ConfigFile(new File(confDir, username + ".conf").toPath())),
-                new ConfigFileConfig(new ConfigFile(DFBnc.class.getResourceAsStream("/com/dfbnc/defaults.config"))));
+                new ConfigFileConfig(new File(confDir, username + ".conf")),
+                new ConfigFileConfig(DFBnc.class.getResourceAsStream("/com/dfbnc/defaults.config")));
 
         // Find sub-client configs
         final File[] subConfigs = confDir.listFiles((final File dir, final String name) -> name.toLowerCase().endsWith(".scconf"));
@@ -111,7 +110,7 @@ public final class Account implements UserSocketWatcher {
             Logger.info("    Found sub-client: " + subName);
 
             try {
-                final Config subConfig = new DefaultsConfig(new ConfigFileConfig(new ConfigFile(sc.toPath())), config);
+                final Config subConfig = new DefaultsConfig(new ConfigFileConfig(sc), config);
 
                 subClientConfigs.put(subName, subConfig);
             } catch (final InvalidConfigFileException icfe) {
@@ -583,18 +582,25 @@ public final class Account implements UserSocketWatcher {
             final File sc = new File(confDir, subName + ".scconf");
 
             try {
-                final Config subConfig = new DefaultsConfig(new ConfigFileConfig(new ConfigFile(sc.toPath())), config);
+                final Config subConfig = new DefaultsConfig(new ConfigFileConfig(sc), config);
 
                 subClientConfigs.put(subName, subConfig);
             } catch (final InvalidConfigFileException icfe) {
                 Logger.error("Unable to load sub-client config: " + sc.getName() + "(" + icfe.getMessage() + ")");
+                icfe.printStackTrace();
             } catch (final IOException ioe) {
                 // This should hopefully never happen.
                 // We're in trouble if it does.
+                Logger.error("Error loading sub-client config: " + sc.getName() + "(" + ioe.getMessage() + ")");
+                ioe.printStackTrace();
             }
         }
 
         return subClientConfigs.get(subName);
+    }
+
+    public Map<String,Config> getSubClientConfigs() {
+        return subClientConfigs;
     }
 
     /**

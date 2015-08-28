@@ -25,7 +25,9 @@ package com.dfbnc.config;
 import com.dmdirc.util.io.ConfigFile;
 import com.dmdirc.util.io.InvalidConfigFileException;
 import com.dmdirc.util.validators.Validator;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.Set;
 
@@ -41,14 +43,35 @@ public class ConfigFileConfig extends ConfigImpl {
 
     /**
      * Creates a new configuration file, creating the file is needed.
+     *
+     * @param file File to create ConfigFile from
      */
-    public ConfigFileConfig(final ConfigFile config) throws IOException, InvalidConfigFileException {
+    public ConfigFileConfig(final File file) throws IOException, InvalidConfigFileException {
         super();
-        this.config = config;
 
-        if (config.isWritable()) {
-            config.write();
+        if (file == null) {
+            throw new IOException("Unable to create config file.");
         }
+        if (file != null && !file.exists()) {
+            if (!file.createNewFile()) {
+                throw new IOException("Unable to create config file.");
+            }
+         }
+
+        this.config = new ConfigFile(file.toPath());
+
+        init();
+    }
+
+    /**
+     * Creates a new configuration file from an input stream.
+     *
+     * @param stream InputStream to create ConfigFile from
+     */
+    public ConfigFileConfig(final InputStream stream) throws IOException, InvalidConfigFileException {
+        super();
+        this.config = new ConfigFile(stream);
+
         init();
     }
 
