@@ -93,7 +93,7 @@ public class IRCServerType extends ServerType {
         // Migrate old CWL and Highlights to sub-client configs.
         final Map<String,String> options = new HashMap<>();
         options.putAll(config.getOptions("irc"));
-        
+
         for (final Map.Entry<String, String> e : options.entrySet()) {
             if (e.getKey().toLowerCase().startsWith("channelwhitelist.") || e.getKey().toLowerCase().startsWith("highlight.")) {
                 Logger.info("Migrating subclient list: " + e.getKey());

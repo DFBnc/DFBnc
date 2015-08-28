@@ -23,10 +23,10 @@
 package com.dfbnc.servers.irc;
 
 import com.dfbnc.Account;
+import com.dfbnc.AccountConfigChangeListener;
 import com.dfbnc.ConnectionHandler;
 import com.dfbnc.Consts;
 import com.dfbnc.config.Config;
-import com.dfbnc.config.ConfigChangeListener;
 import com.dfbnc.sockets.UnableToConnectException;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.sockets.UserSocketWatcher;
@@ -63,7 +63,7 @@ import uk.org.dataforce.libs.logger.LogLevel;
  * It handles parser callbacks, and proxies data between users and the server.
  * It also handles the performs.
  */
-public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatcher, ConfigChangeListener {
+public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatcher, AccountConfigChangeListener {
 
     /** Account that this IRCConnectionHandler is for. */
     private final Account myAccount;
@@ -169,8 +169,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 
         privateBackbufferList = new RollingList<>(getConfigMaxValue("server", "privatebackbuffer"));
         myParser.connect();
-        // TODO: Need a config change listener on ALL sub-configs...
-        myAccount.getAccountConfig().addChangeListener(this);
+        myAccount.addConfigChangeListener(this);
         ((IRCParser)myParser).getControlThread().setName("IRC Parser - " + myAccount.getName() + " - <server>");
     }
 
@@ -875,7 +874,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 
     @Override
     @SuppressWarnings("unchecked")
-    public void configChanged(final String domain, final String setting) {
+    public void accountConfigChanged(final Account account, final String subClient, final String domain, final String setting) {
         if (domain.equalsIgnoreCase("server") && setting.equalsIgnoreCase("backbuffer")) {
             final int size = getConfigMaxValue("server", "backbuffer");
             for (ChannelInfo channel : myParser.getChannels()) {

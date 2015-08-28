@@ -40,18 +40,16 @@ public abstract class ConfigImpl implements Config {
     /**
      * A validator which succeeds on all values.
      */
-    private final Validator<String> permissiveValidator;
+    private final Validator<String> permissiveValidator = new PermissiveValidator<>();
     /**
      * Configuration change listeners.
      */
-    private final Map<String, List<ConfigChangeListener>> listeners;
+    private final Map<String, List<ConfigChangeListener>> listeners = new HashMap<>();
 
     /**
      * Creates a new configuration file, creating the file is needed.
      */
     public ConfigImpl() throws IOException, InvalidConfigFileException {
-        listeners = new HashMap<>();
-        permissiveValidator = new PermissiveValidator<>();
     }
 
     @Override
@@ -151,6 +149,12 @@ public abstract class ConfigImpl implements Config {
         addListener(domain + "." + key, listener);
     }
 
+    /**
+     * Adds a change listener to the list of listeners.
+     *
+     * @param key the key to listen for.
+     * @param listener The listener to register
+     */
     protected void addListener(final String key, final ConfigChangeListener listener) {
         if (!listeners.containsKey(key)) {
             final List<ConfigChangeListener> l = new ArrayList<>();
@@ -166,20 +170,26 @@ public abstract class ConfigImpl implements Config {
         listeners.values().stream().forEach((list) -> list.remove(listener));
     }
 
+    /**
+     * Call matching listeners
+     *
+     * @param domain the domain that changed
+     * @param option the option that changed
+     */
     protected void callListeners(final String domain, final String option) {
         if (listeners.containsKey(domain)) {
             for (final ConfigChangeListener listener : listeners.get(domain)) {
-                listener.configChanged(domain, option);
+                listener.configChanged(this, domain, option);
             }
         }
         if (listeners.containsKey(domain + "." + option)) {
             for (final ConfigChangeListener listener : listeners.get(domain + "." + option)) {
-                listener.configChanged(domain, option);
+                listener.configChanged(this, domain, option);
             }
         }
         if (listeners.containsKey("")) {
             for (final ConfigChangeListener listener : listeners.get("")) {
-                listener.configChanged(domain, option);
+                listener.configChanged(this, domain, option);
             }
         }
     }

@@ -35,6 +35,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.config.Config;
+import com.dfbnc.config.ConfigChangeListener;
 import com.dfbnc.config.ConfigFileConfig;
 import com.dfbnc.config.DefaultsConfig;
 import com.dfbnc.servers.ServerType;
@@ -43,6 +44,7 @@ import com.dfbnc.sockets.UnableToConnectException;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.sockets.UserSocketWatcher;
 import com.dfbnc.util.Util;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import uk.org.dataforce.libs.logger.Logger;
@@ -50,7 +52,7 @@ import uk.org.dataforce.libs.logger.Logger;
 /**
  * Functions related to Accounts
  */
-public final class Account implements UserSocketWatcher {
+public final class Account implements UserSocketWatcher,ConfigChangeListener {
 
     /** Salt used when generating passwords */
     private static final String salt = "a5S5l1N4u4O2y9Z4l6W7t1A9b9L8a1X5a7F4s5E8";
@@ -63,15 +65,19 @@ public final class Account implements UserSocketWatcher {
     /** Deletecode for this account. This is not saved between sessions */
     private String deleteCode = "";
     /** CommandManager for this account */
-    private CommandManager myCommandManager = new CommandManager();
+    private final CommandManager myCommandManager = new CommandManager();
     /** ConnectionHandler for this account */
     private ConnectionHandler myConnectionHandler = null;
     /** List of all sockets that are part of this account. */
-    private List<UserSocket> myUserSockets = new CopyOnWriteArrayList<>();
+    private final List<UserSocket> myUserSockets = new CopyOnWriteArrayList<>();
     /** Account config file. */
     private Config config;
     /** SubClient configs. */
-    private Map<String,Config> subClientConfigs = new HashMap<>();
+    private final Map<String,Config> subClientConfigs = new HashMap<>();
+    /** Reverse map of subClientConfigs */
+    private final Map<Config,String> subClientConfigKeys = new HashMap<>();
+    /** Configuration change listeners. */
+    private final Map<String, List<AccountConfigChangeListener>> listeners = new HashMap<>();
     /** Reconnect Timer. */
     private Timer reconnectTimer;
     /** Is the next disconnect intentional? */
@@ -99,6 +105,7 @@ public final class Account implements UserSocketWatcher {
         config = new DefaultsConfig(
                 new ConfigFileConfig(new File(confDir, username + ".conf")),
                 new ConfigFileConfig(DFBnc.class.getResourceAsStream("/com/dfbnc/defaults.config")));
+        config.addChangeListener(this);
 
         // Find sub-client configs
         final File[] subConfigs = confDir.listFiles((final File dir, final String name) -> name.toLowerCase().endsWith(".scconf"));
@@ -111,8 +118,10 @@ public final class Account implements UserSocketWatcher {
 
             try {
                 final Config subConfig = new DefaultsConfig(new ConfigFileConfig(sc), config);
+                subConfig.addChangeListener(this);
 
                 subClientConfigs.put(subName, subConfig);
+                subClientConfigKeys.put(subConfig, subName);
             } catch (final InvalidConfigFileException icfe) {
                 Logger.error("Unable to load sub-client config: " + sc.getName() + "(" + icfe.getMessage() + ")");
             }
@@ -583,8 +592,10 @@ public final class Account implements UserSocketWatcher {
 
             try {
                 final Config subConfig = new DefaultsConfig(new ConfigFileConfig(sc), config);
+                subConfig.addChangeListener(this);
 
                 subClientConfigs.put(subName, subConfig);
+                subClientConfigKeys.put(subConfig, subName);
             } catch (final InvalidConfigFileException icfe) {
                 Logger.error("Unable to load sub-client config: " + sc.getName() + "(" + icfe.getMessage() + ")");
                 icfe.printStackTrace();
@@ -599,8 +610,90 @@ public final class Account implements UserSocketWatcher {
         return subClientConfigs.get(subName);
     }
 
+    /**
+     * Get all the subclient Configs
+     *
+     * @return sub client configs.
+     */
     public Map<String,Config> getSubClientConfigs() {
         return subClientConfigs;
+    }
+
+    /**
+     * Adds a change listener for the specified domain.
+     *
+     * @param domain The domain to be monitored
+     * @param listener The listener to register
+     */
+    public void addConfigChangeListener(final String domain, final AccountConfigChangeListener listener) {
+        addConfigListener(domain, listener);
+    }
+
+    /**
+     * Adds a change listener for all domains.
+     *
+     * @param listener The listener to register
+     */
+    public void addConfigChangeListener(final AccountConfigChangeListener listener) {
+        addConfigListener("", listener);
+    }
+
+    /**
+     * Adds a change listener for the specified domain and key.
+     *
+     * @param domain The domain of the option
+     * @param key The option to be monitored
+     * @param listener The listener to register
+     */
+    public void addConfigChangeListener(final String domain, final String key, final AccountConfigChangeListener listener) {
+        addConfigListener(domain + "." + key, listener);
+    }
+
+    /**
+     * Adds a change listener to the list of listeners.
+     *
+     * @param key the key to listen for.
+     * @param listener The listener to register
+     */
+    protected void addConfigListener(final String key, final AccountConfigChangeListener listener) {
+        if (!listeners.containsKey(key)) {
+            final List<AccountConfigChangeListener> l = new ArrayList<>();
+            listeners.put(key, l);
+        }
+        if (!listeners.get(key).contains(listener)) {
+            listeners.get(key).add(listener);
+        }
+    }
+
+    /**
+     * Removes the specified listener for all domains and options.
+     *
+     * @param listener The listener to be removed
+     */
+    public void removeListener(final AccountConfigChangeListener listener) {
+        listeners.values().stream().forEach((list) -> list.remove(listener));
+    }
+
+    /**
+     * Call matching listeners.
+     *
+     * @param config The config object that had the change
+     * @param domain the domain that changed
+     * @param option the option that changed
+     */
+    @Override
+    public void configChanged(final Config config, final String domain, final String option) {
+        final String subClientName = (config == this.config) ? null : subClientConfigKeys.get(config);
+
+        if (listeners.containsKey(domain)) {
+            listeners.get(domain).stream().forEach((listener) -> listener.accountConfigChanged(this, subClientName, domain, option));
+        }
+        if (listeners.containsKey(domain + "." + option)) {
+            listeners.get(domain + "." + option).stream().forEach((listener) -> listener.accountConfigChanged(this, subClientName, domain, option));
+        }
+        if (listeners.containsKey("")) {
+            listeners.get("").stream().forEach((listener) -> listener.accountConfigChanged(this, subClientName, domain, option));
+        }
     }
 
     /**

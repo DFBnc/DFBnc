@@ -19,13 +19,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.dfbnc.config;
-
+package com.dfbnc;
 
 /**
  *
  * @author shane
  */
-public interface ConfigChangeListener {
-    void configChanged(final Config config, final String domain, final String setting);
+public interface AccountConfigChangeListener {
+    /**
+     * Account Config Changed
+     *
+     * @param account Account object that changed
+     * @param subClient Subclient name that changed (or null for global config)
+     * @param domain Domain that changed
+     * @param setting Setting that changed
+     */
+    void accountConfigChanged(final Account account, final String subClient, final String domain, final String setting);
 }
