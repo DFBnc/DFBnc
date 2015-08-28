@@ -156,7 +156,9 @@ public abstract class ConfigImpl implements Config {
             final List<ConfigChangeListener> l = new ArrayList<>();
             listeners.put(key, l);
         }
-        listeners.get(key).add(listener);
+        if (!listeners.get(key).contains(listener)) {
+            listeners.get(key).add(listener);
+        }
     }
 
     @Override

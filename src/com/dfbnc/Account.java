@@ -347,10 +347,10 @@ public final class Account implements UserSocketWatcher {
         if (checkOldSubClientPassword(subclient, password)) {
             Logger.info("Migrating old subclient password: " + getName() + "+" + subclient);
             config.unsetOption("user", "password." + subclient.toLowerCase());
-            getSubConfig(subclient).setOption("user", "password", Util.md5(hashedPassword.toString()));
+            getConfig(subclient).setOption("user", "password", Util.md5(hashedPassword.toString()));
         }
 
-        return Util.md5(hashedPassword.toString()).equals(getSubConfig(subclient).getOption("user", "password"));
+        return Util.md5(hashedPassword.toString()).equals(getConfig(subclient).getOption("user", "password"));
     }
 
     /**
@@ -403,8 +403,8 @@ public final class Account implements UserSocketWatcher {
         }
         hashedPassword.append(salt);
 
-        getSubConfig(subclient).setOption("user", "password", Util.md5(hashedPassword.toString()));
-        getSubConfig(subclient).save();
+        getConfig(subclient).setOption("user", "password", Util.md5(hashedPassword.toString()));
+        getConfig(subclient).save();
     }
 
     /**
@@ -556,12 +556,12 @@ public final class Account implements UserSocketWatcher {
     }
 
     /**
-     * Returns this accounts config.
+     * Returns this accounts global config.
      *
      * @return Account's config
      */
-    public Config getConfig() {
-        return config;
+    public Config getAccountConfig() {
+        return getConfig(null);
     }
 
     /**
@@ -573,8 +573,8 @@ public final class Account implements UserSocketWatcher {
      * @param subName The name of the subclient to get the config for.
      * @return Config for the given subclient.
      */
-    public Config getSubConfig(final String subName) {
-        if (subName == null || subName.isEmpty()) { return getConfig(); }
+    public Config getConfig(final String subName) {
+        if (subName == null || subName.isEmpty()) { return config; }
 
         if (!subClientConfigs.containsKey(subName)) {
             Logger.info("Creating new sub-client config for client " + getName() + "+" + subName);
@@ -704,7 +704,7 @@ public final class Account implements UserSocketWatcher {
      * @param type Human-Friendly type of exception.
      */
     public void reportException(final Throwable t,  final String type) {
-        if (!getConfig().getOptionBool("server", "reporterrors") || t == null) {
+        if (!getAccountConfig().getOptionBool("server", "reporterrors") || t == null) {
             return;
         }
 

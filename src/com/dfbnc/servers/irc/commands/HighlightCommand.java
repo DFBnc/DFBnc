@@ -24,6 +24,8 @@ package com.dfbnc.servers.irc.commands;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.AbstractListEditCommand;
 import com.dfbnc.commands.ListOption;
+import com.dfbnc.config.Config;
+import com.dfbnc.sockets.UserSocket;
 
 /**
  * This file represents the 'Highlight' command
@@ -31,7 +33,7 @@ import com.dfbnc.commands.ListOption;
 public class HighlightCommand extends AbstractListEditCommand {
 
     @Override
-    public String getPropertyName(final String command) { return "highlight." + command; }
+    public String getPropertyName(final String command) { return "highlight"; }
 
     @Override
     public String getDomainName(final String command) { return "irc"; }
@@ -68,6 +70,11 @@ public class HighlightCommand extends AbstractListEditCommand {
     @Override
     public boolean hasSubList() {
         return true;
+    }
+
+    @Override
+    public Config getConfig(final UserSocket user, final String sublist) {
+        return user.getAccount().getConfig(sublist);
     }
 
     @Override

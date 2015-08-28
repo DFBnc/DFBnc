@@ -50,15 +50,15 @@ public class ServerSetCommand extends AbstractSetCommand {
         setDomain = "server";
 
         // Add the valid params
-        validParams.put("reconnect", new ParamInfo("Auto reconnect on disconnect.", ParamType.BOOL));
-        validParams.put("reporterrors", new ParamInfo("Report errors from ConnectionHandlers to connected users.", ParamType.BOOL));
-        validParams.put("autoconnect", new ParamInfo("Auto connect on startup.", ParamType.BOOL));
-        validParams.put("backbuffer", new ParamInfo("Number of lines to store as backbuffer in each channel (0 to disable).", ParamType.INT));
-        validParams.put("backbuffertimeout", new ParamInfo("How long in seconds to permit messages to be stored in the backbuffer (0 to disable).", ParamType.INT));
-        validParams.put("privatebackbuffer", new ParamInfo("Number of lines to store as backbuffer for private messages (0 to disable).", ParamType.INT));
-        validParams.put("privatebackbuffertimeout", new ParamInfo("How long in seconds to permit messages to be stored in the private message backbuffer (0 to disable).", ParamType.INT));
-        validParams.put("privatebackbuffertimestamp", new ParamInfo("Force timestamp prepends on private message backbuffers?", ParamType.BOOL));
-        validParams.put("userdisconnect", new ParamInfo("Disconnect user if the server disconnects us.", ParamType.BOOL));
+        validParams.put("reconnect", new ParamInfo("Auto reconnect on disconnect.", ParamType.BOOL, false));
+        validParams.put("reporterrors", new ParamInfo("Report errors from ConnectionHandlers to connected users.", ParamType.BOOL, false));
+        validParams.put("autoconnect", new ParamInfo("Auto connect on startup.", ParamType.BOOL, false));
+        validParams.put("backbuffer", new ParamInfo("Number of lines to store as backbuffer in each channel (0 to disable).", ParamType.INT, true));
+        validParams.put("backbuffertimeout", new ParamInfo("How long in seconds to permit messages to be stored in the backbuffer (0 to disable).", ParamType.INT, true));
+        validParams.put("privatebackbuffer", new ParamInfo("Number of lines to store as backbuffer for private messages (0 to disable).", ParamType.INT, true));
+        validParams.put("privatebackbuffertimeout", new ParamInfo("How long in seconds to permit messages to be stored in the private message backbuffer (0 to disable).", ParamType.INT, true));
+        validParams.put("privatebackbuffertimestamp", new ParamInfo("Force timestamp prepends on private message backbuffers?", ParamType.BOOL, true));
+        validParams.put("userdisconnect", new ParamInfo("Disconnect user if the server disconnects us.", ParamType.BOOL, false));
     }
 
     /**

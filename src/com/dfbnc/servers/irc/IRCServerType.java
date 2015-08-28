@@ -31,7 +31,11 @@ import com.dfbnc.servers.ServerType;
 import com.dfbnc.servers.ServerTypeManager;
 import com.dfbnc.Account;
 import com.dfbnc.ConnectionHandler;
+import com.dfbnc.config.Config;
 import com.dfbnc.sockets.UnableToConnectException;
+import java.util.HashMap;
+import java.util.Map;
+import uk.org.dataforce.libs.logger.Logger;
 
 /**
  * This file gives the ability to connect to an IRC Server
@@ -73,15 +77,32 @@ public class IRCServerType extends ServerType {
     public void activate(final Account account) {
         account.getCommandManager().addSubCommandManager(myCommandManager);
 
+        final Config config = account.getAccountConfig();
+
         // Set some defaults if they are not already set.
-        if (account.getConfig().getOption("irc", "nickname").isEmpty()) {
-            account.getConfig().setOption("irc", "nickname", account.getName());
+        if (config.getOption("irc", "nickname").isEmpty()) {
+            config.setOption("irc", "nickname", account.getName());
         }
-        if (account.getConfig().getOption("irc", "realname").isEmpty()) {
-            account.getConfig().setOption("irc", "realname", account.getName());
+        if (config.getOption("irc", "realname").isEmpty()) {
+            config.setOption("irc", "realname", account.getName());
         }
-        if (account.getConfig().getOption("irc", "username").isEmpty()) {
-            account.getConfig().setOption("irc", "username", account.getName());
+        if (config.getOption("irc", "username").isEmpty()) {
+            config.setOption("irc", "username", account.getName());
+        }
+
+        // Migrate old CWL and Highlights to sub-client configs.
+        final Map<String,String> options = new HashMap<>();
+        options.putAll(config.getOptions("irc"));
+        
+        for (final Map.Entry<String, String> e : options.entrySet()) {
+            if (e.getKey().toLowerCase().startsWith("channelwhitelist.") || e.getKey().toLowerCase().startsWith("highlight.")) {
+                Logger.info("Migrating subclient list: " + e.getKey());
+                final String[] bits = e.getKey().split("\\.", 2);
+                if (!e.getValue().isEmpty()) {
+                    account.getConfig(bits[1]).setOption("irc", bits[0], e.getValue());
+                }
+                config.unsetOption("irc", e.getKey());
+            }
         }
     }
 

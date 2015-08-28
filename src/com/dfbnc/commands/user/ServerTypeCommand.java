@@ -60,7 +60,7 @@ public class ServerTypeCommand extends Command {
 
                 final ServerType currentType = user.getAccount().getServerType();
                 if (actualParams[2].equalsIgnoreCase("none")) {
-                    user.getAccount().getConfig().setOption("server", "servertype", "");
+                    user.getAccountConfig().setOption("server", "servertype", "");
                     output.sendBotMessage("You now have no servertype.");
                     if (currentType != null) { currentType.deactivate(user.getAccount()); }
                 } else {
@@ -68,7 +68,7 @@ public class ServerTypeCommand extends Command {
                         ServerType serverType = DFBnc.getServerTypeManager().getServerType(actualParams[2]);
                         if (currentType != null) { currentType.deactivate(user.getAccount()); }
                         serverType.activate(user.getAccount());
-                        user.getAccount().getConfig().setOption("server", "servertype", actualParams[2].toLowerCase());
+                        user.getAccountConfig().setOption("server", "servertype", actualParams[2].toLowerCase());
                         output.sendBotMessage("Your ServerType is now "+actualParams[2].toLowerCase()+".");
                     } catch (ServerTypeNotFound e) {
                         output.sendBotMessage("Sorry, "+e);
@@ -85,7 +85,7 @@ public class ServerTypeCommand extends Command {
             }
         } else if (actualParams.length > 1 && actualParams[1].equalsIgnoreCase("help")) {
             output.sendBotMessage("This command allows you to set the servertype for this account.");
-            final String currentType = user.getAccount().getConfig().getOption("server", "servertype");
+            final String currentType = user.getAccountConfig().getOption("server", "servertype");
             String info = "";
             final ServerType st = user.getAccount().getServerType();
             if (st == null) {

@@ -21,6 +21,7 @@
  */
 package com.dfbnc.commands;
 
+import com.dfbnc.config.Config;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -155,7 +156,6 @@ public abstract class AbstractListEditCommand extends Command {
         final int positionParam = commandParam + 1;
 
         if (actualParams.length > commandParam) {
-
             final String listParamName = hasSubList ? validSubList(actualParams[listParam]) : actualParams[listParam];
             if (listParamName == null) {
                 output.sendBotMessage("There is no list to modify using '" + listParamName + "'");
@@ -171,9 +171,10 @@ public abstract class AbstractListEditCommand extends Command {
                 output.sendBotMessage("Please try /dfbnc '" + actualParams[0] + "' for more information");
                 return;
             }
+            final String subListName = hasSubList ? validSubList(actualParams[listParam]) : null;
             List<String> myList = new ArrayList<>();
-            if (user.getAccount().getConfig().hasOption(getDomainName(listParamName), getPropertyName(listParamName))) {
-                myList = user.getAccount().getConfig().getOptionList(getDomainName(listParamName), getPropertyName(listParamName));
+            if (getConfig(user, subListName).hasOption(getDomainName(listParamName), getPropertyName(listParamName))) {
+                myList = getConfig(user, subListName).getOptionList(getDomainName(listParamName), getPropertyName(listParamName));
             } else if (!isDynamicList()) {
                 output.sendBotMessage("There is no list to modify using '" + listParamName + "'");
                 output.sendBotMessage("Please try /dfbnc '" + actualParams[0] + "' for more information");
@@ -260,14 +261,14 @@ public abstract class AbstractListEditCommand extends Command {
                 output.sendBotMessage("For assistance, please try: /dfbnc " + actualParams[0]);
             }
             if (isDynamicList()) {
-                if (!myList.isEmpty() || user.getAccount().getConfig().hasOption(getDomainName(listParamName), getPropertyName(listParamName))) {
+                if (!myList.isEmpty() || getConfig(user, subListName).hasOption(getDomainName(listParamName), getPropertyName(listParamName))) {
                     // Only save lists that actually have something, or existed before.
-                    user.getAccount().getConfig().setOption(getDomainName(listParamName), getPropertyName(listParamName), myList);
-
-                    // TODO: Remove dynamic lists that are empty.
+                    getConfig(user, subListName).setOption(getDomainName(listParamName), getPropertyName(listParamName), myList);
+                } else if (myList.isEmpty()) {
+                    getConfig(user, subListName).unsetOption(getDomainName(listParamName), getPropertyName(listParamName));
                 }
             } else {
-                user.getAccount().getConfig().setOption(getDomainName(listParamName), getPropertyName(listParamName), myList);
+                getConfig(user, subListName).setOption(getDomainName(listParamName), getPropertyName(listParamName), myList);
             }
         } else if (hasSubList && actualParams.length == 1) {
             output.sendBotMessage("You must specify a sublist to edit eg:");
@@ -292,6 +293,21 @@ public abstract class AbstractListEditCommand extends Command {
                 output.sendBotMessage("  /dfbnc " + actualParams[0] + extra + " clear");
             }
         }
+    }
+
+    /**
+     * Get the config object to use for this AbstractSetCommand.
+     *
+     * The default implementation of this uses the global account config, but
+     * sub-implementations may wish to use the subclient config based on the
+     * list or sub-list.
+     *
+     * @param user Usersocket that initiated this list edit
+     * @param sublist List we are editing (null if not a sub-list)
+     * @return Config
+     */
+    public Config getConfig(final UserSocket user, final String sublist) {
+        return user.getAccountConfig();
     }
 
     /**

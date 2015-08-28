@@ -47,6 +47,7 @@ import com.dfbnc.DFBnc;
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandNotFoundException;
 import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.config.Config;
 import com.dfbnc.util.Util;
 import uk.org.dataforce.libs.logger.Logger;
 
@@ -442,6 +443,24 @@ public class UserSocket extends ConnectedSocket {
      */
     public Account getAccount() {
         return myAccount;
+    }
+
+    /**
+     * Get the global config for the account linked to this socket
+     *
+     * @return Config object for the account that is associated with this socket
+     */
+    public Config getAccountConfig() {
+        return getAccount().getAccountConfig();
+    }
+
+    /**
+     * Get the subclient config for the account linked to this socket
+     *
+     * @return subclient Config object for the account that is associated with this socket
+     */
+    public Config getClientConfig() {
+        return getAccount().getConfig(getClientID());
     }
 
     /**

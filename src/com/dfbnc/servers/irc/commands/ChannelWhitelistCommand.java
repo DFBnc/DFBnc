@@ -24,6 +24,8 @@ package com.dfbnc.servers.irc.commands;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.AbstractListEditCommand;
 import com.dfbnc.commands.ListOption;
+import com.dfbnc.config.Config;
+import com.dfbnc.sockets.UserSocket;
 
 /**
  * This file represents the 'ChannelWhitelist' command
@@ -31,7 +33,7 @@ import com.dfbnc.commands.ListOption;
 public class ChannelWhitelistCommand extends AbstractListEditCommand {
 
     @Override
-    public String getPropertyName(final String command) { return "channelwhitelist." + command; }
+    public String getPropertyName(final String command) { return "channelwhitelist"; }
 
     @Override
     public String getDomainName(final String command) { return "irc"; }
@@ -60,6 +62,11 @@ public class ChannelWhitelistCommand extends AbstractListEditCommand {
     @Override
     public String getAddUsageSyntax() {
         return "<channel>";
+    }
+
+    @Override
+    public Config getConfig(final UserSocket user, final String sublist) {
+        return user.getAccount().getConfig(sublist);
     }
 
     @Override
