@@ -23,6 +23,8 @@
 
 package com.dfbnc.commands.user;
 
+import com.dfbnc.AccountManager;
+import com.dfbnc.DFBnc;
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.CommandOutput;
@@ -43,7 +45,8 @@ public class SaveCommand extends Command {
     @Override
     public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
         output.sendBotMessage("Saving config files...");
-        user.getAccount().save();
+        AccountManager.saveAccounts();
+        output.sendBotMessage("Done.");
     }
 
     /**

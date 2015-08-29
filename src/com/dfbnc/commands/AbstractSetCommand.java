@@ -21,7 +21,6 @@
  */
 package com.dfbnc.commands;
 
-import com.dfbnc.config.Config;
 import java.util.HashMap;
 import java.util.Map;
 import com.dfbnc.sockets.UserSocket;
@@ -50,6 +49,9 @@ public abstract class AbstractSetCommand extends Command {
 
         String[] actualParams = params;
 
+        // TODO: Allow specifying.
+        final String wantedClientID = user.getClientID();
+
         if (actualParams.length > 1) {
             actualParams[1] = getFullParam(output, actualParams, 1, validParams.keySet());
             if (actualParams[1] == null) { return; }
@@ -59,9 +61,10 @@ public abstract class AbstractSetCommand extends Command {
                 output.sendBotMessage("Valid settings are:");
                 for (String param : validParams.keySet()) {
                     final String description = validParams.get(param).getDescription();
-                    final String value = getConfig(user, validParams.get(param).isSubClient()).getOption(setDomain, param);
+                    final String wantedClient = validParams.get(param).isSubClient() ? wantedClientID : null;
+                    final String value = user.getAccount().getConfig(wantedClient).getOption(setDomain, param);
                     if (validParams.get(param).isSubClient()) {
-                        final String globalValue = getConfig(user, false).getOption(setDomain, param);
+                        final String globalValue = user.getAccount().getAccountConfig().getOption(setDomain, param);
                         output.sendBotMessage(String.format("  %15s - %s [Current: %s]  [Account-Level: %s]", param, description, value, globalValue));
                     } else {
                         output.sendBotMessage(String.format("  %15s - %s [Current: %s]", param, description, value));
@@ -72,7 +75,9 @@ public abstract class AbstractSetCommand extends Command {
 
             final ParamInfo pi = validParams.get(actualParams[1].toLowerCase());
             // Get the current value
-            final String currentValue = getConfig(user, pi.isSubClient()).getOption(setDomain, actualParams[1]);
+            final String wantedClient = pi.isSubClient() ? wantedClientID : null;
+            final String currentValue = user.getAccount().getConfig(wantedClient).getOption(setDomain, actualParams[1]);
+            final String globalValue = user.getAccount().getAccountConfig().getOption(setDomain, actualParams[1]);
             // And the type of this param
             final ParamType paramType = pi.getType();
             // Check if user wants to change it
@@ -97,7 +102,7 @@ public abstract class AbstractSetCommand extends Command {
                             output.sendBotMessage("Sorry, '" + newValue + "' is not a valid value for '" + actualParams[1] + "'");
                             return;
                         } else {
-                            getConfig(user, pi.isSubClient()).setOption(setDomain, actualParams[1], newValueInt);
+                            user.getAccount().getConfig(wantedClient).setOption(setDomain, actualParams[1], newValueInt);
                         }
                     } catch (NumberFormatException nfe) {
                         output.sendBotMessage("Sorry, '" + newValue + "' is not a valid value for '" + actualParams[1] + "'");
@@ -110,7 +115,7 @@ public abstract class AbstractSetCommand extends Command {
                             output.sendBotMessage("Sorry, '" + newValue + "' is not a valid value for '" + actualParams[1] + "'");
                             return;
                         } else {
-                            getConfig(user, pi.isSubClient()).setOption(setDomain, actualParams[1], newValueFloat);
+                            user.getAccount().getConfig(wantedClient).setOption(setDomain, actualParams[1], newValueFloat);
                         }
                     } catch (NumberFormatException nfe) {
                         output.sendBotMessage("Sorry, '" + newValue + "' is not a valid value for '" + actualParams[1] + "'");
@@ -118,29 +123,33 @@ public abstract class AbstractSetCommand extends Command {
                     }
                 } else if (paramType == ParamType.BOOL) {
                     if (newValue.equalsIgnoreCase("true") || newValue.equalsIgnoreCase("yes") || newValue.equalsIgnoreCase("on") || newValue.equalsIgnoreCase("1")) {
-                        getConfig(user, pi.isSubClient()).setOption(setDomain, actualParams[1], true);
+                        user.getAccount().getConfig(wantedClient).setOption(setDomain, actualParams[1], true);
                         newValue = "True";
                     } else {
-                        getConfig(user, pi.isSubClient()).setOption(setDomain, actualParams[1], false);
+                        user.getAccount().getConfig(wantedClient).setOption(setDomain, actualParams[1], false);
                         newValue = "False";
                     }
                 } else {
-                    getConfig(user, pi.isSubClient()).setOption(setDomain, actualParams[1], newValue);
+                    user.getAccount().getConfig(wantedClient).setOption(setDomain, actualParams[1], newValue);
                 }
 
                 // And let the user know.
                 output.sendBotMessage("Changed value of '" + actualParams[1].toLowerCase() + "' from '" + currentValue + "' to '" + newValue + "'");
             } else {
                 output.sendBotMessage("The current value of '" + actualParams[1].toLowerCase() + "' is: " + currentValue);
+                if (pi.isSubClient()) {
+                    output.sendBotMessage("    The account-level value of '" + actualParams[1].toLowerCase() + "' is: " + globalValue);
+                }
             }
         } else {
             output.sendBotMessage("You need to choose a setting to set the value for.");
             output.sendBotMessage("Valid settings are:");
             for (String param : validParams.keySet()) {
                 final String description = validParams.get(param).getDescription();
-                final String value = getConfig(user, validParams.get(param).isSubClient()).getOption(setDomain, param);
+                final String wantedClient = validParams.get(param).isSubClient() ? wantedClientID : null;
+                final String value = user.getAccount().getConfig(wantedClient).getOption(setDomain, param);
                 if (validParams.get(param).isSubClient()) {
-                    final String globalValue = getConfig(user, false).getOption(setDomain, param);
+                    final String globalValue = user.getAccount().getAccountConfig().getOption(setDomain, param);
                     output.sendBotMessage(String.format("  %15s - %s [Current: %s]  [Account-Level: %s]", param, description, value, globalValue));
                 } else {
                     output.sendBotMessage(String.format("  %15s - %s [Current: %s]", param, description, value));
@@ -149,17 +158,6 @@ public abstract class AbstractSetCommand extends Command {
             output.sendBotMessage("Syntax: /dfbnc " + actualParams[0] + " <param> [value]");
             output.sendBotMessage("Ommiting [value] will show you the current value.");
         }
-    }
-
-    /**
-     * Get the Config object to use.
-     *
-     * @param user Usersocket we want the config for.
-     * @param subClient Do we want the sub-client specific config?
-     * @return Config Object
-     */
-    public final Config getConfig(final UserSocket user, final boolean subClient) {
-        return subClient ? user.getClientConfig() : user.getAccountConfig();
     }
 
     public AbstractSetCommand(final CommandManager manager) {
