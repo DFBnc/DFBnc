@@ -47,8 +47,12 @@ import com.dfbnc.DFBnc;
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandNotFoundException;
 import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.commands.filters.CommandOutputFilter;
+import com.dfbnc.commands.filters.CommandOutputFilterException;
+import com.dfbnc.commands.filters.CommandOutputFilterManager;
 import com.dfbnc.config.Config;
 import com.dfbnc.util.Util;
+import java.util.Collections;
 import uk.org.dataforce.libs.logger.Logger;
 
 /**
@@ -1108,17 +1112,29 @@ public class UserSocket extends ConnectedSocket {
             // Store current messages.
             final List<String> oldMessages = output.getMessages();
 
-            // Now run any filters. If any of them fail, we will restore the
-            // commandoutput back to unfiltered and not run any more.
-            if (sections.size() > 1) {
-                for (int i = 1; i < sections.size(); i++) {
-                    if (!doCommandOutputFilter(sections.get(i), output)) {
-                        output.setMessages(oldMessages);
-                        output.sendBotMessage("");
-                        output.sendBotMessage("Error with filter: " + Arrays.toString(sections.get(i)));
-                        break;
+            // Now run any filters. If any of them fail or throw exceptions,
+            // we will restore the commandoutput back to unfiltered and not
+            // run any more.
+            String[] section = new String[0];
+            try {
+                if (sections.size() > 1) {
+                    for (int i = 1; i < sections.size(); i++) {
+                        section = sections.get(i);
+                        final CommandOutputFilter cof = CommandOutputFilterManager.getFilter(section[0]);
+                        final String[] filterParams = section.length > 1 ? Arrays.copyOfRange(section, 1, section.length) : new String[0];
+
+                        if (cof != null) {
+                            cof.runFilter(filterParams, output);
+                        } else {
+                            throw new CommandOutputFilterException("Unknown filter.");
+                        }
                     }
                 }
+            } catch (final CommandOutputFilterException ex) {
+                output.setMessages(oldMessages);
+                output.sendBotMessage("--------------------------------------");
+                output.sendBotMessage("Error with filter: " + Arrays.toString(section));
+                output.sendBotMessage("Reason: " + ex.getMessage());
             }
         }
     }
@@ -1169,39 +1185,5 @@ public class UserSocket extends ConnectedSocket {
         }
 
         return false;
-    }
-
-
-    /**
-     * Run a filter against the command output.
-     *
-     * @param bits This is the filter command and its parameters.
-     *             bits[0] is the filter, bits[1]..bits[n] are the params.
-     * @param output This is the CommandOutput from the command. This may have
-     *               already been modified by other filters.
-     * @return True if filter ran successfully.
-     */
-    private boolean doCommandOutputFilter(final String[] bits, final CommandOutput output) {
-        // TODO: Filters should exist as first-class objects, much like
-        //       commands, with a FilterManager etc.
-        //       This will do for now as an initial proof-of-concept though.
-        final List<String> filterType = Command.getParamMatch(bits[0], Arrays.asList("include", "exclude"));
-
-        if (bits.length > 1 && !filterType.isEmpty()) {
-            final List<String> oldMessages = output.getMessages();
-            final List<String> filteredMessages = new LinkedList<>();
-            for (final String s : oldMessages) {
-                final boolean matches = s.toLowerCase().matches(".*" + bits[1].toLowerCase() + ".*");
-                if (matches && filterType.get(0).equalsIgnoreCase("include")) {
-                    filteredMessages.add(s);
-                } else if (!matches && filterType.get(0).equalsIgnoreCase("exclude")) {
-                    filteredMessages.add(s);
-                }
-            }
-            output.setMessages(filteredMessages);
-            return true;
-        } else {
-            return false;
-        }
     }
 }

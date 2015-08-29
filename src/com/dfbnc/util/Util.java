@@ -37,6 +37,17 @@ public final class Util {
      *
      * @param input String to work with.
      * @param joiner String to use in between parts
+     * @return Joined string (or "" if given parameters are out of range)
+     */
+    public static String joinString(final String[] input, final String joiner) {
+        return Util.joinString(input, joiner, 0, input.length - 1);
+    }
+
+    /**
+     * Join an array of Strings back together.
+     *
+     * @param input String to work with.
+     * @param joiner String to use in between parts
      * @param start position to start with
      * @param end position to end with. (Same as start means end of array, negative
      *            works from the end of the array (-1 = end of array))
