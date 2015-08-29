@@ -21,7 +21,6 @@
  */
 package com.dfbnc;
 
-import com.dmdirc.util.io.ConfigFile;
 import com.dmdirc.util.io.InvalidConfigFileException;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -384,7 +383,7 @@ public class DFBnc {
         final InputStream version = DFBnc.class.getResourceAsStream("/com/dfbnc/version.config");
         if (version != null) {
             try {
-                versionConfig = new ReadOnlyConfig(new ConfigFile(version));
+                versionConfig = new ReadOnlyConfig(new ConfigFileConfig(version));
             } catch (final Exception e) { /** Oh well, default it is. */ }
         }
     }

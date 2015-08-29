@@ -6,30 +6,27 @@
 
 package com.dfbnc.config;
 
-import com.dmdirc.util.io.ConfigFile;
 import com.dmdirc.util.io.InvalidConfigFileException;
-import com.dmdirc.util.validators.PermissiveValidator;
 import com.dmdirc.util.validators.Validator;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Wrapper around an existing Config to make it ReadOnly
+ */
 public class ReadOnlyConfig implements Config {
 
-    private final ConfigFile config;
-    private final Validator<String> permissiveValidator;
+    private final Config config;
 
-    public ReadOnlyConfig(final ConfigFile config) throws IOException, InvalidConfigFileException {
+    public ReadOnlyConfig(final Config config) throws IOException, InvalidConfigFileException {
         this.config = config;
-        config.read();
-        permissiveValidator = new PermissiveValidator<>();
     }
 
     @Override
     public String getOption(final String domain, final String option) {
-        return getOption(domain, option, permissiveValidator);
+        return config.getOption(domain, option);
     }
 
     @Override
@@ -44,12 +41,7 @@ public class ReadOnlyConfig implements Config {
 
     @Override
     public String getOption(final String domain, final String option, final Validator<String> validator) {
-        String value = config.getKeyDomain(domain).get(option);
-
-        if (validator.validate(value).isFailure()) {
-            value = null;
-        }
-        return value;
+        return config.getOption(domain, option, validator);
     }
 
     @Override
@@ -59,20 +51,12 @@ public class ReadOnlyConfig implements Config {
 
     @Override
     public Boolean getOptionBool(final String domain, final String option) {
-        return Boolean.valueOf(getOption(domain, option));
+        return config.getOptionBool(domain, option);
     }
 
     @Override
     public List<String> getOptionList(final String domain, final String option, final Validator<String> validator) {
-        final List<String> res = new ArrayList<>();
-
-        for (String line : getOption(domain, option, validator).split("\n")) {
-            if (!line.isEmpty()) {
-                res.add(line);
-            }
-        }
-
-        return res;
+        return config.getOptionList(domain, option, validator);
     }
 
     @Override
@@ -82,45 +66,37 @@ public class ReadOnlyConfig implements Config {
 
     @Override
     public List<String> getOptionList(final String domain, final String option) {
-        return getOptionList(domain, option, permissiveValidator);
+        return config.getOptionList(domain, option);
     }
 
     @Override
     public Integer getOptionInt(final String domain, final String option, final Validator<String> validator) {
-        final String value = getOption(domain, option, validator);
-        Integer intVal;
-        try {
-            intVal = Integer.parseInt(value);
-        } catch (NumberFormatException ex) {
-            intVal = null;
-        }
-        return intVal;
+        return config.getOptionInt(domain, option, validator);
     }
 
     @Override
     public Integer getOptionInt(final String domain, final String option) {
-        return getOptionInt(domain, option, permissiveValidator);
+        return config.getOptionInt(domain, option);
     }
 
     @Override
     public boolean hasOption(final String domain, final String option, final Validator<String> validator) {
-        String value = config.getKeyDomain(domain).get(option);
-        return value != null && !validator.validate(value).isFailure();
+        return config.hasOption(domain, option, validator);
     }
 
     @Override
     public boolean hasOption(final String domain, final String option) {
-        return hasOption(domain, option, permissiveValidator);
+        return config.hasOption(domain, option);
     }
 
     @Override
     public Map<String, String> getOptions(final String domain) {
-        return config.getKeyDomain(domain);
+        return config.getOptions(domain);
     }
 
     @Override
     public Set<String> getDomains() {
-        return config.getKeyDomains().keySet();
+        return config.getDomains();
     }
 
     @Override
@@ -145,7 +121,7 @@ public class ReadOnlyConfig implements Config {
 
     @Override
     public void init() throws IOException, InvalidConfigFileException {
-        config.read();
+        config.init();
     }
 
     @Override
