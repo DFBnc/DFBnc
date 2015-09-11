@@ -133,9 +133,6 @@ public class SSLByteChannel implements ByteChannel {
         if (isOpen()) {
             try {
                 final SSLEngineResult r = sslLoop(unwrap());
-                if (r != null && (r.getStatus() == SSLEngineResult.Status.BUFFER_UNDERFLOW && r.getHandshakeStatus() == SSLEngineResult.HandshakeStatus.NEED_UNWRAP)) {
-                    throw new SSLException("Unrecognized SSL data, plaintext connection?");
-                }
             } catch (final ClosedChannelException e) {
                 close();
             }
@@ -277,7 +274,6 @@ public class SSLByteChannel implements ByteChannel {
 
         // Handshake if needed.
         HandshakeStatus hsStatus = wrapResult.ser.getHandshakeStatus();
-        boolean isTask = (hsStatus == HandshakeStatus.NEED_TASK);
         while (hsStatus != HandshakeStatus.FINISHED && hsStatus != HandshakeStatus.NOT_HANDSHAKING) {
             hsStatus = wrapResult.ser.getHandshakeStatus();
             switch (hsStatus) {
@@ -299,7 +295,7 @@ public class SSLByteChannel implements ByteChannel {
                     break;
             }
 
-            if (!isTask && hsStatus == HandshakeStatus.NEED_UNWRAP && wrapResult.bytes == 0) {
+            if (wrapResult.ser.getHandshakeStatus() == HandshakeStatus.NEED_UNWRAP && wrapResult.bytes == 0) {
                 break;
             }
 
