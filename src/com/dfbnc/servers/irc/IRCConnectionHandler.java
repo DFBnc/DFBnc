@@ -336,7 +336,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         if (serverRequeueList != null) {
             final List<DataInEvent> events = serverRequeueList;
             serverRequeueList = null;
-            serverRequeueList.stream().forEach((e) -> onDataIn(e));
+            events.stream().forEach((e) -> onDataIn(e));
         }
         forceRequeueList.remove(user);
     }
