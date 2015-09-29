@@ -174,7 +174,7 @@ public class CommandManagerTest {
 	}
 
 	/**
-	 * Tests that after adding a command it is returned by getAllCommands().
+	 * Tests that adding a command with the same 'handles' replaces previously added commands.
 	 */
 	@Test
 	public void testReplaceCommand() {
