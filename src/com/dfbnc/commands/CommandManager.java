@@ -21,6 +21,10 @@
  */
 package com.dfbnc.commands;
 
+import com.dfbnc.DFBnc;
+import com.dfbnc.sockets.UserSocket;
+import uk.org.dataforce.libs.logger.Logger;
+
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,10 +34,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
-
-import com.dfbnc.DFBnc;
-import com.dfbnc.sockets.UserSocket;
-import uk.org.dataforce.libs.logger.Logger;
 
 /**
  * DFBNC Command Manager.
@@ -220,11 +220,8 @@ public final class CommandManager {
 
         try {
             for (String handle : handles) {
-                if (knownCommands.containsKey(handle.toLowerCase())) {
-                    // New Commands take priority over old ones
-                    knownCommands.remove(handle.toLowerCase());
-                }
                 Logger.debug2("\t Added handler for: "+handle);
+                // New Commands take priority over old ones
                 knownCommands.put(handle.toLowerCase(), command);
             }
         } catch (Exception e) {
@@ -241,16 +238,8 @@ public final class CommandManager {
      * @param command Command subclass for the command.
      */
     public void delCommand(final Command command) {
-        Command testCommand;
-        Logger.debug("Deleting command: "+command.getName());
-        for (String elementName : knownCommands.keySet()) {
-            Logger.debug2("\t Checking handler for: "+elementName);
-            testCommand = knownCommands.get(elementName);
-            if (testCommand != null && testCommand.getName().equalsIgnoreCase(command.getName())) {
-                Logger.debug2("\t Removed handler for: "+elementName);
-                knownCommands.remove(elementName);
-            }
-        }
+        Logger.debug("Deleting command: " + command.getName());
+        knownCommands.values().removeIf(c -> c.getName().equalsIgnoreCase(command.getName()));
     }
 
 
