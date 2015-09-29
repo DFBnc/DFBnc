@@ -21,10 +21,14 @@
  */
 package com.dfbnc.commands;
 
-import com.dfbnc.commands.CommandManager;
-import org.junit.Test;
+import com.dfbnc.sockets.UserSocket;
 import org.junit.Before;
+import org.junit.Test;
+
+import java.util.Map;
+
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Test Command Manager as per http://code.google.com/p/dfbnc/wiki/CommandManagerInfo
@@ -131,4 +135,101 @@ public class CommandManagerTest {
 		// Don't Allow the Duplicate
 		assertFalse("CommandManager allowed subCommandManager with recursion", commandManager[1].addSubCommandManager(commandManager[0]));
 	}
+
+	/**
+	 * Tests that after adding a command it is returned by getAllCommands().
+	 */
+	@Test
+	public void testAddCommand() {
+		// Assume that the command manager starts empty.
+		assumeTrue(commandManager[0].getAllCommands(true).isEmpty());
+
+		// When we add a command
+		Command command = new FakeCommand(commandManager[0], "stuff");
+		commandManager[0].addCommand(command);
+
+		// Then getAllCommands() returns a map with a single entry.
+		Map<String, Command> allCommands = commandManager[0].getAllCommands(true);
+		assertEquals(1, allCommands.size());
+		assertTrue(allCommands.containsKey("stuff"));
+		assertSame(command, allCommands.get("stuff"));
+	}
+
+	/**
+	 * Tests that after removing a command it is no longer returned by getAllCommands().
+	 */
+	@Test
+	public void testRemoveCommand() {
+		// Given a command manager with one command
+		Command command = new FakeCommand(commandManager[0], "stuff");
+		commandManager[0].addCommand(command);
+		assumeTrue(commandManager[0].getAllCommands(true).size() == 1);
+
+		// When we delete the command
+		commandManager[0].delCommand(command);
+
+		// Then nothing is left
+		Map<String, Command> allCommands = commandManager[0].getAllCommands(true);
+		assertTrue(allCommands.isEmpty());
+	}
+
+	/**
+	 * Tests that after adding a command it is returned by getAllCommands().
+	 */
+	@Test
+	public void testReplaceCommand() {
+		// Assume that the command manager starts empty.
+		assumeTrue(commandManager[0].getAllCommands(true).isEmpty());
+
+		// When we add a command
+		Command command1 = new FakeCommand(commandManager[0], "stuff");
+		commandManager[0].addCommand(command1);
+
+		// And then replace it
+		Command command2 = new FakeCommand2(commandManager[0], "stuff");
+		commandManager[0].addCommand(command2);
+
+		// Then getAllCommands() returns a map with a single entry ...
+		Map<String, Command> allCommands = commandManager[0].getAllCommands(true);
+		assertEquals(1, allCommands.size());
+		assertTrue(allCommands.containsKey("stuff"));
+
+		// ... corresponding to the most-recently added command
+		assertSame(command2, allCommands.get("stuff"));
+	}
+
+	private static class FakeCommand extends Command {
+
+		private final String[] handles;
+
+		protected FakeCommand(CommandManager manager, String... handles) {
+			super(manager);
+			this.handles = handles;
+		}
+
+		@Override
+		public void handle(UserSocket user, String[] params, CommandOutput output) {
+			// Do nothing
+		}
+
+		@Override
+		public String[] handles() {
+			return handles;
+		}
+
+		@Override
+		public String getDescription(String command) {
+			return "description";
+		}
+
+	}
+
+	private static class FakeCommand2 extends FakeCommand {
+
+		protected FakeCommand2(CommandManager manager, String... handles) {
+			super(manager, handles);
+		}
+
+	}
+
 }
