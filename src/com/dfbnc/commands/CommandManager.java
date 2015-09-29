@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 /**
  * DFBNC Command Manager.
@@ -125,38 +126,25 @@ public final class CommandManager {
      * @return Map of available commands.
      */
     public Map<String, Command> getAllCommands(final String startsWith, final boolean allowAdmin) {
-        // First get our own commands,
-        Map<String, Command> result;
         final String sw = startsWith.toLowerCase();
+        final boolean allCommands = startsWith.isEmpty() || startsWith.equals("?");
 
-        if (startsWith.isEmpty() || startsWith.equals("?")) {
-            if (allowAdmin) {
-                result = new HashMap<>(knownCommands);
-            } else {
-                // For non-admins we actually need to check all the commands to
-                // see if we are allowed use it or not.
-                result = new HashMap<>();
-                for (Entry<String, Command> entry : new HashMap<>(knownCommands).entrySet()) {
-                    result.put(entry.getKey(), entry.getValue());
-                }
-            }
-        } else {
-            result = new HashMap<>();
-            for (Entry<String, Command> entry : new HashMap<>(knownCommands).entrySet()) {
-                if (!result.containsKey(entry.getKey()) && (entry.getKey().startsWith(sw) || entry.getKey().startsWith("*" + sw)) && (allowAdmin || !entry.getValue().isAdminOnly())) {
-                    result.put(entry.getKey(), entry.getValue());
-                }
-            }
-        }
+        // First get our own commands
+        final Map<String, Command> result = knownCommands
+                .entrySet()
+                .parallelStream()
+                .filter(e -> allowAdmin || !e.getValue().isAdminOnly())
+                .filter(e -> allCommands || e.getKey().startsWith(sw) || e.getKey().startsWith("*" + sw))
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
-        // Now all our submanagers commands
+        // Now all our submanagers' commands
         for (CommandManager subManager : subManagers) {
-            Map<String, Command> subResult = subManager.getAllCommands(startsWith, allowAdmin);
-            for (Entry<String, Command> entry : subResult.entrySet()) {
-                if (!result.containsKey(entry.getKey())) {
-                    result.put(entry.getKey(), entry.getValue());
-                }
-            }
+            result.putAll(
+                    subManager.getAllCommands(startsWith, allowAdmin)
+                            .entrySet()
+                            .parallelStream()
+                            .filter(entry -> !result.containsKey(entry.getKey()))
+                            .collect(Collectors.toMap(Entry::getKey, Entry::getValue)));
         }
 
         return result;

@@ -198,6 +198,78 @@ public class CommandManagerTest {
 		assertSame(command2, allCommands.get("stuff"));
 	}
 
+	/**
+	 * Tests that admin only commands are excluded from getAllCommands().
+	 */
+	@Test
+	public void testAdminOnlyCommands() {
+		// Assume that the command manager starts empty.
+		assumeTrue(commandManager[0].getAllCommands(true).isEmpty());
+
+		// When we add an admin-only command
+		Command command = new AdminOnlyCommand(commandManager[0], "stuff");
+		commandManager[0].addCommand(command);
+
+		// Then getAllCommands() returns nothing if admin commands are disallowed
+		Map<String, Command> allCommands = commandManager[0].getAllCommands(false);
+		assertTrue(allCommands.isEmpty());
+	}
+
+	/**
+	 * Tests retrieving commands that start with a certain value.
+	 */
+	@Test
+	public void testCommandsStartingWith() {
+		// Assume that the command manager starts empty.
+		assumeTrue(commandManager[0].getAllCommands(true).isEmpty());
+
+		// When we add some commands
+		Command command1 = new FakeCommand(commandManager[0], "stuff1", "stuff2", "foo");
+		commandManager[0].addCommand(command1);
+		Command command2 = new FakeCommand2(commandManager[0], "far");
+		commandManager[0].addCommand(command2);
+
+		// Then commands starting with the specified prefix are returned
+		Map<String, Command> stCommands = commandManager[0].getAllCommands("st", false);
+		assertEquals(2, stCommands.size());
+		assertEquals(command1, stCommands.get("stuff1"));
+		assertEquals(command1, stCommands.get("stuff2"));
+
+		Map<String, Command> fCommands = commandManager[0].getAllCommands("f", false);
+		assertEquals(2, fCommands.size());
+		assertEquals(command1, fCommands.get("foo"));
+		assertEquals(command2, fCommands.get("far"));
+	}
+
+	/**
+	 * Tests that if a sub-manager contains a command with the same 'handles', then the parent command takes priority
+	 */
+	@Test
+	public void testCommandsFromSubManagersDontReplaceParentCommands() {
+		// Assume that the command managers starts empty.
+		assumeTrue(commandManager[0].getAllCommands(true).isEmpty());
+		assumeTrue(commandManager[1].getAllCommands(true).isEmpty());
+
+		// When we have a sub-manager
+		commandManager[0].addSubCommandManager(commandManager[1]);
+
+		// And the two managers have a command with the same 'handles'...
+		Command command1 = new FakeCommand(commandManager[0], "stuff");
+		commandManager[0].addCommand(command1);
+		Command command2 = new FakeCommand2(commandManager[1], "stuff");
+		commandManager[1].addCommand(command2);
+
+		// Then only the parent command is returned for queries with no text
+		Map<String, Command> allCommands = commandManager[0].getAllCommands(true);
+		assertEquals(1, allCommands.size());
+		assertSame(command1, allCommands.get("stuff"));
+
+		// And only the parent command is returned for queries with a substring test
+		Map<String, Command> stCommands = commandManager[0].getAllCommands("st", true);
+		assertEquals(1, stCommands.size());
+		assertSame(command1, stCommands.get("stuff"));
+	}
+
 	private static class FakeCommand extends Command {
 
 		private final String[] handles;
@@ -230,6 +302,18 @@ public class CommandManagerTest {
 			super(manager, handles);
 		}
 
+	}
+
+	private static class AdminOnlyCommand extends FakeCommand {
+
+		protected AdminOnlyCommand(CommandManager manager, String... handles) {
+			super(manager, handles);
+		}
+
+		@Override
+		public boolean isAdminOnly() {
+			return true;
+		}
 	}
 
 }
