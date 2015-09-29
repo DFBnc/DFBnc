@@ -46,6 +46,7 @@ import com.dmdirc.parser.interfaces.Parser;
 import com.dmdirc.parser.irc.*;
 import com.dmdirc.parser.irc.outputqueue.*;
 import net.engio.mbassy.listener.Handler;
+import uk.org.dataforce.libs.logger.LogLevel;
 import uk.org.dataforce.libs.logger.Logger;
 
 import java.io.PrintWriter;
@@ -54,7 +55,6 @@ import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
-import uk.org.dataforce.libs.logger.LogLevel;
 
 
 /**
@@ -336,7 +336,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         if (serverRequeueList != null) {
             final List<DataInEvent> events = serverRequeueList;
             serverRequeueList = null;
-            events.stream().forEach((e) -> onDataIn(e));
+            events.stream().forEach(this::onDataIn);
         }
         forceRequeueList.remove(user);
     }
