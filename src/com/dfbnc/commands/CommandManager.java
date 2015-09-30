@@ -93,16 +93,7 @@ public final class CommandManager {
      * @return True if manager is a SubManager of this or one of its SubManagers.
      */
     public boolean hasSubCommandManager(final CommandManager manager) {
-        if (subManagers.contains(manager)) {
-            return true;
-        } else {
-            for (CommandManager subManager : subManagers) {
-                if (subManager.hasSubCommandManager(manager)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return subManagers.parallelStream().anyMatch(s -> s == manager || s.hasSubCommandManager(manager));
     }
 
     /**
@@ -157,18 +148,11 @@ public final class CommandManager {
      * @return true if the CommandManager was added, else false.
      */
     public boolean addSubCommandManager(final CommandManager manager) {
-        // Check that we don't have this already, its not us, and it doesn't have us.
-        if (!hasSubCommandManager(manager) && manager != this && !manager.hasSubCommandManager(this)) {
-            // now check that this doesn't have any of our sub-managers available
-            for (CommandManager subManager : subManagers) {
-                if (manager.hasSubCommandManager(subManager)) {
-                    return false;
-                }
-            }
-            subManagers.add(manager);
-            return true;
-        }
-        return false;
+        return !hasSubCommandManager(manager)
+                && manager != this
+                && !manager.hasSubCommandManager(this)
+                && subManagers.parallelStream().noneMatch(manager::hasSubCommandManager)
+                && subManagers.add(manager);
     }
 
     /**
@@ -178,11 +162,7 @@ public final class CommandManager {
      * @return true if the CommandManager was removed, else false.
      */
     public boolean delSubCommandManager(final CommandManager manager) {
-        if (subManagers.contains(manager)) {
-            subManagers.remove(manager);
-            return true;
-        }
-        return false;
+        return subManagers.remove(manager);
     }
 
     /**
@@ -229,7 +209,6 @@ public final class CommandManager {
         Logger.debug("Deleting command: " + command.getName());
         knownCommands.values().removeIf(c -> c.getName().equalsIgnoreCase(command.getName()));
     }
-
 
     /**
      * Get the matching command used for a specified name.
