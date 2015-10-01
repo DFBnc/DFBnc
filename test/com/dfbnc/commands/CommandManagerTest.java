@@ -137,6 +137,44 @@ public class CommandManagerTest {
 	}
 
 	/**
+	 * Tests the behaviour of hasSubCommandManager() with direct submanagers.
+	 */
+	@Test
+	public void testHasDirectSubManager() {
+		// Given a manager with some direct submanagers
+		commandManager[0].addSubCommandManager(commandManager[1]);
+		commandManager[0].addSubCommandManager(commandManager[2]);
+
+		// Then hasSubCommandManager returns true for those managers
+		assertTrue(commandManager[0].hasSubCommandManager(commandManager[1]));
+		assertTrue(commandManager[0].hasSubCommandManager(commandManager[2]));
+
+		// And false for any others
+		assertFalse(commandManager[0].hasSubCommandManager(commandManager[3]));
+		assertFalse(commandManager[0].hasSubCommandManager(commandManager[4]));
+	}
+
+
+	/**
+	 * Tests the behaviour of hasSubCommandManager() with indirect submanagers.
+	 */
+	@Test
+	public void testHasIndirectSubManager() {
+		// Given a manager with some a tree of submanagers
+		commandManager[0].addSubCommandManager(commandManager[1]);
+		commandManager[1].addSubCommandManager(commandManager[2]);
+		commandManager[2].addSubCommandManager(commandManager[3]);
+
+		// Then the root's hasSubCommandManager returns true for all included managers
+		assertTrue(commandManager[0].hasSubCommandManager(commandManager[1]));
+		assertTrue(commandManager[0].hasSubCommandManager(commandManager[2]));
+		assertTrue(commandManager[0].hasSubCommandManager(commandManager[3]));
+
+		// And false for any others
+		assertFalse(commandManager[0].hasSubCommandManager(commandManager[4]));
+	}
+
+	/**
 	 * Tests that after adding a command it is returned by getAllCommands().
 	 */
 	@Test
