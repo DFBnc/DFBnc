@@ -23,14 +23,21 @@
 
 package com.dfbnc.commands.user;
 
-import java.util.Map;
-import java.util.Map.Entry;
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
-import com.dfbnc.commands.CommandNotFoundException;
 import com.dfbnc.commands.CommandOutput;
-import com.dfbnc.commands.show.*;
+import com.dfbnc.commands.show.ConnectionsCommand;
+import com.dfbnc.commands.show.FirstTimeCommand;
+import com.dfbnc.commands.show.ListUsersCommand;
+import com.dfbnc.commands.show.LoggingCommand;
+import com.dfbnc.commands.show.ShowCommandsCommand;
+import com.dfbnc.commands.show.SystemCommand;
+import com.dfbnc.commands.show.VersionCommand;
 import com.dfbnc.sockets.UserSocket;
+
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 
 /**
  * This file represents the 'show' command
@@ -79,11 +86,12 @@ public class ShowCommand extends Command {
         }
 
         if (actualParams.length > 1) {
-            final Entry<String, Command> matchingCommand;
-            try {
-                matchingCommand = showManager.getMatchingCommand(actualParams[1], user.getAccount().isAdmin());
-                actualParams[1] = matchingCommand.getKey();
-            } catch (CommandNotFoundException cnfe) {
+            final Optional<Entry<String, Command>> matchingCommand
+                    = showManager.getMatchingCommand(actualParams[1], user.getAccount().isAdmin());
+            if (matchingCommand.isPresent()) {
+                actualParams[1] = matchingCommand.get().getKey();
+                matchingCommand.get().getValue().handle(user, actualParams, output);
+            } else {
                 final Map<String, Command> allCommands = showManager.getAllCommands(actualParams[1], user.getAccount().isAdmin());
                 if (allCommands.size() > 0) {
                     output.sendBotMessage("Multiple possible matches were found for '"+actualParams[1]+"': ");
@@ -91,17 +99,11 @@ public class ShowCommand extends Command {
                         if (p.charAt(0) == '*') { continue; }
                         output.sendBotMessage("    " + p);
                     }
-                    return;
                 } else {
                     output.sendBotMessage("There were no matches for '"+actualParams[1]+"'.");
                     output.sendBotMessage("Try: /dfbnc " + actualParams[0] + " ?");
-                    return;
                 }
             }
-
-            // Show something!.
-            matchingCommand.getValue().handle(user, actualParams, output);
-
         } else {
             output.sendBotMessage("You need to choose something to show.");
             output.sendBotMessage("Valid options are:");
