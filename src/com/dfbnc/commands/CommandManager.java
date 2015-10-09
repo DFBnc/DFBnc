@@ -48,7 +48,7 @@ public final class CommandManager {
     /** HashMap used to store the different types of Command known. */
     private HashMap<String,Command> knownCommands = new HashMap<>();
 
-    /** List used to store sub command mamangers */
+    /** List used to store sub command managers */
     private List<CommandManager> subManagers = new ArrayList<>();
 
     /** Nesting limit for calls to getCommand() */
@@ -333,22 +333,19 @@ public final class CommandManager {
             result = knownCommands.get("*"+name.toLowerCase());
         }
 
-        if (result == null || (result.isAdminOnly() && !allowAdmin)) {
-            if (nesting <= nestingLimit) {
-                for (CommandManager manager : subManagers) {
-                    Optional<Command> managerCommand = manager.getCommand(name, allowAdmin, (nesting+1));
-                    if (managerCommand.isPresent()) {
-                        return managerCommand;
-                    }
-                }
-            }
-            // Command was not found in any manager.
-            // If short commands are enabled, try to find a matching command.
-
-            return Optional.empty();
-        } else {
+        if (result != null && (!result.isAdminOnly() || allowAdmin)) {
             return Optional.of(result);
         }
+
+        if (nesting <= nestingLimit) {
+            return subManagers.stream()
+                    .map(m -> m.getCommand(name, allowAdmin, nesting + 1))
+                    .filter(Optional::isPresent)
+                    .findFirst()
+                    .orElse(Optional.<Command>empty());
+        }
+
+        return Optional.empty();
     }
 
     /**
