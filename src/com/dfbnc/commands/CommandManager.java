@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -223,14 +224,11 @@ public final class CommandManager {
      * @throws CommandNotFoundException If the requested command doesn't exist in this or any sub managers
      */
     public Entry<String, Command> getMatchingCommand(final String name, final boolean allowAdmin) throws CommandNotFoundException {
-        CommandNotFoundException cnfe;
-
         Logger.debug5("Looking for matching command: " + name);
 
-        try {
-            return new SimpleImmutableEntry<>(name, getCommand(name, allowAdmin));
-        } catch (CommandNotFoundException p) {
-            cnfe = p;
+        Optional<Command> command = getCommand(name, allowAdmin);
+        if (command.isPresent()) {
+            return new SimpleImmutableEntry<>(name, command.get());
         }
 
         Logger.debug5("No exact match found.");
@@ -252,7 +250,7 @@ public final class CommandManager {
                 Logger.debug5("Matching Handler: " + entry);
                 // Don't match this command if the short form is not permitted.
                 if (!entry.getValue().allowShort(entry.getKey())) {
-                    throw cnfe;
+                    throw new CommandNotFoundException("Command not found: " + name);
                 }
 
                 String handlerName = entry.getKey().charAt(0) == '*' ? entry.getKey().substring(1) : entry.getKey();
@@ -288,14 +286,14 @@ public final class CommandManager {
                 }
 
                 if (unhidden == null) {
-                    throw cnfe;
+                    throw new CommandNotFoundException("Command not found: " + name);
                 } else {
                     return unhidden;
                 }
             }
         }
 
-        throw cnfe;
+        throw new CommandNotFoundException("Command not found: " + name);
     }
 
     /**
@@ -303,9 +301,8 @@ public final class CommandManager {
      *
      * @param name Name to look for
      * @return Command for the given name.
-     * @throws CommandNotFoundException If the requested command doesn't exist in this or any sub managers
      */
-    public Command getCommand(final String name) throws CommandNotFoundException {
+    public Optional<Command> getCommand(final String name) {
         return getCommand(name, true, 0);
     }
 
@@ -315,9 +312,8 @@ public final class CommandManager {
      * @param name Name to look for
      * @param allowAdmin Allow admin-only commands?
      * @return Command for the given name.
-     * @throws CommandNotFoundException If the requested command doesn't exist in this or any sub managers
      */
-    public Command getCommand(final String name, final boolean allowAdmin) throws CommandNotFoundException {
+    public Optional<Command> getCommand(final String name, final boolean allowAdmin) {
         return getCommand(name, allowAdmin, 0);
     }
 
@@ -328,9 +324,8 @@ public final class CommandManager {
      * @param allowAdmin Allow admin-only commands?
      * @param nesting Amount of previous calls.
      * @return Command for the given name.
-     * @throws CommandNotFoundException If the requested command doesn't exist in this or any sub managers
      */
-    protected Command getCommand(final String name, final boolean allowAdmin, final int nesting) throws CommandNotFoundException {
+    protected Optional<Command> getCommand(final String name, final boolean allowAdmin, final int nesting) {
         Command result = null;
         if (knownCommands.containsKey(name.toLowerCase())) {
             result = knownCommands.get(name.toLowerCase());
@@ -341,17 +336,18 @@ public final class CommandManager {
         if (result == null || (result.isAdminOnly() && !allowAdmin)) {
             if (nesting <= nestingLimit) {
                 for (CommandManager manager : subManagers) {
-                    try {
-                        return manager.getCommand(name, allowAdmin, (nesting+1));
-                    } catch (CommandNotFoundException cnf) { /* Ignore, it might be in other managers */ }
+                    Optional<Command> managerCommand = manager.getCommand(name, allowAdmin, (nesting+1));
+                    if (managerCommand.isPresent()) {
+                        return managerCommand;
+                    }
                 }
             }
             // Command was not found in any manager.
             // If short commands are enabled, try to find a matching command.
 
-            throw new CommandNotFoundException("No command is known by "+name);
+            return Optional.empty();
         } else {
-            return result;
+            return Optional.of(result);
         }
     }
 

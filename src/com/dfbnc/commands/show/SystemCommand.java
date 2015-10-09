@@ -21,12 +21,6 @@
  */
 package com.dfbnc.commands.show;
 
-import com.dmdirc.util.DateUtils;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-import java.util.Map.Entry;
-
 import com.dfbnc.DFBnc;
 import com.dfbnc.DFBncDaemon;
 import com.dfbnc.commands.AdminCommand;
@@ -34,9 +28,14 @@ import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.CommandOutput;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.util.Util;
-import java.util.Arrays;
+import com.dmdirc.util.DateUtils;
 import uk.org.dataforce.libs.cliparser.CLIParam;
 import uk.org.dataforce.libs.cliparser.CLIParser;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Map.Entry;
 
 /**
  * This file represents the 'system' command
@@ -90,15 +89,15 @@ public class SystemCommand extends AdminCommand {
         output.sendBotMessage("----------------------------------------");
         output.sendBotMessage("Component Versions:");
         output.sendBotMessage("--------------------");
-        try { myManager.getCommand("version").handle(user, new String[]{"version", "all"}, output); } catch (final Exception e) { }
+        myManager.getCommand("version").ifPresent(c -> c.handle(user, new String[]{"version", "all"}, output));
         output.sendBotMessage("----------------------------------------");
         output.sendBotMessage("Connections:");
         output.sendBotMessage("--------------------");
-        try{ myManager.getCommand("connections").handle(user, new String[]{"connections", "full", "all"}, output); } catch (final Exception e) { }
+        myManager.getCommand("connections").ifPresent(c -> c.handle(user, new String[]{"connections", "full", "all"}, output));
         output.sendBotMessage("----------------------------------------");
         output.sendBotMessage("Logging:");
         output.sendBotMessage("--------------------");
-        try{ myManager.getCommand("logging").handle(user, new String[]{"connections", "full", "all"}, output); } catch (final Exception e) { }
+        myManager.getCommand("logging").ifPresent(c -> c.handle(user, new String[]{"connections", "full", "all"}, output));
         output.sendBotMessage("----------------------------------------");
 
     }
