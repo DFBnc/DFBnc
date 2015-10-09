@@ -45,8 +45,12 @@ import java.util.stream.Collectors;
  * @version $Id: CommandManager.java 1360 2007-05-25 19:12:05Z ShaneMcC $
  */
 public final class CommandManager {
+
+    /** Command name prefix used in {@link #knownCommands} for hidden commands (e.g. aliases). */
+    private static final char HIDDEN_PREFIX = '*';
+
     /** HashMap used to store the different types of Command known. */
-    private HashMap<String,Command> knownCommands = new HashMap<>();
+    private Map<String, Command> knownCommands = new HashMap<>();
 
     /** List used to store sub command managers */
     private List<CommandManager> subManagers = new ArrayList<>();
@@ -126,7 +130,7 @@ public final class CommandManager {
                 .entrySet()
                 .parallelStream()
                 .filter(e -> allowAdmin || !e.getValue().isAdminOnly())
-                .filter(e -> allCommands || e.getKey().startsWith(sw) || e.getKey().startsWith("*" + sw))
+                .filter(e -> allCommands || e.getKey().startsWith(sw) || e.getKey().startsWith(HIDDEN_PREFIX + sw))
                 .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
         // Now all our submanagers' commands
@@ -252,7 +256,7 @@ public final class CommandManager {
                     return Optional.empty();
                 }
 
-                String handlerName = entry.getKey().charAt(0) == '*' ? entry.getKey().substring(1) : entry.getKey();
+                String handlerName = entry.getKey().charAt(0) == HIDDEN_PREFIX ? entry.getKey().substring(1) : entry.getKey();
                 if (cmds.size() > 1) {
                     // Single command, but multiple handles. Use the
                     // earliest one from the handles array.
@@ -271,7 +275,7 @@ public final class CommandManager {
                 Entry<String, Command> unhidden = null;
                 for (Entry<String, Command> entry : cmds.entrySet()) {
                     // Check if this is a non-hidden entry
-                    if (entry.getKey().charAt(0) != '*') {
+                    if (entry.getKey().charAt(0) != HIDDEN_PREFIX) {
                         // If we have found no un-hidden entries yet, save it
                         // otherwise, if we have already found one, then abort
                         // and forget about any we found.
@@ -324,8 +328,8 @@ public final class CommandManager {
         Command result = null;
         if (knownCommands.containsKey(name.toLowerCase())) {
             result = knownCommands.get(name.toLowerCase());
-        } else if (knownCommands.containsKey("*"+name.toLowerCase())) {
-            result = knownCommands.get("*"+name.toLowerCase());
+        } else if (knownCommands.containsKey(HIDDEN_PREFIX + name.toLowerCase())) {
+            result = knownCommands.get(HIDDEN_PREFIX + name.toLowerCase());
         }
 
         if (result != null && (!result.isAdminOnly() || allowAdmin)) {
