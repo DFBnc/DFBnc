@@ -21,13 +21,14 @@
  */
 package com.dfbnc.commands.show;
 
-import java.util.Collection;
 import com.dfbnc.Account;
-import com.dfbnc.AccountManager;
+import com.dfbnc.DFBnc;
 import com.dfbnc.commands.AdminCommand;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.CommandOutput;
 import com.dfbnc.sockets.UserSocket;
+
+import java.util.Collection;
 
 /**
  * Shows a list of users known to the bouncer.
@@ -45,7 +46,7 @@ public class ListUsersCommand extends AdminCommand {
 
     @Override
     public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
-        final Collection<Account> accounts = AccountManager.getAccounts();
+        final Collection<Account> accounts = DFBnc.getAccountManager().getAccounts();
         output.sendBotMessage("This BNC has " + accounts.size() + " users: ");
         for (Account account : accounts) {
             final StringBuilder sb = new StringBuilder("    ");

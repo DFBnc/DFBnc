@@ -23,7 +23,6 @@
 package com.dfbnc.commands.admin;
 
 import com.dfbnc.Account;
-import com.dfbnc.AccountManager;
 import com.dfbnc.DFBnc;
 import com.dfbnc.commands.AdminCommand;
 import com.dfbnc.commands.CommandManager;
@@ -54,7 +53,7 @@ public class ShutdownCommand extends AdminCommand {
         } else {
             message = Util.joinString(params, " ", 1, 1);
         }
-        for (Account account: AccountManager.getAccounts()) {
+        for (Account account: DFBnc.getAccountManager().getAccounts()) {
             for (UserSocket userSocket : account.getUserSockets()) {
                 userSocket.sendBotMessage("This server is now shutting down: %s", message);
             }

@@ -21,22 +21,6 @@
  */
 package com.dfbnc;
 
-import com.dmdirc.util.io.InvalidConfigFileException;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Timer;
-import java.util.TimerTask;
-
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.admin.*;
 import com.dfbnc.commands.user.*;
@@ -49,13 +33,29 @@ import com.dfbnc.sockets.ListenSocket;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.util.MultiWriter;
 import com.dfbnc.util.RollingWriter;
-import java.io.Writer;
+import com.dmdirc.util.io.InvalidConfigFileException;
 import uk.org.dataforce.libs.cliparser.BooleanParam;
 import uk.org.dataforce.libs.cliparser.CLIParam;
 import uk.org.dataforce.libs.cliparser.CLIParser;
 import uk.org.dataforce.libs.cliparser.StringParam;
 import uk.org.dataforce.libs.logger.LogLevel;
 import uk.org.dataforce.libs.logger.Logger;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Writer;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Main BNC Class.
@@ -84,6 +84,9 @@ public class DFBnc {
 
     /** The ServerType manager for this bnc */
     private static ServerTypeManager myServerTypeManager = new ServerTypeManager();
+
+    /** The account manager for this bnc */
+    private static AccountManager accountManager = new AccountManager();
 
     /** The arraylist of listenSockets */
     private static ArrayList<ListenSocket> listenSockets = new ArrayList<>();
@@ -287,7 +290,7 @@ public class DFBnc {
 
         // By now, we will have forked if required.
         Logger.info("Loading Accounts..");
-        AccountManager.loadAccounts();
+        accountManager.loadAccounts();
 
         openListenSockets();
 
@@ -476,8 +479,8 @@ public class DFBnc {
         UserSocket.closeAll("BNC Shutdown");
 
         Logger.info("Saving Accounts");
-        AccountManager.shutdown();
-        AccountManager.saveAccounts();
+        accountManager.shutdown();
+        accountManager.saveAccounts();
 
         if (config != null) {
             Logger.info("Saving config to '"+configFile+"'");
@@ -562,6 +565,15 @@ public class DFBnc {
      */
     public static ServerTypeManager getServerTypeManager() {
         return myServerTypeManager;
+    }
+
+    /**
+     * Get the AccountManager
+     *
+     * @return The AccountManager
+     */
+    public static AccountManager getAccountManager() {
+        return accountManager;
     }
 
     /**

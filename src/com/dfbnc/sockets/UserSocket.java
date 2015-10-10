@@ -21,8 +21,22 @@
  */
 package com.dfbnc.sockets;
 
+import com.dfbnc.Account;
+import com.dfbnc.ConnectionHandler;
+import com.dfbnc.Consts;
+import com.dfbnc.DFBnc;
+import com.dfbnc.commands.Command;
+import com.dfbnc.commands.CommandNotFoundException;
+import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.commands.filters.CommandOutputFilter;
+import com.dfbnc.commands.filters.CommandOutputFilterException;
+import com.dfbnc.commands.filters.CommandOutputFilterManager;
+import com.dfbnc.config.Config;
+import com.dfbnc.util.Util;
 import com.dmdirc.parser.irc.CapabilityState;
 import com.dmdirc.parser.irc.IRCParser;
+import uk.org.dataforce.libs.logger.Logger;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
@@ -38,22 +52,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
-
-import com.dfbnc.Account;
-import com.dfbnc.AccountManager;
-import com.dfbnc.ConnectionHandler;
-import com.dfbnc.Consts;
-import com.dfbnc.DFBnc;
-import com.dfbnc.commands.Command;
-import com.dfbnc.commands.CommandNotFoundException;
-import com.dfbnc.commands.CommandOutput;
-import com.dfbnc.commands.filters.CommandOutputFilter;
-import com.dfbnc.commands.filters.CommandOutputFilterException;
-import com.dfbnc.commands.filters.CommandOutputFilterManager;
-import com.dfbnc.config.Config;
-import com.dfbnc.util.Util;
-import java.util.Collections;
-import uk.org.dataforce.libs.logger.Logger;
 
 /**
  * This socket handles actual clients connected to the bnc.
@@ -885,19 +883,19 @@ public class UserSocket extends ConnectedSocket {
             if (bits.length > 2 && !bits[2].isEmpty()) {
                 clientType = ClientType.getFromName(bits[2].toLowerCase());
             }
-            if (AccountManager.count() == 0 || (DFBnc.getBNC().allowAutoCreate() && !AccountManager.exists(username))) {
-                Account acc = AccountManager.createAccount(username, password);
-                    if (AccountManager.count() == 1) {
+            if (DFBnc.getAccountManager().count() == 0 || (DFBnc.getBNC().allowAutoCreate() && !DFBnc.getAccountManager().exists(username))) {
+                Account acc = DFBnc.getAccountManager().createAccount(username, password);
+                    if (DFBnc.getAccountManager().count() == 1) {
                         acc.setAdmin(true);
                         sendBotMessage("You are the first user of this bnc, and have been made admin");
                     } else {
                         sendBotMessage("The given account does not exist, so an account has been created for you.");
                     }
-                    AccountManager.saveAccounts();
+                DFBnc.getAccountManager().saveAccounts();
                     DFBnc.getBNC().getConfig().save();
             }
-            if (AccountManager.checkPassword(username, clientID, password)) {
-                myAccount = AccountManager.get(username);
+            if (DFBnc.getAccountManager().checkPassword(username, clientID, password)) {
+                myAccount = DFBnc.getAccountManager().get(username);
                 if (myAccount.isSuspended()) {
                     sendBotMessage("This account has been suspended.");
                     sendBotMessage("Reason: "+myAccount.getSuspendReason());

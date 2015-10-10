@@ -21,12 +21,12 @@
  */
 package com.dfbnc.commands.admin;
 
+import com.dfbnc.Account;
+import com.dfbnc.DFBnc;
 import com.dfbnc.commands.AdminCommand;
 import com.dfbnc.commands.CommandManager;
-import com.dfbnc.sockets.UserSocket;
-import com.dfbnc.Account;
-import com.dfbnc.AccountManager;
 import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.sockets.UserSocket;
 
 /**
  * This file represents the 'Unsuspend' command
@@ -45,10 +45,10 @@ public class UnsuspendCommand extends AdminCommand {
             output.sendBotMessage("You need to specify a username to unsuspend.");
         } else {
             final String account = params[1];
-            if (!AccountManager.exists(account)) {
+            if (!DFBnc.getAccountManager().exists(account)) {
                 output.sendBotMessage("No account with the name '%s' exists.", account);
             } else {
-                final Account acc = AccountManager.get(account);
+                final Account acc = DFBnc.getAccountManager().get(account);
                 if (!acc.isSuspended()) {
                     output.sendBotMessage("The Account '%s' is not suspended.", account);
                 } else {

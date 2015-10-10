@@ -24,7 +24,7 @@
 package com.dfbnc.commands.user;
 
 import com.dfbnc.Account;
-import com.dfbnc.AccountManager;
+import com.dfbnc.DFBnc;
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.CommandOutput;
@@ -59,7 +59,7 @@ public class PasswordCommand extends Command {
             if (user.getAccount().isAdmin() || username.equalsIgnoreCase(user.getAccount().getName())) {
                 subclient = (bits.length > 1) ? bits[1].toLowerCase() : null;
                 password = params[2];
-                account = AccountManager.get(username);
+                account = DFBnc.getAccountManager().get(username);
             } else {
                 output.sendBotMessage("Error: Only admins can set the password for other users.");
                 return;

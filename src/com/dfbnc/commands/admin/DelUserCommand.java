@@ -21,12 +21,13 @@
  */
 package com.dfbnc.commands.admin;
 
-import java.io.IOException;
+import com.dfbnc.DFBnc;
 import com.dfbnc.commands.AdminCommand;
 import com.dfbnc.commands.CommandManager;
-import com.dfbnc.sockets.UserSocket;
-import com.dfbnc.AccountManager;
 import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.sockets.UserSocket;
+
+import java.io.IOException;
 
 /**
  * This file represents the 'DelUser' command
@@ -45,19 +46,19 @@ public class DelUserCommand extends AdminCommand {
             output.sendBotMessage("You need to specify a username to delete.");
         } else {
             final String account = params[1];
-            if (AccountManager.exists(account)) {
+            if (DFBnc.getAccountManager().exists(account)) {
                 if (params.length == 2) {
-                    final String deleteCode = AccountManager.makePassword(15);
-                    AccountManager.get(account).setDeleteCode(deleteCode);
+                    final String deleteCode = DFBnc.getAccountManager().makePassword(15);
+                    DFBnc.getAccountManager().get(account).setDeleteCode(deleteCode);
                     output.sendBotMessage("Deleting an account will remove all settings for the account.");
                     output.sendBotMessage("Are you sure you want to continue?");
                     output.sendBotMessage("To continue please enter /raw dfbnc %s %s %s", params[0], account, deleteCode);
-                } else if (!params[2].equals(AccountManager.get(account).getDeleteCode())) {
+                } else if (!params[2].equals(DFBnc.getAccountManager().get(account).getDeleteCode())) {
                     output.sendBotMessage("Invalid Delete code specified.");
                 } else {
                     output.sendBotMessage("Deleting account '%s'", account);
                     try {
-                        AccountManager.get(account).delete();
+                        DFBnc.getAccountManager().get(account).delete();
                         output.sendBotMessage("Account '%s' deleted.", account);
                     } catch (final IOException ioe) {
                         output.sendBotMessage("Deleting account '%s' failed: %s", account, ioe);

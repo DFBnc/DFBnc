@@ -22,17 +22,6 @@
 
 package com.dfbnc;
 
-import com.dmdirc.util.io.ConfigFile;
-import com.dmdirc.util.io.InvalidConfigFileException;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.CopyOnWriteArrayList;
-
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.config.Config;
 import com.dfbnc.config.ConfigChangeListener;
@@ -44,10 +33,20 @@ import com.dfbnc.sockets.UnableToConnectException;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.sockets.UserSocketWatcher;
 import com.dfbnc.util.Util;
+import com.dmdirc.util.io.InvalidConfigFileException;
+import uk.org.dataforce.libs.logger.Logger;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import uk.org.dataforce.libs.logger.Logger;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Functions related to Accounts
@@ -313,7 +312,7 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
      */
     public void save() {
         config.save();
-        subClientConfigs.values().stream().forEach((c) -> c.save());
+        subClientConfigs.values().stream().forEach(Config::save);
     }
 
     /**
@@ -458,7 +457,7 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
         }
 
         // Now remove the account.
-        AccountManager.remove(getName());
+        DFBnc.getAccountManager().remove(getName());
     }
 
     /**

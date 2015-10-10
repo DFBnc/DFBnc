@@ -22,7 +22,7 @@
 package com.dfbnc.commands.admin;
 
 import com.dfbnc.Account;
-import com.dfbnc.AccountManager;
+import com.dfbnc.DFBnc;
 import com.dfbnc.commands.AdminCommand;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.CommandOutput;
@@ -45,12 +45,12 @@ public class AddUserCommand extends AdminCommand {
             output.sendBotMessage("You need to specify a username to add.");
         } else {
             final String account = params[1];
-            if (AccountManager.exists(account)) {
+            if (DFBnc.getAccountManager().exists(account)) {
                 output.sendBotMessage("An account with the name '%s' already exists.", account);
             } else {
                 output.sendBotMessage("Creating account '%s'...", account);
-                final String password = AccountManager.makePassword();
-                Account acc = AccountManager.createAccount(account, password);
+                final String password = DFBnc.getAccountManager().makePassword();
+                Account acc = DFBnc.getAccountManager().createAccount(account, password);
                 if (acc != null) {
                     output.sendBotMessage("Account created. Password has been set to '%s'", password);
                 } else {

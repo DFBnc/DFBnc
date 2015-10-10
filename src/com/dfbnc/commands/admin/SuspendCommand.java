@@ -21,12 +21,12 @@
  */
 package com.dfbnc.commands.admin;
 
+import com.dfbnc.Account;
+import com.dfbnc.DFBnc;
 import com.dfbnc.commands.AdminCommand;
 import com.dfbnc.commands.CommandManager;
-import com.dfbnc.sockets.UserSocket;
-import com.dfbnc.Account;
-import com.dfbnc.AccountManager;
 import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.sockets.UserSocket;
 
 /**
  * This file represents the 'Suspend' command
@@ -45,10 +45,10 @@ public class SuspendCommand extends AdminCommand {
             output.sendBotMessage("You need to specify a username to suspend.");
         } else {
             final String account = params[1];
-            if (!AccountManager.exists(account)) {
+            if (!DFBnc.getAccountManager().exists(account)) {
                 output.sendBotMessage("No account with the name '%s' exists.", account);
             } else {
-                final Account acc = AccountManager.get(account);
+                final Account acc = DFBnc.getAccountManager().get(account);
                 if (acc == user.getAccount()) {
                     output.sendBotMessage("You can't suspend yourself.");
                 } else if (acc.isSuspended()) {
