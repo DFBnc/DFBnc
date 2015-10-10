@@ -21,13 +21,14 @@
  */
 package com.dfbnc.commands.user;
 
-import java.util.Map;
-import java.util.Map.Entry;
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
-import com.dfbnc.commands.CommandNotFoundException;
 import com.dfbnc.commands.CommandOutput;
 import com.dfbnc.sockets.UserSocket;
+
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 
 
 /**
@@ -48,9 +49,9 @@ public class HelpCommand extends Command {
 
         if (!command.equals("")) {
             if (user.getAccount() != null) {
-                try {
-                    final Entry<String, Command> e = user.getAccount().getCommandManager().getMatchingCommand(command, user.getAccount().isAdmin());
-                    final Command cmd = e.getValue();
+                final Optional<Entry<String, Command>> e = user.getAccount().getCommandManager().getMatchingCommand(command, user.getAccount().isAdmin());
+                if (e.isPresent()) {
+                    final Command cmd = e.get().getValue();
 
                     final String[] help = cmd.getHelp(params);
                     if (help != null) {
@@ -58,9 +59,9 @@ public class HelpCommand extends Command {
                             output.sendBotMessage(line);
                         }
                     } else {
-                        output.sendBotMessage("The command '%s' has no detailed help available.", e.getKey());
+                        output.sendBotMessage("The command '%s' has no detailed help available.", e.get().getKey());
                     }
-                } catch (CommandNotFoundException e) {
+                } else {
                     final Map<String, Command> allCommands = user.getAccount().getCommandManager().getAllCommands(command, user.getAccount().isAdmin());
                     if (allCommands.size() > 0) {
                         output.sendBotMessage("Multiple possible matches were found for '"+command+"': ");
@@ -73,13 +74,10 @@ public class HelpCommand extends Command {
                 }
             }
         } else {
-            //try to execute showcommands, else tell user to do so
+            // Try to execute showcommands
             output.sendBotMessage("You need to specify a command to get help for.");
-            try {
-                user.getAccount().getCommandManager().getCommand("showcommands").handle(user, new String[]{"showcommands"}, output);
-            } catch (CommandNotFoundException ex) {
-                output.sendBotMessage("You need to specify a command to get help for, try 'showcommands' to see all the commands");
-            }
+            user.getAccount().getCommandManager().getCommand("showcommands")
+                    .ifPresent(c -> c.handle(user, new String[]{"showcommands"}, output));
         }
     }
 
