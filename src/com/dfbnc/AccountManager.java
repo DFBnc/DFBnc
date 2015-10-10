@@ -23,17 +23,20 @@
 
 package com.dfbnc;
 
+import com.dfbnc.servers.ServerType;
+import com.dfbnc.sockets.UnableToConnectException;
 import com.dmdirc.util.io.InvalidConfigFileException;
+import uk.org.dataforce.libs.logger.LogLevel;
+import uk.org.dataforce.libs.logger.Logger;
+
 import java.io.File;
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
-import com.dfbnc.servers.ServerType;
-import com.dfbnc.sockets.UnableToConnectException;
-import uk.org.dataforce.libs.logger.LogLevel;
-import uk.org.dataforce.libs.logger.Logger;
 
 /**
  * Manages the list of accounts.
@@ -41,11 +44,10 @@ import uk.org.dataforce.libs.logger.Logger;
 public class AccountManager {
 
     /** List of loaded Accounts */
-    private static final HashMap<String, Account> accounts =
-            new HashMap<>();
+    private final Map<String, Account> accounts = new HashMap<>();
 
-    /** Prevent instantiation of AccountManager. */
-    private AccountManager() {
+    /** Prevent public instantiation of AccountManager. Use {@link DFBnc#getAccountManager()}. */
+    AccountManager() {
     }
 
     /**
@@ -53,7 +55,7 @@ public class AccountManager {
      *
      * @return Returns a collection of accounts
      */
-    public static Collection<Account> getAccounts() {
+    public Collection<Account> getAccounts() {
         return new ArrayList<>(accounts.values());
     }
 
@@ -62,7 +64,7 @@ public class AccountManager {
      *
      * @return total number of known accounts
      */
-    public static int count() {
+    public int count() {
         return accounts.size();
     }
 
@@ -74,7 +76,7 @@ public class AccountManager {
      * @param password Password to check
      * @return true/false depending on successful match
      */
-    public static boolean checkPassword(final String username, final String subclient, final String password) {
+    public boolean checkPassword(final String username, final String subclient, final String password) {
         if (exists(username)) {
             return get(username).checkPassword(subclient, password);
         } else {
@@ -89,7 +91,7 @@ public class AccountManager {
      * @param username Username to check
      * @return true/false depending on if the account exists or not
      */
-    public static boolean exists(final String username) {
+    public boolean exists(final String username) {
         Logger.debug2("exists: Checking if user exists: " + username.replace('.', '_').toLowerCase());
         if (LogLevel.DEBUG3.isLoggable(Logger.getLevel())) {
             for (String a : accounts.keySet()) {
@@ -105,7 +107,7 @@ public class AccountManager {
      * @param username Username to check
      * @return Account object for given username, or null if it doesn't exist
      */
-    public static Account get(final String username) {
+    public Account get(final String username) {
         return accounts.get(username.replace('.', '_').toLowerCase());
     }
 
@@ -115,7 +117,7 @@ public class AccountManager {
      * @param username Username to remove
      * @return Account object that was removed, or null if nothing was removed.
      */
-    public static Account remove(final String username) {
+    public Account remove(final String username) {
         synchronized (accounts) {
             return accounts.remove(username.replace('.', '_').toLowerCase());
         }
@@ -125,12 +127,12 @@ public class AccountManager {
      * Create an account with the given username and password and return the
      * Account Object associated with it.
      *
-     * @param username Username to check
-     * @param password Password to check
+     * @param username Username to create
+     * @param password Password for the user
      *
      * @return The account created, or null if the account could not be created
      */
-    public static Account createAccount(final String username, final String password) {
+    public Account createAccount(final String username, final String password) {
         final String accountName = username.replace('.', '_').toLowerCase();
         Logger.debug2("createAccount: Saving user as: " + username.replace('.', '_').toLowerCase());
         synchronized (accounts) {
@@ -157,7 +159,7 @@ public class AccountManager {
      *
      * @return Random Password
      */
-    public static String makePassword() {
+    public String makePassword() {
         return makePassword(8);
     }
 
@@ -167,11 +169,11 @@ public class AccountManager {
      * @param length Length to make password
      * @return Random Password
      */
-    public static String makePassword(final int length) {
+    public String makePassword(final int length) {
         final String validChars =
                 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!£$%^&*()_-+={}[]@~'#<>?/.,\\|\"";
         final StringBuilder password = new StringBuilder();
-        final Random r = new Random();
+        final Random r = new SecureRandom();
         for (int i = 0; i < length; i++) {
             password.append(validChars.charAt(r.nextInt(validChars.length())));
         }
@@ -181,7 +183,7 @@ public class AccountManager {
     /**
      * Load all the accounts from the config
      */
-    public static void loadAccounts() {
+    public void loadAccounts() {
         final File directory = new File(DFBnc.getConfigDirName());
         final File[] directories = directory.listFiles();
         if (directories == null) {
@@ -214,7 +216,7 @@ public class AccountManager {
     /**
      * Save all the accounts to the config
      */
-    public static void saveAccounts() {
+    public void saveAccounts() {
         for (Account acc : accounts.values()) {
             Logger.debug("Saving account: " + acc.getName());
             acc.save();
@@ -224,7 +226,7 @@ public class AccountManager {
     /**
      * Shutdown all accounts.
      */
-    public static void shutdown() {
+    public void shutdown() {
         for (Account acc : accounts.values()) {
             ServerType st = acc.getServerType();
             if (st != null) {
