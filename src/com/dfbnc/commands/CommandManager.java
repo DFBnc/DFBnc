@@ -22,6 +22,7 @@
 package com.dfbnc.commands;
 
 import com.dfbnc.DFBnc;
+import com.dfbnc.config.Config;
 import com.dfbnc.sockets.UserSocket;
 import uk.org.dataforce.libs.logger.Logger;
 
@@ -49,27 +50,32 @@ public final class CommandManager {
     /** Command name prefix used in {@link #knownCommands} for hidden commands (e.g. aliases). */
     private static final char HIDDEN_PREFIX = '*';
 
+    /** Nesting limit for calls to getCommand() */
+    private static final int NESTING_LIMIT = 10;
+
     /** HashMap used to store the different types of Command known. */
-    private Map<String, Command> knownCommands = new HashMap<>();
+    private final Map<String, Command> knownCommands = new HashMap<>();
 
     /** List used to store sub command managers */
-    private List<CommandManager> subManagers = new ArrayList<>();
+    private final List<CommandManager> subManagers = new ArrayList<>();
 
-    /** Nesting limit for calls to getCommand() */
-    private final static int nestingLimit = 10;
+    /** Config to use to get settings. */
+    private final Config config;
+
+    /**
+     * Constructor to create a CommandManager.
+     */
+    public CommandManager() {
+        this(DFBnc.getBNC().getConfig());
+    }
 
     /**
      * Constructor to create a CommandManager
-     */
-    public CommandManager() { }
-
-    /**
-     * Constructor to create a CommandManager, specifying a sub command manager.
      *
-     * @param submanager Sub command manager to add
+     * @param config Config to use to get settings.
      */
-    public CommandManager(final CommandManager submanager) {
-        subManagers.add(submanager);
+    public CommandManager(final Config config) {
+        this.config = config;
     }
 
     /**
@@ -224,7 +230,7 @@ public final class CommandManager {
      *
      * @param name Name to look for
      * @param allowAdmin Allow admin-only commands?
-     * @return Command Entry for the given name.f
+     * @return Command Entry for the given name.
      */
     public Optional<Entry<String, Command>> getMatchingCommand(final String name, final boolean allowAdmin) {
         Logger.debug5("Looking for matching command: " + name);
@@ -236,7 +242,7 @@ public final class CommandManager {
 
         Logger.debug5("No exact match found.");
 
-        if (DFBnc.getBNC().getConfig().getOptionBool("general", "allowshortcommands")) {
+        if (config.getOptionBool("general", "allowshortcommands")) {
             Logger.debug5("Short commands enabled.");
             // Find a matching command.
             final Map<String, Command> cmds = new TreeMap<>(getAllCommands(name, allowAdmin));
@@ -336,7 +342,7 @@ public final class CommandManager {
             return Optional.of(result);
         }
 
-        if (nesting <= nestingLimit) {
+        if (nesting <= NESTING_LIMIT) {
             return subManagers.stream()
                     .map(m -> m.getCommand(name, allowAdmin, nesting + 1))
                     .filter(Optional::isPresent)

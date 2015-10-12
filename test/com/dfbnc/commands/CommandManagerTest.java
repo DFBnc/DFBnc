@@ -21,29 +21,43 @@
  */
 package com.dfbnc.commands;
 
+import com.dfbnc.config.Config;
 import com.dfbnc.sockets.UserSocket;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Map;
+import java.util.Optional;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
+import static org.mockito.Mockito.when;
 
 /**
  * Test Command Manager as per http://code.google.com/p/dfbnc/wiki/CommandManagerInfo
  */
+@RunWith(MockitoJUnitRunner.class)
 public class CommandManagerTest {
+
 	/** Array of CommandManagers to allow for testing */
-	CommandManager[] commandManager = new CommandManager[5];
+	private final CommandManager[] commandManager = new CommandManager[5];
+
+	/** Config to use for command managers. */
+	@Mock private Config mockConfig;
 
 	/**
-	 * This guarentees a fresh set of CommandManagers for each test.
+	 * This guarantees a fresh set of CommandManagers for each test.
 	 */
 	@Before
 	public void setUp() {
 		for (int i = 0; i < commandManager.length; ++i) {
-			commandManager[i] = new CommandManager();
+			commandManager[i] = new CommandManager(mockConfig);
 		}
 	}
 
@@ -308,6 +322,147 @@ public class CommandManagerTest {
 		assertSame(command1, stCommands.get("stuff"));
 	}
 
+	/**
+	 * Tests that getMatchingCommand() correctly resolves a short command into a single match.
+	 */
+	@Test
+	public void testGetMatchingCommandWithSimpleShortCommand() {
+		// Given a simple command
+		Command command = new FakeCommand(commandManager[0], "stuff");
+		commandManager[0].addCommand(command);
+
+		// Given short commands are enabled
+		when(mockConfig.getOptionBool("general", "allowshortcommands")).thenReturn(true);
+
+		// When we try to match it with a shortened version
+		Optional<Map.Entry<String, Command>> match = commandManager[0].getMatchingCommand("st", true);
+
+		// Then the command is returned
+		assertTrue(match.isPresent());
+		assertEquals("stuff", match.get().getKey());
+		assertSame(command, match.get().getValue());
+	}
+
+	/**
+	 * Tests that getMatchingCommand() does not expand short commands if the setting is disabled.
+	 */
+	@Test
+	public void testGetMatchingCommandWithShortCommandsDisabled() {
+		// Given a simple command
+		Command command = new FakeCommand(commandManager[0], "stuff");
+		commandManager[0].addCommand(command);
+
+		// Given short commands are disabled
+		when(mockConfig.getOptionBool("general", "allowshortcommands")).thenReturn(false);
+
+		// When we try to match it with a shortened version
+		Optional<Map.Entry<String, Command>> match = commandManager[0].getMatchingCommand("st", true);
+
+		// Then nothing is returned
+		assertFalse(match.isPresent());
+	}
+
+	/**
+	 * Tests that getMatchingCommand() doesn't resolve short commands if the command doesn't allow it.
+	 */
+	@Test
+	public void testGetMatchingCommandWithShortCommandNotAllowed() {
+		// Given a simple command that doesn't allow itself to be shortened
+		Command command = new NonShortCommand(commandManager[0], "stuff");
+		commandManager[0].addCommand(command);
+
+		// Given short commands are enabled
+		when(mockConfig.getOptionBool("general", "allowshortcommands")).thenReturn(true);
+
+		// When we try to match it with a shortened version
+		Optional<Map.Entry<String, Command>> match = commandManager[0].getMatchingCommand("st", true);
+
+		// Then nothing is returned
+		assertFalse(match.isPresent());
+	}
+
+	/**
+	 * Tests that getMatchingCommand() returns nothing if a short command matches multiple commands.
+	 */
+	@Test
+	public void testGetMatchingCommandWithAmbiguousShortCommand() {
+		// Given two simple commands
+		Command command1 = new FakeCommand(commandManager[0], "stuff");
+		commandManager[0].addCommand(command1);
+		Command command2 = new FakeCommand(commandManager[0], "staff");
+		commandManager[0].addCommand(command2);
+
+		// Given short commands are enabled
+		when(mockConfig.getOptionBool("general", "allowshortcommands")).thenReturn(true);
+
+		// When we try to match with an ambiguous shortened version
+		Optional<Map.Entry<String, Command>> match = commandManager[0].getMatchingCommand("st", true);
+
+		// Then nothing is returned
+		assertFalse(match.isPresent());
+	}
+
+	/**
+	 * Tests that getMatchingCommand() returns a single command even if its "handles" match multiple times.
+	 */
+	@Test
+	public void testGetMatchingCommandWithMultipleMatchingHandles() {
+		// Given a simple command with multiple handles
+		Command command = new FakeCommand(commandManager[0], "meh", "stuff", "staff", "stop");
+		commandManager[0].addCommand(command);
+
+		// Given short commands are enabled
+		when(mockConfig.getOptionBool("general", "allowshortcommands")).thenReturn(true);
+
+		// When we try to match with an ambiguous shortened version
+		Optional<Map.Entry<String, Command>> match = commandManager[0].getMatchingCommand("st", true);
+
+		// Then the command is returned, and the first matching handles entry is used as the key
+		assertTrue(match.isPresent());
+		assertEquals("stuff", match.get().getKey());
+		assertSame(command, match.get().getValue());
+	}
+
+	/**
+	 * Tests that getMatchingCommand() returns a single non-hidden command if there's an ambiguous short command.
+	 */
+	@Test
+	public void testGetMatchingCommandWithHiddenAmbiguousShortCommand() {
+		// Given two simple commands
+		Command command1 = new FakeCommand(commandManager[0], "stuff");
+		commandManager[0].addCommand(command1);
+		Command command2 = new FakeCommand(commandManager[0], "*staff");
+		commandManager[0].addCommand(command2);
+
+		// Given short commands are enabled
+		when(mockConfig.getOptionBool("general", "allowshortcommands")).thenReturn(true);
+
+		// When we try to match with an ambiguous shortened version
+		Optional<Map.Entry<String, Command>> match = commandManager[0].getMatchingCommand("st", true);
+
+		// Then the non-hidden is returned
+		assertTrue(match.isPresent());
+		assertEquals("stuff", match.get().getKey());
+		assertSame(command1, match.get().getValue());
+	}
+
+	/**
+	 * Tests that getCommand() correctly matches a hidden command.
+	 */
+	@Test
+	public void testGetHiddenCommand() {
+		// Given a simple hidden command
+		Command command = new FakeCommand(commandManager[0], "*staff");
+		commandManager[0].addCommand(command);
+
+		// When we try to retrieve the hidden command
+		Optional<Command> match = commandManager[0].getCommand("staff");
+
+		// Then it's returned
+		assertTrue(match.isPresent());
+		assertSame(command, match.get());
+	}
+
 	private static class FakeCommand extends Command {
 
 		private final String[] handles;
@@ -351,6 +506,19 @@ public class CommandManagerTest {
 		@Override
 		public boolean isAdminOnly() {
 			return true;
+		}
+
+	}
+
+	private static class NonShortCommand extends FakeCommand {
+
+		public NonShortCommand(CommandManager manager, String... handles) {
+			super(manager, handles);
+		}
+
+		@Override
+		public boolean allowShort(String handle) {
+			return false;
 		}
 	}
 
