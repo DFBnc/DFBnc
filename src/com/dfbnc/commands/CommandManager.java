@@ -22,6 +22,7 @@
 package com.dfbnc.commands;
 
 import com.dfbnc.DFBnc;
+import com.dfbnc.config.Config;
 import com.dfbnc.sockets.UserSocket;
 import uk.org.dataforce.libs.logger.Logger;
 
@@ -58,18 +59,23 @@ public final class CommandManager {
     /** List used to store sub command managers */
     private final List<CommandManager> subManagers = new ArrayList<>();
 
-    /**
-     * Constructor to create a CommandManager
-     */
-    public CommandManager() { }
+    /** Config to use to get settings. */
+    private final Config config;
 
     /**
-     * Constructor to create a CommandManager, specifying a sub command manager.
-     *
-     * @param submanager Sub command manager to add
+     * Constructor to create a CommandManager.
      */
-    public CommandManager(final CommandManager submanager) {
-        subManagers.add(submanager);
+    public CommandManager() {
+        this(DFBnc.getBNC().getConfig());
+    }
+
+    /**
+     * Constructor to create a CommandManager
+     *
+     * @param config Config to use to get settings.
+     */
+    public CommandManager(final Config config) {
+        this.config = config;
     }
 
     /**
@@ -236,7 +242,7 @@ public final class CommandManager {
 
         Logger.debug5("No exact match found.");
 
-        if (DFBnc.getBNC().getConfig().getOptionBool("general", "allowshortcommands")) {
+        if (config.getOptionBool("general", "allowshortcommands")) {
             Logger.debug5("Short commands enabled.");
             // Find a matching command.
             final Map<String, Command> cmds = new TreeMap<>(getAllCommands(name, allowAdmin));

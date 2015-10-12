@@ -21,29 +21,41 @@
  */
 package com.dfbnc.commands;
 
+import com.dfbnc.config.Config;
 import com.dfbnc.sockets.UserSocket;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 /**
  * Test Command Manager as per http://code.google.com/p/dfbnc/wiki/CommandManagerInfo
  */
+@RunWith(MockitoJUnitRunner.class)
 public class CommandManagerTest {
+
 	/** Array of CommandManagers to allow for testing */
-	CommandManager[] commandManager = new CommandManager[5];
+	private final CommandManager[] commandManager = new CommandManager[5];
+
+	/** Config to use for command managers. */
+	@Mock private Config mockConfig;
 
 	/**
-	 * This guarentees a fresh set of CommandManagers for each test.
+	 * This guarantees a fresh set of CommandManagers for each test.
 	 */
 	@Before
 	public void setUp() {
 		for (int i = 0; i < commandManager.length; ++i) {
-			commandManager[i] = new CommandManager();
+			commandManager[i] = new CommandManager(mockConfig);
 		}
 	}
 
