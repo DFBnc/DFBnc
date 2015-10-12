@@ -49,14 +49,14 @@ public final class CommandManager {
     /** Command name prefix used in {@link #knownCommands} for hidden commands (e.g. aliases). */
     private static final char HIDDEN_PREFIX = '*';
 
+    /** Nesting limit for calls to getCommand() */
+    private static final int NESTING_LIMIT = 10;
+
     /** HashMap used to store the different types of Command known. */
-    private Map<String, Command> knownCommands = new HashMap<>();
+    private final Map<String, Command> knownCommands = new HashMap<>();
 
     /** List used to store sub command managers */
-    private List<CommandManager> subManagers = new ArrayList<>();
-
-    /** Nesting limit for calls to getCommand() */
-    private final static int nestingLimit = 10;
+    private final List<CommandManager> subManagers = new ArrayList<>();
 
     /**
      * Constructor to create a CommandManager
@@ -336,7 +336,7 @@ public final class CommandManager {
             return Optional.of(result);
         }
 
-        if (nesting <= nestingLimit) {
+        if (nesting <= NESTING_LIMIT) {
             return subManagers.stream()
                     .map(m -> m.getCommand(name, allowAdmin, nesting + 1))
                     .filter(Optional::isPresent)
