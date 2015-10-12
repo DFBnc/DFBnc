@@ -230,7 +230,7 @@ public final class CommandManager {
      *
      * @param name Name to look for
      * @param allowAdmin Allow admin-only commands?
-     * @return Command Entry for the given name.f
+     * @return Command Entry for the given name.
      */
     public Optional<Entry<String, Command>> getMatchingCommand(final String name, final boolean allowAdmin) {
         Logger.debug5("Looking for matching command: " + name);
