@@ -63,19 +63,28 @@ public final class CommandManager {
     private final Config config;
 
     /**
-     * Constructor to create a CommandManager.
+     * Constructor to create a CommandManager using the global config.
      */
-    public CommandManager() {
-        this(DFBnc.getBNC().getConfig());
-    }
+    public CommandManager() { this(null); }
 
     /**
-     * Constructor to create a CommandManager
+     * Constructor to create a CommandManager using a given config.
      *
      * @param config Config to use to get settings.
      */
     public CommandManager(final Config config) {
         this.config = config;
+    }
+
+    /**
+     * Get the config to use.
+     * This is because we need a config later, but DFBnc.getBNC() may not
+     * work yet.
+     *
+     * @return The config to use, based on which constructor.
+     */
+    private Config getConfig() {
+        return config == null ? DFBnc.getBNC().getConfig() : config;
     }
 
     /**
@@ -242,7 +251,7 @@ public final class CommandManager {
 
         Logger.debug5("No exact match found.");
 
-        if (config.getOptionBool("general", "allowshortcommands")) {
+        if (getConfig().getOptionBool("general", "allowshortcommands")) {
             Logger.debug5("Short commands enabled.");
             // Find a matching command.
             final Map<String, Command> cmds = new TreeMap<>(getAllCommands(name, allowAdmin));
