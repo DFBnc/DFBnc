@@ -23,9 +23,9 @@ package com.dfbnc.commands.debug;
 
 import com.dfbnc.commands.AdminCommand;
 import com.dfbnc.commands.CommandManager;
-import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.commands.CommandOutputBuffer;
 import com.dfbnc.sockets.UserSocket;
-import java.util.Arrays;
+
 import java.util.LinkedList;
 import java.util.List;
 import uk.org.dataforce.libs.logger.LogLevel;
@@ -40,10 +40,10 @@ public class LogLevelDebugCommand extends AdminCommand {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
-     * @param output CommandOutput where output from this command should go.
+     * @param output CommandOutputBuffer where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output) {
         if (params.length > 2) {
             final List<String> validParams = new LinkedList<>();
             for (LogLevel l : LogLevel.values()) { validParams.add(l.name()); }
@@ -51,19 +51,19 @@ public class LogLevelDebugCommand extends AdminCommand {
             final String optionString = getFullParam(output, params, 2, validParams);
             if (optionString == null) { return; }
             if (!validParams.contains(optionString.toUpperCase())) {
-                output.sendBotMessage("Unknown parameter: %s", optionString);
+                output.addBotMessage("Unknown parameter: %s", optionString);
                 return;
             }
 
             try {
                 final LogLevel l = LogLevel.valueOf(optionString.toUpperCase());
                 Logger.setLevel(l);
-                output.sendBotMessage("Current LogLevel is now: " + Logger.getLevel());
+                output.addBotMessage("Current LogLevel is now: " + Logger.getLevel());
             } catch (final Exception e) {
-                output.sendBotMessage("No such LogLevel: " + optionString);
+                output.addBotMessage("No such LogLevel: " + optionString);
             }
         } else {
-            output.sendBotMessage("Current LogLevel is: " + Logger.getLevel());
+            output.addBotMessage("Current LogLevel is: " + Logger.getLevel());
         }
     }
 

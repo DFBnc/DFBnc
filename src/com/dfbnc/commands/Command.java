@@ -49,9 +49,9 @@ public abstract class Command {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
-     * @param output CommandOutput where output from this command should go.
+     * @param output CommandOutputBuffer where output from this command should go.
      */
-    public abstract void handle(final UserSocket user, final String[] params, final CommandOutput output);
+    public abstract void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output);
 
     /**
      * What does this Command handle.
@@ -173,33 +173,33 @@ public abstract class Command {
      * otherwise return the full version of the parameter if it matches, or the
      * input the user gave.
      *
-     * @param output CommandOutput to send possible matches to
+     * @param output CommandOutputBuffer to send possible matches to
      * @param params Parameters for the command
      * @param position Position to check
      * @param options Options to look for
      * @return null or a string containing the full param or the input param.
      */
-    public final String getFullParam(final CommandOutput output, final String[] params, final int position, final Collection<String> options) {
+    public final String getFullParam(final CommandOutputBuffer output, final String[] params, final int position, final Collection<String> options) {
         String result = (params.length > position) ? params[position] : "";
         final List<String> paramMatch = Command.getParamMatch(result, options);
         boolean hasEmpty = false;
         if (paramMatch.size() > 1) {
-            output.sendBotMessage("Multiple possible matches were found for '"+result+"': ");
+            output.addBotMessage("Multiple possible matches were found for '" + result + "': ");
             for (String p : paramMatch) {
                 if (p.isEmpty()) {
                     hasEmpty = true;
                 } else {
-                    output.sendBotMessage("    " + p);
+                    output.addBotMessage("    " + p);
                 }
             }
             if (hasEmpty) {
-                output.sendBotMessage("    <cr>");
+                output.addBotMessage("    <cr>");
             }
             return null;
         } else if (paramMatch.size() == 1) {
             result = paramMatch.get(0);
         } else {
-            output.sendBotMessage("No valid matches were found for '"+result+"': ");
+            output.addBotMessage("No valid matches were found for '" + result + "': ");
             return null;
         }
 

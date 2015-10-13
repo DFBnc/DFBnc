@@ -144,10 +144,10 @@ public abstract class AbstractListEditCommand extends Command {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
-     * @param output CommandOutput where output from this command should go.
+     * @param output CommandOutputBuffer where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output) {
         String[] actualParams = params;
 
         final boolean hasSubList = hasSubList();
@@ -158,8 +158,8 @@ public abstract class AbstractListEditCommand extends Command {
         if (actualParams.length > commandParam) {
             final String listParamName = hasSubList ? validSubList(actualParams[listParam]) : actualParams[listParam];
             if (listParamName == null) {
-                output.sendBotMessage("There is no list to modify using '" + listParamName + "'");
-                output.sendBotMessage("Please try /dfbnc '" + actualParams[0] + "' for more information");
+                output.addBotMessage("There is no list to modify using '" + listParamName + "'");
+                output.addBotMessage("Please try /dfbnc '" + actualParams[0] + "' for more information");
                 return;
             }
 
@@ -167,8 +167,8 @@ public abstract class AbstractListEditCommand extends Command {
             if (actualParams[commandParam] == null) { return; }
 
             if (getPropertyName(listParamName).equals("")) {
-                output.sendBotMessage("There is no list to modify using '" + listParamName + "'");
-                output.sendBotMessage("Please try /dfbnc '" + actualParams[0] + "' for more information");
+                output.addBotMessage("There is no list to modify using '" + listParamName + "'");
+                output.addBotMessage("Please try /dfbnc '" + actualParams[0] + "' for more information");
                 return;
             }
             final String subListName = hasSubList ? validSubList(actualParams[listParam]) : null;
@@ -176,18 +176,18 @@ public abstract class AbstractListEditCommand extends Command {
             if (getConfig(user, subListName).hasOption(getDomainName(listParamName), getPropertyName(listParamName))) {
                 myList = getConfig(user, subListName).getOptionList(getDomainName(listParamName), getPropertyName(listParamName));
             } else if (!isDynamicList()) {
-                output.sendBotMessage("There is no list to modify using '" + listParamName + "'");
-                output.sendBotMessage("Please try /dfbnc '" + actualParams[0] + "' for more information");
+                output.addBotMessage("There is no list to modify using '" + listParamName + "'");
+                output.addBotMessage("Please try /dfbnc '" + actualParams[0] + "' for more information");
                 return;
             }
             if (actualParams[commandParam].equalsIgnoreCase("list")) {
                 if (myList.size() > 0) {
-                    output.sendBotMessage("You currently have the following items in your " + getListName(listParamName) + ":");
+                    output.addBotMessage("You currently have the following items in your " + getListName(listParamName) + ":");
                     for (int i = 0; i < myList.size(); ++i) {
-                        output.sendBotMessage(String.format("    %2d: %s", i, myList.get(i)));
+                        output.addBotMessage(String.format("    %2d: %s", i, myList.get(i)));
                     }
                 } else {
-                    output.sendBotMessage("Your " + getListName(listParamName) + " is currently empty.");
+                    output.addBotMessage("Your " + getListName(listParamName) + " is currently empty.");
                 }
             } else if (canAdd(listParamName) && (actualParams[commandParam].equalsIgnoreCase("add") || actualParams[commandParam].equalsIgnoreCase("edit") || actualParams[commandParam].equalsIgnoreCase("ins"))) {
                 int numParams = 3;
@@ -202,10 +202,10 @@ public abstract class AbstractListEditCommand extends Command {
                         try {
                             position = Integer.parseInt(actualParams[positionParam]);
                             if (position >= myList.size()) {
-                                output.sendBotMessage("'" + actualParams[positionParam] + "' is not a valid position in the " + getListName(listParamName));
+                                output.addBotMessage("'" + actualParams[positionParam] + "' is not a valid position in the " + getListName(listParamName));
                             }
                         } catch (NumberFormatException nfe) {
-                            output.sendBotMessage("'" + actualParams[positionParam] + "' is not a valid position in the " + getListName(listParamName));
+                            output.addBotMessage("'" + actualParams[positionParam] + "' is not a valid position in the " + getListName(listParamName));
                         }
                     }
                     StringBuilder allInput = new StringBuilder("");
@@ -216,23 +216,23 @@ public abstract class AbstractListEditCommand extends Command {
                     if (listOption.isValid()) {
                         if (actualParams[commandParam].equalsIgnoreCase("add")) {
                             myList.add(listOption.getParam());
-                            output.sendBotMessage("'" + listOption.getParam() + "' has been added to your " + getListName(listParamName));
+                            output.addBotMessage("'" + listOption.getParam() + "' has been added to your " + getListName(listParamName));
                         } else if (actualParams[commandParam].equalsIgnoreCase("edit")) {
                             myList.remove(position);
                             myList.add(position, listOption.getParam());
-                            output.sendBotMessage("'" + position + "' has been edited to '" + listOption.getParam() + "'.");
+                            output.addBotMessage("'" + position + "' has been edited to '" + listOption.getParam() + "'.");
                         } else {
                             myList.add(position, listOption.getParam());
-                            output.sendBotMessage("'" + listOption.getParam() + "' has been inserted in position '" + position + "'.");
+                            output.addBotMessage("'" + listOption.getParam() + "' has been inserted in position '" + position + "'.");
                         }
                     } else {
                         for (String out : listOption.getOutput()) {
-                            output.sendBotMessage(out);
+                            output.addBotMessage(out);
                         }
                     }
                 } else {
                     for (String out : getUsageOutput(actualParams[commandParam])) {
-                        output.sendBotMessage(out);
+                        output.addBotMessage(out);
                     }
                 }
             } else if (actualParams[commandParam].equalsIgnoreCase("del") || actualParams[commandParam].equalsIgnoreCase("delete")) {
@@ -242,23 +242,23 @@ public abstract class AbstractListEditCommand extends Command {
                         if (position < myList.size()) {
                             final String itemName = myList.get(position);
                             myList.remove(position);
-                            output.sendBotMessage("Item number " + position + " (" + itemName + ") has been removed from your " + getListName(listParamName) + ".");
+                            output.addBotMessage("Item number " + position + " (" + itemName + ") has been removed from your " + getListName(listParamName) + ".");
                         } else {
-                            output.sendBotMessage("There is no item with the number " + position + " in your " + getListName(listParamName));
-                            output.sendBotMessage("Use /dfbnc " + actualParams[0] + " list to view your " + getListName(listParamName));
+                            output.addBotMessage("There is no item with the number " + position + " in your " + getListName(listParamName));
+                            output.addBotMessage("Use /dfbnc " + actualParams[0] + " list to view your " + getListName(listParamName));
                         }
                     } catch (NumberFormatException nfe) {
-                        output.sendBotMessage("You must specify an item number to delete");
+                        output.addBotMessage("You must specify an item number to delete");
                     }
                 } else {
-                    output.sendBotMessage("You must specify an item number to delete");
+                    output.addBotMessage("You must specify an item number to delete");
                 }
             } else if (actualParams[commandParam].equalsIgnoreCase("clear")) {
                 myList.clear();
-                output.sendBotMessage("Your " + getListName(listParamName) + " has been cleared.");
+                output.addBotMessage("Your " + getListName(listParamName) + " has been cleared.");
             } else {
-                output.sendBotMessage("Invalid subcommand: " + actualParams[commandParam]);
-                output.sendBotMessage("For assistance, please try: /dfbnc " + actualParams[0]);
+                output.addBotMessage("Invalid subcommand: " + actualParams[commandParam]);
+                output.addBotMessage("For assistance, please try: /dfbnc " + actualParams[0]);
             }
             if (isDynamicList()) {
                 if (!myList.isEmpty() || getConfig(user, subListName).hasOption(getDomainName(listParamName), getPropertyName(listParamName))) {
@@ -271,26 +271,26 @@ public abstract class AbstractListEditCommand extends Command {
                 getConfig(user, subListName).setOption(getDomainName(listParamName), getPropertyName(listParamName), myList);
             }
         } else if (hasSubList && actualParams.length == 1) {
-            output.sendBotMessage("You must specify a sublist to edit eg:");
-            output.sendBotMessage("  /dfbnc " + actualParams[0] + " <sublist> <command>");
+            output.addBotMessage("You must specify a sublist to edit eg:");
+            output.addBotMessage("  /dfbnc " + actualParams[0] + " <sublist> <command>");
         } else {
             final String listParamName = hasSubList ? validSubList(actualParams[listParam]) : actualParams[listParam];
             String[] helpOutput = getHelpOutput(listParamName);
             if (helpOutput != null) {
                 for (final String out : helpOutput) {
-                    output.sendBotMessage(out);
+                    output.addBotMessage(out);
                 }
             } else {
-                output.sendBotMessage("This command can be used to modify your " + getListName(listParamName) + " using the following params:");
+                output.addBotMessage("This command can be used to modify your " + getListName(listParamName) + " using the following params:");
                 final String extra = hasSubList ? " "+listParamName : "";
-                output.sendBotMessage("  /dfbnc " + actualParams[0] + extra +" list");
+                output.addBotMessage("  /dfbnc " + actualParams[0] + extra + " list");
                 if (canAdd(actualParams[0])) {
-                    output.sendBotMessage("  /dfbnc " + actualParams[0] + extra + " add " + getAddUsageSyntax());
-                    output.sendBotMessage("  /dfbnc " + actualParams[0] + extra + " edit <number> " + getAddUsageSyntax());
-                    output.sendBotMessage("  /dfbnc " + actualParams[0] + extra + " ins <number> " + getAddUsageSyntax());
+                    output.addBotMessage("  /dfbnc " + actualParams[0] + extra + " add " + getAddUsageSyntax());
+                    output.addBotMessage("  /dfbnc " + actualParams[0] + extra + " edit <number> " + getAddUsageSyntax());
+                    output.addBotMessage("  /dfbnc " + actualParams[0] + extra + " ins <number> " + getAddUsageSyntax());
                 }
-                output.sendBotMessage("  /dfbnc " + actualParams[0] + extra + " del <number>");
-                output.sendBotMessage("  /dfbnc " + actualParams[0] + extra + " clear");
+                output.addBotMessage("  /dfbnc " + actualParams[0] + extra + " del <number>");
+                output.addBotMessage("  /dfbnc " + actualParams[0] + extra + " clear");
             }
         }
     }

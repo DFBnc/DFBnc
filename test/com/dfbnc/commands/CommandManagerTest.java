@@ -473,7 +473,7 @@ public class CommandManagerTest {
 		}
 
 		@Override
-		public void handle(UserSocket user, String[] params, CommandOutput output) {
+		public void handle(UserSocket user, String[] params, CommandOutputBuffer output) {
 			// Do nothing
 		}
 

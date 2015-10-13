@@ -23,7 +23,7 @@ package com.dfbnc.commands.show;
 
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
-import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.commands.CommandOutputBuffer;
 import com.dfbnc.sockets.UserSocket;
 
 import java.util.TreeMap;
@@ -41,10 +41,10 @@ public class ShowCommandsCommand extends Command {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
-     * @param output CommandOutput where output from this command should go.
+     * @param output CommandOutputBuffer where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output) {
         // This stores the output for any admin commands we run across, these are
         // displayed at the end after the normal-user commands.
         ArrayList<String> adminCommands = new ArrayList<>();
@@ -53,8 +53,8 @@ public class ShowCommandsCommand extends Command {
         if (commandsType == null) { return; }
 
         if (commandsType.equals("") || commandsType.equalsIgnoreCase("all") || commandsType.equalsIgnoreCase("user")) {
-            output.sendBotMessage("The following commands are available to you:");
-            output.sendBotMessage("");
+            output.addBotMessage("The following commands are available to you:");
+            output.addBotMessage("");
         }
 
         CommandManager cmdmgr = user.getAccount().getCommandManager();
@@ -65,7 +65,7 @@ public class ShowCommandsCommand extends Command {
             if (command.isAdminOnly()) {
                 adminCommands.add(String.format("%-20s - %s", entry.getKey(), command.getDescription(entry.getKey())));
             } else if (commandsType.equals("") || commandsType.equalsIgnoreCase("all") || commandsType.equalsIgnoreCase("user")) {
-                output.sendBotMessage(String.format("%-20s - %s", entry.getKey(), command.getDescription(entry.getKey())));
+                output.addBotMessage(String.format("%-20s - %s", entry.getKey(), command.getDescription(entry.getKey())));
             }
         }
 
@@ -74,22 +74,22 @@ public class ShowCommandsCommand extends Command {
             if (user.getAccount().isAdmin()) {
                 if (adminCommands.size() > 0) {
                     if (commandsType.equals("") || commandsType.equalsIgnoreCase("all") || commandsType.equalsIgnoreCase("user")) {
-                        output.sendBotMessage("");
+                        output.addBotMessage("");
                     }
                     if (commandsType.equalsIgnoreCase("admin")) {
-                        output.sendBotMessage("The following admin-only commands are available to you:");
+                        output.addBotMessage("The following admin-only commands are available to you:");
                     } else {
-                        output.sendBotMessage("The following admin-only commands are also available to you:");
+                        output.addBotMessage("The following admin-only commands are also available to you:");
                     }
-                    output.sendBotMessage("");
+                    output.addBotMessage("");
                     for (final String out : adminCommands) {
-                        output.sendBotMessage(out);
+                        output.addBotMessage(out);
                     }
                 } else {
-                    output.sendBotMessage("There are no admin-only commands available to you.");
+                    output.addBotMessage("There are no admin-only commands available to you.");
                 }
             } else if (commandsType.equalsIgnoreCase("admin")) {
-                output.sendBotMessage("Admin commands are not available to you.");
+                output.addBotMessage("Admin commands are not available to you.");
             }
         }
     }

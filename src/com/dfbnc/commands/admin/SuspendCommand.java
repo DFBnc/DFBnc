@@ -25,7 +25,7 @@ import com.dfbnc.Account;
 import com.dfbnc.DFBnc;
 import com.dfbnc.commands.AdminCommand;
 import com.dfbnc.commands.CommandManager;
-import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.commands.CommandOutputBuffer;
 import com.dfbnc.sockets.UserSocket;
 
 /**
@@ -37,28 +37,28 @@ public class SuspendCommand extends AdminCommand {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
-     * @param output CommandOutput where output from this command should go.
+     * @param output CommandOutputBuffer where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output) {
         if (params.length == 1) {
-            output.sendBotMessage("You need to specify a username to suspend.");
+            output.addBotMessage("You need to specify a username to suspend.");
         } else {
             final String account = params[1];
             if (!DFBnc.getAccountManager().exists(account)) {
-                output.sendBotMessage("No account with the name '%s' exists.", account);
+                output.addBotMessage("No account with the name '%s' exists.", account);
             } else {
                 final Account acc = DFBnc.getAccountManager().get(account);
                 if (acc == user.getAccount()) {
-                    output.sendBotMessage("You can't suspend yourself.");
+                    output.addBotMessage("You can't suspend yourself.");
                 } else if (acc.isSuspended()) {
-                    output.sendBotMessage("The Account '%s' is already suspended (%s).", account, acc.getSuspendReason());
+                    output.addBotMessage("The Account '%s' is already suspended (%s).", account, acc.getSuspendReason());
                 } else {
                     final StringBuilder reason = new StringBuilder();
                     for (int i = 2; i < params.length; i++) { reason.append(params[i]); }
-                    output.sendBotMessage("Suspending Account '%s'..", account);
+                    output.addBotMessage("Suspending Account '%s'..", account);
                     acc.setSuspended(true, reason.toString());
-                    output.sendBotMessage("Account suspended with reason: %s", acc.getSuspendReason());
+                    output.addBotMessage("Account suspended with reason: %s", acc.getSuspendReason());
                 }
             }
         }

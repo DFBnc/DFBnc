@@ -25,7 +25,7 @@ package com.dfbnc.commands.user;
 
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
-import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.commands.CommandOutputBuffer;
 import com.dfbnc.commands.show.ConnectionsCommand;
 import com.dfbnc.commands.show.FirstTimeCommand;
 import com.dfbnc.commands.show.ListUsersCommand;
@@ -50,10 +50,10 @@ public class ShowCommand extends Command {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
-     * @param output CommandOutput where output from this command should go.
+     * @param output CommandOutputBuffer where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output) {
         String[] actualParams = params;
         boolean legacy = false;
 
@@ -82,7 +82,7 @@ public class ShowCommand extends Command {
         }
 
         if (legacy) {
-            output.sendBotMessage("Note: The command '%s' has been deprecated in favour of 'show %s'. Support for legacy command names may be dropped in the future.", params[0], actualParams[1]);
+            output.addBotMessage("Note: The command '%s' has been deprecated in favour of 'show %s'. Support for legacy command names may be dropped in the future.", params[0], actualParams[1]);
         }
 
         if (actualParams.length > 1) {
@@ -94,26 +94,26 @@ public class ShowCommand extends Command {
             } else {
                 final Map<String, Command> allCommands = showManager.getAllCommands(actualParams[1], user.getAccount().isAdmin());
                 if (allCommands.size() > 0) {
-                    output.sendBotMessage("Multiple possible matches were found for '"+actualParams[1]+"': ");
+                    output.addBotMessage("Multiple possible matches were found for '" + actualParams[1] + "': ");
                     for (String p : allCommands.keySet()) {
                         if (p.charAt(0) == '*') { continue; }
-                        output.sendBotMessage("    " + p);
+                        output.addBotMessage("    " + p);
                     }
                 } else {
-                    output.sendBotMessage("There were no matches for '"+actualParams[1]+"'.");
-                    output.sendBotMessage("Try: /dfbnc " + actualParams[0] + " ?");
+                    output.addBotMessage("There were no matches for '" + actualParams[1] + "'.");
+                    output.addBotMessage("Try: /dfbnc " + actualParams[0] + " ?");
                 }
             }
         } else {
-            output.sendBotMessage("You need to choose something to show.");
-            output.sendBotMessage("Valid options are:");
+            output.addBotMessage("You need to choose something to show.");
+            output.addBotMessage("Valid options are:");
             for (Entry<String, Command> e : showManager.getAllCommands(user.getAccount().isAdmin()).entrySet()) {
                 if (e.getKey().charAt(0) != '*') {
                     final String description = e.getValue().getDescription(e.getKey());
-                    output.sendBotMessage(String.format("%-20s - %s", e.getKey(), description));
+                    output.addBotMessage(String.format("%-20s - %s", e.getKey(), description));
                 }
             }
-            output.sendBotMessage("Syntax: /dfbnc " + actualParams[0] + " <item> [params]");
+            output.addBotMessage("Syntax: /dfbnc " + actualParams[0] + " <item> [params]");
         }
     }
 
@@ -145,8 +145,8 @@ public class ShowCommand extends Command {
         showManager.addCommand(new Command(showManager){
 
             @Override
-            public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
-                   output.sendBotMessage("This is not the 'show' you are looking for... ;)");
+            public void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output) {
+                   output.addBotMessage("This is not the 'show' you are looking for... ;)");
             }
 
             @Override

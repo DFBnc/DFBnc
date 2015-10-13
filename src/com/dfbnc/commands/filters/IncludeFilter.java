@@ -5,17 +5,19 @@
 
 package com.dfbnc.commands.filters;
 
-import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.commands.CommandOutputBuffer;
 import com.dfbnc.util.Util;
-import java.util.stream.Collectors;
 
 /**
+ * Filter that excludes all messages that do not match the parameters (i.e., includes only those matching).
  *
  * @author Shane Mc Cormack <shanemcc@gmail.com>
  */
 public class IncludeFilter implements CommandOutputFilter {
+
     @Override
-    public void runFilter(final String[] params, final CommandOutput output) throws CommandOutputFilterException {
-        output.setMessages(output.getMessages().stream().filter(s -> s.toLowerCase().matches(".*" + Util.joinString(params, " ").toLowerCase() + ".*")).collect(Collectors.toList()));
+    public void runFilter(final String[] params, final CommandOutputBuffer output) throws CommandOutputFilterException {
+        output.removeMessagesIf(s -> !s.toLowerCase().matches(".*" + Util.joinString(params, " ").toLowerCase() + ".*"));
     }
+
 }

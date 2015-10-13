@@ -25,7 +25,7 @@ import com.dfbnc.DFBnc;
 import com.dfbnc.DFBncDaemon;
 import com.dfbnc.commands.AdminCommand;
 import com.dfbnc.commands.CommandManager;
-import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.commands.CommandOutputBuffer;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.util.Util;
 import com.dmdirc.util.DateUtils;
@@ -46,59 +46,59 @@ public class SystemCommand extends AdminCommand {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
-     * @param output CommandOutput where output from this command should go.
+     * @param output CommandOutputBuffer where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output) {
         final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-        output.sendBotMessage("----------------------------------------");
-        output.sendBotMessage("DFBnc System Information");
-        output.sendBotMessage("----------------------------------------");
-        output.sendBotMessage("Started At: " + sdf.format(new Date(DFBnc.startTime)));
+        output.addBotMessage("----------------------------------------");
+        output.addBotMessage("DFBnc System Information");
+        output.addBotMessage("----------------------------------------");
+        output.addBotMessage("Started At: " + sdf.format(new Date(DFBnc.startTime)));
         final long upSeconds = (System.currentTimeMillis() - DFBnc.startTime) / 1000;
-        output.sendBotMessage("Uptime: " + DateUtils.formatDuration((int)upSeconds));
-        output.sendBotMessage("----------------------------------------");
-        output.sendBotMessage("Startup Information:");
-        output.sendBotMessage("--------------------");
-        output.sendBotMessage("Forking Supported: " + (DFBncDaemon.canFork() ? "Yes" : "No"));
+        output.addBotMessage("Uptime: " + DateUtils.formatDuration((int) upSeconds));
+        output.addBotMessage("----------------------------------------");
+        output.addBotMessage("Startup Information:");
+        output.addBotMessage("--------------------");
+        output.addBotMessage("Forking Supported: " + (DFBncDaemon.canFork() ? "Yes" : "No"));
         if (DFBncDaemon.canFork()) {
-            output.sendBotMessage("Forked: " + (DFBnc.daemon.isDaemonized() ? "Yes" : "No"));
-            output.sendBotMessage("Current PID: " + DFBncDaemon.getPID());
+            output.addBotMessage("Forked: " + (DFBnc.daemon.isDaemonized() ? "Yes" : "No"));
+            output.addBotMessage("Current PID: " + DFBncDaemon.getPID());
             final List<String> var = DFBncDaemon.getArgs();
-            output.sendBotMessage("Run Args: " + Util.joinString(var.toArray(new String[var.size()]), " ", 0, 0));
+            output.addBotMessage("Run Args: " + Util.joinString(var.toArray(new String[var.size()]), " ", 0, 0));
         }
 
         final CLIParser cli = CLIParser.getCLIParser();
-        output.sendBotMessage("CLI Parser Args: " + Util.joinString(cli.getLastArgs(), " ", 0, 0));
-        output.sendBotMessage("CLI Params:");
+        output.addBotMessage("CLI Parser Args: " + Util.joinString(cli.getLastArgs(), " ", 0, 0));
+        output.addBotMessage("CLI Params:");
         for (final CLIParam p : cli.getParamList()) {
-            output.sendBotMessage("    " + (p.getChr() != 0 ? p.getChr() : "") + "/" + p.getString() + " - " + p.getNumber() + " = " + p.getStringValue());
+            output.addBotMessage("    " + (p.getChr() != 0 ? p.getChr() : "") + "/" + p.getString() + " - " + p.getNumber() + " = " + p.getStringValue());
         }
-        output.sendBotMessage("Redundant:");
+        output.addBotMessage("Redundant:");
         for (final String s : cli.getRedundant()) {
-            output.sendBotMessage("    " + s);
+            output.addBotMessage("    " + s);
         }
 
-        output.sendBotMessage("----------------------------------------");
-        output.sendBotMessage("Host Information:");
-        output.sendBotMessage("--------------------");
+        output.addBotMessage("----------------------------------------");
+        output.addBotMessage("Host Information:");
+        output.addBotMessage("--------------------");
         for (Entry<Object, Object> e : System.getProperties().entrySet()) {
-            output.sendBotMessage("    %s: %s", e.getKey(), e.getValue());
+            output.addBotMessage("    %s: %s", e.getKey(), e.getValue());
         }
-        output.sendBotMessage("----------------------------------------");
-        output.sendBotMessage("Component Versions:");
-        output.sendBotMessage("--------------------");
+        output.addBotMessage("----------------------------------------");
+        output.addBotMessage("Component Versions:");
+        output.addBotMessage("--------------------");
         myManager.getCommand("version").ifPresent(c -> c.handle(user, new String[]{"version", "all"}, output));
-        output.sendBotMessage("----------------------------------------");
-        output.sendBotMessage("Connections:");
-        output.sendBotMessage("--------------------");
+        output.addBotMessage("----------------------------------------");
+        output.addBotMessage("Connections:");
+        output.addBotMessage("--------------------");
         myManager.getCommand("connections").ifPresent(c -> c.handle(user, new String[]{"connections", "full", "all"}, output));
-        output.sendBotMessage("----------------------------------------");
-        output.sendBotMessage("Logging:");
-        output.sendBotMessage("--------------------");
+        output.addBotMessage("----------------------------------------");
+        output.addBotMessage("Logging:");
+        output.addBotMessage("--------------------");
         myManager.getCommand("logging").ifPresent(c -> c.handle(user, new String[]{"connections", "full", "all"}, output));
-        output.sendBotMessage("----------------------------------------");
+        output.addBotMessage("----------------------------------------");
 
     }
 

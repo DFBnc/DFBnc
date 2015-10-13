@@ -29,7 +29,7 @@ import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.DFBnc;
-import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.commands.CommandOutputBuffer;
 
 /**
  * This file represents the 'version' command
@@ -40,10 +40,10 @@ public class VersionCommand extends Command {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
-     * @param output CommandOutput where output from this command should go.
+     * @param output CommandOutputBuffer where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output) {
         final Map<String,String> versions = DFBnc.getVersions();
         final Set<String> validParams = new HashSet<>(versions.keySet());
         validParams.add("");
@@ -54,7 +54,7 @@ public class VersionCommand extends Command {
 
         for (Entry<String, String> e : versions.entrySet()) {
             if (versionType.equalsIgnoreCase("") || versionType.equalsIgnoreCase("all") || versionType.equalsIgnoreCase(e.getKey())) {
-                output.sendBotMessage("%s version: %s", e.getKey(), e.getValue());
+                output.addBotMessage("%s version: %s", e.getKey(), e.getValue());
             }
         }
     }

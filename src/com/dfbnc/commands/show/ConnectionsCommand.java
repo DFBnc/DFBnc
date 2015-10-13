@@ -25,7 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
-import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.commands.CommandOutputBuffer;
 import com.dfbnc.sockets.UserSocket;
 import java.net.InetSocketAddress;
 import java.util.HashSet;
@@ -40,10 +40,10 @@ public class ConnectionsCommand extends Command {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
-     * @param output CommandOutput where output from this command should go.
+     * @param output CommandOutputBuffer where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output) {
         final List<String> validParams;
         if (user.getAccount().isAdmin()) {
             validParams = Arrays.asList("account", "all", "authenticated", "unauthenticated", "brief", "full", "");
@@ -57,7 +57,7 @@ public class ConnectionsCommand extends Command {
             final String optionString = getFullParam(output, params, i, validParams);
             if (optionString == null) { return; }
             if (!validParams.contains(optionString)) {
-                output.sendBotMessage("Unknown parameter: %s", optionString);
+                output.addBotMessage("Unknown parameter: %s", optionString);
                 return;
             }
 
@@ -83,15 +83,15 @@ public class ConnectionsCommand extends Command {
 
         // Check for invalid combinations
         if ((askedParams.contains("brief") && askedParams.contains("full")) || (askedParams.contains("unauthenticated") && askedParams.contains("account"))) {
-            output.sendBotMessage("Invalid combination of parameters.");
+            output.addBotMessage("Invalid combination of parameters.");
             return;
         }
 
-        output.sendBotMessage("Currently connected sockets:");
+        output.addBotMessage("Currently connected sockets:");
         if (user.getAccount().isAdmin()) {
-            output.sendBotMessage("    Filter: %s", Arrays.toString(askedParams.toArray()));
+            output.addBotMessage("    Filter: %s", Arrays.toString(askedParams.toArray()));
         }
-        output.sendBotMessage("");
+        output.addBotMessage("");
 
         int count = 0;
         int matched = 0;
@@ -104,51 +104,51 @@ public class ConnectionsCommand extends Command {
 
             if (askedParams.contains("full")) {
                 if (u.equals(user)) {
-                    output.sendBotMessage("User: " + u.getSocketID() + " **Current Socket**");
+                    output.addBotMessage("User: " + u.getSocketID() + " **Current Socket**");
                 } else {
-                    output.sendBotMessage("User: " + u.getSocketID());
+                    output.addBotMessage("User: " + u.getSocketID());
                 }
-                output.sendBotMessage("          Socket ID: " + u.toString());
+                output.addBotMessage("          Socket ID: " + u.toString());
                 if (u.getAccount() == null) {
-                    output.sendBotMessage("          Account: UNAUTHENTICATED");
+                    output.addBotMessage("          Account: UNAUTHENTICATED");
                 } else {
-                    output.sendBotMessage("          Account: " + u.getAccount().getName());
+                    output.addBotMessage("          Account: " + u.getAccount().getName());
                     if (u.getAccount().isAdmin()) {
-                        output.sendBotMessage("          User is admin");
+                        output.addBotMessage("          User is admin");
                     }
                 }
                 if (u.getClientID() != null) {
-                    output.sendBotMessage("          Sub-Client: " + u.getClientID());
+                    output.addBotMessage("          Sub-Client: " + u.getClientID());
                 }
                 if (u.getClientVersion() != null) {
-                    output.sendBotMessage("          Client Version: " + u.getClientVersion());
+                    output.addBotMessage("          Client Version: " + u.getClientVersion());
                 }
-                output.sendBotMessage("          Client Type: " + u.getClientType());
+                output.addBotMessage("          Client Type: " + u.getClientType());
 
                 final InetSocketAddress remote = u.getRemoteSocketAddress();
                 final InetSocketAddress local = u.getLocalSocketAddress();
 
-                output.sendBotMessage("          UserSocket Info: ");
-                output.sendBotMessage("                    Remote IP: " + remote.getAddress());
-                output.sendBotMessage("                    Remote Port: " + remote.getPort());
-                output.sendBotMessage("                    Local IP: "  + local.getAddress());
-                output.sendBotMessage("                    Local Port: " + local.getPort());
-                output.sendBotMessage("                    SSL: " + Boolean.toString(u.isSSL()));
-                output.sendBotMessage("");
+                output.addBotMessage("          UserSocket Info: ");
+                output.addBotMessage("                    Remote IP: " + remote.getAddress());
+                output.addBotMessage("                    Remote Port: " + remote.getPort());
+                output.addBotMessage("                    Local IP: " + local.getAddress());
+                output.addBotMessage("                    Local Port: " + local.getPort());
+                output.addBotMessage("                    SSL: " + Boolean.toString(u.isSSL()));
+                output.addBotMessage("");
             } else {
                 final String acc = (u.getAccount() == null ? "UNAUTHENTICATED" : u.getAccount().getName());
                 final String subclient = (u.getClientID() != null ? "+" + u.getClientID() : "");
                 final String current = (u.equals(user) ? "**" : "");
                 final String admin = (u.getAccount() != null && u.getAccount().isAdmin() ? "@" : "");
-                output.sendBotMessage("[%s%s%s%s] - {%s} - %s: %s", admin, acc, subclient, current, u.getInfo(), u.getClientType(), u.getClientVersion());
+                output.addBotMessage("[%s%s%s%s] - {%s} - %s: %s", admin, acc, subclient, current, u.getInfo(), u.getClientType(), u.getClientVersion());
             }
             matched++;
         }
-        output.sendBotMessage("----------");
+        output.addBotMessage("----------");
         if (user.getAccount().isAdmin()) {
-            output.sendBotMessage("Matched: %d    Total: %d", matched, count);
+            output.addBotMessage("Matched: %d    Total: %d", matched, count);
         } else {
-            output.sendBotMessage("Total: %d", matched);
+            output.addBotMessage("Total: %d", matched);
         }
     }
 

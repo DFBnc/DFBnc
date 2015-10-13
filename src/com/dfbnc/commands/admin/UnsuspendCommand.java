@@ -25,7 +25,7 @@ import com.dfbnc.Account;
 import com.dfbnc.DFBnc;
 import com.dfbnc.commands.AdminCommand;
 import com.dfbnc.commands.CommandManager;
-import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.commands.CommandOutputBuffer;
 import com.dfbnc.sockets.UserSocket;
 
 /**
@@ -37,24 +37,24 @@ public class UnsuspendCommand extends AdminCommand {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
-     * @param output CommandOutput where output from this command should go.
+     * @param output CommandOutputBuffer where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output) {
         if (params.length == 1) {
-            output.sendBotMessage("You need to specify a username to unsuspend.");
+            output.addBotMessage("You need to specify a username to unsuspend.");
         } else {
             final String account = params[1];
             if (!DFBnc.getAccountManager().exists(account)) {
-                output.sendBotMessage("No account with the name '%s' exists.", account);
+                output.addBotMessage("No account with the name '%s' exists.", account);
             } else {
                 final Account acc = DFBnc.getAccountManager().get(account);
                 if (!acc.isSuspended()) {
-                    output.sendBotMessage("The Account '%s' is not suspended.", account);
+                    output.addBotMessage("The Account '%s' is not suspended.", account);
                 } else {
-                    output.sendBotMessage("Unsuspending Account '%s'..", account);
+                    output.addBotMessage("Unsuspending Account '%s'..", account);
                     acc.setSuspended(false, null);
-                    output.sendBotMessage("Account unsuspended.");
+                    output.addBotMessage("Account unsuspended.");
                 }
             }
         }

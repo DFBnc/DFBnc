@@ -25,7 +25,7 @@ import com.dfbnc.Account;
 import com.dfbnc.DFBnc;
 import com.dfbnc.commands.AdminCommand;
 import com.dfbnc.commands.CommandManager;
-import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.commands.CommandOutputBuffer;
 import com.dfbnc.sockets.UserSocket;
 
 /**
@@ -37,24 +37,24 @@ public class AddUserCommand extends AdminCommand {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
-     * @param output CommandOutput where output from this command should go.
+     * @param output CommandOutputBuffer where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output) {
         if (params.length == 1) {
-            output.sendBotMessage("You need to specify a username to add.");
+            output.addBotMessage("You need to specify a username to add.");
         } else {
             final String account = params[1];
             if (DFBnc.getAccountManager().exists(account)) {
-                output.sendBotMessage("An account with the name '%s' already exists.", account);
+                output.addBotMessage("An account with the name '%s' already exists.", account);
             } else {
-                output.sendBotMessage("Creating account '%s'...", account);
+                output.addBotMessage("Creating account '%s'...", account);
                 final String password = DFBnc.getAccountManager().makePassword();
                 Account acc = DFBnc.getAccountManager().createAccount(account, password);
                 if (acc != null) {
-                    output.sendBotMessage("Account created. Password has been set to '%s'", password);
+                    output.addBotMessage("Account created. Password has been set to '%s'", password);
                 } else {
-                    output.sendBotMessage("There was an error creating the account.");
+                    output.addBotMessage("There was an error creating the account.");
                 }
             }
         }

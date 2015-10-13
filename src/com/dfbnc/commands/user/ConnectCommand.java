@@ -25,7 +25,7 @@ import com.dfbnc.Account;
 import com.dfbnc.ConnectionHandler;
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
-import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.commands.CommandOutputBuffer;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.sockets.UnableToConnectException;
 
@@ -39,19 +39,19 @@ public class ConnectCommand extends Command {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
-     * @param output CommandOutput where output from this command should go.
+     * @param output CommandOutputBuffer where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output) {
         final Account acc = user.getAccount();
 
         if (!params[0].equalsIgnoreCase("connect")) {
-            output.sendBotMessage("Disconnecting...");
+            output.addBotMessage("Disconnecting...");
             if (acc.getConnectionHandler() == null) {
-                output.sendBotMessage("Not connected!");
+                output.addBotMessage("Not connected!");
                 if (acc.isReconnecting()) {
                     acc.cancelReconnect();
-                    output.sendBotMessage("Reconnect attempt cancelled.");
+                    output.addBotMessage("Reconnect attempt cancelled.");
                 }
             } else {
                 String reason = "BNC Disconnecting";
@@ -70,15 +70,15 @@ public class ConnectCommand extends Command {
         }
 
         if (acc.getConnectionHandler() == null) {
-            output.sendBotMessage("Connecting...");
+            output.addBotMessage("Connecting...");
             try {
                 ConnectionHandler handler = acc.getServerType().newConnectionHandler(user.getAccount(), -1);
                 acc.setConnectionHandler(handler);
             } catch (UnableToConnectException utce) {
-                output.sendBotMessage("There was an error connecting: "+utce.getMessage());
+                output.addBotMessage("There was an error connecting: " + utce.getMessage());
             }
         } else {
-            output.sendBotMessage("Already connected.");
+            output.addBotMessage("Already connected.");
         }
     }
 
