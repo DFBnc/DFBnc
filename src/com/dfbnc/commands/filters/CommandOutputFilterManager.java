@@ -49,5 +49,7 @@ public class CommandOutputFilterManager {
     static {
         knownFilters.put("include", new IncludeFilter());
         knownFilters.put("exclude", new ExcludeFilter());
+        knownFilters.put("head", new HeadFilter());
+        knownFilters.put("tail", new TailFilter());
     }
 }
