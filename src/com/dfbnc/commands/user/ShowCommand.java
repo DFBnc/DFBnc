@@ -97,7 +97,7 @@ public class ShowCommand extends Command {
                     output.addBotMessage("Multiple possible matches were found for '%s': ", actualParams[1]);
                     for (String p : allCommands.keySet()) {
                         if (p.charAt(0) == '*') { continue; }
-                        output.addBotMessage("    %s", + p);
+                        output.addBotMessage("    %s", p);
                     }
                 } else {
                     output.addBotMessage("There were no matches for '%s'.", actualParams[1]);
