@@ -21,40 +21,42 @@
  */
 package com.dfbnc.commands;
 
-import java.util.LinkedList;
-import java.util.List;
-
 import com.dfbnc.sockets.UserSocket;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.function.Predicate;
+
 /**
- * Output from commands is buffered through CommandOutput objects, as this
+ * Output from commands is buffered through CommandOutputBuffer objects, as this
  * allows output to be filtered.
  *
  * @author Shane Mc Cormack <shanemcc@gmail.com>
  */
-public class CommandOutput {
+public class CommandOutputBuffer {
+
     /** UserSocket to send output to. */
     private final UserSocket user;
 
     /** Messages for output. */
-    final List<String> messages = new LinkedList<>();
+    private final List<String> messages = new LinkedList<>();
 
     /**
-     * Create a new CommandOutput that will output to the given UserSocket.
+     * Create a new CommandOutputBuffer that will output to the given UserSocket.
      *
      * @param user UserSocket to send output to.
      */
-    public CommandOutput(final UserSocket user) {
+    public CommandOutputBuffer(final UserSocket user) {
         this.user = user;
     }
 
     /**
-     * Send a message to the user from the bnc bot in printf format.
+     * Adds a message to be sent to the user from the bnc bot in printf format.
      *
      * @param data The format string
      * @param args The args for the format string
      */
-    public void sendBotMessage(final String data, final Object... args) {
+    public void addBotMessage(final String data, final Object... args) {
         messages.add(String.format(data, args));
     }
 
@@ -76,11 +78,19 @@ public class CommandOutput {
     }
 
     /**
-     * Send the output to ths user.
+     * Removes all messages that match the specified filter.
+     *
+     * @param filter The filter to use to decide which messages to remove.
+     */
+    public void removeMessagesIf(final Predicate<? super String> filter) {
+        messages.removeIf(filter);
+    }
+
+    /**
+     * Send the output to the user.
      */
     public void send() {
-        for (final String message : messages) {
-            user.sendBotMessage(message);
-        }
+        messages.forEach(user::sendBotMessage);
     }
+
 }

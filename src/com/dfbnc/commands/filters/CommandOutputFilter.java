@@ -5,7 +5,7 @@
 
 package com.dfbnc.commands.filters;
 
-import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.commands.CommandOutputBuffer;
 
 /**
  *
@@ -18,10 +18,10 @@ public interface CommandOutputFilter {
      * Run a filter against command output.
      *
      * @param params Parameters for the filter.
-     * @param output This is the CommandOutput from the command. This may have
+     * @param output This is the CommandOutputBuffer from the command. This may have
      *               already been modified by other filters.
      * @throws CommandOutputFilterException if there was a problem filtering
      *         the output.
      */
-    public void runFilter(final String[] params, final CommandOutput output) throws CommandOutputFilterException;
+    public void runFilter(final String[] params, final CommandOutputBuffer output) throws CommandOutputFilterException;
 }

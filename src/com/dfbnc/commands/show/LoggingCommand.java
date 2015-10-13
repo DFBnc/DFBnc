@@ -26,7 +26,7 @@ import java.text.SimpleDateFormat;
 import com.dfbnc.DFBnc;
 import com.dfbnc.commands.AdminCommand;
 import com.dfbnc.commands.CommandManager;
-import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.commands.CommandOutputBuffer;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.util.RollingWriter;
 
@@ -39,16 +39,16 @@ public class LoggingCommand extends AdminCommand {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
-     * @param output CommandOutput where output from this command should go.
+     * @param output CommandOutputBuffer where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output) {
         final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         final RollingWriter rw = DFBnc.getBNC().getRollingWriter();
-        output.sendBotMessage("Most recent " + rw.size() + " (Max: " + rw.getCapacity() + ") log entries: ");
-        output.sendBotMessage("");
+        output.addBotMessage("Most recent " + rw.size() + " (Max: " + rw.getCapacity() + ") log entries: ");
+        output.addBotMessage("");
         for (final String line : rw) {
-            output.sendBotMessage("    " + line);
+            output.addBotMessage("    " + line);
         }
     }
 

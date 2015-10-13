@@ -25,7 +25,7 @@ package com.dfbnc.commands.user;
 
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
-import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.commands.CommandOutputBuffer;
 import com.dfbnc.commands.debug.LogLevelDebugCommand;
 import com.dfbnc.commands.debug.LoggingDebugCommand;
 import com.dfbnc.commands.debug.RawDebugCommand;
@@ -46,10 +46,10 @@ public class DebugCommand extends Command {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
-     * @param output CommandOutput where output from this command should go.
+     * @param output CommandOutputBuffer where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output) {
         String[] actualParams = params;
 
         if (actualParams.length > 1) {
@@ -61,26 +61,26 @@ public class DebugCommand extends Command {
             } else {
                 final Map<String, Command> allCommands = debugManager.getAllCommands(actualParams[1], user.getAccount().isAdmin());
                 if (allCommands.size() > 0) {
-                    output.sendBotMessage("Multiple possible matches were found for '"+actualParams[1]+"': ");
+                    output.addBotMessage("Multiple possible matches were found for '" + actualParams[1] + "': ");
                     for (String p : allCommands.keySet()) {
                         if (p.charAt(0) == '*') { continue; }
-                        output.sendBotMessage("    " + p);
+                        output.addBotMessage("    " + p);
                     }
                 } else {
-                    output.sendBotMessage("There were no matches for '"+actualParams[1]+"'.");
-                    output.sendBotMessage("Try: /dfbnc " + actualParams[0] + " ?");
+                    output.addBotMessage("There were no matches for '" + actualParams[1] + "'.");
+                    output.addBotMessage("Try: /dfbnc " + actualParams[0] + " ?");
                 }
             }
         } else {
-            output.sendBotMessage("You need to choose a debug command to run.");
-            output.sendBotMessage("Valid options are:");
+            output.addBotMessage("You need to choose a debug command to run.");
+            output.addBotMessage("Valid options are:");
             for (Entry<String, Command> e : debugManager.getAllCommands(user.getAccount().isAdmin()).entrySet()) {
                 if (e.getKey().charAt(0) != '*') {
                     final String description = e.getValue().getDescription(e.getKey());
-                    output.sendBotMessage(String.format("%-20s - %s", e.getKey(), description));
+                    output.addBotMessage(String.format("%-20s - %s", e.getKey(), description));
                 }
             }
-            output.sendBotMessage("Syntax: /dfbnc " + actualParams[0] + " <item> [params]");
+            output.addBotMessage("Syntax: /dfbnc " + actualParams[0] + " <item> [params]");
         }
     }
 

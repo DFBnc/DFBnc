@@ -358,10 +358,10 @@ public final class CommandManager {
      *
      * @param user UserSocket that issued the command
      * @param params Params for command (param0 is the command name)
-     * @param output CommandOutput where output from this command should go.
+     * @param output CommandOutputBuffer where output from this command should go.
      * @throws CommandNotFoundException exception if no commands exists to handle the line
      */
-    public void handle(final UserSocket user, final String[] params, final CommandOutput output) throws CommandNotFoundException {
+    public void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output) throws CommandNotFoundException {
         if (params.length == 0 || params[0] == null || params[0].isEmpty()) {
             throw new CommandNotFoundException("No valid command given.");
         }

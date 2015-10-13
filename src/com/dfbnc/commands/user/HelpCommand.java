@@ -23,7 +23,7 @@ package com.dfbnc.commands.user;
 
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
-import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.commands.CommandOutputBuffer;
 import com.dfbnc.sockets.UserSocket;
 
 import java.util.Map;
@@ -40,10 +40,10 @@ public class HelpCommand extends Command {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
-     * @param output CommandOutput where output from this command should go.
+     * @param output CommandOutputBuffer where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output) {
 
         final String command = (params.length > 1) ? params[1] : "";
 
@@ -56,26 +56,26 @@ public class HelpCommand extends Command {
                     final String[] help = cmd.getHelp(params);
                     if (help != null) {
                         for (String line : help) {
-                            output.sendBotMessage(line);
+                            output.addBotMessage(line);
                         }
                     } else {
-                        output.sendBotMessage("The command '%s' has no detailed help available.", e.get().getKey());
+                        output.addBotMessage("The command '%s' has no detailed help available.", e.get().getKey());
                     }
                 } else {
                     final Map<String, Command> allCommands = user.getAccount().getCommandManager().getAllCommands(command, user.getAccount().isAdmin());
                     if (allCommands.size() > 0) {
-                        output.sendBotMessage("Multiple possible matches were found for '"+command+"': ");
+                        output.addBotMessage("Multiple possible matches were found for '" + command + "': ");
                         for (final String p : allCommands.keySet()) {
-                            output.sendBotMessage("    " + (p.charAt(0) == '*' ? p.substring(1) : p));
+                            output.addBotMessage("    " + (p.charAt(0) == '*' ? p.substring(1) : p));
                         }
                     } else {
-                        output.sendBotMessage("The command '%s' does not exist.", command);
+                        output.addBotMessage("The command '%s' does not exist.", command);
                     }
                 }
             }
         } else {
             // Try to execute showcommands
-            output.sendBotMessage("You need to specify a command to get help for.");
+            output.addBotMessage("You need to specify a command to get help for.");
             user.getAccount().getCommandManager().getCommand("showcommands")
                     .ifPresent(c -> c.handle(user, new String[]{"showcommands"}, output));
         }

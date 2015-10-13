@@ -26,7 +26,7 @@ import java.util.Collection;
 import com.dfbnc.DFBnc;
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
-import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.commands.CommandOutputBuffer;
 import com.dfbnc.servers.ServerType;
 import com.dfbnc.servers.ServerTypeNotFound;
 import com.dfbnc.sockets.UserSocket;
@@ -40,10 +40,10 @@ public class ServerTypeCommand extends Command {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
-     * @param output CommandOutput where output from this command should go.
+     * @param output CommandOutputBuffer where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output) {
         String[] actualParams = params;
 
         if (actualParams.length > 1) {
@@ -61,7 +61,7 @@ public class ServerTypeCommand extends Command {
                 final ServerType currentType = user.getAccount().getServerType();
                 if (actualParams[2].equalsIgnoreCase("none")) {
                     user.getAccountConfig().setOption("server", "servertype", "");
-                    output.sendBotMessage("You now have no servertype.");
+                    output.addBotMessage("You now have no servertype.");
                     if (currentType != null) { currentType.deactivate(user.getAccount()); }
                 } else {
                     try {
@@ -69,34 +69,34 @@ public class ServerTypeCommand extends Command {
                         if (currentType != null) { currentType.deactivate(user.getAccount()); }
                         serverType.activate(user.getAccount());
                         user.getAccountConfig().setOption("server", "servertype", actualParams[2].toLowerCase());
-                        output.sendBotMessage("Your ServerType is now "+actualParams[2].toLowerCase()+".");
+                        output.addBotMessage("Your ServerType is now " + actualParams[2].toLowerCase() + ".");
                     } catch (ServerTypeNotFound e) {
-                        output.sendBotMessage("Sorry, "+e);
+                        output.addBotMessage("Sorry, " + e);
                     }
                 }
             } else {
-                output.sendBotMessage("Available Types:");
+                output.addBotMessage("Available Types:");
                 for (String name : DFBnc.getServerTypeManager().getServerTypeNames()) {
                     try {
                         final ServerType type = DFBnc.getServerTypeManager().getServerType(name);
-                        output.sendBotMessage("    " + name + " - " + type.getDescription());
+                        output.addBotMessage("    " + name + " - " + type.getDescription());
                     } catch (ServerTypeNotFound ex) { /* It will be found. */ }
                 }
             }
         } else if (actualParams.length > 1 && actualParams[1].equalsIgnoreCase("help")) {
-            output.sendBotMessage("This command allows you to set the servertype for this account.");
+            output.addBotMessage("This command allows you to set the servertype for this account.");
             final String currentType = user.getAccountConfig().getOption("server", "servertype");
             String info = "";
             final ServerType st = user.getAccount().getServerType();
             if (st == null) {
                 info = " (Currently not available)";
             }
-            output.sendBotMessage("Your current servertype is: "+currentType+info);
-            output.sendBotMessage("");
-            output.sendBotMessage("You can set your type using the command: /dfbnc "+actualParams[0]+" settype <type>");
-            output.sendBotMessage("A list of available types can be seen by ommiting the <type> param");
+            output.addBotMessage("Your current servertype is: " + currentType + info);
+            output.addBotMessage("");
+            output.addBotMessage("You can set your type using the command: /dfbnc " + actualParams[0] + " settype <type>");
+            output.addBotMessage("A list of available types can be seen by ommiting the <type> param");
         } else {
-            output.sendBotMessage("For usage information use /dfbnc "+actualParams[0]+" help");
+            output.addBotMessage("For usage information use /dfbnc " + actualParams[0] + " help");
         }
     }
 

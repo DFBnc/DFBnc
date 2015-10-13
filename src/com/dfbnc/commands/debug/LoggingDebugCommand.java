@@ -24,11 +24,11 @@ package com.dfbnc.commands.debug;
 import com.dfbnc.DFBnc;
 import com.dfbnc.commands.AdminCommand;
 import com.dfbnc.commands.CommandManager;
-import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.commands.CommandOutputBuffer;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.util.MultiWriter;
 import com.dfbnc.util.UserSocketMessageWriter;
-import com.dfbnc.util.Util;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -41,17 +41,17 @@ public class LoggingDebugCommand extends AdminCommand {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
-     * @param output CommandOutput where output from this command should go.
+     * @param output CommandOutputBuffer where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output) {
         if (params.length > 2) {
             final List<String> validParams = Arrays.asList("on", "off");
 
             final String optionString = getFullParam(output, params, 2, validParams);
             if (optionString == null) { return; }
             if (!validParams.contains(optionString)) {
-                output.sendBotMessage("Unknown parameter: %s", optionString);
+                output.addBotMessage("Unknown parameter: %s", optionString);
                 return;
             }
 
@@ -72,7 +72,7 @@ public class LoggingDebugCommand extends AdminCommand {
             }
 
         } else {
-            output.sendBotMessage("You need to specify an option 'on' or 'off'");
+            output.addBotMessage("You need to specify an option 'on' or 'off'");
         }
     }
 

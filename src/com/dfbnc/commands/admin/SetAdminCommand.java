@@ -25,7 +25,7 @@ import com.dfbnc.Account;
 import com.dfbnc.DFBnc;
 import com.dfbnc.commands.AdminCommand;
 import com.dfbnc.commands.CommandManager;
-import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.commands.CommandOutputBuffer;
 import com.dfbnc.sockets.UserSocket;
 
 /**
@@ -37,34 +37,34 @@ public class SetAdminCommand extends AdminCommand {
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
-     * @param output CommandOutput where output from this command should go.
+     * @param output CommandOutputBuffer where output from this command should go.
      */
     @Override
-    public void handle(final UserSocket user, final String[] params, final CommandOutput output) {
+    public void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output) {
         if (params.length == 1) {
-            output.sendBotMessage("You need to specify a username to chagne the admin status of.");
+            output.addBotMessage("You need to specify a username to chagne the admin status of.");
         } else {
             final String account = params[1];
             if (!DFBnc.getAccountManager().exists(account)) {
-                output.sendBotMessage("No account with the name '%s' exists.", account);
+                output.addBotMessage("No account with the name '%s' exists.", account);
             } else {
                 final Account acc = DFBnc.getAccountManager().get(account);
                 if (acc == user.getAccount()) {
-                    output.sendBotMessage("You can't change your own status");
+                    output.addBotMessage("You can't change your own status");
                 } else {
                     final String newStatus = (params.length > 2) ? params[2] : "";
                     if (newStatus.isEmpty()) {
                         if (acc.isAdmin()) {
-                            output.sendBotMessage("The account '%s' is currently an admin.", account);
+                            output.addBotMessage("The account '%s' is currently an admin.", account);
                         } else {
-                            output.sendBotMessage("The account '%s' is not currently an admin.", account);
+                            output.addBotMessage("The account '%s' is not currently an admin.", account);
                         }
                     } else {
                         acc.setAdmin(newStatus.equalsIgnoreCase("true") || newStatus.equalsIgnoreCase("yes") || newStatus.equalsIgnoreCase("on") || newStatus.equalsIgnoreCase("1"));
                         if (acc.isAdmin()) {
-                            output.sendBotMessage("The account '%s' is now an admin.", account);
+                            output.addBotMessage("The account '%s' is now an admin.", account);
                         } else {
-                            output.sendBotMessage("The account '%s' is now no longer an admin.", account);
+                            output.addBotMessage("The account '%s' is now no longer an admin.", account);
                         }
                     }
                 }

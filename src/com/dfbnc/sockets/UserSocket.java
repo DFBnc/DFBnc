@@ -27,7 +27,7 @@ import com.dfbnc.Consts;
 import com.dfbnc.DFBnc;
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandNotFoundException;
-import com.dfbnc.commands.CommandOutput;
+import com.dfbnc.commands.CommandOutputBuffer;
 import com.dfbnc.commands.filters.CommandOutputFilter;
 import com.dfbnc.commands.filters.CommandOutputFilterException;
 import com.dfbnc.commands.filters.CommandOutputFilterManager;
@@ -908,7 +908,7 @@ public class UserSocket extends ConnectedSocket {
                     }
                     // Run the firsttime command if this is the first time the account has been used
                     if (myAccount.isFirst()) {
-                        final CommandOutput co = new CommandOutput(this);
+                        final CommandOutputBuffer co = new CommandOutputBuffer(this);
                         handleBotCommand(new String[]{"show", "firsttime"}, co);
                         if (myAccount.isAdmin()) {
                             sendBotMessage("");
@@ -988,7 +988,7 @@ public class UserSocket extends ConnectedSocket {
             case "NOTICE":
                 if (line.length > 2) {
                     if (line[1].toLowerCase().startsWith(Util.getBotName().toLowerCase())) {
-                        final CommandOutput co = new CommandOutput(this);
+                        final CommandOutputBuffer co = new CommandOutputBuffer(this);
                         handleBotCommand(line[2].split(" "), co);
                         co.send();
                         return;
@@ -1028,7 +1028,7 @@ public class UserSocket extends ConnectedSocket {
                 } else {
                     bits = new String[0];
                 }
-                final CommandOutput co = new CommandOutput(this);
+                final CommandOutputBuffer co = new CommandOutputBuffer(this);
                 handleBotCommand(bits, co);
                 co.send();
                 return;
@@ -1072,7 +1072,7 @@ public class UserSocket extends ConnectedSocket {
      * @param bits This is the command and its parameters.
      *             bits[0] is the command, bits[1]..bits[n] are the params.
      */
-    private void handleBotCommand(final String[] bits, final CommandOutput output) {
+    private void handleBotCommand(final String[] bits, final CommandOutputBuffer output) {
         final List<String[]> sections = new LinkedList<>();
 
         // TODO: Filtering doesn't make sense in all cases, and should probably
@@ -1130,9 +1130,9 @@ public class UserSocket extends ConnectedSocket {
                 }
             } catch (final CommandOutputFilterException ex) {
                 output.setMessages(oldMessages);
-                output.sendBotMessage("--------------------------------------");
-                output.sendBotMessage("Error with filter: " + Arrays.toString(section));
-                output.sendBotMessage("Reason: " + ex.getMessage());
+                output.addBotMessage("--------------------------------------");
+                output.addBotMessage("Error with filter: " + Arrays.toString(section));
+                output.addBotMessage("Reason: " + ex.getMessage());
             }
         }
     }
@@ -1145,7 +1145,7 @@ public class UserSocket extends ConnectedSocket {
      *             bits[0] is the command, bits[1]..bits[n] are the params.
      * @return True is a command actually ran, else false.
      */
-    private boolean doBotCommand(final String[] bits, final CommandOutput output) {
+    private boolean doBotCommand(final String[] bits, final CommandOutputBuffer output) {
         try {
             if (myAccount != null) {
                 myAccount.getCommandManager().handle(this, bits, output);
@@ -1158,26 +1158,26 @@ public class UserSocket extends ConnectedSocket {
                     if (cmds.size() == 1) {
                         final String req = (bits.length > 0 ? bits[0] : "");
                         final String match = cmds.firstKey();
-                        output.sendBotMessage("The command '%s' only matched a single command (%s). To prevent accidental use however, the full command is required.", req, match);
+                        output.addBotMessage("The command '%s' only matched a single command (%s). To prevent accidental use however, the full command is required.", req, match);
                         return false;
                     } else {
-                        output.sendBotMessage("Unknown command '%s' Please try 'show commands'", (bits.length > 0 ? bits[0] : ""));
-                        output.sendBotMessage("Possible matching commands:");
-                        output.sendBotMessage("----------");
+                        output.addBotMessage("Unknown command '%s' Please try 'show commands'", (bits.length > 0 ? bits[0] : ""));
+                        output.addBotMessage("Possible matching commands:");
+                        output.addBotMessage("----------");
                         for (Entry<String, Command> entry : cmds.entrySet()) {
                             if (entry.getKey().charAt(0) == '*') { continue; }
                             final Command command = entry.getValue();
                             if (!command.isAdminOnly() || myAccount.isAdmin()) {
-                                output.sendBotMessage(String.format("%-20s - %s", entry.getKey(), command.getDescription(entry.getKey())));
+                                output.addBotMessage(String.format("%-20s - %s", entry.getKey(), command.getDescription(entry.getKey())));
                             }
                         }
                         return false;
                     }
                 }
             }
-            output.sendBotMessage("Unknown command '%s' Please try 'show commands'", (bits.length > 0 ? bits[0] : ""));
+            output.addBotMessage("Unknown command '%s' Please try 'show commands'", (bits.length > 0 ? bits[0] : ""));
         } catch (Exception e) {
-            output.sendBotMessage("Exception with command '%s': %s", (bits.length > 0 ? bits[0] : ""), e.getMessage());
+            output.addBotMessage("Exception with command '%s': %s", (bits.length > 0 ? bits[0] : ""), e.getMessage());
             e.printStackTrace();
             return false;
         }
