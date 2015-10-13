@@ -57,7 +57,7 @@ public class CommandOutputBuffer {
      * @param args The args for the format string
      */
     public void addBotMessage(final String data, final Object... args) {
-        messages.add(String.format(data, args));
+        messages.add(args.length == 0 ? data : String.format(data, args));
     }
 
     /**

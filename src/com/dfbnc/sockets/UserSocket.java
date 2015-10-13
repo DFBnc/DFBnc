@@ -499,13 +499,15 @@ public class UserSocket extends ConnectedSocket {
      * @param args The args for the format string
      */
     public void sendBotMessage(final String data, final Object... args) {
+        final String outLine = args.length == 0 ? data : String.format(data, args);
+
         if (post001) {
             if (myAccount != null) {
                 final String method = myAccount.getContactMethod();
                 if (method.equalsIgnoreCase("SNOTICE")) {
                     sendServerLine("NOTICE", data, args);
                 } else if (method.equalsIgnoreCase("AUTH")) {
-                    sendLine("NOTICE AUTH :- %s", String.format(data, args));
+                    sendLine("NOTICE AUTH :- %s", outLine);
                 } else {
                     sendBotLine(method, data, args);
                 }
@@ -513,7 +515,7 @@ public class UserSocket extends ConnectedSocket {
                 sendServerLine("NOTICE", data, args);
             }
         } else {
-            sendLine("NOTICE AUTH :- %s", String.format(data, args));
+            sendLine("NOTICE AUTH :- %s", outLine);
         }
     }
 
@@ -527,7 +529,8 @@ public class UserSocket extends ConnectedSocket {
      * @param args The args for the format string
      */
     public void sendBotChat(final String target, final String type, final String data, final Object... args) {
-        sendLine(":%s!bot@%s %s %s :%s", Util.getBotName(), getServerName(), type, target, String.format(data, args));
+        final String outLine = args.length == 0 ? data : String.format(data, args);
+        sendLine(":%s!bot@%s %s %s :%s", Util.getBotName(), getServerName(), type, target, outLine);
     }
 
     /**
@@ -600,7 +603,8 @@ public class UserSocket extends ConnectedSocket {
      * @param args The args for the format string
      */
     public void sendBotLine(final String type, final String data, final Object... args) {
-        sendLine(":%s!bot@%s %s %s :%s", Util.getBotName(), getServerName(), type, nickname, String.format(data, args));
+        final String outLine = args.length == 0 ? data : String.format(data, args);
+        sendLine(":%s!bot@%s %s %s :%s", Util.getBotName(), getServerName(), type, nickname, outLine);
     }
 
     /**
@@ -611,7 +615,8 @@ public class UserSocket extends ConnectedSocket {
      * @param args The args for the format string
      */
     public void sendServerLine(final String type, final String data, final Object... args) {
-        sendLine(":%s %s %s :%s", getServerName(), type, nickname, String.format(data, args));
+        final String outLine = args.length == 0 ? data : String.format(data, args);
+        sendLine(":%s %s %s :%s", getServerName(), type, nickname, outLine);
     }
 
     @Override
