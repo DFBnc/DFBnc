@@ -25,11 +25,11 @@ import com.dfbnc.commands.AdminCommand;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.CommandOutputBuffer;
 import com.dfbnc.sockets.UserSocket;
+import uk.org.dataforce.libs.logger.LogLevel;
+import uk.org.dataforce.libs.logger.Logger;
 
 import java.util.LinkedList;
 import java.util.List;
-import uk.org.dataforce.libs.logger.LogLevel;
-import uk.org.dataforce.libs.logger.Logger;
 
 /**
  * This file represents the 'debug loglevel' command
@@ -58,12 +58,12 @@ public class LogLevelDebugCommand extends AdminCommand {
             try {
                 final LogLevel l = LogLevel.valueOf(optionString.toUpperCase());
                 Logger.setLevel(l);
-                output.addBotMessage("Current LogLevel is now: " + Logger.getLevel());
+                output.addBotMessage("Current LogLevel is now: %s", Logger.getLevel());
             } catch (final Exception e) {
-                output.addBotMessage("No such LogLevel: " + optionString);
+                output.addBotMessage("No such LogLevel: %s", optionString);
             }
         } else {
-            output.addBotMessage("Current LogLevel is: " + Logger.getLevel());
+            output.addBotMessage("Current LogLevel is: %s", Logger.getLevel());
         }
     }
 

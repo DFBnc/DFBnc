@@ -21,14 +21,15 @@
  */
 package com.dfbnc.commands.show;
 
-import java.util.Arrays;
-import java.util.List;
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.CommandOutputBuffer;
 import com.dfbnc.sockets.UserSocket;
+
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -104,36 +105,36 @@ public class ConnectionsCommand extends Command {
 
             if (askedParams.contains("full")) {
                 if (u.equals(user)) {
-                    output.addBotMessage("User: " + u.getSocketID() + " **Current Socket**");
+                    output.addBotMessage("User: %s **Current Socket**", u.getSocketID());
                 } else {
-                    output.addBotMessage("User: " + u.getSocketID());
+                    output.addBotMessage("User: %s", u.getSocketID());
                 }
-                output.addBotMessage("          Socket ID: " + u.toString());
+                output.addBotMessage("          Socket ID: %s", u.toString());
                 if (u.getAccount() == null) {
                     output.addBotMessage("          Account: UNAUTHENTICATED");
                 } else {
-                    output.addBotMessage("          Account: " + u.getAccount().getName());
+                    output.addBotMessage("          Account: %s", u.getAccount().getName());
                     if (u.getAccount().isAdmin()) {
                         output.addBotMessage("          User is admin");
                     }
                 }
                 if (u.getClientID() != null) {
-                    output.addBotMessage("          Sub-Client: " + u.getClientID());
+                    output.addBotMessage("          Sub-Client: %s", u.getClientID());
                 }
                 if (u.getClientVersion() != null) {
-                    output.addBotMessage("          Client Version: " + u.getClientVersion());
+                    output.addBotMessage("          Client Version: %s", u.getClientVersion());
                 }
-                output.addBotMessage("          Client Type: " + u.getClientType());
+                output.addBotMessage("          Client Type: %s", u.getClientType());
 
                 final InetSocketAddress remote = u.getRemoteSocketAddress();
                 final InetSocketAddress local = u.getLocalSocketAddress();
 
                 output.addBotMessage("          UserSocket Info: ");
-                output.addBotMessage("                    Remote IP: " + remote.getAddress());
-                output.addBotMessage("                    Remote Port: " + remote.getPort());
-                output.addBotMessage("                    Local IP: " + local.getAddress());
-                output.addBotMessage("                    Local Port: " + local.getPort());
-                output.addBotMessage("                    SSL: " + Boolean.toString(u.isSSL()));
+                output.addBotMessage("                    Remote IP: %s", remote.getAddress());
+                output.addBotMessage("                    Remote Port: %s", remote.getPort());
+                output.addBotMessage("                    Local IP: %s", local.getAddress());
+                output.addBotMessage("                    Local Port: %s", local.getPort());
+                output.addBotMessage("                    SSL: %s", Boolean.toString(u.isSSL()));
                 output.addBotMessage("");
             } else {
                 final String acc = (u.getAccount() == null ? "UNAUTHENTICATED" : u.getAccount().getName());

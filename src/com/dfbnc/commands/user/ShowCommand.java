@@ -94,14 +94,14 @@ public class ShowCommand extends Command {
             } else {
                 final Map<String, Command> allCommands = showManager.getAllCommands(actualParams[1], user.getAccount().isAdmin());
                 if (allCommands.size() > 0) {
-                    output.addBotMessage("Multiple possible matches were found for '" + actualParams[1] + "': ");
+                    output.addBotMessage("Multiple possible matches were found for '%s': ", actualParams[1]);
                     for (String p : allCommands.keySet()) {
                         if (p.charAt(0) == '*') { continue; }
-                        output.addBotMessage("    " + p);
+                        output.addBotMessage("    %s", + p);
                     }
                 } else {
-                    output.addBotMessage("There were no matches for '" + actualParams[1] + "'.");
-                    output.addBotMessage("Try: /dfbnc " + actualParams[0] + " ?");
+                    output.addBotMessage("There were no matches for '%s'.", actualParams[1]);
+                    output.addBotMessage("Try: /dfbnc %s ?", actualParams[0]);
                 }
             }
         } else {
@@ -110,10 +110,10 @@ public class ShowCommand extends Command {
             for (Entry<String, Command> e : showManager.getAllCommands(user.getAccount().isAdmin()).entrySet()) {
                 if (e.getKey().charAt(0) != '*') {
                     final String description = e.getValue().getDescription(e.getKey());
-                    output.addBotMessage(String.format("%-20s - %s", e.getKey(), description));
+                    output.addBotMessage("%-20s - %s", e.getKey(), description);
                 }
             }
-            output.addBotMessage("Syntax: /dfbnc " + actualParams[0] + " <item> [params]");
+            output.addBotMessage("Syntax: /dfbnc %s <item> [params]", actualParams[0]);
         }
     }
 

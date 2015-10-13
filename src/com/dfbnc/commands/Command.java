@@ -21,12 +21,13 @@
  */
 package com.dfbnc.commands;
 
+import com.dfbnc.DFBnc;
+import com.dfbnc.sockets.UserSocket;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import com.dfbnc.DFBnc;
-import com.dfbnc.sockets.UserSocket;
 
 /**
  * This file represents a command
@@ -184,12 +185,12 @@ public abstract class Command {
         final List<String> paramMatch = Command.getParamMatch(result, options);
         boolean hasEmpty = false;
         if (paramMatch.size() > 1) {
-            output.addBotMessage("Multiple possible matches were found for '" + result + "': ");
+            output.addBotMessage("Multiple possible matches were found for '%s': ", result);
             for (String p : paramMatch) {
                 if (p.isEmpty()) {
                     hasEmpty = true;
                 } else {
-                    output.addBotMessage("    " + p);
+                    output.addBotMessage("    %s", p);
                 }
             }
             if (hasEmpty) {
@@ -199,7 +200,7 @@ public abstract class Command {
         } else if (paramMatch.size() == 1) {
             result = paramMatch.get(0);
         } else {
-            output.addBotMessage("No valid matches were found for '" + result + "': ");
+            output.addBotMessage("No valid matches were found for '%s': ", result);
             return null;
         }
 

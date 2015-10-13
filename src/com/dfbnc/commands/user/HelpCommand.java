@@ -64,9 +64,9 @@ public class HelpCommand extends Command {
                 } else {
                     final Map<String, Command> allCommands = user.getAccount().getCommandManager().getAllCommands(command, user.getAccount().isAdmin());
                     if (allCommands.size() > 0) {
-                        output.addBotMessage("Multiple possible matches were found for '" + command + "': ");
+                        output.addBotMessage("Multiple possible matches were found for '%s': ", command);
                         for (final String p : allCommands.keySet()) {
-                            output.addBotMessage("    " + (p.charAt(0) == '*' ? p.substring(1) : p));
+                            output.addBotMessage("    %s", (p.charAt(0) == '*' ? p.substring(1) : p));
                         }
                     } else {
                         output.addBotMessage("The command '%s' does not exist.", command);

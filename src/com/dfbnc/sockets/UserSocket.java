@@ -1131,8 +1131,8 @@ public class UserSocket extends ConnectedSocket {
             } catch (final CommandOutputFilterException ex) {
                 output.setMessages(oldMessages);
                 output.addBotMessage("--------------------------------------");
-                output.addBotMessage("Error with filter: " + Arrays.toString(section));
-                output.addBotMessage("Reason: " + ex.getMessage());
+                output.addBotMessage("Error with filter: %s", Arrays.toString(section));
+                output.addBotMessage("Reason: %s", ex.getMessage());
             }
         }
     }
@@ -1168,7 +1168,7 @@ public class UserSocket extends ConnectedSocket {
                             if (entry.getKey().charAt(0) == '*') { continue; }
                             final Command command = entry.getValue();
                             if (!command.isAdminOnly() || myAccount.isAdmin()) {
-                                output.addBotMessage(String.format("%-20s - %s", entry.getKey(), command.getDescription(entry.getKey())));
+                                output.addBotMessage("%-20s - %s", entry.getKey(), command.getDescription(entry.getKey()));
                             }
                         }
                         return false;

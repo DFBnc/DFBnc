@@ -47,7 +47,7 @@ public class ListUsersCommand extends AdminCommand {
     @Override
     public void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output) {
         final Collection<Account> accounts = DFBnc.getAccountManager().getAccounts();
-        output.addBotMessage("This BNC has " + accounts.size() + " users: ");
+        output.addBotMessage("This BNC has %s users: ", accounts.size());
         for (Account account : accounts) {
             final StringBuilder sb = new StringBuilder("    ");
 
@@ -69,7 +69,7 @@ public class ListUsersCommand extends AdminCommand {
                 sb.append("  (Currently connected)");
             }
 
-            output.addBotMessage(sb.toString());
+            output.addBotMessage("%s", sb.toString());
         }
     }
 
