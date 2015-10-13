@@ -75,7 +75,7 @@ public class ConnectCommand extends Command {
                 ConnectionHandler handler = acc.getServerType().newConnectionHandler(user.getAccount(), -1);
                 acc.setConnectionHandler(handler);
             } catch (UnableToConnectException utce) {
-                output.addBotMessage("There was an error connecting: " + utce.getMessage());
+                output.addBotMessage("There was an error connecting: %s", utce.getMessage());
             }
         } else {
             output.addBotMessage("Already connected.");

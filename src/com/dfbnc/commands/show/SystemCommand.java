@@ -55,29 +55,29 @@ public class SystemCommand extends AdminCommand {
         output.addBotMessage("----------------------------------------");
         output.addBotMessage("DFBnc System Information");
         output.addBotMessage("----------------------------------------");
-        output.addBotMessage("Started At: " + sdf.format(new Date(DFBnc.startTime)));
+        output.addBotMessage("Started At: %s", sdf.format(new Date(DFBnc.startTime)));
         final long upSeconds = (System.currentTimeMillis() - DFBnc.startTime) / 1000;
-        output.addBotMessage("Uptime: " + DateUtils.formatDuration((int) upSeconds));
+        output.addBotMessage("Uptime: %s", DateUtils.formatDuration((int) upSeconds));
         output.addBotMessage("----------------------------------------");
         output.addBotMessage("Startup Information:");
         output.addBotMessage("--------------------");
-        output.addBotMessage("Forking Supported: " + (DFBncDaemon.canFork() ? "Yes" : "No"));
+        output.addBotMessage("Forking Supported: %s", (DFBncDaemon.canFork() ? "Yes" : "No"));
         if (DFBncDaemon.canFork()) {
-            output.addBotMessage("Forked: " + (DFBnc.daemon.isDaemonized() ? "Yes" : "No"));
-            output.addBotMessage("Current PID: " + DFBncDaemon.getPID());
+            output.addBotMessage("Forked: %s", (DFBnc.daemon.isDaemonized() ? "Yes" : "No"));
+            output.addBotMessage("Current PID: %s", DFBncDaemon.getPID());
             final List<String> var = DFBncDaemon.getArgs();
-            output.addBotMessage("Run Args: " + Util.joinString(var.toArray(new String[var.size()]), " ", 0, 0));
+            output.addBotMessage("Run Args: %s", Util.joinString(var.toArray(new String[var.size()]), " ", 0, 0));
         }
 
         final CLIParser cli = CLIParser.getCLIParser();
-        output.addBotMessage("CLI Parser Args: " + Util.joinString(cli.getLastArgs(), " ", 0, 0));
+        output.addBotMessage("CLI Parser Args: %s", Util.joinString(cli.getLastArgs(), " ", 0, 0));
         output.addBotMessage("CLI Params:");
         for (final CLIParam p : cli.getParamList()) {
-            output.addBotMessage("    " + (p.getChr() != 0 ? p.getChr() : "") + "/" + p.getString() + " - " + p.getNumber() + " = " + p.getStringValue());
+            output.addBotMessage("    %s", (p.getChr() != 0 ? p.getChr() : "") + "/" + p.getString() + " - " + p.getNumber() + " = " + p.getStringValue());
         }
         output.addBotMessage("Redundant:");
         for (final String s : cli.getRedundant()) {
-            output.addBotMessage("    " + s);
+            output.addBotMessage("    %s", s);
         }
 
         output.addBotMessage("----------------------------------------");

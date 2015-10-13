@@ -65,7 +65,7 @@ public class ShowCommandsCommand extends Command {
             if (command.isAdminOnly()) {
                 adminCommands.add(String.format("%-20s - %s", entry.getKey(), command.getDescription(entry.getKey())));
             } else if (commandsType.equals("") || commandsType.equalsIgnoreCase("all") || commandsType.equalsIgnoreCase("user")) {
-                output.addBotMessage(String.format("%-20s - %s", entry.getKey(), command.getDescription(entry.getKey())));
+                output.addBotMessage("%-20s - %s", entry.getKey(), command.getDescription(entry.getKey()));
             }
         }
 
@@ -83,7 +83,7 @@ public class ShowCommandsCommand extends Command {
                     }
                     output.addBotMessage("");
                     for (final String out : adminCommands) {
-                        output.addBotMessage(out);
+                        output.addBotMessage("%s", out);
                     }
                 } else {
                     output.addBotMessage("There are no admin-only commands available to you.");

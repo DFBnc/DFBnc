@@ -21,14 +21,14 @@
  */
 package com.dfbnc.commands.show;
 
-import java.text.SimpleDateFormat;
-
 import com.dfbnc.DFBnc;
 import com.dfbnc.commands.AdminCommand;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.CommandOutputBuffer;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.util.RollingWriter;
+
+import java.text.SimpleDateFormat;
 
 /**
  * This file represents the 'logging' show command
@@ -45,10 +45,10 @@ public class LoggingCommand extends AdminCommand {
     public void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output) {
         final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         final RollingWriter rw = DFBnc.getBNC().getRollingWriter();
-        output.addBotMessage("Most recent " + rw.size() + " (Max: " + rw.getCapacity() + ") log entries: ");
+        output.addBotMessage("Most recent %s (Max: %s) log entries: ", rw.size(), rw.getCapacity());
         output.addBotMessage("");
         for (final String line : rw) {
-            output.addBotMessage("    " + line);
+            output.addBotMessage("    %s", line);
         }
     }
 

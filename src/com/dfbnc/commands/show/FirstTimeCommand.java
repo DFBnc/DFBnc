@@ -21,12 +21,13 @@
  */
 package com.dfbnc.commands.show;
 
-import java.util.Arrays;
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.CommandOutputBuffer;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.util.Util;
+
+import java.util.Arrays;
 
 /**
  * This file represents the 'FirstTime' command
@@ -81,8 +82,8 @@ public class FirstTimeCommand extends Command {
             output.addBotMessage("----");
             output.addBotMessage("You may view this again at anytime by issuing: /dfbnc show firsttime");
             output.addBotMessage("----");
-            output.addBotMessage("In all cases /dfbnc can be substituted for /msg " + Util.getBotName() + ". Example:");
-            output.addBotMessage("    /msg " + Util.getBotName() + " show commands");
+            output.addBotMessage("In all cases /dfbnc can be substituted for /msg %s. Example:", Util.getBotName());
+            output.addBotMessage("    /msg %s show commands", Util.getBotName());
             output.addBotMessage(" will do the same as:");
             output.addBotMessage("    /dfbnc show commands");
         }

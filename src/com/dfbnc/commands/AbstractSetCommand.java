@@ -21,9 +21,10 @@
  */
 package com.dfbnc.commands;
 
+import com.dfbnc.sockets.UserSocket;
+
 import java.util.HashMap;
 import java.util.Map;
-import com.dfbnc.sockets.UserSocket;
 
 /**
  * This file represents a set-type command..
@@ -57,7 +58,7 @@ public abstract class AbstractSetCommand extends Command {
             if (actualParams[1] == null) { return; }
 
             if (validParams.get(actualParams[1].toLowerCase()) == null) {
-                output.addBotMessage("Invalid setting '" + actualParams[1] + "'.");
+                output.addBotMessage("Invalid setting '%s'.", actualParams[1]);
                 output.addBotMessage("Valid settings are:");
                 for (String param : validParams.keySet()) {
                     final String description = validParams.get(param).getDescription();
@@ -65,9 +66,9 @@ public abstract class AbstractSetCommand extends Command {
                     final String value = user.getAccount().getConfig(wantedClient).getOption(setDomain, param);
                     if (validParams.get(param).isSubClient()) {
                         final String globalValue = user.getAccount().getAccountConfig().getOption(setDomain, param);
-                        output.addBotMessage(String.format("  %15s - %s [Current: %s]  [Account-Level: %s]", param, description, value, globalValue));
+                        output.addBotMessage("  %15s - %s [Current: %s]  [Account-Level: %s]", param, description, value, globalValue);
                     } else {
-                        output.addBotMessage(String.format("  %15s - %s [Current: %s]", param, description, value));
+                        output.addBotMessage("  %15s - %s [Current: %s]", param, description, value);
                     }
                 }
                 return;
@@ -99,26 +100,26 @@ public abstract class AbstractSetCommand extends Command {
                     try {
                         int newValueInt = Integer.parseInt(newValue);
                         if ((paramType == ParamType.NEGATIVEINT && newValueInt >= 0) || (paramType == ParamType.POSITIVEINT && newValueInt < 0)) {
-                            output.addBotMessage("Sorry, '" + newValue + "' is not a valid value for '" + actualParams[1] + "'");
+                            output.addBotMessage("Sorry, '%s' is not a valid value for '%s'", newValue, actualParams[1]);
                             return;
                         } else {
                             user.getAccount().getConfig(wantedClient).setOption(setDomain, actualParams[1], newValueInt);
                         }
                     } catch (NumberFormatException nfe) {
-                        output.addBotMessage("Sorry, '" + newValue + "' is not a valid value for '" + actualParams[1] + "'");
+                        output.addBotMessage("Sorry, '%s' is not a valid value for '%s'", newValue, actualParams[1]);
                         return;
                     }
                 } else if (paramType == ParamType.FLOAT || paramType == ParamType.NEGATIVEFLOAT || paramType == ParamType.POSITIVEFLOAT) {
                     try {
                         float newValueFloat = Float.parseFloat(newValue);
                         if ((paramType == ParamType.NEGATIVEFLOAT && newValueFloat >= 0) || (paramType == ParamType.POSITIVEFLOAT && newValueFloat < 0)) {
-                            output.addBotMessage("Sorry, '" + newValue + "' is not a valid value for '" + actualParams[1] + "'");
+                            output.addBotMessage("Sorry, '%s' is not a valid value for '%s'", newValue, actualParams[1]);
                             return;
                         } else {
                             user.getAccount().getConfig(wantedClient).setOption(setDomain, actualParams[1], newValueFloat);
                         }
                     } catch (NumberFormatException nfe) {
-                        output.addBotMessage("Sorry, '" + newValue + "' is not a valid value for '" + actualParams[1] + "'");
+                        output.addBotMessage("Sorry, '%s' is not a valid value for '%s'", newValue, actualParams[1]);
                         return;
                     }
                 } else if (paramType == ParamType.BOOL) {
@@ -134,11 +135,11 @@ public abstract class AbstractSetCommand extends Command {
                 }
 
                 // And let the user know.
-                output.addBotMessage("Changed value of '" + actualParams[1].toLowerCase() + "' from '" + currentValue + "' to '" + newValue + "'");
+                output.addBotMessage("Changed value of '%s' from '%s' to '%s'", actualParams[1].toLowerCase(), currentValue, newValue);
             } else {
-                output.addBotMessage("The current value of '" + actualParams[1].toLowerCase() + "' is: " + currentValue);
+                output.addBotMessage("The current value of '%s' is: %s", actualParams[1].toLowerCase(), currentValue);
                 if (pi.isSubClient()) {
-                    output.addBotMessage("    The account-level value of '" + actualParams[1].toLowerCase() + "' is: " + globalValue);
+                    output.addBotMessage("    The account-level value of '%s' is: %s", actualParams[1].toLowerCase(), globalValue);
                 }
             }
         } else {
@@ -150,12 +151,12 @@ public abstract class AbstractSetCommand extends Command {
                 final String value = user.getAccount().getConfig(wantedClient).getOption(setDomain, param);
                 if (validParams.get(param).isSubClient()) {
                     final String globalValue = user.getAccount().getAccountConfig().getOption(setDomain, param);
-                    output.addBotMessage(String.format("  %15s - %s [Current: %s]  [Account-Level: %s]", param, description, value, globalValue));
+                    output.addBotMessage("  %15s - %s [Current: %s]  [Account-Level: %s]", param, description, value, globalValue);
                 } else {
-                    output.addBotMessage(String.format("  %15s - %s [Current: %s]", param, description, value));
+                    output.addBotMessage("  %15s - %s [Current: %s]", param, description, value);
                 }
             }
-            output.addBotMessage("Syntax: /dfbnc " + actualParams[0] + " <param> [value]");
+            output.addBotMessage("Syntax: /dfbnc %s <param> [value]", actualParams[0]);
             output.addBotMessage("Ommiting [value] will show you the current value.");
         }
     }
