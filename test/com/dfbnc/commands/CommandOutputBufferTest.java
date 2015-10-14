@@ -93,14 +93,14 @@ public class CommandOutputBufferTest {
     public void testSendMessages() {
         // Given a bunch of messages have been added
         buffer.addBotMessage("test1");
-        buffer.addBotMessage("test%s", "2");
+        buffer.addBotMessage("test%s", "%2");
 
         // When we tell the buffer to send them
         buffer.send();
 
         // Then they're passed on to the socket
-        verify(userSocket).sendBotMessage("test1");
-        verify(userSocket).sendBotMessage("test2");
+        verify(userSocket).sendBotMessage("%s", "test1");
+        verify(userSocket).sendBotMessage("%s", "test%2");
     }
 
 }

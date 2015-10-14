@@ -192,7 +192,7 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
 
                     for (UserSocket socket : myUserSockets) {
                         if (user != socket) {
-                            socket.sendBotMessage(sb.toString());
+                            socket.sendBotMessage("%s", sb.toString());
                         }
                     }
                 }
@@ -236,7 +236,7 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
 
         for (UserSocket socket : myUserSockets) {
             if (user != socket) {
-                socket.sendBotMessage(sb.toString());
+                socket.sendBotMessage("%s", sb.toString());
             }
         }
     }
@@ -745,7 +745,7 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
                             setConnectionHandler(newHandler);
                         }
                     } catch (final UnableToConnectException ex) {
-                        sendBotMessage("Unable to reconnect: " + ex.getMessage());
+                        sendBotMessage("Unable to reconnect: %s", ex.getMessage());
                         myConnectionHandler = null;
                         // This is not the place to try again, this exception
                         // happens if the params we have are not valid for
@@ -767,7 +767,7 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
                     socket.sendLine("ERROR : " + reason, false);
                     socket.closeSocket("Error from server: " + reason);
                 } else {
-                    socket.sendBotMessage("Disconnected from server: " + reason);
+                    socket.sendBotMessage("Disconnected from server: %s", reason);
                 }
             }
         } else {
@@ -820,11 +820,11 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
         Logger.error("----");
 
         sendBotMessage("----");
-        sendBotMessage(type + ": " + t);
-        sendBotMessage(type + " Stack trace:");
+        sendBotMessage("%s: %s", type, t);
+        sendBotMessage("%s Stack trace:", type);
         final String[] bits = writer.getBuffer().toString().split("\n");
         for (final String bit : bits) {
-            sendBotMessage("    " + bit);
+            sendBotMessage("    %s", bit);
         }
         sendBotMessage("----");
     }

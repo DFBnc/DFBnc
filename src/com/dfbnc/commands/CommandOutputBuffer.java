@@ -90,7 +90,7 @@ public class CommandOutputBuffer {
      * Send the output to the user.
      */
     public void send() {
-        messages.forEach(user::sendBotMessage);
+        messages.forEach(m -> user.sendBotMessage("%s", m));
     }
 
 }
