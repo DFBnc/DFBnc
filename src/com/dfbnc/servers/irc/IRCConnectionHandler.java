@@ -148,18 +148,18 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 
         setupCallbacks();
 
-        acc.sendBotMessage("Using server: " + serverInfo[3]);
+        acc.sendBotMessage("Using server: %s", serverInfo[3]);
 
         final String bindIP = myAccount.getAccountConfig().getOption("irc", "bindip");
         if (!bindIP.isEmpty()) {
             myParser.setBindIP(bindIP);
-            acc.sendBotMessage("Trying to bind to: " + bindIP);
+            acc.sendBotMessage("Trying to bind to: %s", bindIP);
         }
 
         final String bindIPv6 = myAccount.getAccountConfig().getOption("irc", "bindipv6");
         if (!bindIPv6.isEmpty()) {
             myParser.setBindIPv6(bindIPv6);
-            acc.sendBotMessage("Trying to bind to: " + bindIPv6);
+            acc.sendBotMessage("Trying to bind to: %s", bindIPv6);
         }
 
         // Reprocess queued items every 5 seconds.

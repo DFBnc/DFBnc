@@ -430,7 +430,7 @@ public class UserSocket extends ConnectedSocket {
 
     @Override
     public void socketOpened() {
-        sendBotMessage("Welcome to DFBnc (" + DFBnc.getVersion() + ")");
+        sendBotMessage("Welcome to DFBnc (%s)", DFBnc.getVersion());
         if (isSSL) {
             sendBotMessage("You are connected using SSL");
         } else {
@@ -903,7 +903,7 @@ public class UserSocket extends ConnectedSocket {
                 myAccount = DFBnc.getAccountManager().get(username);
                 if (myAccount.isSuspended()) {
                     sendBotMessage("This account has been suspended.");
-                    sendBotMessage("Reason: "+myAccount.getSuspendReason());
+                    sendBotMessage("Reason: %s", myAccount.getSuspendReason());
                     myAccount = null;
                     close("Account suspended.");
                 } else {
@@ -934,7 +934,7 @@ public class UserSocket extends ConnectedSocket {
                 message.append(maxPasswordTries - passwordTries);
                 message.append(" attempt(s) left.");
                 sendIRCLine(Consts.ERR_PASSWDMISMATCH, line[0], message.toString());
-                sendBotMessage(message.toString());
+                sendBotMessage("%s", message.toString());
                 password = null;
                 if (passwordTries >= maxPasswordTries) {
                     sendIRCLine(Consts.ERR_PASSWDMISMATCH, line[0], "Too many password attempts, closing socket.");
