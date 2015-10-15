@@ -190,11 +190,9 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
 
                     sb.append(")");
 
-                    for (UserSocket socket : myUserSockets) {
-                        if (user != socket) {
-                            socket.sendBotMessage("%s", sb.toString());
-                        }
-                    }
+                    myUserSockets.stream()
+                            .filter(socket -> user != socket)
+                            .forEach(socket -> socket.sendBotMessage("%s", sb.toString()));
                 }
             }
         }, 1000);
@@ -234,11 +232,9 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
         sb.append("): ");
         sb.append(user.getCloseReason());
 
-        for (UserSocket socket : myUserSockets) {
-            if (user != socket) {
-                socket.sendBotMessage("%s", sb.toString());
-            }
-        }
+        myUserSockets.stream()
+                .filter(socket -> user != socket)
+                .forEach(socket -> socket.sendBotMessage("%s", sb.toString()));
     }
 
     /**
@@ -670,7 +666,7 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
      * @param listener The listener to be removed
      */
     public void removeListener(final AccountConfigChangeListener listener) {
-        listeners.values().stream().forEach((list) -> list.remove(listener));
+        listeners.values().forEach(list -> list.remove(listener));
     }
 
     /**
@@ -685,13 +681,13 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
         final String subClientName = (config == this.config) ? null : subClientConfigKeys.get(config);
 
         if (listeners.containsKey(domain)) {
-            listeners.get(domain).stream().forEach((listener) -> listener.accountConfigChanged(this, subClientName, domain, option));
+            listeners.get(domain).forEach(listener -> listener.accountConfigChanged(this, subClientName, domain, option));
         }
         if (listeners.containsKey(domain + "." + option)) {
-            listeners.get(domain + "." + option).stream().forEach((listener) -> listener.accountConfigChanged(this, subClientName, domain, option));
+            listeners.get(domain + "." + option).forEach((listener) -> listener.accountConfigChanged(this, subClientName, domain, option));
         }
         if (listeners.containsKey("")) {
-            listeners.get("").stream().forEach((listener) -> listener.accountConfigChanged(this, subClientName, domain, option));
+            listeners.get("").forEach((listener) -> listener.accountConfigChanged(this, subClientName, domain, option));
         }
     }
 
@@ -722,7 +718,7 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
     }
 
     /**
-     * Called when the IRC Connnection handler is disconnected.
+     * Called when the IRC Connection handler is disconnected.
      *
      * @param reason Reason for disconnection
      */
@@ -795,7 +791,7 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
      * @param t Throwable to report.
      * @param type Human-Friendly type of exception.
      */
-    public void reportException(final Throwable t,  final String type) {
+    public void reportException(final Throwable t, final String type) {
         if (!getAccountConfig().getOptionBool("server", "reporterrors") || t == null) {
             return;
         }
@@ -810,7 +806,7 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
      * @param t Throwable to report.
      * @param type Human-Friendly type of exception.
      */
-    public void forceReportException(final Throwable t,  final String type) {
+    public void forceReportException(final Throwable t, final String type) {
         final StringWriter writer = new StringWriter();
         t.printStackTrace(new PrintWriter(writer));
 
