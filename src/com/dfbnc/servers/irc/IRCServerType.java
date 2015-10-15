@@ -21,28 +21,30 @@
  */
 package com.dfbnc.servers.irc;
 
-import com.dfbnc.servers.irc.commands.ServerListCommand;
-import com.dfbnc.servers.irc.commands.PerformCommand;
-import com.dfbnc.servers.irc.commands.IRCSetCommand;
-import com.dfbnc.servers.irc.commands.ChannelWhitelistCommand;
-import com.dfbnc.servers.irc.commands.HighlightCommand;
-import com.dfbnc.commands.CommandManager;
-import com.dfbnc.servers.ServerType;
-import com.dfbnc.servers.ServerTypeManager;
 import com.dfbnc.Account;
 import com.dfbnc.ConnectionHandler;
+import com.dfbnc.commands.CommandManager;
 import com.dfbnc.config.Config;
+import com.dfbnc.servers.ServerType;
+import com.dfbnc.servers.ServerTypeManager;
+import com.dfbnc.servers.irc.commands.ChannelWhitelistCommand;
+import com.dfbnc.servers.irc.commands.HighlightCommand;
+import com.dfbnc.servers.irc.commands.IRCSetCommand;
+import com.dfbnc.servers.irc.commands.PerformCommand;
+import com.dfbnc.servers.irc.commands.ServerListCommand;
 import com.dfbnc.sockets.UnableToConnectException;
+import uk.org.dataforce.libs.logger.Logger;
+
 import java.util.HashMap;
 import java.util.Map;
-import uk.org.dataforce.libs.logger.Logger;
 
 /**
  * This file gives the ability to connect to an IRC Server
  */
 public class IRCServerType extends ServerType {
+
     /** CommandManager for IRCServerType */
-    final CommandManager myCommandManager = new CommandManager();
+    private final CommandManager myCommandManager = new CommandManager();
 
     /**
      * Create a new instance of the ServerType Object
