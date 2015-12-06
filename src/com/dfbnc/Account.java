@@ -53,8 +53,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public final class Account implements UserSocketWatcher,ConfigChangeListener {
 
-    /** Salt used when generating passwords */
-    private static final String salt = "a5S5l1N4u4O2y9Z4l6W7t1A9b9L8a1X5a7F4s5E8";
     /** Are passwords case sensitive? */
     private static final boolean caseSensitivePasswords = false;
     /** This account name */
@@ -331,6 +329,21 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
     }
 
     /**
+     * Get the salt for this client password.
+     *
+     * @param subclient Subclient to check, null for none.
+     * @return The salt used for this clients password.
+     */
+    public String getSalt(final String subclient) {
+        if (getConfig(subclient).hasOption("user", "salt")) {
+            return getConfig(subclient).getOption("user", "salt");
+        } else {
+            // Return the old default salt.
+            return "a5S5l1N4u4O2y9Z4l6W7t1A9b9L8a1X5a7F4s5E8";
+        }
+    }
+
+    /**
      * Check if a password matches this account password. If no subclient
      * password is defined, fallback to the main account password.
      *
@@ -346,7 +359,7 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
         } else {
             hashedPassword.append(password.toLowerCase());
         }
-        hashedPassword.append(salt);
+        hashedPassword.append(getSalt(subclient));
 
         if (checkOldSubClientPassword(subclient, password)) {
             Logger.info("Migrating old subclient password: " + getName() + "+" + subclient);
@@ -378,7 +391,7 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
         } else {
             hashedPassword.append(password.toLowerCase());
         }
-        hashedPassword.append(salt);
+        hashedPassword.append(getSalt(subclient));
 
         return Util.md5(hashedPassword.toString()).equals(config.getOption("user", passwordKey));
     }
@@ -400,14 +413,16 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
      */
     public void setPassword(final String subclient, final String password) {
         final StringBuilder hashedPassword = new StringBuilder(myName.toLowerCase());
+        final String newSalt = DFBnc.getAccountManager().makePassword(40, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
         if (caseSensitivePasswords) {
             hashedPassword.append(password);
         } else {
             hashedPassword.append(password.toLowerCase());
         }
-        hashedPassword.append(salt);
+        hashedPassword.append(newSalt);
 
         getConfig(subclient).setOption("user", "password", Util.md5(hashedPassword.toString()));
+        getConfig(subclient).setOption("user", "salt", newSalt);
         getConfig(subclient).save();
     }
 

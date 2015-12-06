@@ -170,8 +170,18 @@ public class AccountManager {
      * @return Random Password
      */
     public String makePassword(final int length) {
-        final String validChars =
-                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!£$%^&*()_-+={}[]@~'#<>?/.,\\|\"";
+        final String validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!£$%^&*()_-+={}[]@~'#<>?/.,\\|\"";
+        return makePassword(length, validChars);
+    }
+
+    /**
+     * Create a random password X characters in length from the given characters.
+     *
+     * @param length Length to make password
+     * @param validChars Valid characters to pick from.
+     * @return Random Password
+     */
+    public String makePassword(final int length, final String validChars) {
         final StringBuilder password = new StringBuilder();
         final Random r = new SecureRandom();
         for (int i = 0; i < length; i++) {
