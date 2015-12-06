@@ -62,9 +62,10 @@ public class IRCSetCommand extends AbstractSetCommand {
         validParams.put("ratelimititems", new ParamInfo("How many items in queue before activating rate limiting?", ParamType.POSITIVEINT, false));
         validParams.put("ratelimitwaittime", new ParamInfo("How much time to wait between lines (in ms)?", ParamType.POSITIVEINT, false));
 
+        validParams.put("keepnick", new ParamInfo("Try to keep our nickname (offline if set and offline, else primary).", ParamType.BOOL, false));
+
         // Currently unimplemented.
         validParams.put("bindipv6", new ParamInfo("[Not Implemented] IPv6 Address to bind to for new connections", ParamType.WORD, false));
-        validParams.put("keepnick", new ParamInfo("[Not Implemented] When there is no users connected, try to keep our nickname (offline if set, else primary).", ParamType.BOOL, false));
         validParams.put("offlinenickname", new ParamInfo("[Not Implemented] Nickname to change to when offline", ParamType.WORD, false));
 
         validParams.put("offlineawayreason", new ParamInfo("[Not Implemented] Away reason to set when all users disconnect and we are not away", ParamType.STRING, false));

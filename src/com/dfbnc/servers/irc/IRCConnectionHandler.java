@@ -49,6 +49,7 @@ import com.dmdirc.parser.events.MOTDEndEvent;
 import com.dmdirc.parser.events.NickChangeEvent;
 import com.dmdirc.parser.events.NumericEvent;
 import com.dmdirc.parser.events.ParserEvent;
+import com.dmdirc.parser.events.QuitEvent;
 import com.dmdirc.parser.events.SocketCloseEvent;
 import com.dmdirc.parser.interfaces.ChannelClientInfo;
 import com.dmdirc.parser.interfaces.ChannelInfo;
@@ -81,6 +82,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**
@@ -103,20 +105,24 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     private boolean hasMOTDEnd = false;
     /** Have we hacked in our own 005? (Shows support for LISTMODE) */
     private boolean hacked005 = false;
-    /** This stores the 002-005 lines which are sent to users who connect after we receive them  */
+    /** This stores the 002-005 lines which are sent to users who connect after we receive them.  */
     private final List<String> connectionLines = new ArrayList<>();
-    /** This stores tokens not related to a channel that we want to temporarily allow to come via onDataIn */
+    /** This stores tokens not related to a channel that we want to temporarily allow to come via onDataIn. */
     private final List<String> allowTokens = new ArrayList<>();
     /** This stores client-sent lines that need to be processed at a later date. */
     private final List<RequeueLine> requeueList = new ArrayList<>();
     /** This stores server-sent lines that need to be sent later. */
     private List<DataInEvent> serverRequeueList;
-    /** This timer handles re-processing of items in the requeueList */
+    /** This timer handles re-processing of items in the requeueList. */
     private final Timer requeueTimer = new Timer("requeueTimer");
     /** This stores a list of user sockets that we want to requeue all lines from and for temporarily. */
     private final List<UserSocket> forceRequeueList = new ArrayList<>();
     /** Private backbuffer list. */
     private final RollingList<BackbufferMessage> privateBackbufferList;
+    /** This timer handles keeping our nickname when we can't see the client. */
+    private final Timer nickKeepTimer = new Timer("nickKeepTimer");
+    /** Do we want to attempt to keep the nickname next time the timer fires? */
+    private AtomicBoolean skipKeepNick = new AtomicBoolean(false);
 
     /**
      * Create a new IRCConnectionHandler
@@ -189,7 +195,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         }
 
         // Reprocess queued items every 5 seconds.
-        requeueTimer.scheduleAtFixedRate(new RequeueTimerTask(this), 0, 5000);
+        requeueTimer.schedule(new RequeueTimerTask(this), 0, 5000);
         // Allow the initial usermode line through to the user
         allowLine(null, "221");
 
@@ -197,6 +203,19 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         myParser.connect();
         myAccount.addConfigChangeListener(this);
         ((IRCParser)myParser).getControlThread().setName("IRC Parser - " + myAccount.getName() + " - <server>");
+
+        // Try to keep our nickname every 5 minutes.
+        final long nickKeepTime = 5 * 60 * 1000;
+        nickKeepTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                if (!parserReady || !myAccount.getAccountConfig().getOptionBool("irc", "keepnick") || skipKeepNick.getAndSet(false)) { return; }
+
+                if (!myAccount.getAccountConfig().getOption("irc", "nickname").equalsIgnoreCase(myParser.getLocalClient().getNickname())) {
+                    myParser.getLocalClient().setNickname(myAccount.getAccountConfig().getOption("irc", "nickname"));
+                }
+            }
+        }, nickKeepTime, nickKeepTime);
     }
 
     /**
@@ -599,6 +618,13 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
             }
         } else if (line[0].equalsIgnoreCase("quit")) {
             return;
+        } else if (line[0].equalsIgnoreCase("nick")) {
+            // Allow nick-in-use error if the user tried to change the
+            // nickname.
+            allowLine(null, "433");
+            // Ignore the next keepNick attempt in case it clashes with this
+            // and we forward on the wrong nick-in-use event.
+            skipKeepNick.set(false);
         }
 
         if (outData.length() == 0) {
@@ -767,9 +793,21 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         if (!checkParser(event)) { return; }
 
         if (event.getClient() == event.getParser().getLocalClient()) {
-            for (UserSocket socket : myAccount.getUserSockets()) {
-                socket.setNickname(event.getParser().getLocalClient().getNickname());
-            }
+            // No longer allow nick in use, as the nick change succeeded.
+            disallowLine(null, "433");
+            myAccount.getUserSockets().forEach(socket -> socket.setNickname(event.getParser().getLocalClient().getNickname()));
+        } else if (myAccount.getAccountConfig().getOptionBool("irc", "keepnick") && event.getOldNick().equalsIgnoreCase(myAccount.getAccountConfig().getOption("irc", "nickname"))) {
+            myParser.getLocalClient().setNickname(myAccount.getAccountConfig().getOption("irc", "nickname"));
+        }
+    }
+
+    @Handler
+    public void onQuit(final QuitEvent event) {
+        if (!checkParser(event)) { return; }
+        if (event.getClient() == event.getParser().getLocalClient()) { return; }
+
+        if (myAccount.getAccountConfig().getOptionBool("irc", "keepnick") && event.getClient().getNickname().equalsIgnoreCase(myAccount.getAccountConfig().getOption("irc", "nickname"))) {
+            myParser.getLocalClient().setNickname(myAccount.getAccountConfig().getOption("irc", "nickname"));
         }
     }
 
@@ -1029,6 +1067,11 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
                 channelName = channel.getName();
             }
             switch (numeric) {
+                case 433: // Nick in use
+                    forwardLine = checkAllowLine(null, bits[1]);
+                    disallowLine(null, "433"); // If we allow it above, we don't want to allow it again.
+                    break;
+
                 case 324: // Channel Modes
                 case 332: // Topic
                 case 367: // Ban List
@@ -1199,6 +1242,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         if (!checkParser(event)) { return; }
 
         requeueTimer.cancel();
+        nickKeepTimer.cancel();
         myAccount.handlerDisconnected("Remote connection closed.");
     }
 
@@ -1225,6 +1269,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
             }
         }
         requeueTimer.cancel();
+        nickKeepTimer.cancel();
         myAccount.handlerDisconnected("Connection error: " + description);
     }
 
