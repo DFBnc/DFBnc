@@ -329,21 +329,6 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
     }
 
     /**
-     * Get the salt for this client password.
-     *
-     * @param subclient Subclient to check, null for none.
-     * @return The salt used for this clients password.
-     */
-    public String getSalt(final String subclient) {
-        if (getConfig(subclient).hasOption("user", "salt")) {
-            return getConfig(subclient).getOption("user", "salt");
-        } else {
-            // Return the old default salt.
-            return "a5S5l1N4u4O2y9Z4l6W7t1A9b9L8a1X5a7F4s5E8";
-        }
-    }
-
-    /**
      * Check if a password matches this account password. If no subclient
      * password is defined, fallback to the main account password.
      *
@@ -359,7 +344,8 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
         } else {
             hashedPassword.append(password.toLowerCase());
         }
-        hashedPassword.append(getSalt(subclient));
+        // Append per-client salt if set, else use the old default salt.
+        hashedPassword.append(getConfig(subclient).hasOption("user", "salt") ? getConfig(subclient).getOption("user", "salt") : "a5S5l1N4u4O2y9Z4l6W7t1A9b9L8a1X5a7F4s5E8");
 
         if (checkOldSubClientPassword(subclient, password)) {
             Logger.info("Migrating old subclient password: " + getName() + "+" + subclient);
@@ -367,7 +353,15 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
             getConfig(subclient).setOption("user", "password", Util.md5(hashedPassword.toString()));
         }
 
-        return Util.md5(hashedPassword.toString()).equals(getConfig(subclient).getOption("user", "password"));
+        final boolean result = Util.md5(hashedPassword.toString()).equals(getConfig(subclient).getOption("user", "password"));
+
+        // Resalt if using the old default salt.
+        if (result && !getConfig(subclient).hasOption("user", "salt")) {
+            Logger.info("Re-salting password: " + getName() + "+" + subclient);
+            setPassword(subclient, password);
+        }
+
+        return result;
     }
 
     /**
@@ -391,7 +385,8 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
         } else {
             hashedPassword.append(password.toLowerCase());
         }
-        hashedPassword.append(getSalt(subclient));
+        // Old subclient passwords will always use the old default salt.
+        hashedPassword.append("a5S5l1N4u4O2y9Z4l6W7t1A9b9L8a1X5a7F4s5E8");
 
         return Util.md5(hashedPassword.toString()).equals(config.getOption("user", passwordKey));
     }
