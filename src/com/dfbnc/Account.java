@@ -53,8 +53,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public final class Account implements UserSocketWatcher,ConfigChangeListener {
 
-    /** Are passwords case sensitive? */
-    private static final boolean caseSensitivePasswords = false;
     /** This account name */
     private final String myName;
     /** Is this account an admin */
@@ -339,11 +337,7 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
     public boolean checkPassword(final String subclient, final String password) {
         final StringBuilder hashedPassword = new StringBuilder(myName.toLowerCase());
 
-        if (caseSensitivePasswords) {
-            hashedPassword.append(password);
-        } else {
-            hashedPassword.append(password.toLowerCase());
-        }
+        hashedPassword.append(password);
         // Append per-client salt if set, else use the old default salt.
         hashedPassword.append(getConfig(subclient).hasOption("user", "salt") ? getConfig(subclient).getOption("user", "salt") : "a5S5l1N4u4O2y9Z4l6W7t1A9b9L8a1X5a7F4s5E8");
 
@@ -380,11 +374,7 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
         if (!config.hasOption("user", passwordKey)) { return false; }
 
         hashedPassword.append(subclient.toLowerCase());
-        if (caseSensitivePasswords) {
-            hashedPassword.append(password);
-        } else {
-            hashedPassword.append(password.toLowerCase());
-        }
+        hashedPassword.append(password);
         // Old subclient passwords will always use the old default salt.
         hashedPassword.append("a5S5l1N4u4O2y9Z4l6W7t1A9b9L8a1X5a7F4s5E8");
 
@@ -409,11 +399,7 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
     public void setPassword(final String subclient, final String password) {
         final StringBuilder hashedPassword = new StringBuilder(myName.toLowerCase());
         final String newSalt = DFBnc.getAccountManager().makePassword(40, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
-        if (caseSensitivePasswords) {
-            hashedPassword.append(password);
-        } else {
-            hashedPassword.append(password.toLowerCase());
-        }
+        hashedPassword.append(password);
         hashedPassword.append(newSalt);
 
         getConfig(subclient).setOption("user", "password", Util.md5(hashedPassword.toString()));

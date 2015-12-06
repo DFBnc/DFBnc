@@ -899,6 +899,7 @@ public class UserSocket extends ConnectedSocket {
                 DFBnc.getAccountManager().saveAccounts();
                     DFBnc.getBNC().getConfig().save();
             }
+
             if (DFBnc.getAccountManager().checkPassword(username, clientID, password)) {
                 myAccount = DFBnc.getAccountManager().get(username);
                 if (myAccount.isSuspended()) {
@@ -935,6 +936,13 @@ public class UserSocket extends ConnectedSocket {
                 message.append(" attempt(s) left.");
                 sendIRCLine(Consts.ERR_PASSWDMISMATCH, line[0], message.toString());
                 sendBotMessage("%s", message.toString());
+
+                // TODO: Remove this warning at some poing as it gives too much away.
+                if (DFBnc.getAccountManager().checkPassword(username, clientID, password.toLowerCase())) {
+                    sendBotMessage("%s", "WARNING: Your password was previously hashed non case-sensitively.");
+                    sendBotMessage("%s", "WARNING: Please try connecting with a lowercase password and then changing it.");
+                }
+
                 password = null;
                 if (passwordTries >= maxPasswordTries) {
                     sendIRCLine(Consts.ERR_PASSWDMISMATCH, line[0], "Too many password attempts, closing socket.");
