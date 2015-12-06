@@ -1062,9 +1062,9 @@ public class UserSocket extends ConnectedSocket {
         ConnectionHandler myConnectionHandler = myAccount.getConnectionHandler();
         if (myConnectionHandler != null) {
             if (alternativeSendLine == null) {
-                myConnectionHandler.dataRecieved(this, normalLine, line);
+                myConnectionHandler.dataReceived(this, normalLine, line);
             } else if (!alternativeSendLine.isEmpty()) {
-                myConnectionHandler.dataRecieved(this, alternativeSendLine, IRCParser.tokeniseLine(alternativeSendLine));
+                myConnectionHandler.dataReceived(this, alternativeSendLine, IRCParser.tokeniseLine(alternativeSendLine));
             }
         } else {
             sendIRCLine(Consts.ERR_UNKNOWNCOMMAND, line[0], "Unknown command");

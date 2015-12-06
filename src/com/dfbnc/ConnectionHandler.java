@@ -47,13 +47,13 @@ public interface ConnectionHandler {
     String getMyHost();
 
     /**
-     * Called when data is recieved on the user socket.
+     * Called when data is received on the user socket.
      *
      * @param user The socket that the data arrived on
-     * @param data Un-tokenised version of the Data that was recieved
-     * @param line IRC-Tokenised version of the Data that was recieved
+     * @param data Un-tokenised version of the Data that was received
+     * @param line IRC-Tokenised version of the Data that was received
      */
-    void dataRecieved(final UserSocket user, final String data, final String[] line);
+    void dataReceived(final UserSocket user, final String data, final String[] line);
 
     /**
      * Servername to use in sendIRCLine and Bot SNOTICEs as an alternative to
