@@ -1191,7 +1191,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
             myParser.sendRawMessage(filterPerformLine(line));
             Logger.debug3("Sending perform line: " + line);
         }
-        if (myAccount.getUserSockets().isEmpty()) {
+        if (myAccount.getActiveClientSockets().isEmpty()) {
             myList = myAccount.getAccountConfig().getOptionList("irc", "perform.lastdetach");
             for (String line : myList) {
                 myParser.sendRawMessage(filterPerformLine(line));
@@ -1380,7 +1380,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
                             line.reprocess(IRCConnectionHandler.this);
                         }
 
-                        if (myAccount.getUserSockets().size() == 1) {
+                        if (user.isActiveClient() && myAccount.getActiveClientSockets().size() == 1) {
                             List<String> myList = myAccount.getAccountConfig().getOptionList("irc", "perform.firstattach");
                             for (String line : myList) {
                                 myParser.sendRawMessage(filterPerformLine(line));
@@ -1608,7 +1608,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     @Override
     public void userDisconnected(final UserSocket user) {
         if (parserReady) {
-            if (myAccount.getUserSockets().isEmpty()) {
+            if (user.isActiveClient() && myAccount.getActiveClientSockets().isEmpty()) {
                 List<String> myList = myAccount.getAccountConfig().getOptionList("irc", "perform.lastdetach");
                 for (String line : myList) {
                     myParser.sendRawMessage(filterPerformLine(line));

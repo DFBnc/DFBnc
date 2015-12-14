@@ -466,6 +466,15 @@ public class UserSocket extends ConnectedSocket {
     }
 
     /**
+     * Is this socket considered an active client?
+     *
+     * @return True if this socket is considered an active client.
+     */
+    public boolean isActiveClient() {
+        return getClientConfig().getOptionBool("user", "activeclient");
+    }
+
+    /**
      * Get the realname supplied to this socket
      *
      * @return Realname supplied to this socket

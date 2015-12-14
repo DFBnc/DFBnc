@@ -47,6 +47,7 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 /**
  * Functions related to Accounts
@@ -240,6 +241,17 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
      */
     public List<UserSocket> getUserSockets() {
         return myUserSockets;
+    }
+
+    /**
+     * Get a List of all UserSockets that are part of this account that are
+     * considered active clients.
+     *
+     * @return a List of all UserSockets that are part of this account that are
+     *         considered active clients.
+     */
+    public List<UserSocket> getActiveClientSockets() {
+        return myUserSockets.stream().filter(u-> u.isActiveClient()).collect(Collectors.toList());
     }
 
     /**
