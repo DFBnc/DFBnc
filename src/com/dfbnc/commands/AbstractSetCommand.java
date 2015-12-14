@@ -22,6 +22,7 @@
 package com.dfbnc.commands;
 
 import com.dfbnc.sockets.UserSocket;
+import java.util.Arrays;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -50,8 +51,29 @@ public abstract class AbstractSetCommand extends Command {
 
         String[] actualParams = params;
 
-        // TODO: Allow specifying.
-        final String wantedClientID = user.getClientID();
+        // TODO: I don't really like this.
+        String wantedClientID = user.getClientID();
+        if (actualParams.length > 1 && actualParams[1].equalsIgnoreCase("--global")) {
+            wantedClientID = null;
+            actualParams = Arrays.copyOfRange(actualParams, 1, actualParams.length);
+            actualParams[0] = params[0];
+        } else if (actualParams.length > 1 && actualParams[1].equalsIgnoreCase("--subclient")) {
+            if (actualParams.length > 2) {
+                wantedClientID = actualParams[2];
+                actualParams = Arrays.copyOfRange(actualParams, 2, actualParams.length);
+                actualParams[0] = params[0];
+            } else {
+                output.addBotMessage("You must specify a subclient.");
+                return;
+            }
+        }
+
+        if (wantedClientID == null) {
+            output.addBotMessage("[Editing Global Client Settings]");
+        } else {
+            output.addBotMessage("[Editing Sub-Client Settings for: %s]", actualParams[2]);
+        }
+        output.addBotMessage("");
 
         if (actualParams.length > 1) {
             actualParams[1] = getFullParam(output, actualParams, 1, validParams.keySet());
@@ -59,6 +81,7 @@ public abstract class AbstractSetCommand extends Command {
 
             if (validParams.get(actualParams[1].toLowerCase()) == null) {
                 output.addBotMessage("Invalid setting '%s'.", actualParams[1]);
+                output.addBotMessage("");
                 output.addBotMessage("Valid settings are:");
                 for (String param : validParams.keySet()) {
                     final String description = validParams.get(param).getDescription();
@@ -144,6 +167,7 @@ public abstract class AbstractSetCommand extends Command {
             }
         } else {
             output.addBotMessage("You need to choose a setting to set the value for.");
+            output.addBotMessage("");
             output.addBotMessage("Valid settings are:");
             for (String param : validParams.keySet()) {
                 final String description = validParams.get(param).getDescription();
@@ -156,8 +180,13 @@ public abstract class AbstractSetCommand extends Command {
                     output.addBotMessage("  %15s - %s [Current: %s]", param, description, value);
                 }
             }
-            output.addBotMessage("Syntax: /dfbnc %s <param> [value]", actualParams[0]);
+            output.addBotMessage("");
+            output.addBotMessage("");
+            output.addBotMessage("Syntax: /dfbnc [--global|--subclient <client>] %s <param> [value]", actualParams[0]);
+            output.addBotMessage("");
             output.addBotMessage("Ommiting [value] will show you the current value.");
+            output.addBotMessage("Passing --global will edit the account-level setting rather than this-subclient where applicable");
+            output.addBotMessage("Passing --subclient <client> will edit the value for the <client> sub-client where applicable rather than this-subclient");
         }
     }
 
