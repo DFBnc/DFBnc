@@ -50,7 +50,7 @@ public class UserSetCommand extends AbstractSetCommand {
         setDomain = "user";
 
         // Add the valid params
-        // validParams.put("readonly", new ParamInfo("Prevent this sub-client being able to change any settings.", ParamType.BOOL, false));
+        validParams.put("readonly", new ParamInfo("Prevent a sub-client being able to change any settings. (If you set this on yourself, you will be unable to unset it.)", ParamType.BOOL, false));
         validParams.put("activeclient", new ParamInfo("Is this client counted for the purposes of performing offline actions? (eg offlinenick, dperform, aperform)", ParamType.BOOL, false));
     }
 

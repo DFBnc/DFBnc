@@ -45,6 +45,10 @@ public class DelUserCommand extends AdminCommand {
         if (params.length == 1) {
             output.addBotMessage("You need to specify a username to delete.");
         } else {
+            if (user.isReadOnly()) {
+                output.addBotMessage("Sorry, read-only sub-clients are unable to delete users.");
+                return;
+            }
             final String account = params[1];
             if (DFBnc.getAccountManager().exists(account)) {
                 if (params.length == 2) {

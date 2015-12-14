@@ -54,6 +54,11 @@ public class ServerTypeCommand extends Command {
 
         if (actualParams.length > 1 && actualParams[1].equalsIgnoreCase("settype")) {
             if (actualParams.length > 2) {
+                if (user.isReadOnly()) {
+                    output.addBotMessage("Sorry, read-only sub-clients are unable to make changes to the server type.");
+                    return;
+                }
+
                 final Collection<String> availableTypes = DFBnc.getServerTypeManager().getServerTypeNames();
                 availableTypes.add("none");
                 actualParams[2] = getFullParam(output, actualParams, 2, availableTypes);

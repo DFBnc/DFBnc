@@ -245,7 +245,7 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
 
     /**
      * Get a List of all UserSockets that are part of this account that are
-     * considered active clients.
+     * considered "active" clients.
      *
      * @return a List of all UserSockets that are part of this account that are
      *         considered active clients.

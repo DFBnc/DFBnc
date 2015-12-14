@@ -191,6 +191,11 @@ public abstract class AbstractListEditCommand extends Command {
                     output.addBotMessage("Your %s is currently empty.", getListName(listParamName));
                 }
             } else if (canAdd(listParamName) && (actualParams[commandParam].equalsIgnoreCase("add") || actualParams[commandParam].equalsIgnoreCase("edit") || actualParams[commandParam].equalsIgnoreCase("ins"))) {
+                if (user.isReadOnly()) {
+                    output.addBotMessage("Sorry, read-only sub-clients are unable to make changes to lists.");
+                    return;
+                }
+
                 int numParams = 3;
                 if (actualParams[commandParam].equalsIgnoreCase("add")) {
                     numParams = 2;
@@ -237,6 +242,11 @@ public abstract class AbstractListEditCommand extends Command {
                     }
                 }
             } else if (actualParams[commandParam].equalsIgnoreCase("del") || actualParams[commandParam].equalsIgnoreCase("delete")) {
+                if (user.isReadOnly()) {
+                    output.addBotMessage("Sorry, read-only sub-clients are unable to make changes to lists.");
+                    return;
+                }
+
                 if (actualParams.length > positionParam) {
                     try {
                         final int position = Integer.parseInt(actualParams[positionParam]);

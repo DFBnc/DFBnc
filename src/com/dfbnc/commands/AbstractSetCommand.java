@@ -106,6 +106,11 @@ public abstract class AbstractSetCommand extends Command {
             final ParamType paramType = pi.getType();
             // Check if user wants to change it
             if (actualParams.length > 2) {
+                if (user.isReadOnly()) {
+                    output.addBotMessage("Sorry, read-only sub-clients are unable to make changes to settings.");
+                    return;
+                }
+
                 String newValue;
                 // If its a string we get the rest of the line, else just the first word
                 if (paramType == ParamType.STRING) {

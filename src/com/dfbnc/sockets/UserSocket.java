@@ -475,6 +475,15 @@ public class UserSocket extends ConnectedSocket {
     }
 
     /**
+     * Is this socket a read-only client?
+     *
+     * @return True if this socket is considered a read-only.
+     */
+    public boolean isReadOnly() {
+        return getClientID() != null && getClientConfig().getOptionBool("user", "readonly");
+    }
+
+    /**
      * Get the realname supplied to this socket
      *
      * @return Realname supplied to this socket

@@ -44,6 +44,11 @@ public class SetAdminCommand extends AdminCommand {
         if (params.length == 1) {
             output.addBotMessage("You need to specify a username to chagne the admin status of.");
         } else {
+            if (user.isReadOnly()) {
+                output.addBotMessage("Sorry, read-only sub-clients are unable to change admin settings.");
+                return;
+            }
+
             final String account = params[1];
             if (!DFBnc.getAccountManager().exists(account)) {
                 output.addBotMessage("No account with the name '%s' exists.", account);

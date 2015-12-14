@@ -54,6 +54,11 @@ public class PasswordCommand extends Command {
             password = params[1];
             account = user.getAccount();
         } else if (params.length > 2) {
+            if (user.isReadOnly()) {
+                output.addBotMessage("Sorry, read-only sub-clients are unable to change passwords.");
+                return;
+            }
+
             final String[] bits = params[1].split("\\+");
             username = bits[0];
             if (user.getAccount().isAdmin() || username.equalsIgnoreCase(user.getAccount().getName())) {
