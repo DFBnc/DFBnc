@@ -211,8 +211,8 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
             public void run() {
                 if (!parserReady || !myAccount.getAccountConfig().getOptionBool("irc", "keepnick") || skipKeepNick.getAndSet(false)) { return; }
 
-                if (!myAccount.getAccountConfig().getOption("irc", "nickname").equalsIgnoreCase(myParser.getLocalClient().getNickname())) {
-                    myParser.getLocalClient().setNickname(myAccount.getAccountConfig().getOption("irc", "nickname"));
+                if (!myParser.getLocalClient().getNickname().equalsIgnoreCase(getKeepNick())) {
+                    myParser.getLocalClient().setNickname(getKeepNick());
                 }
             }
         }, nickKeepTime, nickKeepTime);
@@ -788,6 +788,19 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         }
     }
 
+    /**
+     * Get the nickname we should use for keepnick related activities.
+     *
+     * @return Nickname for keepnick related activities.
+     */
+    private String getKeepNick() {
+        if (myAccount.getActiveClientSockets().isEmpty() && !myAccount.getAccountConfig().getOption("irc", "offlinenickname").isEmpty()) {
+            return myAccount.getAccountConfig().getOption("irc", "offlinenickname");
+        }
+
+        return myAccount.getAccountConfig().getOption("irc", "nickname");
+    }
+
     @Handler
     public void onNickChanged(final NickChangeEvent event) {
         if (!checkParser(event)) { return; }
@@ -796,8 +809,8 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
             // No longer allow nick in use, as the nick change succeeded.
             disallowLine(null, "433");
             myAccount.getUserSockets().forEach(socket -> socket.setNickname(event.getParser().getLocalClient().getNickname()));
-        } else if (myAccount.getAccountConfig().getOptionBool("irc", "keepnick") && event.getOldNick().equalsIgnoreCase(myAccount.getAccountConfig().getOption("irc", "nickname"))) {
-            myParser.getLocalClient().setNickname(myAccount.getAccountConfig().getOption("irc", "nickname"));
+        } else if (myAccount.getAccountConfig().getOptionBool("irc", "keepnick") && event.getOldNick().equalsIgnoreCase(getKeepNick())) {
+            myParser.getLocalClient().setNickname(getKeepNick());
         }
     }
 
@@ -806,8 +819,8 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         if (!checkParser(event)) { return; }
         if (event.getClient() == event.getParser().getLocalClient()) { return; }
 
-        if (myAccount.getAccountConfig().getOptionBool("irc", "keepnick") && event.getClient().getNickname().equalsIgnoreCase(myAccount.getAccountConfig().getOption("irc", "nickname"))) {
-            myParser.getLocalClient().setNickname(myAccount.getAccountConfig().getOption("irc", "nickname"));
+        if (myAccount.getAccountConfig().getOptionBool("irc", "keepnick") && event.getClient().getNickname().equalsIgnoreCase(getKeepNick())) {
+            myParser.getLocalClient().setNickname(getKeepNick());
         }
     }
 
@@ -1196,6 +1209,10 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
             for (String line : myList) {
                 myParser.sendRawMessage(filterPerformLine(line));
             }
+
+            if (!myAccount.getAccountConfig().getOption("irc", "offlinenickname").isEmpty()) {
+                myParser.getLocalClient().setNickname(myAccount.getAccountConfig().getOption("irc", "offlinenickname"));
+            }
         }
     }
 
@@ -1385,6 +1402,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
                             for (String line : myList) {
                                 myParser.sendRawMessage(filterPerformLine(line));
                             }
+                            myParser.getLocalClient().setNickname(myAccount.getAccountConfig().getOption("irc", "nickname"));
                         }
                     }
                 }, 1500);
@@ -1612,6 +1630,10 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
                 List<String> myList = myAccount.getAccountConfig().getOptionList("irc", "perform.lastdetach");
                 for (String line : myList) {
                     myParser.sendRawMessage(filterPerformLine(line));
+                }
+
+                if (!myAccount.getAccountConfig().getOption("irc", "offlinenickname").isEmpty()) {
+                    myParser.getLocalClient().setNickname(myAccount.getAccountConfig().getOption("irc", "offlinenickname"));
                 }
             }
         }
