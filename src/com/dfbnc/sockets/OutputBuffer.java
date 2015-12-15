@@ -25,8 +25,6 @@ import java.util.concurrent.Semaphore;
 
 /**
  * Synchronized wrapper around StringBuffer used to buffer output to a socket.
- *
- * @author shane
  */
 public class OutputBuffer {
     /** Semaphore for synchronization */

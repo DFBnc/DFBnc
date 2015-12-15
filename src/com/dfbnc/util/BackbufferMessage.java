@@ -24,8 +24,6 @@ package com.dfbnc.util;
 
 /**
  * This class stores a Backbuffer Message
- *
- * @author shane
  */
 public class BackbufferMessage {
     /** The timestamp for this message. */

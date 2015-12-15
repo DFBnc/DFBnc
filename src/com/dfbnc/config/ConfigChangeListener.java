@@ -24,7 +24,6 @@ package com.dfbnc.config;
 
 /**
  *
- * @author shane
  */
 public interface ConfigChangeListener {
     void configChanged(final Config config, final String domain, final String setting);

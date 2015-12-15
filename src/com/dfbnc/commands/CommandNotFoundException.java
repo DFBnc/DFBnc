@@ -24,9 +24,6 @@ package com.dfbnc.commands;
 
 /**
  * Command Not Found Exception.
- *
- * @author Shane Mc Cormack
- * @version $Id: ProcessorNotFound.java 1320 2007-05-21 09:53:01Z ShaneMcC $
  */
 public class CommandNotFoundException extends Exception {
     /**

@@ -24,8 +24,6 @@ package com.dfbnc.commands.filters;
 
 /**
  * Command Output Filter Exception.
- *
- * @author Shane Mc Cormack
  */
 public class CommandOutputFilterException extends RuntimeException {
     /**

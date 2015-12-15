@@ -27,6 +27,7 @@ import com.dfbnc.config.Config;
 import com.dfbnc.config.ConfigChangeListener;
 import com.dfbnc.config.ConfigFileConfig;
 import com.dfbnc.config.DefaultsConfig;
+import com.dfbnc.servers.logging.ServerLogger;
 import com.dfbnc.servers.ServerType;
 import com.dfbnc.servers.ServerTypeNotFound;
 import com.dfbnc.sockets.UnableToConnectException;
@@ -64,6 +65,8 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
     private final CommandManager myCommandManager = new CommandManager();
     /** ConnectionHandler for this account */
     private ConnectionHandler myConnectionHandler = null;
+    /** ServerLogger for this account */
+    private ServerLogger myServerLogger = null;
     /** List of all sockets that are part of this account. */
     private final List<UserSocket> myUserSockets = new CopyOnWriteArrayList<>();
     /** Account config file. */
@@ -91,7 +94,7 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
     public Account(final String username) throws IOException, InvalidConfigFileException {
         myName = username;
         Logger.info("Loading Account: " + username);
-        final File confDir = new File(DFBnc.getConfigDirName(), username);
+        final File confDir = getConfigDirectory();
         if (!confDir.exists()) {
             if (!confDir.mkdirs()) {
                 throw new IOException("Unable to create config directory.");
@@ -133,6 +136,15 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
         if (myServerType != null) {
             myServerType.activate(this);
         }
+    }
+
+    /**
+     * Get the config directory for this account.
+     *
+     * @return The config directory for this account.
+     */
+    public File getConfigDirectory() {
+        return new File(DFBnc.getConfigDirName(), myName);
     }
 
     /**
@@ -309,6 +321,12 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
      */
     public void setConnectionHandler(final ConnectionHandler handler) {
         myConnectionHandler = handler;
+
+        // Update the ServerLogger
+        if (myServerLogger != null) { myServerLogger.disableLogging(); }
+        if (handler != null) {
+            myServerLogger = handler.getServerLogger();
+        }
     }
 
     /**
@@ -451,6 +469,7 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
         }
         if (myConnectionHandler != null) {
             myConnectionHandler.shutdown("Account Deleted");
+            if (myServerLogger != null) { myServerLogger.disableLogging(); }
         }
 
         final File confDir = new File(DFBnc.getConfigDirName(), getName());
@@ -480,6 +499,7 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
                 socket.close("Account Suspended (" + suspendReason + ")");
             }
             myConnectionHandler.shutdown("Account Suspended");
+            if (myServerLogger != null) { myServerLogger.disableLogging(); }
         }
     }
 
@@ -732,6 +752,8 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
      */
     public void handlerDisconnected(final String reason) {
         final ConnectionHandler oldHandler = myConnectionHandler;
+        if (myServerLogger != null) { myServerLogger.disableLogging(); }
+
         myConnectionHandler = null;
         if (!disconnectWanted && config.getOptionBool("server", "reconnect")) {
             reconnectTimer = new Timer("Reconnect Timer - " + getName());

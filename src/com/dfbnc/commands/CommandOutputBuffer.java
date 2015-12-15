@@ -30,8 +30,6 @@ import java.util.function.Predicate;
 /**
  * Output from commands is buffered through CommandOutputBuffer objects, as this
  * allows output to be filtered.
- *
- * @author Shane Mc Cormack <shanemcc@gmail.com>
  */
 public class CommandOutputBuffer {
 

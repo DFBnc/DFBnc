@@ -59,6 +59,7 @@ public class ServerSetCommand extends AbstractSetCommand {
         validParams.put("privatebackbuffertimeout", new ParamInfo("How long in seconds to permit messages to be stored in the private message backbuffer (0 to disable).", ParamType.INT, true));
         validParams.put("privatebackbuffertimestamp", new ParamInfo("Force timestamp prepends on private message backbuffers?", ParamType.BOOL, true));
         validParams.put("userdisconnect", new ParamInfo("Disconnect user if the server disconnects us.", ParamType.BOOL, false));
+        validParams.put("logging", new ParamInfo("Enable server-side logging of events.", ParamType.BOOL, false));
     }
 
     /**

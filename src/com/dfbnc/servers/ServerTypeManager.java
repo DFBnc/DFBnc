@@ -31,9 +31,6 @@ import uk.org.dataforce.libs.logger.Logger;
 /**
  * DFBNC ServerType Manager.
  * Manages adding/removing/creating ServerTypes.
- *
- * @author Shane Mc Cormack
- * @version $Id: ServerTypeManager.java 1360 2007-05-25 19:12:05Z ShaneMcC $
  */
 public final class ServerTypeManager {
     /** HashMap used to store the different types of ServerType known. */

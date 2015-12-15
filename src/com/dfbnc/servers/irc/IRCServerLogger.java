@@ -23,27 +23,30 @@
  * SOFTWARE.
  */
 
-package com.dfbnc.commands.filters;
+package com.dfbnc.servers.irc;
 
-import com.dfbnc.commands.CommandOutputBuffer;
-import java.util.List;
+import com.dfbnc.Account;
+import com.dfbnc.servers.logging.ServerLogger;
+import com.dmdirc.parser.events.DataOutEvent;
+//   - Channel Self Message
+//   - Channel Self Action
+//   - Channel Self Notice
 
 /**
- * Filter that shows only the last X messages
+ * IRC Specific ServerLogger that parses DataOut events into useful events.
  */
-public class TailFilter implements CommandOutputFilter {
+public class IRCServerLogger extends ServerLogger {
 
-    @Override
-    public void runFilter(final String[] params, final CommandOutputBuffer output) throws CommandOutputFilterException {
-        try {
-            final List<String> messages = output.getMessages();
-            final int wanted = Integer.parseInt(params.length == 0 ? "10" : params[0]);
-            if (wanted < messages.size() && wanted >= 0) {
-                output.setMessages(messages.subList(messages.size() - wanted, messages.size()));
-            }
-        } catch (final NumberFormatException nfe) {
-            throw new CommandOutputFilterException("Invalid Number: " + params[0], nfe);
-        }
+    /**
+     * Create a ServerLogger
+     *
+     * @param account Account we are logging for.
+     * @param connectionHandler IRCConnectionHandler we are logging.
+     * @throws Exception if we are unable to create the logs directory.
+     */
+    public IRCServerLogger(final Account account, final IRCConnectionHandler connectionHandler) throws Exception {
+        super(account, connectionHandler);
     }
+
 
 }

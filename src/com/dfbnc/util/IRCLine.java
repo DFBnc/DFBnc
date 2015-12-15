@@ -27,8 +27,6 @@ import java.util.Map.Entry;
 /**
  * This class represents a line of IRC Data with support for message tags.
  * (See: http://ircv3.atheme.org/specification/message-tags-3.2)
- *
- * @author Shane Mc Cormack <shanemcc@gmail.com>
  */
 public class IRCLine {
     /** The line to send. */

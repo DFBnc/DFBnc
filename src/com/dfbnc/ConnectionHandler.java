@@ -21,6 +21,7 @@
  */
 package com.dfbnc;
 
+import com.dfbnc.servers.logging.ServerLogger;
 import com.dfbnc.util.BackbufferMessage;
 import com.dfbnc.util.RollingList;
 import com.dfbnc.sockets.UnableToConnectException;
@@ -114,4 +115,24 @@ public interface ConnectionHandler {
      */
     boolean allowedChannel(final UserSocket user, final String channel);
 
+    /**
+     * Subscribe to any ConnectionHandler Event Buses.
+     *
+     * @param listener Listener to subscribe.
+     */
+    void subscribe(final Object listener);
+
+    /**
+     * Unsubscribe from any ConnectionHandler Event Buses.
+     *
+     * @param listener Listener to subscribe.
+     */
+    void unsubscribe(final Object listener);
+
+    /**
+     * Get a ServerLogger that can deal with events from this ConnectionHandler.
+     *
+     * @return a ServerLogger that can deal with events from this ConnectionHandler.
+     */
+    ServerLogger getServerLogger();
 }

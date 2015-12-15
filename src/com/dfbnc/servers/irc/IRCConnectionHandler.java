@@ -27,6 +27,7 @@ import com.dfbnc.AccountConfigChangeListener;
 import com.dfbnc.ConnectionHandler;
 import com.dfbnc.Consts;
 import com.dfbnc.config.Config;
+import com.dfbnc.servers.logging.ServerLogger;
 import com.dfbnc.sockets.UnableToConnectException;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.sockets.UserSocketWatcher;
@@ -83,6 +84,7 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
 
 
 /**
@@ -296,6 +298,28 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
      */
     private void setupCallbacks() {
         myParser.getCallbackManager().subscribe(this);
+    }
+
+    @Override
+    public void subscribe(final Object listener) {
+        myParser.getCallbackManager().subscribe(listener);
+    }
+
+    @Override
+    public void unsubscribe(final Object listener) {
+        myParser.getCallbackManager().unsubscribe(listener);
+    }
+
+    @Override
+    public ServerLogger getServerLogger() {
+        try {
+            return new IRCServerLogger(myAccount, this);
+        } catch (final Exception e) {
+            Logger.error("Unable to load ServerLogger: " + myAccount.getName() + "(" + e.getMessage() + ")");
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     /**

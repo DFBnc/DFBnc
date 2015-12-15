@@ -41,9 +41,6 @@ import java.util.stream.Collectors;
 /**
  * DFBNC Command Manager.
  * Manages adding/removing/calling commands.
- *
- * @author Shane Mc Cormack
- * @version $Id: CommandManager.java 1360 2007-05-25 19:12:05Z ShaneMcC $
  */
 public final class CommandManager {
 

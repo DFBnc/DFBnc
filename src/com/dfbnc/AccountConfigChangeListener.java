@@ -23,7 +23,6 @@ package com.dfbnc;
 
 /**
  *
- * @author shane
  */
 public interface AccountConfigChangeListener {
     /**
