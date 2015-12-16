@@ -84,7 +84,6 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
 
 
 /**
@@ -308,6 +307,11 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     @Override
     public void unsubscribe(final Object listener) {
         myParser.getCallbackManager().unsubscribe(listener);
+    }
+
+    @Override
+    public Parser getParser() {
+        return myParser;
     }
 
     @Override

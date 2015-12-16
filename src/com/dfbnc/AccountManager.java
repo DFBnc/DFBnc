@@ -243,6 +243,7 @@ public class AccountManager {
             }
             if (acc.getConnectionHandler() != null) {
                 acc.getConnectionHandler().shutdown("BNC Shutting Down");
+                if (acc.getServerLogger() != null) { acc.getServerLogger().disableLogging(); }
             }
         }
     }

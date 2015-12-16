@@ -315,6 +315,15 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
     }
 
     /**
+     * Get the ServerLogger for this account
+     *
+     * @return The ServerLogger for this account
+     */
+    public ServerLogger getServerLogger() {
+        return myServerLogger;
+    }
+
+    /**
      * Set the ConnectionHandler for this account
      *
      * @param handler The New ConnectionHandler for this account

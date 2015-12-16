@@ -26,6 +26,8 @@ import com.dfbnc.util.BackbufferMessage;
 import com.dfbnc.util.RollingList;
 import com.dfbnc.sockets.UnableToConnectException;
 
+import com.dmdirc.parser.interfaces.Parser;
+
 import com.dfbnc.sockets.UserSocket;
 
 /**
@@ -135,4 +137,11 @@ public interface ConnectionHandler {
      * @return a ServerLogger that can deal with events from this ConnectionHandler.
      */
     ServerLogger getServerLogger();
+
+    /**
+     * Get the parser used by this ConnectionHandler.
+     *
+     * @return The parser used by this ConnectionHandler.
+     */
+    Parser getParser();
 }

@@ -40,6 +40,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import net.engio.mbassy.listener.Handler;
 import com.dmdirc.parser.interfaces.ChannelClientInfo;
+import com.dmdirc.parser.interfaces.ChannelInfo;
 import com.dmdirc.parser.interfaces.ClientInfo;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -57,18 +58,19 @@ import com.dmdirc.parser.events.ChannelQuitEvent;
 import com.dmdirc.parser.events.ChannelKickEvent;
 import com.dmdirc.parser.events.ChannelNickChangeEvent;
 import com.dmdirc.parser.events.ChannelModeChangeEvent;
+import com.dmdirc.parser.events.ChannelNoticeEvent;
+import com.dmdirc.parser.events.PrivateNoticeEvent;
+
+import com.dmdirc.parser.events.SocketCloseEvent;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 // TODO: Missing.
-// import com.dmdirc.parser.events.PrivateNoticeEvent;
 // import com.dmdirc.parser.events.ChannelModeMessageEvent;
-// import com.dmdirc.parser.events.ChannelNoticeEvent;
 // import com.dmdirc.parser.events.ChannelModeNoticeEvent;
 // import com.dmdirc.parser.events.ChannelCTCPEvent;
 // import com.dmdirc.parser.events.ChannelCTCPReplyEvent;
-// import com.dmdirc.parser.events.ChannelListModeEvent;
-
-// import com.dmdirc.parser.events.SocketCloseEvent;
-//  - Close off all channels.
 
 /**
  * Basic Server Logger handling DMDIRC Parser Events.
@@ -89,9 +91,27 @@ public class ServerLogger {
     /** Timer used to close idle files. */
     private final Timer idleFileTimer;
     /** Log file Locator */
-    private final LogFileLocator locator;
+    protected final LogFileLocator locator;
     /** Do we want to add channel modes to log messages. */
     private final boolean channelmodeprefix = true;
+
+    /** Have we been disabled? */
+    private final AtomicBoolean disabled = new AtomicBoolean(false);
+
+    /**
+     * Parser Local Client.
+     *
+     * We keep a copy of this from our most recent self-join because
+     * SocketClosed can happen after the state has reset, which is shit.
+     */
+    protected ClientInfo localClient = null;
+
+    /**
+     * List of channels we last knew we were in.
+     *
+     * We keep our own channel state for throwing channelQuits on socketclosed.
+     */
+    protected final List<ChannelInfo> myChannels = new LinkedList<>();
 
     /**
      * Create a ServerLogger
@@ -104,6 +124,11 @@ public class ServerLogger {
     public ServerLogger(final Account account, final ConnectionHandler connectionHandler) throws Exception {
         myAccount = account;
         myConnectionHandler = connectionHandler;
+
+        if (connectionHandler.getParser() == null) {
+            throw new Exception("A parser is required before a ServerLogger can be created.");
+        }
+
         locator = new LogFileLocator(myAccount);
 
         // Close idle files every hour.
@@ -119,6 +144,9 @@ public class ServerLogger {
     }
 
     public void disableLogging() {
+        handleSocketClose(new SocketCloseEvent(myConnectionHandler.getParser(), new Date()));
+        disabled.set(true);
+
         if (idleFileTimer != null) {
             idleFileTimer.cancel();
             idleFileTimer.purge();
@@ -169,10 +197,25 @@ public class ServerLogger {
     }
 
     @Handler
+    public void handleQueryNotices(final PrivateNoticeEvent event) {
+        final ClientInfo user = event.getParser().getClient(event.getHost());
+        final String filename = locator.getLogFile(user);
+        if (filename == null) { return; }
+        appendLine(filename, "-%s- %s", user.getNickname(), event.getMessage());
+    }
+
+    @Handler
     public void handleChannelMessage(final ChannelMessageEvent event) {
         final String filename = locator.getLogFile(event.getChannel());
         if (filename == null) { return; }
         appendLine(filename, "<%s> %s", getDisplayName(event.getClient()), event.getMessage());
+    }
+
+    @Handler
+    public void handleChannelNotice(final ChannelNoticeEvent event) {
+        final String filename = locator.getLogFile(event.getChannel());
+        if (filename == null) { return; }
+        appendLine(filename, "-%s- %s", getDisplayName(event.getClient()), event.getMessage());
     }
 
     @Handler
@@ -210,7 +253,7 @@ public class ServerLogger {
         if (filename == null) { return; }
 
         final ChannelClientInfo channelClient = event.getClient();
-        appendLine(filename, "*** %s (%s) joined the channel", getDisplayName(channelClient), channelClient.getClient().getHostname());
+        appendLine(filename, "*** %s (%s) joined the channel", getDisplayName(channelClient), getFullHostname(channelClient));
     }
 
     @Handler
@@ -218,10 +261,17 @@ public class ServerLogger {
         final String filename = locator.getLogFile(event.getChannel());
         if (filename == null) { return; }
 
-        appendLine(filename, "*** Channel opened at: %s", OPENED_AT_FORMAT.format(new Date()));
-        appendLine(filename, "");
+        localClient = event.getParser().getLocalClient();
+        synchronized (myChannels) {
+            if (!myChannels.contains(event.getChannel())) {
+                myChannels.add(event.getChannel());
+                appendLine(filename, "*** Channel opened at: %s", OPENED_AT_FORMAT.format(new Date()));
+                appendLine(filename, "");
+            }
+        }
+
         final ChannelClientInfo channelClient = event.getChannel().getChannelClient(event.getParser().getLocalClient());
-        appendLine(filename, "*** %s (%s) joined the channel", getDisplayName(channelClient), channelClient.getClient().getHostname());
+        appendLine(filename, "*** %s (%s) joined the channel", getDisplayName(channelClient), getFullHostname(channelClient));
     }
 
     @Handler
@@ -234,18 +284,31 @@ public class ServerLogger {
         final String message = event.getReason();
 
         if (message.isEmpty()) {
-             appendLine(filename, "*** %s (%s) left the channel", getDisplayName(channelClient), channelClient.getClient().getHostname());
+             appendLine(filename, "*** %s (%s) left the channel", getDisplayName(channelClient), getFullHostname(channelClient));
         } else {
-            appendLine(filename, "*** %s (%s) left the channel (%s)", getDisplayName(channelClient), channelClient.getClient().getHostname(), message);
+            appendLine(filename, "*** %s (%s) left the channel (%s)", getDisplayName(channelClient), getFullHostname(channelClient), message);
         }
 
-        if (channelClient.getClient() == event.getParser().getLocalClient()) {
-            appendLine(filename, "*** Channel closed at: %s", OPENED_AT_FORMAT.format(new Date()));
+        if (channelClient.getClient() == localClient) {
+            synchronized(myChannels) {
+                if (myChannels.contains(event.getChannel())) {
+                    appendLine(filename, "");
+                    appendLine(filename, "*** Channel closed at: %s", OPENED_AT_FORMAT.format(new Date()));
+                    myChannels.remove(event.getChannel());
+                }
+            }
 
             if (openFiles.containsKey(filename)) {
                 StreamUtils.close(openFiles.get(filename).writer);
                 openFiles.remove(filename);
             }
+        }
+    }
+
+    @Handler
+    public void handleSocketClose(final SocketCloseEvent event) {
+        for (final ChannelInfo c : new LinkedList<>(myChannels)) {
+            handleChannelQuit(new ChannelQuitEvent(event.getParser(), event.getDate(), c, c.getChannelClient(localClient), "Socket Closed"));
         }
     }
 
@@ -258,13 +321,19 @@ public class ServerLogger {
         final ChannelClientInfo channelClient = event.getClient();
 
         if (reason.isEmpty()) {
-            appendLine(filename, "*** %s (%s) Quit IRC", getDisplayName(channelClient), channelClient.getClient().getHostname());
+            appendLine(filename, "*** %s (%s) Quit IRC", getDisplayName(channelClient), getFullHostname(channelClient));
         } else {
-            appendLine(filename, "*** %s (%s) Quit IRC (%s)", getDisplayName(channelClient), channelClient.getClient().getHostname(), reason);
+            appendLine(filename, "*** %s (%s) Quit IRC (%s)", getDisplayName(channelClient), getFullHostname(channelClient), reason);
         }
 
-        if (channelClient.getClient() == event.getParser().getLocalClient()) {
-            appendLine(filename, "*** Channel closed at: %s", OPENED_AT_FORMAT.format(new Date()));
+        if (channelClient.getClient() == localClient) {
+            synchronized(myChannels) {
+                if (myChannels.contains(event.getChannel())) {
+                    appendLine(filename, "");
+                    appendLine(filename, "*** Channel closed at: %s", OPENED_AT_FORMAT.format(new Date()));
+                    myChannels.remove(event.getChannel());
+                }
+            }
 
             if (openFiles.containsKey(filename)) {
                 StreamUtils.close(openFiles.get(filename).writer);
@@ -287,8 +356,16 @@ public class ServerLogger {
             appendLine(filename, "*** %s was kicked by %s (%s)", getDisplayName(victim), getDisplayName(perpetrator), reason);
         }
 
-        if (victim.getClient() == event.getParser().getLocalClient()) {
+        if (victim.getClient() == localClient) {
+            appendLine(filename, "");
             appendLine(filename, "*** Channel closed at: %s", OPENED_AT_FORMAT.format(new Date()));
+            synchronized(myChannels) {
+                if (myChannels.contains(event.getChannel())) {
+                    appendLine(filename, "");
+                    appendLine(filename, "*** Channel closed at: %s", OPENED_AT_FORMAT.format(new Date()));
+                    myChannels.remove(event.getChannel());
+                }
+            }
 
             if (openFiles.containsKey(filename)) {
                 StreamUtils.close(openFiles.get(filename).writer);
@@ -340,6 +417,7 @@ public class ServerLogger {
      */
     protected boolean appendLine(final String filename, final String line) {
         if (myAccount.getAccountConfig().getOptionBool("server", "logging") == false) { return true; }
+        if (disabled.get()) { return false; }
 
         final StringBuilder finalLine = new StringBuilder();
 
@@ -372,6 +450,17 @@ public class ServerLogger {
              */
         }
         return false;
+    }
+
+    /**
+     * Get full hostname name for channelClient.
+     *
+     * @param channelClient Get full hostname name for channelClient (nick|user@host)
+     *
+     * @return name to display
+     */
+    protected String getFullHostname(final ChannelClientInfo channelClient) {
+        return channelClient.getClient().getNickname() + "!" + channelClient.getClient().getUsername() + "@" + channelClient.getClient().getHostname();
     }
 
     /**
