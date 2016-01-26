@@ -2,7 +2,7 @@
 
 ## What is it? #################################################################
 
-DFBnc is an open-source, MIT-Licensed, multi-tennant, java-based IRC Bouncer.
+DFBnc is an open-source, MIT-Licensed, multi-tenant, java-based IRC Bouncer.
 
 ## CI ##########################################################################
 
