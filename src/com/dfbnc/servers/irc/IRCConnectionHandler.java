@@ -41,6 +41,8 @@ import com.dmdirc.parser.common.MyInfo;
 import com.dmdirc.parser.common.ParserError;
 import com.dmdirc.parser.events.ChannelJoinEvent;
 import com.dmdirc.parser.events.ChannelSelfJoinEvent;
+import com.dmdirc.parser.events.ChannelPartEvent;
+import com.dmdirc.parser.events.ChannelKickEvent;
 import com.dmdirc.parser.events.ConnectErrorEvent;
 import com.dmdirc.parser.events.DataInEvent;
 import com.dmdirc.parser.events.DataOutEvent;
@@ -77,10 +79,12 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -124,6 +128,8 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     private final Timer nickKeepTimer = new Timer("nickKeepTimer");
     /** Do we want to attempt to keep the nickname next time the timer fires? */
     private AtomicBoolean skipKeepNick = new AtomicBoolean(false);
+    /** This stores the list of active channels for non-bursty clients. */
+    private final Map<UserSocket,Set<String>> activeChannelList = new HashMap<>();
 
     /**
      * Create a new IRCConnectionHandler
@@ -448,9 +454,38 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         StringBuilder outData = new StringBuilder();
         boolean resetOutData = false;
 
-        if (line.length > 1 && myParser.isValidChannelName(line[1]) && !user.allowedChannel(line[1])) {
-            user.sendIRCLine(403, myParser.getLocalClient().getNickname() + " " + line[1], "Channel is not whitelisted for this client", true);
+        final boolean forced = line[1].equalsIgnoreCase("-f");
+        final int channelPos = forced ? 2 : 1;
+
+        // TODO: This should check comma separated channels in the case of
+        // JOIN for non auto-burst clients.
+        if (line.length > channelPos && myParser.isValidChannelName(line[channelPos]) && !allowedChannel(user, line[channelPos])) {
+            user.sendIRCLine(403, myParser.getLocalClient().getNickname() + " " + line[channelPos], "Channel is not whitelisted for this client", true);
             return;
+        }
+
+        if (!user.getClientConfig().getOptionBool("user", "autoburst")) {
+            if (line[0].equalsIgnoreCase("join") && !activeAllowedChannel(user, line[channelPos])) {
+                activateChannel(user, line[channelPos]);
+                if (myParser.getChannel(line[channelPos]) != null) {
+                    // Only return if we are not in the channel, otherwise we want
+                    // to let the join through.
+                    return;
+                }
+            } else if (line[0].equalsIgnoreCase("part") && activeAllowedChannel(user, line[channelPos])) {
+                if (forced) {
+                    outData.append("PART ");
+                    outData.append(Util.joinString(line, " ", 2, 2));
+                } else {
+                    deactivateChannel(user, line[channelPos]);
+                    final ClientInfo me = myParser.getLocalClient();
+                    user.sendLine(":%s!%s@%s PART %s :Channel Deactivated", me.getNickname(), me.getUsername(), me.getHostname(), line[1]);
+                    return;
+                }
+            } else if (!activeAllowedChannel(user, line[channelPos])) {
+                user.sendIRCLine(403, myParser.getLocalClient().getNickname() + " " + line[channelPos], "Channel is whitelisted, but not active for this client", true);
+                return;
+            }
         }
 
         if (line[0].equalsIgnoreCase("topic") || line[0].equalsIgnoreCase("names") || line[0].equalsIgnoreCase("mode") || line[0].equalsIgnoreCase("listmode")) {
@@ -930,6 +965,20 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     }
 
     @Handler
+    public void onChannelPart(final ChannelPartEvent event) {
+        if (event.getClient().getClient() == myParser.getLocalClient()) {
+            deactivateChannel(null, event.getChannel().getName());
+        }
+    }
+
+    @Handler
+    public void onChannelKick(final ChannelKickEvent event) {
+        if (event.getClient().getClient() == myParser.getLocalClient()) {
+            deactivateChannel(null, event.getChannel().getName());
+        }
+    }
+
+    @Handler
     public void onChannelSelfJoin(final ChannelSelfJoinEvent event) {
         if (!checkParser(event)) { return; }
 
@@ -962,7 +1011,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 
         for (UserSocket socket : myAccount.getUserSockets()) {
             if (socket.syncCompleted()) {
-                if (!socket.allowedChannel(event.getChannel().getName())) { continue; }
+                if (!activeAllowedChannel(socket, event.getChannel().getName())) { continue; }
 
                 if (socket.getCapabilityState("extended-join") == CapabilityState.ENABLED) {
                     socket.sendLine(":%s JOIN %s %s :%s", ci.toString(), event.getChannel().getName(), accountName, ci.getRealname());
@@ -1199,7 +1248,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 
         if (forwardLine) {
             for (UserSocket socket : myAccount.getUserSockets()) {
-                if (channelName != null && !socket.allowedChannel(channelName)) { continue; }
+                if (channelName != null && !activeAllowedChannel(socket, channelName)) { continue; }
 
                 boolean canSendMessage = socket.syncCompleted();
                 if (!socket.syncCompleted()) {
@@ -1402,20 +1451,9 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
                     public void run() {
                         if (!user.getSocketWrapper().isConnected()) { return; }
 
-                        for (final ChannelInfo channel : channels) {
-                            if (!user.allowedChannel(channel.getName())) { continue; }
-
-                            if (user.getCapabilityState("extended-join") == CapabilityState.ENABLED) {
-                                user.sendLine(":%s JOIN %s %s :%s", me, channel, (me.getAccountName() == null ? "*" : me.getAccountName()), me.getRealname());
-                            } else {
-                                user.sendLine(":%s JOIN %s", me, channel);
-                            }
-
-                            sendTopic(user, channel);
-                            sendNames(user, channel);
-
-                            if (myAccount.getAccountConfig().getOptionInt("server", "backbuffer") > 0) {
-                                sendBackbuffer(user, channel);
+                        if (user.getClientConfig().getOptionBool("user", "autoburst")) {
+                            for (final ChannelInfo channel : channels) {
+                                sendChannelBurst(user, channel);
                             }
                         }
                         user.setSyncCompleted();
@@ -1442,6 +1480,30 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
             user.setSyncCompleted();
         }
         Logger.debug2("end irc user connected.");
+    }
+
+    /**
+     * Send the channel burst for the given user
+     *
+     * @param user User to send reply to
+     * @param channel Channel to send reply for
+     */
+    private void sendChannelBurst(final UserSocket user, final ChannelInfo channel) {
+        if (!activeAllowedChannel(user, channel.getName())) { return; }
+        final ClientInfo me = myParser.getLocalClient();
+
+        if (user.getCapabilityState("extended-join") == CapabilityState.ENABLED) {
+            user.sendLine(":%s JOIN %s %s :%s", me, channel, (me.getAccountName() == null ? "*" : me.getAccountName()), me.getRealname());
+        } else {
+            user.sendLine(":%s JOIN %s", me, channel);
+        }
+
+        sendTopic(user, channel);
+        sendNames(user, channel);
+
+        if (myAccount.getAccountConfig().getOptionInt("server", "backbuffer") > 0) {
+            sendBackbuffer(user, channel);
+        }
     }
 
     /**
@@ -1698,13 +1760,80 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     }
 
     /**
+     * Is this socket active and allowed in the given channel?
+     *
+     * @param user UserSocket we are checking.
+     * @param channel Channel Name
+     * @return True if this socket is active, else false.
+     */
+    @Override
+    public boolean activeAllowedChannel(final UserSocket user, final String channel) {
+        if (user.getClientConfig().getOptionBool("user", "autoburst")) {
+            // Bursty clients are always active, so just check if they
+            // are allowed.
+            return allowedChannel(user, channel);
+        }
+
+        if (activeChannelList.containsKey(user) && !activeChannelList.get(user).isEmpty()) {
+            for (final String c : activeChannelList.get(user)) {
+                if (c.equalsIgnoreCase(channel)) {
+                    // We check if the client is allowed in a channel on JOIN
+                    // so if they are in the active list, then they are allowed.
+                    return true;
+                }
+            }
+        }
+
+       // User has not yet joined any channels, or has parted all their
+       // channels.
+       return false;
+    }
+
+    /**
+     * Activate a channel for a non-bursty client.
+     * This will send the channel burst.
+     *
+     * @param user User to activate channel for.
+     * @param channel Channel to activate.
+     */
+    public void activateChannel(final UserSocket user, final String channel) {
+        synchronized (activeChannelList) {
+            final Set<String> acl = (activeChannelList.containsKey(user)) ? activeChannelList.get(user) : new LinkedHashSet<>();
+            acl.add(myParser.getStringConverter().toLowerCase(channel));
+            activeChannelList.put(user, acl);
+
+            if (myParser.getChannel(channel) != null) {
+                sendChannelBurst(user, myParser.getChannel(channel));
+            }
+        }
+    }
+
+    /**
+     * De-activate a channel for a non-bursty client.
+     * This will stop the client interacting with this channel any further.
+     * If a null user is passed, then we will deactivate the channel for all
+     * currently-active clients.
+     *
+     * @param user User to activate channel for.
+     * @param channel Channel to activate.
+     */
+    public void deactivateChannel(final UserSocket user, final String channel) {
+        synchronized (activeChannelList) {
+            if (user == null) {
+                activeChannelList.values().stream().forEach(acl -> acl.remove(myParser.getStringConverter().toLowerCase(channel)));
+            } else if (activeChannelList.containsKey(user)) {
+                activeChannelList.get(user).remove(myParser.getStringConverter().toLowerCase(channel));
+            }
+        }
+    }
+
+    /**
      * Is this socket allowed to interact with the given channel name?
      *
      * @param user UserSocket we are checking.
      * @param channel Channel Name
      * @return True if this socket is allowed, else false.
      */
-    @Override
     public boolean allowedChannel(final UserSocket user, final String channel) {
         // TODO: This whole method needs optimising really... Allowed channels
         //       need caching etc.

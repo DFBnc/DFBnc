@@ -71,7 +71,7 @@ public abstract class AbstractSetCommand extends Command {
         if (wantedClientID == null) {
             output.addBotMessage("[Editing Global Client Settings]");
         } else {
-            output.addBotMessage("[Editing Sub-Client Settings for: %s]", actualParams[2]);
+            output.addBotMessage("[Editing Sub-Client Settings for: %s]", wantedClientID);
         }
         output.addBotMessage("");
 

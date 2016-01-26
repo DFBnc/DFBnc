@@ -52,6 +52,7 @@ public class UserSetCommand extends AbstractSetCommand {
         // Add the valid params
         validParams.put("readonly", new ParamInfo("Prevent a sub-client being able to change any settings. (If you set this on yourself, you will be unable to unset it.)", ParamType.BOOL, false));
         validParams.put("activeclient", new ParamInfo("Is this client counted for the purposes of performing offline actions? (eg offlinenick, dperform, aperform)", ParamType.BOOL, false));
+        validParams.put("autoburst", new ParamInfo("Should this client be automatically joined into channels on connect? (If FALSE then PARTs from this client just remove that client from the channel not the whole bouncer)", ParamType.BOOL, true));
     }
 
     /**

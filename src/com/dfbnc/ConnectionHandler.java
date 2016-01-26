@@ -115,7 +115,7 @@ public interface ConnectionHandler {
      * @param channel Channel Name
      * @return True if this socket is allowed, else false.
      */
-    boolean allowedChannel(final UserSocket user, final String channel);
+    boolean activeAllowedChannel(final UserSocket user, final String channel);
 
     /**
      * Subscribe to any ConnectionHandler Event Buses.
