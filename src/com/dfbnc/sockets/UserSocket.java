@@ -570,16 +570,6 @@ public class UserSocket extends ConnectedSocket {
     }
 
     /**
-     * Is this socket allowed to interact with the given channel name?
-     *
-     * @param channel Channel Name
-     * @return True if this socket is allowed, else false.
-     */
-    public boolean allowedChannel(final String channel) {
-        return (myAccount.getConnectionHandler() == null) || myAccount.getConnectionHandler().allowedChannel(this, channel);
-    }
-
-    /**
      * Send a given raw line to all sockets
      *
      * @param line Line to send
@@ -605,7 +595,8 @@ public class UserSocket extends ConnectedSocket {
      */
     public void sendAllChannel(final String channel, final String line, final boolean ignoreThis) {
         for (UserSocket socket : this.getAccount().getUserSockets()) {
-            if (ignoreThis && socket == this || !socket.allowedChannel(channel)) {
+            boolean allowedChannel = (myAccount.getConnectionHandler() == null) || myAccount.getConnectionHandler().activeAllowedChannel(this, channel);
+            if (ignoreThis && socket == this || !allowedChannel) {
                 continue;
             }
 
