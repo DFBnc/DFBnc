@@ -103,7 +103,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     /** Server we were supposed to connect to. */
     private final int myServerNum;
     /** IRCParser we are using. */
-    private final Parser myParser;
+    private Parser myParser;
     /** Have we received a ServerReady callback? */
     private boolean parserReady = false;
     /** Have we received a MOTDEnd callback? */
@@ -132,15 +132,23 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     private final Map<UserSocket,Set<String>> activeChannelList = new HashMap<>();
 
     /**
-     * Create a new IRCConnectionHandler
+     * Create a new IRCConnectionHandler.
      *
      * @param acc Account that requested the connection
      * @param serverNum Server number to use to connect, negative = random
-     * @throws UnableToConnectException If there is a problem connecting to the server
      */
-    public IRCConnectionHandler(final Account acc, final int serverNum) throws UnableToConnectException {
+    public IRCConnectionHandler(final Account acc, final int serverNum) {
         myAccount = acc;
         myServerNum = serverNum;
+        privateBackbufferList = new RollingList<>(getConfigMaxValue("server", "privatebackbuffer"));
+    }
+
+    /**
+     * Initialises the connection handler, begins connecting to IRC, and starts relevant timers.
+     *
+     * @throws UnableToConnectException If there is a problem connecting to the server
+     */
+    public void init() throws UnableToConnectException {
         final MyInfo me = new MyInfo();
         me.setNickname(myAccount.getAccountConfig().getOption("irc", "nickname"));
         final String myAltNickname;
@@ -152,15 +160,15 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         me.setRealname(myAccount.getAccountConfig().getOption("irc", "realname"));
         me.setUsername(myAccount.getAccountConfig().getOption("irc", "username"));
 
-        List<String> serverList = acc.getAccountConfig().getOptionList("irc", "serverlist");
+        List<String> serverList = myAccount.getAccountConfig().getOptionList("irc", "serverlist");
 
         if (serverList.isEmpty()) {
             throw new UnableToConnectException("No servers found");
         }
 
-        int serverNumber = serverNum;
+        int serverNumber = myServerNum;
         if (serverNumber >= serverList.size() || serverNumber < 0) {
-            serverNumber = (new Random()).nextInt(serverList.size());
+            serverNumber = new Random().nextInt(serverList.size());
         }
 
         String[] serverInfo = IRCServerType.parseServerString(serverList.get(serverNumber));
@@ -187,18 +195,18 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 
         setupCallbacks();
 
-        acc.sendBotMessage("Using server: %s", serverInfo[3]);
+        myAccount.sendBotMessage("Using server: %s", serverInfo[3]);
 
         final String bindIP = myAccount.getAccountConfig().getOption("irc", "bindip");
         if (!bindIP.isEmpty()) {
             myParser.setBindIP(bindIP);
-            acc.sendBotMessage("Trying to bind to: %s", bindIP);
+            myAccount.sendBotMessage("Trying to bind to: %s", bindIP);
         }
 
         final String bindIPv6 = myAccount.getAccountConfig().getOption("irc", "bindipv6");
         if (!bindIPv6.isEmpty()) {
             myParser.setBindIPv6(bindIPv6);
-            acc.sendBotMessage("Trying to bind to: %s", bindIPv6);
+            myAccount.sendBotMessage("Trying to bind to: %s", bindIPv6);
         }
 
         // Reprocess queued items every 5 seconds.
@@ -206,7 +214,6 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         // Allow the initial usermode line through to the user
         allowLine(null, "221");
 
-        privateBackbufferList = new RollingList<>(getConfigMaxValue("server", "privatebackbuffer"));
         myParser.connect();
         myAccount.addConfigChangeListener(this);
         ((IRCParser)myParser).getControlThread().setName("IRC Parser - " + myAccount.getName() + " - <server>");
@@ -355,7 +362,9 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 
     @Override
     public ConnectionHandler newInstance() throws UnableToConnectException {
-        return new IRCConnectionHandler(myAccount, myServerNum);
+        IRCConnectionHandler handler = new IRCConnectionHandler(myAccount, myServerNum);
+        handler.init();
+        return handler;
     }
 
     /**

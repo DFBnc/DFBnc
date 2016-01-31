@@ -180,6 +180,8 @@ public class IRCServerType extends ServerType {
      */
     @Override
     public IRCConnectionHandler newConnectionHandler(final Account acc, final int serverNum) throws UnableToConnectException {
-        return new IRCConnectionHandler(acc, serverNum);
+        IRCConnectionHandler handler = new IRCConnectionHandler(acc, serverNum);
+        handler.init();
+        return handler;
     }
 }
