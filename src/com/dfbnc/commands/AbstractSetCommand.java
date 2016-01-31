@@ -187,7 +187,7 @@ public abstract class AbstractSetCommand extends Command {
             }
             output.addBotMessage("");
             output.addBotMessage("");
-            output.addBotMessage("Syntax: /dfbnc [--global|--subclient <client>] %s <param> [value]", actualParams[0]);
+            output.addBotMessage("Syntax: /dfbnc %s [--global|--subclient <client>] <param> [value]", actualParams[0]);
             output.addBotMessage("");
             output.addBotMessage("Ommiting [value] will show you the current value.");
             output.addBotMessage("Passing --global will edit the account-level setting rather than this-subclient where applicable");
