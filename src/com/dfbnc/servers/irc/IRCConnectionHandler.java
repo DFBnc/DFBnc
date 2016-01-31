@@ -143,11 +143,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         privateBackbufferList = new RollingList<>(getConfigMaxValue("server", "privatebackbuffer"));
     }
 
-    /**
-     * Initialises the connection handler, begins connecting to IRC, and starts relevant timers.
-     *
-     * @throws UnableToConnectException If there is a problem connecting to the server
-     */
+    @Override
     public void init() throws UnableToConnectException {
         final MyInfo me = new MyInfo();
         me.setNickname(myAccount.getAccountConfig().getOption("irc", "nickname"));

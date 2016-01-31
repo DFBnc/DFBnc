@@ -36,6 +36,15 @@ import com.dfbnc.sockets.UserSocket;
 public interface ConnectionHandler {
 
     /**
+     * Initialises the connection handler, begins connecting to servers,
+     * and starts relevant timers.
+     *
+     * @throws UnableToConnectException If there is a problem connecting to
+     * the server
+     */
+    void init() throws UnableToConnectException;
+
+    /**
      * Shutdown this ConnectionHandler
      *
      * @param reason Reason for the Shutdown
