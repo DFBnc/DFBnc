@@ -459,7 +459,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         StringBuilder outData = new StringBuilder();
         boolean resetOutData = false;
 
-        final boolean forced = line[1].equalsIgnoreCase("-f");
+        final boolean forced = line.length > 1 && line[1].equalsIgnoreCase("-f");
         final int channelPos = forced ? 2 : 1;
 
         // TODO: This should check comma separated channels in the case of
