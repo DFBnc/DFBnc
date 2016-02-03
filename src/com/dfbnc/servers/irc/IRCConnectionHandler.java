@@ -26,6 +26,7 @@ import com.dfbnc.Account;
 import com.dfbnc.AccountConfigChangeListener;
 import com.dfbnc.ConnectionHandler;
 import com.dfbnc.Consts;
+import com.dfbnc.DFBnc;
 import com.dfbnc.config.Config;
 import com.dfbnc.servers.logging.ServerLogger;
 import com.dfbnc.sockets.UnableToConnectException;
@@ -850,7 +851,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     @Override
     public String getServerName() {
         if (parserReady) {
-            return myParser.getServerName();
+            return !myParser.getServerName().isEmpty() ? myParser.getServerName() : null;
         } else {
             return null;
         }
