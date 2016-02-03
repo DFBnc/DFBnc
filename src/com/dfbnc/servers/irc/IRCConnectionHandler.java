@@ -131,6 +131,11 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     private AtomicBoolean skipKeepNick = new AtomicBoolean(false);
     /** This stores the list of active channels for non-bursty clients. */
     private final Map<UserSocket,Set<String>> activeChannelList = new HashMap<>();
+    /**
+     * Have we already closed this socket?
+     * Used to prevent connection errors triggering handlerDisconnected twice.
+     */
+    private final AtomicBoolean hasSocketClosed = new AtomicBoolean(false);
 
     /**
      * Create a new IRCConnectionHandler.
@@ -1340,10 +1345,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     @Handler
     public void onSocketClosed(final SocketCloseEvent event) {
         if (!checkParser(event)) { return; }
-
-        requeueTimer.cancel();
-        nickKeepTimer.cancel();
-        myAccount.handlerDisconnected("Remote connection closed.");
+        handleSocketClosed("Remote connection closed.");
     }
 
     @Handler
@@ -1368,9 +1370,15 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
                 description = "Unknown error: " + exception.getMessage();
             }
         }
-        requeueTimer.cancel();
-        nickKeepTimer.cancel();
-        myAccount.handlerDisconnected("Connection error: " + description);
+        handleSocketClosed("Connection error: " + description);
+    }
+
+    private void handleSocketClosed(final String reason) {
+        if (hasSocketClosed.compareAndSet(false, true)) {
+            requeueTimer.cancel();
+            nickKeepTimer.cancel();
+            myAccount.handlerDisconnected(reason);
+        }
     }
 
     @Handler
