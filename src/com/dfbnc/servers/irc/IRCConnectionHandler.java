@@ -26,7 +26,6 @@ import com.dfbnc.Account;
 import com.dfbnc.AccountConfigChangeListener;
 import com.dfbnc.ConnectionHandler;
 import com.dfbnc.Consts;
-import com.dfbnc.DFBnc;
 import com.dfbnc.config.Config;
 import com.dfbnc.servers.logging.ServerLogger;
 import com.dfbnc.sockets.DebugFlag;
@@ -667,8 +666,10 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
                                         user.sendIRCLine(324, myParser.getLocalClient().getNickname() + " " + channel, channel.getModes(), false);
                                         user.sendIRCLine(329, myParser.getLocalClient().getNickname() + " " + channel, "" + ((IRCChannelInfo) channel).getCreateTime(), false);
                                     } else {
-                                        allowLine(channel, "324");
-                                        allowLine(channel, "329");
+                                        if (channel != null) {
+                                            allowLine(channel, "324");
+                                            allowLine(channel, "329");
+                                        }
                                     }
                                 }
                             } else if (client == myParser.getLocalClient()) {
@@ -760,57 +761,56 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
                     outData.append(line[3]);
                 }
                 ChannelInfo channel = myParser.getChannel(line[2]);
-                if (line[0].equalsIgnoreCase("topic")) {
+
+                if (channel != null && line[0].equalsIgnoreCase("topic")) {
                     allowLine(channel, "331");
                     allowLine(channel, "332");
                     allowLine(channel, "333");
-                } else if (line[0].equalsIgnoreCase("names")) {
+                } else if (channel != null && line[0].equalsIgnoreCase("names")) {
                     allowLine(channel, "353");
                     allowLine(channel, "366");
-                } else if (line[0].equalsIgnoreCase("mode")) {
-                    if (channel != null) {
-                        if (line.length == 4) {
-                            for (int i = 0; i < line[3].length(); ++i) {
-                                char modechar = line[3].charAt(i);
-                                Collection<ChannelListModeItem> modeList = channel.getListMode(modechar);
-                                if (modeList != null) {
-                                    if (modechar == 'b' || modechar == 'd' || modechar == 'q') {
-                                        allowLine(channel, "367");
-                                        allowLine(channel, "368");
-                                    } else if (modechar == 'e') {
-                                        allowLine(channel, "348");
-                                        allowLine(channel, "349");
-                                    } else if (modechar == 'I') {
-                                        allowLine(channel, "346");
-                                        allowLine(channel, "347");
-                                    } else if (modechar == 'R') {
-                                        allowLine(channel, "344");
-                                        allowLine(channel, "345");
-                                    }
-
-                                    if (((IRCParser)myParser).getServerType() == ServerType.INSPIRCD) {
-                                        if (modechar == 'w') {
-                                            allowLine(channel, "910");
-                                            allowLine(channel, "911");
-                                        } else if (modechar == 'g') {
-                                            allowLine(channel, "940");
-                                            allowLine(channel, "941");
-                                        } else if (modechar == 'X') {
-                                            allowLine(channel, "954");
-                                            allowLine(channel, "953");
-                                        }
-                                    }
-
+                } else if (channel != null && line[0].equalsIgnoreCase("mode")) {
+                    if (line.length == 4) {
+                        for (int i = 0; i < line[3].length(); ++i) {
+                            char modechar = line[3].charAt(i);
+                            Collection<ChannelListModeItem> modeList = channel.getListMode(modechar);
+                            if (modeList != null) {
+                                if (modechar == 'b' || modechar == 'd' || modechar == 'q') {
+                                    allowLine(channel, "367");
+                                    allowLine(channel, "368");
+                                } else if (modechar == 'e') {
+                                    allowLine(channel, "348");
+                                    allowLine(channel, "349");
+                                } else if (modechar == 'I') {
+                                    allowLine(channel, "346");
+                                    allowLine(channel, "347");
+                                } else if (modechar == 'R') {
+                                    allowLine(channel, "344");
+                                    allowLine(channel, "345");
                                 }
+
+                                if (((IRCParser)myParser).getServerType() == ServerType.INSPIRCD) {
+                                    if (modechar == 'w') {
+                                        allowLine(channel, "910");
+                                        allowLine(channel, "911");
+                                    } else if (modechar == 'g') {
+                                        allowLine(channel, "940");
+                                        allowLine(channel, "941");
+                                    } else if (modechar == 'X') {
+                                        allowLine(channel, "954");
+                                        allowLine(channel, "953");
+                                    }
+                                }
+
                             }
-                        } else {
-                            allowLine(channel, "324");
-                            allowLine(channel, "329");
                         }
                     } else {
-                        allowLine(null, "221");
+                        allowLine(channel, "324");
+                        allowLine(channel, "329");
                     }
-                } else if (line[0].equalsIgnoreCase("listmode")) {
+                } else if (channel == null && line[0].equalsIgnoreCase("mode")) {
+                    allowLine(null, "221");
+                } else if (channel != null && line[0].equalsIgnoreCase("listmode")) {
                     if (myParser instanceof IRCParser) {
                         final IRCParser ircParser = ((IRCParser) myParser);
                         if (ircParser.get005().containsKey("LISTMODE")) {
@@ -1214,13 +1214,18 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
                 case 910: // Access List
                 case 954: // ExemptChanOps List
                 case 941: // Spamfilter List
-                    forwardLine = checkAllowLine(channel, bits[1]);
+                    if (channel != null) {
+                        forwardLine = checkAllowLine(channel, bits[1]);
+                    }
                     break;
 
                 case 353: // Names
                     if (bits.length > 4) {
                         channelName = bits[4];
-                        forwardLine = checkAllowLine(myParser.getChannel(bits[4]), bits[1]);
+                        final ChannelInfo namesChannel = myParser.getChannel(bits[4]);
+                        if (namesChannel != null) {
+                            forwardLine = checkAllowLine(namesChannel, bits[1]);
+                        }
                     } else {
                         myAccount.sendBotMessage("Invalid 353 Response: %s", event.getData());
                         return;
@@ -1232,10 +1237,12 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
                 case 347: // Invite List End
                 case 345: // Reop List
                 case 911: // Reop List
-                    forwardLine = checkAllowLine(channel, bits[1]);
-                    if (forwardLine) {
-                        disallowLine(channel, bits[1]);
-                        disallowLine(channel, Integer.toString(numeric - 1));
+                    if (channel != null) {
+                        forwardLine = checkAllowLine(channel, bits[1]);
+                        if (forwardLine) {
+                            disallowLine(channel, bits[1]);
+                            disallowLine(channel, Integer.toString(numeric - 1));
+                        }
                     }
                     break;
 
@@ -1243,43 +1250,53 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
                 case 388: // Protected List (Backwards List)
                 case 953: // ExemptChanOps List (Backwards List)
                 case 940: // Spamfilter List (Backwards List)
-                    forwardLine = checkAllowLine(channel, bits[1]);
-                    if (forwardLine) {
-                        disallowLine(channel, bits[1]);
-                        disallowLine(channel, Integer.toString(numeric + 1));
+                    if (channel != null) {
+                        forwardLine = checkAllowLine(channel, bits[1]);
+                        if (forwardLine) {
+                            disallowLine(channel, bits[1]);
+                            disallowLine(channel, Integer.toString(numeric + 1));
+                        }
                     }
                     break;
 
                 case 329: // Channel Create Time
-                    forwardLine = checkAllowLine(channel, bits[1]);
-                    if (forwardLine) {
-                        disallowLine(channel, bits[1]);
-                        disallowLine(channel, "324");
+                    if (channel != null) {
+                        forwardLine = checkAllowLine(channel, bits[1]);
+                        if (forwardLine) {
+                            disallowLine(channel, bits[1]);
+                            disallowLine(channel, "324");
+                        }
                     }
                     break;
 
                 case 221: // User Modes
-                    forwardLine = checkAllowLine(channel, bits[1]);
-                    if (forwardLine) {
-                        disallowLine(channel, bits[1]);
+                    if (channel != null) {
+                        forwardLine = checkAllowLine(channel, bits[1]);
+                        if (forwardLine) {
+                            disallowLine(channel, bits[1]);
+                        }
                     }
                     break;
 
                 case 331: // Topic Time/User
                 case 333: // No Topic
-                    forwardLine = checkAllowLine(channel, bits[1]);
-                    if (forwardLine) {
-                        disallowLine(channel, "331");
-                        disallowLine(channel, "332");
-                        disallowLine(channel, "333");
+                    if (channel != null) {
+                        forwardLine = checkAllowLine(channel, bits[1]);
+                        if (forwardLine) {
+                            disallowLine(channel, "331");
+                            disallowLine(channel, "332");
+                            disallowLine(channel, "333");
+                        }
                     }
                     break;
 
                 case 366: // Names End
-                    forwardLine = checkAllowLine(channel, bits[1]);
-                    if (forwardLine) {
-                        disallowLine(channel, bits[1]);
-                        disallowLine(channel, "353");
+                    if (channel != null) {
+                        forwardLine = checkAllowLine(channel, bits[1]);
+                        if (forwardLine) {
+                            disallowLine(channel, bits[1]);
+                            disallowLine(channel, "353");
+                        }
                     }
                     break;
             }
