@@ -22,6 +22,7 @@
 package com.dfbnc;
 
 import com.dfbnc.servers.logging.ServerLogger;
+import com.dfbnc.sockets.DebugFlag;
 import com.dfbnc.util.BackbufferMessage;
 import com.dfbnc.util.RollingList;
 import com.dfbnc.sockets.UnableToConnectException;
@@ -153,4 +154,22 @@ public interface ConnectionHandler {
      * @return The parser used by this ConnectionHandler.
      */
     Parser getParser();
+
+    /**
+     * Enable a DebugFlag on this connection handler.
+     * This may be called multiple times for the same flag for each UserSocket
+     * that enabled it.
+     *
+     * @param flag Flag to enable
+     */
+    void enableDebug(final DebugFlag flag);
+
+    /**
+     * Disable a DebugFlag on this connection handler.
+     * This should only be called once the flag is disabled on all UserSockets
+     * for this account.
+     *
+     * @param flag Flag to disable.
+     */
+    void disableDebug(final DebugFlag flag);
 }

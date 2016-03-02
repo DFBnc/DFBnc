@@ -30,6 +30,7 @@ import com.dfbnc.config.DefaultsConfig;
 import com.dfbnc.servers.logging.ServerLogger;
 import com.dfbnc.servers.ServerType;
 import com.dfbnc.servers.ServerTypeNotFound;
+import com.dfbnc.sockets.DebugFlag;
 import com.dfbnc.sockets.UnableToConnectException;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.sockets.UserSocketWatcher;
@@ -335,6 +336,13 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
         if (myServerLogger != null) { myServerLogger.disableLogging(); }
         if (handler != null) {
             myServerLogger = handler.getServerLogger();
+            
+            // Enable any debug flags
+            for (final UserSocket us : getUserSockets()) {
+                for (final DebugFlag df : us.getDebugFlags()) {
+                    handler.enableDebug(df);
+                }
+            }
         }
     }
 

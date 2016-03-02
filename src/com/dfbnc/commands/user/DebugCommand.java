@@ -26,9 +26,7 @@ package com.dfbnc.commands.user;
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.CommandOutputBuffer;
-import com.dfbnc.commands.debug.LogLevelDebugCommand;
-import com.dfbnc.commands.debug.LoggingDebugCommand;
-import com.dfbnc.commands.debug.RawDebugCommand;
+import com.dfbnc.commands.debug.*;
 import com.dfbnc.sockets.UserSocket;
 
 import java.util.Map;
@@ -105,6 +103,7 @@ public class DebugCommand extends Command {
         debugManager.addCommand(new RawDebugCommand(debugManager));
         debugManager.addCommand(new LoggingDebugCommand(debugManager));
         debugManager.addCommand(new LogLevelDebugCommand(debugManager));
+        debugManager.addCommand(new FlagDebugCommand(debugManager));
     }
 
 

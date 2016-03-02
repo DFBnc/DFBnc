@@ -29,6 +29,7 @@ import com.dfbnc.Consts;
 import com.dfbnc.DFBnc;
 import com.dfbnc.config.Config;
 import com.dfbnc.servers.logging.ServerLogger;
+import com.dfbnc.sockets.DebugFlag;
 import com.dfbnc.sockets.UnableToConnectException;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.sockets.UserSocketWatcher;
@@ -136,6 +137,10 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
      * Used to prevent connection errors triggering handlerDisconnected twice.
      */
     private final AtomicBoolean hasSocketClosed = new AtomicBoolean(false);
+    /** Debug data in. */
+    private boolean debugIn = false;
+    /** Debug data out. */
+    private boolean debugOut = false;
 
     /**
      * Create a new IRCConnectionHandler.
@@ -1090,9 +1095,32 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         return new RollingList<>(0);
     }
 
+    @Override
+    public void enableDebug(final DebugFlag flag) {
+        if (flag == DebugFlag.ServerDataIn) { this.debugIn = true; }
+        if (flag == DebugFlag.ServerDataOut) { this.debugOut = true; }
+    }
+
+    @Override
+    public void disableDebug(final DebugFlag flag) {
+        if (flag == DebugFlag.ServerDataIn) { this.debugIn = false; }
+        if (flag == DebugFlag.ServerDataOut) { this.debugOut = false; }
+    }
+
+    /**
+     * Handle sending debug data to sockets that have asked for it.
+     *
+     * @param flag Flag to check for
+     * @param data Data to send.
+     */
+    private void handleDebugData(final DebugFlag flag, final String data) {
+        myAccount.getUserSockets().stream().filter(u -> u.debugFlagEnabled(flag)).forEach(u -> u.sendDebugBotLine("PRIVMSG", "[%s] %s", flag.getTag(), data));
+    }
+
     @Handler
     public void onDataOut(final DataOutEvent event) {
         if (!checkParser(event)) { return; }
+        if (debugOut) { handleDebugData(DebugFlag.ServerDataOut, event.getData()); }
 
         final String[] bits = IRCParser.tokeniseLine(event.getData());
         if (bits[0].equals("PRIVMSG") && bits.length > 1) {
@@ -1106,6 +1134,8 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     @Handler
     public void onDataIn(final DataInEvent event) {
         if (!checkParser(event)) { return; }
+        if (debugIn) { handleDebugData(DebugFlag.ServerDataIn, event.getData()); }
+
         if (serverRequeueList != null) {
             serverRequeueList.add(event);
         }

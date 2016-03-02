@@ -32,6 +32,8 @@ import com.dfbnc.commands.filters.CommandOutputFilter;
 import com.dfbnc.commands.filters.CommandOutputFilterException;
 import com.dfbnc.commands.filters.CommandOutputFilterManager;
 import com.dfbnc.config.Config;
+import com.dfbnc.util.MultiWriter;
+import com.dfbnc.util.UserSocketMessageWriter;
 import com.dfbnc.util.Util;
 import com.dmdirc.parser.irc.CapabilityState;
 import com.dmdirc.parser.irc.IRCParser;
@@ -42,6 +44,7 @@ import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -127,6 +130,9 @@ public class UserSocket extends ConnectedSocket {
 
     /** Map of objects associated with this UserSocket. */
     private final static HashMap<Object, Object> myMap = new HashMap<>();
+
+    /** Set of debug flags. */
+    private final Set<DebugFlag> debugFlags = new HashSet<>();
 
     /**
      * Create a new UserSocket.
@@ -617,6 +623,18 @@ public class UserSocket extends ConnectedSocket {
     }
 
     /**
+     * Send a message to the user from the bnc debug bot in printf format.
+     *
+     * @param type the Type of message to send
+     * @param data The format string
+     * @param args The args for the format string
+     */
+    public void sendDebugBotLine(final String type, final String data, final Object... args) {
+        final String outLine = args.length == 0 ? data : String.format(data, args);
+        sendLine(":%s!bot@%s %s %s :%s", Util.getBotName() + "_DEBUG", getServerName(), type, nickname, outLine);
+    }
+
+    /**
      * Send a message to the user from the bnc server in printf format.
      *
      * @param type the Type of message to send
@@ -637,6 +655,7 @@ public class UserSocket extends ConnectedSocket {
         }
 
         Logger.info("User Disconnected: " + myInfo);
+        getDebugFlags().stream().forEach(df -> setDebugFlag(df, false));
 
         if (myAccount != null) {
             myAccount.userDisconnected(this);
@@ -1205,5 +1224,78 @@ public class UserSocket extends ConnectedSocket {
         }
 
         return false;
+    }
+
+    private void handleDebugFlagLogging(final boolean value) {
+        final UserSocketMessageWriter usmw;
+        if (getMap().containsKey("usmw_loggingdebug")) {
+            usmw = (UserSocketMessageWriter)getMap().get("usmw_loggingdebug");
+        } else {
+            usmw = new UserSocketMessageWriter(this, DebugFlag.Logging.getTag());
+            getMap().put("usmw_loggingdebug", usmw);
+        }
+
+        final MultiWriter multiWriter = DFBnc.getBNC().getMultiWriter();
+        if (value) {
+            multiWriter.addWriter(usmw);
+        } else {
+            multiWriter.removeWriter(usmw);
+            getMap().remove("usmw_loggingdebug");
+        }
+    }
+
+    /**
+     * Set the given debug flag value.
+     *
+     * @param flag DebugFlag to change
+     * @param newValue New value to set.
+     * @return True if flag was enabled, else false.
+     */
+    public boolean setDebugFlag(final DebugFlag flag, final boolean newValue) {
+        if (newValue) {
+            debugFlags.add(flag);
+
+            // Enable the flag in the connection handler.
+            if (myAccount != null && myAccount.getConnectionHandler() != null) {
+                myAccount.getConnectionHandler().enableDebug(flag);
+            }
+
+            if (flag == DebugFlag.Logging) { handleDebugFlagLogging(true); }
+        } else {
+            debugFlags.remove(flag);
+
+            // Disable the flag in the connection handler if none of
+            // the other sockets that share his account still have it enabled.
+            if (myAccount != null) {
+                final long flagCount = myAccount.getUserSockets().stream().filter(u -> u.debugFlagEnabled(flag)).count();
+
+                if (flagCount == 0 && myAccount.getConnectionHandler() != null) {
+                    myAccount.getConnectionHandler().disableDebug(flag);
+                }
+
+                if (flag == DebugFlag.Logging) { handleDebugFlagLogging(false); }
+            }
+        }
+
+        return newValue;
+    }
+
+    /**
+     * Check if the given debug flag is enabled.
+     *
+     * @param flag DebugFlag to check
+     * @return True if flag was enabled, else false.
+     */
+    public boolean debugFlagEnabled(final DebugFlag flag) {
+        return debugFlags.contains(flag);
+    }
+
+    /**
+     * Get a list of enabled debug flags
+     *
+     * @return List of enabled debug flags
+     */
+    public List<DebugFlag> getDebugFlags() {
+        return Arrays.asList(debugFlags.toArray(new DebugFlag[0]));
     }
 }

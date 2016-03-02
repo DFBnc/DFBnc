@@ -21,21 +21,19 @@
  */
 package com.dfbnc.commands.debug;
 
-import com.dfbnc.commands.AdminCommand;
+import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.CommandOutputBuffer;
 import com.dfbnc.sockets.DebugFlag;
 import com.dfbnc.sockets.UserSocket;
-
-import java.util.Arrays;
-import java.util.List;
+import com.dfbnc.util.Util;
 
 /**
- * This file represents the 'debug logging' command
+ * This file represents the 'debug flag' command
  */
-public class LoggingDebugCommand extends AdminCommand {
+public class FlagDebugCommand extends Command {
     /**
-     * Handle a logging command.
+     * Handle a flag command.
      *
      * @param user the UserSocket that performed this command
      * @param params Params for command (param 0 is the command name)
@@ -43,26 +41,30 @@ public class LoggingDebugCommand extends AdminCommand {
      */
     @Override
     public void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output) {
+
         if (params.length > 2) {
-            final List<String> validParams = Arrays.asList("on", "off");
+            final boolean newValue = params[1].equalsIgnoreCase("flag");
 
-            final String optionString = getFullParam(output, params, 2, validParams);
-            if (optionString == null) { return; }
-            if (!validParams.contains(optionString)) {
-                output.addBotMessage("Unknown parameter: %s", optionString);
-                return;
-            }
-
-            output.addBotMessage("This command has been deprecated. Please use '%s [un]flag logging'", params[0]);
-
-            if (user.setDebugFlag(DebugFlag.Logging, optionString.equalsIgnoreCase("on"))) {
-                output.addBotMessage("Debug '%s' has been enabled.", DebugFlag.Logging.toString());
+            // TODO: This would be nicer if it could use short commands.
+            final String setting = Util.joinString(params, " ", 2, 2);
+            final DebugFlag df = DebugFlag.getFromName(setting);
+            if (df == null) {
+                output.addBotMessage("Unknown debug setting: %s", setting);
             } else {
-                output.addBotMessage("Debug '%s' has been disabled.", DebugFlag.Logging.toString());
+                if (user.setDebugFlag(df, newValue)) {
+                    output.addBotMessage("Debug '%s' has been enabled.", setting);
+                } else {
+                    output.addBotMessage("Debug '%s' has been disabled.", setting);
+                }
             }
         } else {
-            output.addBotMessage("You need to specify an option 'on' or 'off'");
+            // List enabled debugs.
+            output.addBotMessage("Current debug flags for this socket: ");
+            for (DebugFlag df : DebugFlag.values()) {
+                output.addBotMessage("'%s': %s", df.toString(), (user.debugFlagEnabled(df) ? "Enabled" : "Disabled"));
+            }
         }
+
     }
 
     /**
@@ -72,7 +74,7 @@ public class LoggingDebugCommand extends AdminCommand {
      */
     @Override
     public String[] handles() {
-        return new String[]{"logging"};
+        return new String[]{"flag", "unflag"};
     }
 
     /**
@@ -80,7 +82,7 @@ public class LoggingDebugCommand extends AdminCommand {
      *
      * @param manager CommandManager that is in charge of this Command
      */
-    public LoggingDebugCommand (final CommandManager manager) { super(manager); }
+    public FlagDebugCommand (final CommandManager manager) { super(manager); }
 
     /**
      * Get a description of what this command does
@@ -91,6 +93,10 @@ public class LoggingDebugCommand extends AdminCommand {
      */
     @Override
     public String getDescription(final String command) {
-        return "This command allows you to causing logging to be sent to this socket.";
+        if (command.equalsIgnoreCase("flag")) {
+            return "This command allows you to enable debug flags on this socket.";
+        } else {
+            return "This command allows you to disable debug flags on this socket.";
+        }
     }
 }
