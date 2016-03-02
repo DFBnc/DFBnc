@@ -31,9 +31,9 @@ import com.dfbnc.ConnectionHandler;
  * Debug Flags enabled for a given Socket.
  */
 public enum DebugFlag {
-    ServerDataIn("Server Data In", "IN"),
-    ServerDataOut("Server Data Out", "OUT"),
-    Logging("DFBNC Logging", "LOG");
+    ServerDataIn("Server Data In", "IN", false),
+    ServerDataOut("Server Data Out", "OUT", false),
+    Logging("DFBNC Logging", "LOG", true);
 
     /** Name of this DebugFlag. */
     private final String name;
@@ -41,15 +41,20 @@ public enum DebugFlag {
     /** Tag for this DebugFlag. */
     private final String tag;
 
+    /** Is this DebugFlag only available for admins. */
+    private final boolean adminOnly;
+
     /**
      * Create a new DebugFlag.
      *
      * @param name Name
      * @param tag Tag
+     * @param adminOnly Admin Only Flag
      */
-    DebugFlag(final String name, final String tag) {
+    DebugFlag(final String name, final String tag, final boolean adminOnly) {
         this.name = name;
         this.tag = tag;
+        this.adminOnly = adminOnly;
     }
 
     @Override
@@ -57,23 +62,21 @@ public enum DebugFlag {
         return name;
     }
 
+    /**
+     * Tag for this flag.
+     *
+     * @return Tag for this flag
+     */
     public String getTag() {
         return tag;
     }
 
     /**
-     * Get a DebugFlag object based on a given name.
+     * Is this flag admin only?
      *
-     * @param name Name string to parse.
-     * @return DebugFlag for the given name, or null.
+     * @return true if only admins can enable this flag.
      */
-    public static DebugFlag getFromName(final String name) {
-        for (DebugFlag df : DebugFlag.values()) {
-          if (df.toString().equalsIgnoreCase(name)) {
-            return df;
-          }
-        }
-
-        return null;
+    public boolean isAdminOnly() {
+        return adminOnly;
     }
 }

@@ -53,7 +53,7 @@ public class LoggingDebugCommand extends AdminCommand {
                 return;
             }
 
-            output.addBotMessage("This command has been deprecated. Please use '%s [un]flag logging'", params[0]);
+            output.addBotMessage("This command has been deprecated. Please use 'debug [un]flag dfbnc logging'", params[0]);
 
             if (user.setDebugFlag(DebugFlag.Logging, optionString.equalsIgnoreCase("on"))) {
                 output.addBotMessage("Debug '%s' has been enabled.", DebugFlag.Logging.toString());

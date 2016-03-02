@@ -50,6 +50,7 @@ public class FlagDebugCommand extends Command {
             int count = 0;
             for (final DebugFlag df : DebugFlag.values()) {
                 if (!df.toString().toLowerCase().matches(setting.toLowerCase())) { continue; }
+                if (df.isAdminOnly() && !user.getAccount().isAdmin()) { continue; }
 
                 if (user.setDebugFlag(df, newValue)) {
                     output.addBotMessage("Debug '%s' has been enabled.", df.toString());
@@ -66,6 +67,7 @@ public class FlagDebugCommand extends Command {
             // List enabled debugs.
             output.addBotMessage("Current debug flags for this socket: ");
             for (DebugFlag df : DebugFlag.values()) {
+                if (df.isAdminOnly() && !user.getAccount().isAdmin()) { continue; }
                 output.addBotMessage("'%s': %s", df.toString(), (user.debugFlagEnabled(df) ? "Enabled" : "Disabled"));
             }
         }
