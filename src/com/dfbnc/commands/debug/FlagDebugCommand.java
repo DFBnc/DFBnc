@@ -45,17 +45,22 @@ public class FlagDebugCommand extends Command {
         if (params.length > 2) {
             final boolean newValue = params[1].equalsIgnoreCase("flag");
 
-            // TODO: This would be nicer if it could use short commands.
             final String setting = Util.joinString(params, " ", 2, 2);
-            final DebugFlag df = DebugFlag.getFromName(setting);
-            if (df == null) {
-                output.addBotMessage("Unknown debug setting: %s", setting);
-            } else {
+
+            int count = 0;
+            for (final DebugFlag df : DebugFlag.values()) {
+                if (!df.toString().toLowerCase().matches(setting.toLowerCase())) { continue; }
+
                 if (user.setDebugFlag(df, newValue)) {
-                    output.addBotMessage("Debug '%s' has been enabled.", setting);
+                    output.addBotMessage("Debug '%s' has been enabled.", df.toString());
                 } else {
-                    output.addBotMessage("Debug '%s' has been disabled.", setting);
+                    output.addBotMessage("Debug '%s' has been disabled.", df.toString());
                 }
+                count++;
+            }
+
+            if (count == 0) {
+                output.addBotMessage("No debug settings matching: %s", setting);
             }
         } else {
             // List enabled debugs.
