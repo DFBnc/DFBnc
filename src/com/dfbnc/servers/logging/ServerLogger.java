@@ -62,6 +62,7 @@ import com.dmdirc.parser.events.ChannelNoticeEvent;
 import com.dmdirc.parser.events.PrivateNoticeEvent;
 
 import com.dmdirc.parser.events.SocketCloseEvent;
+import java.time.LocalDateTime;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -144,7 +145,7 @@ public class ServerLogger {
     }
 
     public void disableLogging() {
-        handleSocketClose(new SocketCloseEvent(myConnectionHandler.getParser(), new Date()));
+        handleSocketClose(new SocketCloseEvent(myConnectionHandler.getParser(), LocalDateTime.now()));
         disabled.set(true);
 
         if (idleFileTimer != null) {
