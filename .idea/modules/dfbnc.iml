@@ -22,6 +22,6 @@
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="jgit-describe" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="ant-contrib-1.0b3" level="project" />
-    <orderEntry type="library" name="mbassador-1.2.0" level="project" />
+    <orderEntry type="library" name="mbassador-1.2.4" level="project" />
   </component>
 </module>
