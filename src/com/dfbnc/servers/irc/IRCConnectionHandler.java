@@ -45,7 +45,6 @@ import com.dmdirc.parser.events.ChannelSelfJoinEvent;
 import com.dmdirc.parser.events.ChannelPartEvent;
 import com.dmdirc.parser.events.ChannelKickEvent;
 import com.dmdirc.parser.events.ConnectErrorEvent;
-import com.dmdirc.parser.events.DataInEvent;
 import com.dmdirc.parser.events.DataOutEvent;
 import com.dmdirc.parser.events.DebugInfoEvent;
 import com.dmdirc.parser.events.ErrorInfoEvent;
@@ -67,6 +66,7 @@ import com.dmdirc.parser.irc.ServerType;
 import com.dmdirc.parser.irc.ServerTypeGroup;
 import com.dmdirc.parser.irc.SimpleNickInUseHandler;
 import com.dmdirc.parser.irc.SimplePingFailureHandler;
+import com.dmdirc.parser.irc.events.IRCDataInEvent;
 import com.dmdirc.parser.irc.outputqueue.OutputQueue;
 import com.dmdirc.parser.irc.outputqueue.PriorityQueueHandler;
 import com.dmdirc.parser.irc.outputqueue.SimpleRateLimitedQueueHandler;
@@ -118,7 +118,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     /** This stores client-sent lines that need to be processed at a later date. */
     private final List<RequeueLine> requeueList = new ArrayList<>();
     /** This stores server-sent lines that need to be sent later. */
-    private List<DataInEvent> serverRequeueList;
+    private List<IRCDataInEvent> serverRequeueList;
     /** This timer handles re-processing of items in the requeueList. */
     private final Timer requeueTimer = new Timer("requeueTimer");
     /** This stores a list of user sockets that we want to requeue all lines from and for temporarily. */
@@ -424,7 +424,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
             user.sendLine("BATCH -" + batchIdentifier);
         }
         if (serverRequeueList != null) {
-            final List<DataInEvent> events = serverRequeueList;
+            final List<IRCDataInEvent> events = serverRequeueList;
             serverRequeueList = null;
             events.stream().forEach(this::onDataIn);
         }
@@ -1132,7 +1132,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     }
 
     @Handler
-    public void onDataIn(final DataInEvent event) {
+    public void onDataIn(final IRCDataInEvent event) {
         if (!checkParser(event)) { return; }
         if (debugIn) { handleDebugData(DebugFlag.ServerDataIn, event.getData()); }
 
@@ -1144,7 +1144,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         String channelName = null;
         int numeric = 0;
         boolean isNumeric = false;
-        final String[] bits = IRCParser.tokeniseLine(event.getData());
+        final String[] bits = event.getTokenisedData();
         if (bits.length == 1) {
             // Something is wrong, the server sent us a line that only includes its name?
             myAccount.sendBotMessage("Invalid looking line from server, ignored: %s", event.getData());
@@ -1152,27 +1152,27 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         }
 
         // Don't forward pings or pongs from the server
-        if (bits[1].equals("PONG") || bits[0].equals("PONG") || bits[1].equals("PING") || bits[0].equals("PING")) {
+        if (event.getAction().equals("PONG")) {
             return;
         }
 
         // Don't forward CAP from the server
-        if (bits[1].equals("CAP")) { return; }
+        if (event.getAction().equals("CAP")) { return; }
 
         // Don't nick-in-use from the server before 001.
-        if (bits[1].equals("433") && !parserReady) { return; }
+        if (event.getAction().equals("433") && !parserReady) { return; }
 
         // Don't forward JOINs from the server (We fake them in the appropriate
         // onchannel(self)join callbacks - we need the parser to process them
         // first.
-        if (bits[1].equals("JOIN")) { return; }
+        if (event.getAction().equals("JOIN")) { return; }
 
-        if (bits.length > 2 && bits[1].equals("PRIVMSG")) {
+        if (bits.length > 2 && event.getAction().equals("PRIVMSG")) {
             final ChannelInfo channel = event.getParser().getChannel(bits[2]);
             if (channel != null) {
                 channelName = channel.getName();
             }
-            if (channel != null || !event.getParser().isValidChannelName(bits[1])) {
+            if (channel != null || !event.getParser().isValidChannelName(bits[2])) {
                 this.addBackbufferMessage(channel, System.currentTimeMillis(), event.getData());
             }
         } else if (bits.length > 2 && event.getParser().isValidChannelName(bits[2])) {
@@ -1180,15 +1180,15 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         }
 
         try {
-            numeric = Integer.parseInt(bits[1]);
+            numeric = Integer.parseInt(event.getAction());
             isNumeric = true;
             if (myParser instanceof IRCParser) {
                 final IRCParser ircParser = ((IRCParser) myParser);
                 final boolean supportLISTMODE = ircParser.get005().containsKey("LISTMODE");
                 if (supportLISTMODE) {
-                    if (bits[1].equals(ircParser.get005().get("LISTMODE"))) {
+                    if (event.getAction().equals(ircParser.get005().get("LISTMODE"))) {
                         return;
-                    } else if (bits[1].equals(ircParser.get005().get("LISTMODEEND"))) {
+                    } else if (event.getAction().equals(ircParser.get005().get("LISTMODEEND"))) {
                         return;
                     }
                 }
@@ -1199,8 +1199,8 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
             }
             switch (numeric) {
                 case 433: // Nick in use
-                    forwardLine = checkAllowLine(null, bits[1]);
-                    disallowLine(null, "433"); // If we allow it above, we don't want to allow it again.
+                    forwardLine = checkAllowLine(null, event.getAction());
+                    disallowLine(null, event.getAction()); // If we allow it above, we don't want to allow it again.
                     break;
 
                 case 324: // Channel Modes
@@ -1215,7 +1215,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
                 case 954: // ExemptChanOps List
                 case 941: // Spamfilter List
                     if (channel != null) {
-                        forwardLine = checkAllowLine(channel, bits[1]);
+                        forwardLine = checkAllowLine(channel, event.getAction());
                     }
                     break;
 
@@ -1224,7 +1224,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
                         channelName = bits[4];
                         final ChannelInfo namesChannel = myParser.getChannel(bits[4]);
                         if (namesChannel != null) {
-                            forwardLine = checkAllowLine(namesChannel, bits[1]);
+                            forwardLine = checkAllowLine(namesChannel, event.getAction());
                         }
                     } else {
                         myAccount.sendBotMessage("Invalid 353 Response: %s", event.getData());
@@ -1238,9 +1238,9 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
                 case 345: // Reop List
                 case 911: // Reop List
                     if (channel != null) {
-                        forwardLine = checkAllowLine(channel, bits[1]);
+                        forwardLine = checkAllowLine(channel, event.getAction());
                         if (forwardLine) {
-                            disallowLine(channel, bits[1]);
+                            disallowLine(channel, event.getAction());
                             disallowLine(channel, Integer.toString(numeric - 1));
                         }
                     }
@@ -1251,9 +1251,9 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
                 case 953: // ExemptChanOps List (Backwards List)
                 case 940: // Spamfilter List (Backwards List)
                     if (channel != null) {
-                        forwardLine = checkAllowLine(channel, bits[1]);
+                        forwardLine = checkAllowLine(channel, event.getAction());
                         if (forwardLine) {
-                            disallowLine(channel, bits[1]);
+                            disallowLine(channel, event.getAction());
                             disallowLine(channel, Integer.toString(numeric + 1));
                         }
                     }
@@ -1261,9 +1261,9 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 
                 case 329: // Channel Create Time
                     if (channel != null) {
-                        forwardLine = checkAllowLine(channel, bits[1]);
+                        forwardLine = checkAllowLine(channel, event.getAction());
                         if (forwardLine) {
-                            disallowLine(channel, bits[1]);
+                            disallowLine(channel, event.getAction());
                             disallowLine(channel, "324");
                         }
                     }
@@ -1271,9 +1271,9 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 
                 case 221: // User Modes
                     if (channel != null) {
-                        forwardLine = checkAllowLine(channel, bits[1]);
+                        forwardLine = checkAllowLine(channel, event.getAction());
                         if (forwardLine) {
-                            disallowLine(channel, bits[1]);
+                            disallowLine(channel, event.getAction());
                         }
                     }
                     break;
@@ -1281,7 +1281,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
                 case 331: // Topic Time/User
                 case 333: // No Topic
                     if (channel != null) {
-                        forwardLine = checkAllowLine(channel, bits[1]);
+                        forwardLine = checkAllowLine(channel, event.getAction());
                         if (forwardLine) {
                             disallowLine(channel, "331");
                             disallowLine(channel, "332");
@@ -1292,9 +1292,9 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 
                 case 366: // Names End
                     if (channel != null) {
-                        forwardLine = checkAllowLine(channel, bits[1]);
+                        forwardLine = checkAllowLine(channel, event.getAction());
                         if (forwardLine) {
-                            disallowLine(channel, bits[1]);
+                            disallowLine(channel, event.getAction());
                             disallowLine(channel, "353");
                         }
                     }
@@ -1318,7 +1318,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
                 if (canSendMessage) {
                     socket.sendLine(event.getData());
 
-                    if (channelName != null && bits.length > 3 && bits[1].equals("PRIVMSG") && isHighlight(socket, bits[bits.length - 1])) {
+                    if (channelName != null && bits.length > 3 && event.getAction().equals("PRIVMSG") && isHighlight(socket, bits[bits.length - 1])) {
                         final ClientInfo client = event.getParser().getClient(bits[0]);
                         final String truncatedMessage = bits[bits.length - 1].substring(0, Math.min(bits[bits.length - 1].length(), 200)) + (bits[bits.length - 1].length() > 200 ? "..." : "");
                         socket.sendBotChat(channelName, "PRIVMSG", "<%s> %s (/cc %s)", client.getNickname(), truncatedMessage, socket.getNickname());
