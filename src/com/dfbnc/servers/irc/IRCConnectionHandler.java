@@ -78,7 +78,6 @@ import uk.org.dataforce.libs.logger.Logger;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.channels.Channel;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1614,7 +1613,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
                             }
                             myParser.getLocalClient().setNickname(myAccount.getAccountConfig().getOption("irc", "nickname"));
 
-                            if (isPerformDeferred && myAccount.getAccountConfig().getOptionBool("irc", "rememberchannels"))) {
+                            if (isPerformDeferred && myAccount.getAccountConfig().getOptionBool("irc", "rememberchannels")) {
                                 loadStoredChannels();
                                 joinRememberedChannels();
                             } else if (myAccount.getAccountConfig().getOptionBool("irc", "partondetach")) {
