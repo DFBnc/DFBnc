@@ -65,19 +65,17 @@ public class IRCSetCommand extends AbstractSetCommand {
         validParams.put("keepnick", new ParamInfo("Try to keep our nickname (offline if set and offline, else primary).", ParamType.BOOL, false));
         validParams.put("offlinenickname", new ParamInfo("Nickname to change to when offline", ParamType.WORD, false));
 
+        validParams.put("partondetach", new ParamInfo("Part from all channels on detach then rejoin on attach", ParamType.BOOL, false));
+        validParams.put("rememberchannels", new ParamInfo("Remember active channels between server connections", ParamType.STRING, false));
+
         // Currently unimplemented.
         validParams.put("bindipv6", new ParamInfo("[Not Implemented] IPv6 Address to bind to for new connections", ParamType.WORD, false));
 
         validParams.put("offlineawayreason", new ParamInfo("[Not Implemented] Away reason to set when all users disconnect and we are not away", ParamType.STRING, false));
         validParams.put("offlineawayalways", new ParamInfo("[Not Implemented] Always use the offlineawayreason even if an away reason is already set", ParamType.BOOL, false));
 
-        // Stupid annoying thing that people do...
-        validParams.put("partondetach", new ParamInfo("[Not Implemented] Part from all channels on detach then rejoin on attach", ParamType.BOOL, false));
-
         // Not sure of the point in this one..
         validParams.put("offlineversion", new ParamInfo("[Not Implemented] reply to use for CTCP VERSION queries when no users are connected", ParamType.STRING, false));
-
-        validParams.put("rememberchannels", new ParamInfo("[Not Implemented] Remember active channels between server connections", ParamType.STRING, false));
     }
 
     /**

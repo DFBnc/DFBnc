@@ -37,12 +37,14 @@ import com.dfbnc.util.IRCLine;
 import com.dfbnc.util.RollingList;
 import com.dfbnc.util.Util;
 import com.dmdirc.parser.common.AwayState;
+import com.dmdirc.parser.common.ChannelJoinRequest;
 import com.dmdirc.parser.common.ChannelListModeItem;
 import com.dmdirc.parser.common.MyInfo;
 import com.dmdirc.parser.common.ParserError;
 import com.dmdirc.parser.events.ChannelJoinEvent;
 import com.dmdirc.parser.events.ChannelSelfJoinEvent;
 import com.dmdirc.parser.events.ChannelPartEvent;
+import com.dmdirc.parser.events.ChannelPasswordChangedEvent;
 import com.dmdirc.parser.events.ChannelKickEvent;
 import com.dmdirc.parser.events.ConnectErrorEvent;
 import com.dmdirc.parser.events.DataOutEvent;
@@ -143,12 +145,14 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     /** Debug data out. */
     private boolean debugOut = false;
     /** Remembered Channels. */
-    private Set<ChannelInfo> rememberedChannels = new LinkedHashSet<>();
+    private Set<ChannelJoinRequest> rememberedChannels = new LinkedHashSet<>();
     /**
      * Are we currently parting all channels for irc.partondetach?
      * (If so, don't remove channels from rememberedChannels
      */
     private boolean isPartingAll = false;
+    /** Has the perform been deferred utnil the first firstAttach? */
+    private boolean isPerformDeferred = false;
 
     /**
      * Create a new IRCConnectionHandler.
@@ -995,7 +999,6 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
             deactivateChannel(null, event.getChannel().getName());
 
             if (!isPartingAll) {
-                rememberedChannels.remove(event.getChannel());
                 updateStoredChannels();
             }
 
@@ -1011,7 +1014,6 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         if (event.getClient().getClient() == myParser.getLocalClient()) {
             deactivateChannel(null, event.getChannel().getName());
 
-            rememberedChannels.remove(event.getChannel());
             updateStoredChannels();
         }
     }
@@ -1039,7 +1041,6 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         // Fake a join.
         onChannelJoin(new ChannelJoinEvent(event.getParser(), event.getDate(), channel, channel.getChannelClient(event.getParser().getLocalClient())));
 
-        rememberedChannels.add(channel);
         updateStoredChannels();
     }
 
@@ -1047,7 +1048,32 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
      * Store the remembered channels in the account config.
      */
     private void updateStoredChannels() {
-        myAccount.getAccountConfig().setOption("irc", "lastKnownChannels", rememberedChannels.stream().map(ci -> ci.getName() + " " + ci.getPassword()).collect(Collectors.toList()));
+        rememberedChannels.clear();
+        for (final ChannelInfo ci : myParser.getChannels()) {
+            rememberedChannels.add(new ChannelJoinRequest(ci.getName(), ci.getPassword()));
+        }
+
+        myAccount.getAccountConfig().setOption("irc", "lastKnownChannels", rememberedChannels.stream().map(cjr -> cjr.getName() + " " + cjr.getPassword()).collect(Collectors.toList()));
+    }
+
+    /**
+     * Load the remembered channels from the account config.
+     */
+    private void loadStoredChannels() {
+        final List<String> channels = myAccount.getAccountConfig().getOptionList("irc", "lastKnownChannels");
+
+        rememberedChannels.clear();
+        for (final String channel : channels) {
+            final String[] bits = channel.split(" ", 2);
+            rememberedChannels.add(new ChannelJoinRequest(bits[0], (bits.length > 1 ? bits[1] : "")));
+        }
+    }
+
+    /**
+     * Join all the remembered channels.
+     */
+    private void joinRememberedChannels() {
+        myParser.joinChannels(rememberedChannels.toArray(new ChannelJoinRequest[0]));
     }
 
     @Handler
@@ -1370,9 +1396,20 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         hasMOTDEnd = true;
         List<String> myList = myAccount.getAccountConfig().getOptionList("irc", "perform.connect");
         Logger.debug3("Connected. Handling performs");
-        for (String line : myList) {
-            myParser.sendRawMessage(filterPerformLine(line));
-            Logger.debug3("Sending perform line: " + line);
+
+        if (myAccount.getAccountConfig().getOptionBool("irc", "partondetach") && myAccount.getActiveClientSockets().isEmpty()) {
+            Logger.debug3("No clients connected and partondetach is true, deferring perform to prevent join/part spam.");
+            isPerformDeferred = true;
+        } else {
+            for (String line : myList) {
+                myParser.sendRawMessage(filterPerformLine(line));
+                Logger.debug3("Sending perform line: " + line);
+            }
+
+            if (myAccount.getAccountConfig().getOptionBool("irc", "rememberchannels")) {
+                loadStoredChannels();
+                joinRememberedChannels();
+            }
         }
         if (myAccount.getActiveClientSockets().isEmpty()) {
             myList = myAccount.getAccountConfig().getOptionList("irc", "perform.lastdetach");
@@ -1560,14 +1597,28 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
                         }
 
                         if (user.isActiveClient() && myAccount.getActiveClientSockets().size() == 1) {
-                            List<String> myList = myAccount.getAccountConfig().getOptionList("irc", "perform.firstattach");
+                            List<String> myList;
+
+                            if (isPerformDeferred) {
+                                myList = myAccount.getAccountConfig().getOptionList("irc", "perform.connect");
+                                for (String line : myList) {
+                                    myParser.sendRawMessage(filterPerformLine(line));
+                                    Logger.debug3("Sending deferred perform line: " + line);
+                                }
+                                isPerformDeferred = false;
+                            }
+
+                            myList = myAccount.getAccountConfig().getOptionList("irc", "perform.firstattach");
                             for (String line : myList) {
                                 myParser.sendRawMessage(filterPerformLine(line));
                             }
                             myParser.getLocalClient().setNickname(myAccount.getAccountConfig().getOption("irc", "nickname"));
 
-                            if (myAccount.getAccountConfig().getOptionBool("irc", "partondetach")) {
-                                myParser.joinChannels(rememberedChannels.stream().map(ci -> new ChannelJoinRequest(ci.getName(), ci.getPassword())).toArray(ChannelJoinRequest[]::new));
+                            if (isPerformDeferred && myAccount.getAccountConfig().getOptionBool("irc", "rememberchannels"))) {
+                                loadStoredChannels();
+                                joinRememberedChannels();
+                            } else if (myAccount.getAccountConfig().getOptionBool("irc", "partondetach")) {
+                                joinRememberedChannels();
                             }
                         }
                     }
