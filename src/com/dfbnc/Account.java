@@ -336,7 +336,7 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
         if (myServerLogger != null) { myServerLogger.disableLogging(); }
         if (handler != null) {
             myServerLogger = handler.getServerLogger();
-            
+
             // Enable any debug flags
             for (final UserSocket us : getUserSockets()) {
                 for (final DebugFlag df : us.getDebugFlags()) {

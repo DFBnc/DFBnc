@@ -76,6 +76,7 @@ import uk.org.dataforce.libs.logger.Logger;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.channels.Channel;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -89,6 +90,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 
 /**
@@ -140,6 +142,13 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     private boolean debugIn = false;
     /** Debug data out. */
     private boolean debugOut = false;
+    /** Remembered Channels. */
+    private Set<ChannelInfo> rememberedChannels = new LinkedHashSet<>();
+    /**
+     * Are we currently parting all channels for irc.partondetach?
+     * (If so, don't remove channels from rememberedChannels
+     */
+    private boolean isPartingAll = false;
 
     /**
      * Create a new IRCConnectionHandler.
@@ -984,6 +993,16 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     public void onChannelPart(final ChannelPartEvent event) {
         if (event.getClient().getClient() == myParser.getLocalClient()) {
             deactivateChannel(null, event.getChannel().getName());
+
+            if (!isPartingAll) {
+                rememberedChannels.remove(event.getChannel());
+                updateStoredChannels();
+            }
+
+            // Is this the last channel, if so we are no longer parting all!
+            if (getParser().getChannels().size() == 1) {
+                isPartingAll = false;
+            }
         }
     }
 
@@ -991,7 +1010,15 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     public void onChannelKick(final ChannelKickEvent event) {
         if (event.getClient().getClient() == myParser.getLocalClient()) {
             deactivateChannel(null, event.getChannel().getName());
+
+            rememberedChannels.remove(event.getChannel());
+            updateStoredChannels();
         }
+    }
+
+    @Handler
+    public void onChannelPasswordChanged(final ChannelPasswordChangedEvent event) {
+        updateStoredChannels();
     }
 
     @Handler
@@ -1010,9 +1037,17 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         channel.getMap().put("backbufferList", new RollingList<BackbufferMessage>(getConfigMaxValue("server", "backbuffer")));
 
         // Fake a join.
-        onChannelJoin(new ChannelJoinEvent(
-                event.getParser(), event.getDate(), channel,
-                channel.getChannelClient(event.getParser().getLocalClient())));
+        onChannelJoin(new ChannelJoinEvent(event.getParser(), event.getDate(), channel, channel.getChannelClient(event.getParser().getLocalClient())));
+
+        rememberedChannels.add(channel);
+        updateStoredChannels();
+    }
+
+    /**
+     * Store the remembered channels in the account config.
+     */
+    private void updateStoredChannels() {
+        myAccount.getAccountConfig().setOption("irc", "lastKnownChannels", rememberedChannels.stream().map(ci -> ci.getName() + " " + ci.getPassword()).collect(Collectors.toList()));
     }
 
     @Handler
@@ -1530,6 +1565,10 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
                                 myParser.sendRawMessage(filterPerformLine(line));
                             }
                             myParser.getLocalClient().setNickname(myAccount.getAccountConfig().getOption("irc", "nickname"));
+
+                            if (myAccount.getAccountConfig().getOptionBool("irc", "partondetach")) {
+                                myParser.joinChannels(rememberedChannels.stream().map(ci -> new ChannelJoinRequest(ci.getName(), ci.getPassword())).toArray(ChannelJoinRequest[]::new));
+                            }
                         }
                     }
                 }, 1500);
@@ -1785,6 +1824,11 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 
                 if (!myAccount.getAccountConfig().getOption("irc", "offlinenickname").isEmpty()) {
                     myParser.getLocalClient().setNickname(myAccount.getAccountConfig().getOption("irc", "offlinenickname"));
+                }
+
+                if (myAccount.getAccountConfig().getOptionBool("irc", "partondetach")) {
+                    isPartingAll = true;
+                    myParser.joinChannel("0");
                 }
             }
         }
