@@ -13,6 +13,10 @@ All pull requests must pass CI before being accepted.
 
 [![Build Status](https://travis-ci.org/ShaneMcC/DFBnc.png?branch=master)](https://travis-ci.org/ShaneMcC/DFBnc)
 
+# Getting Started ##############################################################
+
+There is a Getting Started guide on the wiki [here](https://github.com/ShaneMcC/DFBnc/wiki/GettingStarted)
+
 # History ######################################################################
 
 ## Then ########################################################################
