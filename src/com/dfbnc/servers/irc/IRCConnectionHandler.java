@@ -90,6 +90,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -1758,8 +1759,12 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         final long earliestTime = (timeout > 0) ? System.currentTimeMillis() - timeout : 0;
         final boolean forceTimestamp = (channel == null) && user.getClientConfig().getOptionBool("server", "privatebackbuffertimestamp");
 
-        final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
         final SimpleDateFormat servertime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+        servertime.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+        // TODO: per-client timezones, somehow.
+        // sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         for (BackbufferMessage message : backbuffer) {
             final String line;
