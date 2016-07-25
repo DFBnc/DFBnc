@@ -113,7 +113,7 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
         // Load Sub-Client Configs
         for (final File sc : subConfigs) {
             // prints file and directory paths
-            final String subName = sc.getName().substring(0, sc.getName().lastIndexOf('.'));
+            final String subName = sc.getName().substring(0, sc.getName().lastIndexOf('.')).toLowerCase().replaceAll("[^a-z0-9_-]", "");
             Logger.info("    Found sub-client: " + subName);
 
             try {
@@ -386,7 +386,7 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
 
         // If the subclient doesn't exist, then use the default config so
         // that we don't create random subclient files...
-        final Config checkConfig = (subclient != null && subClientConfigs.containsKey(subclient)) ? getConfig(subclient) : getConfig(null);
+        final Config checkConfig = (subclient != null && hasSubClient(subclient)) ? getConfig(subclient) : getConfig(null);
 
         hashedPassword.append(password);
         // Append per-client salt if set, else use the old default salt.
@@ -618,18 +618,32 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
     }
 
     /**
+     * Do we have a subclient by the given name?
+     *
+     * @param subclientName Name to check
+     * @return True if this is a valid subclient name, else false.
+     */
+    public boolean hasSubClient(final String subclientName) {
+        if (subclientName == null || subclientName.isEmpty()) { return false; }
+        final String subName = subclientName.replaceAll("[^A-Za-z0-9_-]", "");
+
+        return subClientConfigs.containsKey(subName);
+    }
+
+    /**
      * Returns the config for the given sub client.
      * If a config does not exist for this subclient, then one will be
      * created. If subName is null or empty, the default config will be
      * returned.
      *
-     * @param subName The name of the subclient to get the config for.
+     * @param subclientName The name of the subclient to get the config for.
      * @return Config for the given subclient.
      */
-    public Config getConfig(final String subName) {
-        if (subName == null || subName.isEmpty()) { return config; }
+    public Config getConfig(final String subclientName) {
+        if (subclientName == null || subclientName.isEmpty()) { return config; }
+        final String subName = subclientName.replaceAll("[^a-z0-9_-]", "");
 
-        if (!subClientConfigs.containsKey(subName)) {
+        if (!hasSubClient(subName)) {
             Logger.info("Creating new sub-client config for client " + getName() + "+" + subName);
             final File confDir = new File(DFBnc.getConfigDirName(), getName());
             final File sc = new File(confDir, subName + ".scconf");
