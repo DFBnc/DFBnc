@@ -384,9 +384,13 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
     public boolean checkPassword(final String subclient, final String password) {
         final StringBuilder hashedPassword = new StringBuilder(myName.toLowerCase());
 
+        // If the subclient doesn't exist, then use the default config so
+        // that we don't create random subclient files...
+        final Config checkConfig = (subclient != null && subClientConfigs.containsKey(subclient)) ? getConfig(subclient) : getConfig(null);
+
         hashedPassword.append(password);
         // Append per-client salt if set, else use the old default salt.
-        hashedPassword.append(getConfig(subclient).hasOption("user", "salt") ? getConfig(subclient).getOption("user", "salt") : "a5S5l1N4u4O2y9Z4l6W7t1A9b9L8a1X5a7F4s5E8");
+        hashedPassword.append(checkConfig.hasOption("user", "salt") ? checkConfig.getOption("user", "salt") : "a5S5l1N4u4O2y9Z4l6W7t1A9b9L8a1X5a7F4s5E8");
 
         if (checkOldSubClientPassword(subclient, password)) {
             Logger.info("Migrating old subclient password: " + getName() + "+" + subclient);
@@ -394,10 +398,10 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
             getConfig(subclient).setOption("user", "password", Util.md5(hashedPassword.toString()));
         }
 
-        final boolean result = Util.md5(hashedPassword.toString()).equals(getConfig(subclient).getOption("user", "password"));
+        final boolean result = Util.md5(hashedPassword.toString()).equals(checkConfig.getOption("user", "password"));
 
         // Resalt if using the old default salt.
-        if (result && !getConfig(subclient).hasOption("user", "salt")) {
+        if (result && !checkConfig.hasOption("user", "salt")) {
             Logger.info("Re-salting password: " + getName() + "+" + subclient);
             setPassword(subclient, password);
         }

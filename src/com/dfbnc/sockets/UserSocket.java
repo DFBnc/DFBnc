@@ -912,7 +912,7 @@ public class UserSocket extends ConnectedSocket {
         if (realname != null && password != null && nickname != null) {
             final String[] bits = username.split("\\+");
             username = bits[0];
-            clientID = (bits.length > 1 && !bits[1].isEmpty()) ? bits[1].toLowerCase() : null;
+            clientID = (bits.length > 1 && !bits[1].isEmpty()) ? bits[1].toLowerCase().replaceAll("[^a-z0-9_-]", "") : null;
             if (bits.length > 2 && !bits[2].isEmpty()) {
                 clientType = ClientType.getFromName(bits[2].toLowerCase());
             }
