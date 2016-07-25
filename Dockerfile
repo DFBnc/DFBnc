@@ -7,7 +7,7 @@ RUN \
     curl \
     openjdk-8-jre-headless
 
-RUN curl -L -o /DFBnc.jar https://github.com/ShaneMcC/DFBnc/releases/download/0.4/dfbnc.jar
+RUN curl -L -o /DFBnc.jar https://github.com/ShaneMcC/DFBnc/releases/download/0.4.1/dfbnc.jar
 
 EXPOSE 33262 33263
 
