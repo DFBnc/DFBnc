@@ -1208,7 +1208,7 @@ public class UserSocket extends ConnectedSocket {
                         for (Entry<String, Command> entry : cmds.entrySet()) {
                             if (entry.getKey().charAt(0) == '*') { continue; }
                             final Command command = entry.getValue();
-                            if (!command.isAdminOnly() || myAccount.isAdmin()) {
+                            if (!command.isAdminOnly() || (myAccount.isAdmin() && !isReadOnly())) {
                                 output.addBotMessage("%-20s - %s", entry.getKey(), command.getDescription(entry.getKey()));
                             }
                         }

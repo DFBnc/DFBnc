@@ -382,7 +382,7 @@ public final class CommandManager {
         final Command commandHandler = e.get().getValue();
 
         try {
-            if (commandHandler.isAdminOnly() && !user.getAccount().isAdmin()) {
+            if (commandHandler.isAdminOnly() && (!user.getAccount().isAdmin() || user.isReadOnly())) {
                 throw new CommandNotFoundException("No command is known by "+params[0]);
             } else {
                 commandHandler.handle(user, handleParams, output);
