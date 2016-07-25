@@ -71,7 +71,7 @@ public class ShowCommandsCommand extends Command {
 
 
         if (commandsType.equals("") || commandsType.equalsIgnoreCase("all") || commandsType.equalsIgnoreCase("admin")) {
-            if (user.getAccount().isAdmin()) {
+            if (user.getAccount().isAdmin() && !user.isReadOnly()) {
                 if (adminCommands.size() > 0) {
                     if (commandsType.equals("") || commandsType.equalsIgnoreCase("all") || commandsType.equalsIgnoreCase("user")) {
                         output.addBotMessage("");

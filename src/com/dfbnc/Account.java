@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -615,6 +616,15 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
      */
     public Config getAccountConfig() {
         return getConfig(null);
+    }
+
+    /**
+     * Get names of all SubClients/
+     *
+     * @return List of subclient names.
+     */
+    public List<String> getSubClients() {
+        return new ArrayList<>(subClientConfigs.keySet());
     }
 
     /**

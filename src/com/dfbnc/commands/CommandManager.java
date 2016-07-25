@@ -366,13 +366,14 @@ public final class CommandManager {
      * @param params Params for command (param0 is the command name)
      * @param output CommandOutputBuffer where output from this command should go.
      * @throws CommandNotFoundException exception if no commands exists to handle the line
+     * @throws CommandException exception if there was an exception running the command.
      */
-    public void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output) throws CommandNotFoundException {
+    public void handle(final UserSocket user, final String[] params, final CommandOutputBuffer output) throws CommandNotFoundException, CommandException {
         if (params.length == 0 || params[0] == null || params[0].isEmpty()) {
             throw new CommandNotFoundException("No valid command given.");
         }
 
-        final Optional<Entry<String, Command>> e = getMatchingCommand(params[0], user.getAccount().isAdmin());
+        final Optional<Entry<String, Command>> e = getMatchingCommand(params[0], (user.getAccount().isAdmin() && !user.isReadOnly()));
         if (!e.isPresent()) {
             throw new CommandNotFoundException("Command not found: " + params[0]);
         }
@@ -387,9 +388,12 @@ public final class CommandManager {
             } else {
                 commandHandler.handle(user, handleParams, output);
             }
+        } catch (CommandNotFoundException cnfe) {
+            throw cnfe;
         } catch (Exception ex) {
             Logger.error("There has been an error with the command '"+params[0]+"'");
             ex.printStackTrace();
+            throw new CommandException(ex.getMessage(), ex);
         }
     }
 }

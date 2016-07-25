@@ -70,6 +70,18 @@ public class ListUsersCommand extends AdminCommand {
             }
 
             output.addBotMessage("%s", sb.toString());
+
+            for (final String sc : account.getSubClients()) {
+                final StringBuilder sb2 = new StringBuilder("        ");
+                sb2.append(sc);
+                for (UserSocket us : account.getUserSockets()) {
+                    if (sc.equals(us.getClientID())) {
+                        sb2.append("  (Currently connected)");
+                        break;
+                    }
+                }
+                output.addBotMessage("%s", sb2.toString());
+            }
         }
     }
 

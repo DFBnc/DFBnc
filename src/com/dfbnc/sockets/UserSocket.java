@@ -26,6 +26,7 @@ import com.dfbnc.ConnectionHandler;
 import com.dfbnc.Consts;
 import com.dfbnc.DFBnc;
 import com.dfbnc.commands.Command;
+import com.dfbnc.commands.CommandException;
 import com.dfbnc.commands.CommandNotFoundException;
 import com.dfbnc.commands.CommandOutputBuffer;
 import com.dfbnc.commands.filters.CommandOutputFilter;
@@ -1194,7 +1195,7 @@ public class UserSocket extends ConnectedSocket {
             }
         } catch (CommandNotFoundException c) {
             if (DFBnc.getBNC().getConfig().getOptionBool("general", "allowshortcommands") && bits.length > 0) {
-                final SortedMap<String, Command> cmds = new TreeMap<>(myAccount.getCommandManager().getAllCommands(bits[0], myAccount.isAdmin()));
+                final SortedMap<String, Command> cmds = new TreeMap<>(myAccount.getCommandManager().getAllCommands(bits[0], (myAccount.isAdmin() && !isReadOnly())));
                 if (cmds.size() > 0) {
                     if (cmds.size() == 1) {
                         final String req = (bits.length > 0 ? bits[0] : "");
@@ -1217,7 +1218,7 @@ public class UserSocket extends ConnectedSocket {
                 }
             }
             output.addBotMessage("Unknown command '%s' Please try 'show commands'", (bits.length > 0 ? bits[0] : ""));
-        } catch (Exception e) {
+        } catch (CommandException e) {
             output.addBotMessage("Exception with command '%s': %s", (bits.length > 0 ? bits[0] : ""), e.getMessage());
             e.printStackTrace();
             return false;
