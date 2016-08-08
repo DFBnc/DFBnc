@@ -140,11 +140,11 @@ public class IRCServerType extends ServerType {
      * @param input in the form Server[:port] [password]
      * @return String[4] = {"server", "port", "password", "server:port password"}
      *         Password will be set to "" if not specified
-     *         Port will be set to 6667 if not specified or an invalid port is specified
+     *         Port will be omitted if not specified or an invalid port is specified
      *         The last parameter will be set as the interpreted value of the input.
      */
     public static String[] parseServerString(final String input) {
-        String[] result = new String[]{"", "6667", "", ""};
+        String[] result = new String[]{"", "", "", ""};
         String[] parts = input.split(" ", 2);
         String[] hostBits = parts[0].split(":");
         // Set password
@@ -161,12 +161,12 @@ public class IRCServerType extends ServerType {
                 if (portNum > 0 && portNum <= 65535) {
                     result[1] = hostBits[1];
                 }
-            } catch (NumberFormatException nfe) { /* Ignore the Wrong port and use default */ }
+            } catch (NumberFormatException nfe) { /* Ignore invalid port and use default behaviour. */ }
         }
         // Set Host
         result[0] = hostBits[0];
         // Set interpreted value
-        result[3] = (result[0]+":"+result[1]+" "+result[2]).trim();
+        result[3] = (result[0]+(result[1].isEmpty() ? "" : ":"+result[1])+" "+result[2]).trim();
 
         return result;
     }

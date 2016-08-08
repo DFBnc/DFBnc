@@ -195,11 +195,15 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
         try {
             boolean isSSL = false;
             final int portNum;
-            if (serverInfo[1].charAt(0) == '+') {
-                portNum = Integer.parseInt(serverInfo[1].substring(1));
-                isSSL = true;
+            if (!serverInfo[1].isEmpty()) {
+                if (serverInfo[1].charAt(0) == '+') {
+                    portNum = Integer.parseInt(serverInfo[1].substring(1));
+                    isSSL = true;
+                } else {
+                    portNum = Integer.parseInt(serverInfo[1]);
+                }
             } else {
-                portNum = Integer.parseInt(serverInfo[1]);
+                portNum = -1;
             }
             server = new URI(isSSL ? "ircs" : "irc", serverInfo[2], serverInfo[0], portNum, "", "", "");
         } catch (NumberFormatException nfe) {
