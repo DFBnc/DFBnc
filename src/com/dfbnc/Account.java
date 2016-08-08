@@ -369,7 +369,9 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
      *
      * @param password Password to check
      * @return true/false depending on successful match
+     * @deprecated Use checkAuthentication instead.
      */
+    @Deprecated
     public boolean checkPassword(final String password) {
         return checkPassword(null, password);
     }
@@ -381,7 +383,9 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
      * @param subclient Subclient to check, null for none.
      * @param password Password to check
      * @return true/false depending on successful match
+     * @deprecated Use checkAuthentication instead.
      */
+    @Deprecated
     public boolean checkPassword(final String subclient, final String password) {
         final StringBuilder hashedPassword = new StringBuilder(myName.toLowerCase());
 
@@ -898,5 +902,18 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
             sendBotMessage("    %s", bit);
         }
         sendBotMessage("----");
+    }
+
+    /**
+     * Check if the given UserSocket authenticates for this account using
+     * any of the authentication providers.
+     *
+     * @param usersocket UserSocket to test.
+     * @param password Password to test.
+     * @return True if authentication passed.
+     */
+    public boolean checkAuthentication(final UserSocket usersocket, final String password) {
+        // TODO: Authentication Providers.
+        return this.checkPassword(usersocket.getClientID(), password);
     }
 }

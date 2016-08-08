@@ -93,7 +93,7 @@ public class UserSocket extends ConnectedSocket {
     /** Given client version */
     private String clientVersion = null;
     /** Given client SSL Cert Fingerprint */
-    private String clientCertFP = null;
+    private String clientCertFP = "";
     /** Client Type (used for workarounds) */
     private ClientType clientType = ClientType.getFromVersion("");
     /** Given realname */
@@ -946,17 +946,17 @@ public class UserSocket extends ConnectedSocket {
             }
             if (DFBnc.getAccountManager().count() == 0 || (DFBnc.getBNC().allowAutoCreate() && !DFBnc.getAccountManager().exists(username))) {
                 Account acc = DFBnc.getAccountManager().createAccount(username, password);
-                    if (DFBnc.getAccountManager().count() == 1) {
-                        acc.setAdmin(true);
-                        sendBotMessage("You are the first user of this bnc, and have been made admin");
-                    } else {
-                        sendBotMessage("The given account does not exist, so an account has been created for you.");
-                    }
+                if (DFBnc.getAccountManager().count() == 1) {
+                    acc.setAdmin(true);
+                    sendBotMessage("You are the first user of this bnc, and have been made admin");
+                } else {
+                    sendBotMessage("The given account does not exist, so an account has been created for you.");
+                }
                 DFBnc.getAccountManager().saveAccounts();
-                    DFBnc.getBNC().getConfig().save();
+                DFBnc.getBNC().getConfig().save();
             }
 
-            if (DFBnc.getAccountManager().checkPassword(username, clientID, password)) {
+            if (DFBnc.getAccountManager().exists(username) && DFBnc.getAccountManager().get(username).checkAuthentication(this, password)) {
                 myAccount = DFBnc.getAccountManager().get(username);
                 if (myAccount.isSuspended()) {
                     sendBotMessage("This account has been suspended.");
@@ -994,7 +994,7 @@ public class UserSocket extends ConnectedSocket {
                 sendBotMessage("%s", message.toString());
 
                 // TODO: Remove this warning at some poing as it gives too much away.
-                if (DFBnc.getAccountManager().checkPassword(username, clientID, password.toLowerCase())) {
+                if (DFBnc.getAccountManager().exists(username) && DFBnc.getAccountManager().get(username).checkAuthentication(this, password.toLowerCase())) {
                     sendBotMessage("%s", "WARNING: Your password was previously hashed non case-sensitively.");
                     sendBotMessage("%s", "WARNING: Please try connecting with a lowercase password and then changing it.");
                 }
