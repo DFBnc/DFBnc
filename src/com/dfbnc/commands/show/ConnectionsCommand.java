@@ -135,6 +135,9 @@ public class ConnectionsCommand extends Command {
                 output.addBotMessage("                    Local IP: %s", local.getAddress());
                 output.addBotMessage("                    Local Port: %s", local.getPort());
                 output.addBotMessage("                    SSL: %s", Boolean.toString(u.isSSL()));
+                if (!u.getClientCertFP().isEmpty()) {
+                    output.addBotMessage("                    SSL Client Cert FP: %s", u.getClientCertFP());
+                }
                 output.addBotMessage("");
             } else {
                 final String acc = (u.getAccount() == null ? "UNAUTHENTICATED" : u.getAccount().getName());
