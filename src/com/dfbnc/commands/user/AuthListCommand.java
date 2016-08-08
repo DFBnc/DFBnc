@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2015 DFBnc Developers
+ * Copyright (c) 2006-2016 DFBnc Developers
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.dfbnc.servers.irc.commands;
+package com.dfbnc.commands.user;
 
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.AbstractListEditCommand;
@@ -28,18 +28,18 @@ import com.dfbnc.config.Config;
 import com.dfbnc.sockets.UserSocket;
 
 /**
- * This file represents the 'Highlight' command
+ * This file represents the 'AuthList' command
  */
-public class HighlightCommand extends AbstractListEditCommand {
+public class AuthListCommand extends AbstractListEditCommand {
 
     @Override
-    public String getPropertyName(final String command) { return "highlight"; }
+    public String getPropertyName(final String command) { return "authlist"; }
 
     @Override
-    public String getDomainName(final String command) { return "irc"; }
+    public String getDomainName(final String command) { return "user"; }
 
     @Override
-    public String getListName(final String command) { return "Highlight List (For Sub-Client: " + command + ")"; }
+    public String getListName(final String command) { return "Auth List" + (!command.equalsIgnoreCase("--global") ? " (For Sub-Client: " + command + ")" : ""); }
 
     @Override
     public ListOption checkItem(final String command, final String input) {
@@ -49,11 +49,11 @@ public class HighlightCommand extends AbstractListEditCommand {
     @Override
     public String[] getUsageOutput(final String command) {
         if (command.equalsIgnoreCase("add")) {
-            return new String[]{"You must specify a regex to highlight on."};
+            return new String[]{"You must specify an authentication method."};
         } else if (command.equalsIgnoreCase("edit")) {
-            return new String[]{"You must specify a position number to edit, and a regex to highlight on."};
+            return new String[]{"You must specify a position number to edit, and an authentication method."};
         } else if (command.equalsIgnoreCase("ins")) {
-            return new String[]{"You must specify a position to insert this item, and a regex to highlight on."};
+            return new String[]{"You must specify a position to insert this item, and an authentication method."};
         } else {
             return new String[]{""};
         }
@@ -61,7 +61,7 @@ public class HighlightCommand extends AbstractListEditCommand {
 
     @Override
     public String getAddUsageSyntax() {
-        return "<regex>";
+        return "<METHOD> <Parameters>";
     }
 
     @Override
@@ -69,6 +69,11 @@ public class HighlightCommand extends AbstractListEditCommand {
 
     @Override
     public boolean hasSubList() {
+        return true;
+    }
+
+    @Override
+    public boolean allowGlobalList() {
         return true;
     }
 
@@ -84,12 +89,12 @@ public class HighlightCommand extends AbstractListEditCommand {
 
     @Override
     public String validSubList(final String command) {
-        return command;
+        return command.toLowerCase();
     }
 
     @Override
     public String[] handles() {
-        return new String[]{"highlight"};
+        return new String[]{"authlist"};
     }
 
     /**
@@ -97,10 +102,10 @@ public class HighlightCommand extends AbstractListEditCommand {
      *
      * @param manager CommandManager that is in charge of this Command
      */
-    public HighlightCommand (final CommandManager manager) { super(manager); }
+    public AuthListCommand (final CommandManager manager) { super(manager); }
 
     @Override
     public String getDescription(final String command) {
-        return "This command lets you manipulate the highlight list";
+        return "This command lets you manipulate the authlist";
     }
 }

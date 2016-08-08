@@ -84,7 +84,7 @@ public class ChannelWhitelistCommand extends AbstractListEditCommand {
 
     @Override
     public String validSubList(final String command) {
-        return command.toLowerCase();
+        return command;
     }
 
     @Override

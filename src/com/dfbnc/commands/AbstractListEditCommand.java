@@ -121,6 +121,19 @@ public abstract class AbstractListEditCommand extends Command {
     }
 
     /**
+     * Does this command allow "--global" as a sub-list rather than a real
+     * sub list.
+     *
+     * This does nothing if hasSubList is false.
+     *
+     * @return True if --global should be considered as a global list rather
+     *         than a sub-list called "--global"
+     */
+    public boolean allowGlobalList() {
+        return false;
+    }
+
+    /**
      * Does this command create lists on-the-fly?
      *
      * @return If this list can be added to.
@@ -152,12 +165,14 @@ public abstract class AbstractListEditCommand extends Command {
         String[] actualParams = params;
 
         final boolean hasSubList = hasSubList();
+        final boolean allowGlobalList = allowGlobalList();
         final int listParam = hasSubList ? 1 : 0;
         final int commandParam = listParam + 1;
         final int positionParam = commandParam + 1;
 
         if (actualParams.length > commandParam) {
-            final String listParamName = hasSubList ? validSubList(actualParams[listParam]) : actualParams[listParam];
+            final String listParamName = hasSubList && (!allowGlobalList || !actualParams[listParam].equalsIgnoreCase("--global")) ? validSubList(actualParams[listParam]) : actualParams[listParam];
+
             if (listParamName == null) {
                 output.addBotMessage("There is no list to modify using '%s'", listParamName);
                 output.addBotMessage("Please try /dfbnc '%s' for more information", actualParams[0]);
@@ -172,7 +187,7 @@ public abstract class AbstractListEditCommand extends Command {
                 output.addBotMessage("Please try /dfbnc '%s' for more information", actualParams[0]);
                 return;
             }
-            final String subListName = hasSubList ? validSubList(actualParams[listParam]) : null;
+            final String subListName = hasSubList && (!allowGlobalList || !actualParams[listParam].equalsIgnoreCase("--global")) ? validSubList(actualParams[listParam]) : null;
             List<String> myList = new ArrayList<>();
             if (getConfig(user, subListName).hasOption(getDomainName(listParamName), getPropertyName(listParamName))) {
                 myList = getConfig(user, subListName).getOptionList(getDomainName(listParamName), getPropertyName(listParamName));
@@ -285,7 +300,7 @@ public abstract class AbstractListEditCommand extends Command {
             output.addBotMessage("You must specify a sublist to edit eg:");
             output.addBotMessage("  /dfbnc %s <sublist> <command>", actualParams[0]);
         } else {
-            final String listParamName = hasSubList ? validSubList(actualParams[listParam]) : actualParams[listParam];
+            final String listParamName = hasSubList && (!allowGlobalList || !actualParams[listParam].equalsIgnoreCase("--global")) ? validSubList(actualParams[listParam]) : actualParams[listParam];
             String[] helpOutput = getHelpOutput(listParamName);
             if (helpOutput != null) {
                 for (final String out : helpOutput) {

@@ -260,6 +260,7 @@ public class DFBnc {
         userCommandManager.addCommand(new DebugCommand(userCommandManager));
         userCommandManager.addCommand(new HelpCommand(userCommandManager));
         userCommandManager.addCommand(new PasswordCommand(userCommandManager));
+        userCommandManager.addCommand(new AuthListCommand(userCommandManager));
         userCommandManager.addCommand(new SaveCommand(userCommandManager));
         userCommandManager.addCommand(new ServerSetCommand(userCommandManager));
         userCommandManager.addCommand(new UserSetCommand(userCommandManager));
