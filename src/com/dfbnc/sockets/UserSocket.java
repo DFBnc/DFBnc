@@ -33,6 +33,8 @@ import com.dfbnc.commands.filters.CommandOutputFilter;
 import com.dfbnc.commands.filters.CommandOutputFilterException;
 import com.dfbnc.commands.filters.CommandOutputFilterManager;
 import com.dfbnc.config.Config;
+import com.dfbnc.sockets.secure.HandshakeCompletedEvent;
+import com.dfbnc.sockets.secure.SSLByteChannel;
 import com.dfbnc.util.MultiWriter;
 import com.dfbnc.util.UserSocketMessageWriter;
 import com.dfbnc.util.Util;
@@ -43,9 +45,9 @@ import uk.org.dataforce.libs.logger.Logger;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
+import java.security.cert.CertificateEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -56,6 +58,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import javax.net.ssl.SSLPeerUnverifiedException;
 
 /**
  * This socket handles actual clients connected to the bnc.
@@ -89,6 +92,8 @@ public class UserSocket extends ConnectedSocket {
     private String clientID = null;
     /** Given client version */
     private String clientVersion = null;
+    /** Given client SSL Cert Fingerprint */
+    private String clientCertFP = null;
     /** Client Type (used for workarounds) */
     private ClientType clientType = ClientType.getFromVersion("");
     /** Given realname */
@@ -443,6 +448,15 @@ public class UserSocket extends ConnectedSocket {
         } else {
             sendBotMessage("You are not connected using SSL");
         }
+    }
+
+    @Override
+    public void handshakeCompleted(final HandshakeCompletedEvent hce) {
+        try {
+            final String fingerprint = Util.sha1(hce.getPeerCertificates()[0].getEncoded()).toUpperCase();
+            sendBotMessage("Your SSL Client Certificate Fingerprint is: " + fingerprint);
+            clientCertFP = fingerprint;
+        } catch (final SSLPeerUnverifiedException | CertificateEncodingException ex) { /* Don't Care. */ }
     }
 
     /**

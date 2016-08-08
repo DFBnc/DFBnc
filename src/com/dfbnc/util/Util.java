@@ -98,6 +98,38 @@ public final class Util {
     }
 
     /**
+     * Get the sha1 hash of a string.
+     *
+     * @param string String to hash
+     * @return sha1 hash of given string
+     */
+    public static String sha1(final String string) {
+        try {
+            final MessageDigest m = MessageDigest.getInstance("SHA-1");
+            m.update(string.getBytes(), 0, string.length());
+            return new BigInteger(1, m.digest()).toString(16);
+        } catch (NoSuchAlgorithmException e) {
+            return "";
+        }
+    }
+
+    /**
+     * Get the sha1 hash of a byte array.
+     *
+     * @param input Byte Array to hash
+     * @return sha1 hash of given string
+     */
+    public static String sha1(final byte[] input) {
+        try {
+            final MessageDigest m = MessageDigest.getInstance("SHA-1");
+            m.update(input);
+            return new BigInteger(1, m.digest()).toString(16);
+        } catch (NoSuchAlgorithmException e) {
+            return "";
+        }
+    }
+
+    /**
      * Delete a folder and all it's sub files/folders
      *
      * @param folder Folder to delete

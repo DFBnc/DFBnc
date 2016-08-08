@@ -40,6 +40,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.ClosedChannelException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
@@ -70,6 +72,9 @@ public class SSLByteChannel implements ByteChannel {
 
     /** Prevents trying to close twice. */
     private boolean socketOpen = true;
+
+    /** Handshake Completed Listeners. */
+    final List<HandshakeCompletedListener> hcls = new ArrayList<>();
 
     /**
      * Create a new SSLByteChannel by wrapping an old one.
@@ -119,6 +124,20 @@ public class SSLByteChannel implements ByteChannel {
     public boolean isOpen() {
         return socketOpen;
     }
+
+    /**
+     * Add handshake Completed Listener
+     *
+     * @param hcl Listener to add.
+     */
+    public void addHandshakeCompletedListener(final HandshakeCompletedListener hcl) { hcls.add(hcl); }
+
+    /**
+     * Remove handshake Completed Listener
+     *
+     * @param hcl Listener to remove.
+     */
+    public void removeHandshakeCompletedListener(final HandshakeCompletedListener hcl) { hcls.remove(hcl); }
 
     /**
      * Read bytes from the socket into the given buffer.
@@ -304,6 +323,12 @@ public class SSLByteChannel implements ByteChannel {
             }
         }
 
+        if (wrapResult.ser.getHandshakeStatus() == HandshakeStatus.FINISHED) {
+            for (final HandshakeCompletedListener hcl : hcls) {
+                hcl.handshakeCompleted(new HandshakeCompletedEvent(this));
+            }
+        }
+
         // Check if the socket was closed.
         switch(wrapResult.ser.getStatus()) {
             case CLOSED:
@@ -316,6 +341,15 @@ public class SSLByteChannel implements ByteChannel {
         }
 
         return wrapResult.ser;
+    }
+
+    /**
+     * Get the SSL Engine in use.
+     *
+     * @return Our SSLEngine
+     */
+    public SSLEngine getSSLEngine() {
+        return myEngine;
     }
 
     private enum WrapResultType { WRAP, UNWRAP; }

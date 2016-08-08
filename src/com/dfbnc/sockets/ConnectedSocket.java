@@ -28,6 +28,8 @@ import java.nio.channels.SocketChannel;
 import java.util.concurrent.CountDownLatch;
 
 import com.dfbnc.sockets.plain.PlainSocket;
+import com.dfbnc.sockets.secure.HandshakeCompletedEvent;
+import com.dfbnc.sockets.secure.HandshakeCompletedListener;
 import com.dfbnc.sockets.secure.SecureSocket;
 import com.dfbnc.util.IRCLine;
 import java.net.InetSocketAddress;
@@ -37,7 +39,7 @@ import uk.org.dataforce.libs.logger.Logger;
  * This is responsible for taking incoming data, and separating it
   * into "\n" separated lines.
  */
-public abstract class ConnectedSocket implements SelectedSocketHandler {
+public abstract class ConnectedSocket implements SelectedSocketHandler, HandshakeCompletedListener {
 
     /** SocketWrapper, used to allow for SSL Sockets */
     protected final SocketWrapper mySocketWrapper;
@@ -215,6 +217,16 @@ public abstract class ConnectedSocket implements SelectedSocketHandler {
      * Action to take when socket is opened and ready.
      */
     public void socketOpened() {
+    }
+
+    /**
+     * Action to take when the SSL Handshake has completed if using SSL.
+     *
+     * @param hce The event identifying when the SSL Handshake completed on
+     *            the given SSL connection.
+     */
+    @Override
+    public void handshakeCompleted(final HandshakeCompletedEvent hce) {
     }
 
     /**

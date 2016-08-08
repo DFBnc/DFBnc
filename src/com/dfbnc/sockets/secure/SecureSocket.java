@@ -38,11 +38,13 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
-import javax.net.ssl.TrustManagerFactory;
 
 import com.dfbnc.DFBnc;
 import com.dfbnc.sockets.ConnectedSocket;
 import com.dfbnc.sockets.SocketWrapper;
+import com.dfbnc.util.Util;
+import java.security.cert.CertificateEncodingException;
+import javax.net.ssl.SSLPeerUnverifiedException;
 
 /**
  * This defines a Secure (ssl) Socket.
@@ -67,9 +69,11 @@ public class SecureSocket extends SocketWrapper {
             /* SSLEngine used for this socket */
             SSLEngine sslEngine = getSSLContext().createSSLEngine();
             sslEngine.setUseClientMode(false);
+            sslEngine.setWantClientAuth(true);
             sslEngine.beginHandshake();
 
             myByteChannel = new SSLByteChannel(channel, sslEngine);
+            ((SSLByteChannel)myByteChannel).addHandshakeCompletedListener(owner);
         } catch (final Exception e) {
             throw new IOException("Error setting up SSL Socket: "+e.getMessage(), e);
         }
@@ -90,32 +94,38 @@ public class SecureSocket extends SocketWrapper {
      */
     public static synchronized SSLContext getSSLContext() throws IllegalArgumentException, KeyStoreException, FileNotFoundException, NoSuchAlgorithmException, KeyManagementException, UnrecoverableKeyException, IOException, CertificateException {
         if (sslContext == null) {
-            String storePassword =  DFBnc.getBNC().getConfig().getOption("ssl", "storepass");
-            String keyPassword =  DFBnc.getBNC().getConfig().getOption("ssl", "keypass");
-            String keyStore =  DFBnc.getBNC().getConfig().getOption("ssl", "keystore");
+            final String storePassword =  DFBnc.getBNC().getConfig().getOption("ssl", "storepass");
+            final String keyPassword =  DFBnc.getBNC().getConfig().getOption("ssl", "keypass");
+            final String keyStore =  DFBnc.getBNC().getConfig().getOption("ssl", "keystore");
 
             if (keyStore.isEmpty()) { throw new IllegalArgumentException("No keystore sepcified in config ('ssl.keystore')"); }
             else if (keyPassword.isEmpty()) { throw new IllegalArgumentException("No key password sepcified in config ('ssl.keypass')"); }
             else if (storePassword.isEmpty()) { throw new IllegalArgumentException("No keystore password sepcified in config ('ssl.storepass')"); }
 
-            File keyFile = new File(keyStore);
+            final File keyFile = new File(keyStore);
             if (!keyFile.exists()) { throw new FileNotFoundException("Keystore '"+keyStore+"' does not exist."); }
 
             // Load the keystore
-            KeyStore ks = KeyStore.getInstance("JKS");
+            final KeyStore ks = KeyStore.getInstance("JKS");
             ks.load(new FileInputStream(keyFile), storePassword.toCharArray());
 
             // Load the keymanager
-            KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+            final KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
             kmf.init(ks, keyPassword.toCharArray());
 
             // Load the TrustManager
-            TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
-            tmf.init(ks);
+            // TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+            // tmf.init(ks);
 
             // Create an SSLContext
             sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), new SecureRandom());
+
+            // Init the SSL Context.
+            //
+            // We want to provide our own key using the key manager, and trust
+            // all certificates sent so that we can see all certificates that
+            // are given to us.
+            sslContext.init(kmf.getKeyManagers(), TrustingTrustManager.getTrustingTrustManagers(), new SecureRandom());
         }
 
         return sslContext;
