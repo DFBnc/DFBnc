@@ -214,6 +214,15 @@ public class UserSocket extends ConnectedSocket {
     }
 
     /**
+     * Get the ClientCert FingerPrint for this socket.
+     *
+     * @return The ClientCert FingerPrint for this socket.
+     */
+    public String getClientCertFP() {
+        return clientCertFP;
+    }
+
+    /**
      * Get the client Version for this socket.
      *
      * @return The client Version for this socket.
@@ -454,7 +463,11 @@ public class UserSocket extends ConnectedSocket {
     public void handshakeCompleted(final HandshakeCompletedEvent hce) {
         try {
             final String fingerprint = Util.sha1(hce.getPeerCertificates()[0].getEncoded()).toUpperCase();
-            sendBotMessage("Your SSL Client Certificate Fingerprint is: " + fingerprint);
+            if (clientCertFP.isEmpty()) {
+                // Only tell the client their certificate if we didn't know
+                // about one before. (So probably the first handshake)
+                sendBotMessage("Your SSL Client Certificate Fingerprint is: " + fingerprint);
+            }
             clientCertFP = fingerprint;
         } catch (final SSLPeerUnverifiedException | CertificateEncodingException ex) { /* Don't Care. */ }
     }
