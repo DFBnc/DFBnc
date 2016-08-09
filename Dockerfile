@@ -10,6 +10,7 @@ COPY . /dfbnc/
 
 RUN \
   cd /dfbnc && \
+  if [ -e .git/shallow ]; then git fetch --unshallow; fi && \
   git fetch --tags && \
   git submodule update --init --recursive && \
   ant jar && \
