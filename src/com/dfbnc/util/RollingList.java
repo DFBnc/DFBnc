@@ -83,6 +83,12 @@ public class RollingList<T> extends LinkedList<T> {
         }
     }
 
+    @Override
+    @SuppressWarnings("unchecked")
+    public RollingList<T> clone() {
+        return (RollingList<T>)super.clone();
+    }
+
     //=========================================================================
     // Below are implementations of any method that adds anything to this list.
     //=========================================================================

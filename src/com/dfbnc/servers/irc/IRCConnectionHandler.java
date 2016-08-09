@@ -1744,7 +1744,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 
         // backbufferList may contain more items than this client wants to see.
         // Trim it to size.
-        final RollingList<BackbufferMessage> backbuffer = (RollingList<BackbufferMessage>) backbufferList.clone();
+        final RollingList<BackbufferMessage> backbuffer = backbufferList.clone();
         if (channel != null) {
             backbuffer.setCapacity(user.getClientConfig().getOptionInt("server", "backbuffer"));
         } else if (user.getClientConfig().hasOption("server", "privatebackbuffertimeout")) {
