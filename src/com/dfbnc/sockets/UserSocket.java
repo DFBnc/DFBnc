@@ -22,6 +22,7 @@
 package com.dfbnc.sockets;
 
 import com.dfbnc.Account;
+import com.dfbnc.AccountManager;
 import com.dfbnc.ConnectionHandler;
 import com.dfbnc.Consts;
 import com.dfbnc.DFBnc;
@@ -34,7 +35,6 @@ import com.dfbnc.commands.filters.CommandOutputFilterException;
 import com.dfbnc.commands.filters.CommandOutputFilterManager;
 import com.dfbnc.config.Config;
 import com.dfbnc.sockets.secure.HandshakeCompletedEvent;
-import com.dfbnc.sockets.secure.SSLByteChannel;
 import com.dfbnc.util.MultiWriter;
 import com.dfbnc.util.UserSocketMessageWriter;
 import com.dfbnc.util.Util;
@@ -42,6 +42,7 @@ import com.dmdirc.parser.irc.CapabilityState;
 import com.dmdirc.parser.irc.IRCParser;
 import uk.org.dataforce.libs.logger.Logger;
 
+import javax.net.ssl.SSLPeerUnverifiedException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
@@ -58,7 +59,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import javax.net.ssl.SSLPeerUnverifiedException;
 
 /**
  * This socket handles actual clients connected to the bnc.
@@ -140,6 +140,9 @@ public class UserSocket extends ConnectedSocket {
     /** Set of debug flags. */
     private final Set<DebugFlag> debugFlags = new HashSet<>();
 
+    /** Account manager to use to check account details. */
+    private final AccountManager accountManager;
+
     /**
      * Create a new UserSocket.
      *
@@ -148,7 +151,11 @@ public class UserSocket extends ConnectedSocket {
      * @throws IOException If there is a problem setting up the socket.
      */
     public UserSocket(final SocketChannel sChannel, final boolean fromSSL) throws IOException {
-        super(sChannel, "[UserSocket "+sChannel+"]", fromSSL);
+        super(sChannel, "[UserSocket " + sChannel + "]", fromSSL);
+
+        // TODO: Pass this in, instead of using a static method.
+        accountManager = DFBnc.getAccountManager();
+
         synchronized (knownSockets) {
             final Random random = new Random();
             final StringBuilder tempid = new StringBuilder(String.valueOf(random.nextInt(10)));
@@ -938,74 +945,109 @@ public class UserSocket extends ConnectedSocket {
 
         // After every message, check if we have everything we need...
         if (realname != null && password != null && nickname != null) {
-            final String[] bits = username.split("\\+");
-            username = bits[0];
-            clientID = (bits.length > 1 && !bits[1].isEmpty()) ? bits[1].replaceAll("[^a-z0-9_-]", "") : null;
-            if (bits.length > 2 && !bits[2].isEmpty()) {
-                clientType = ClientType.getFromName(bits[2].toLowerCase());
-            }
-            if (DFBnc.getAccountManager().count() == 0 || (DFBnc.getBNC().allowAutoCreate() && !DFBnc.getAccountManager().exists(username))) {
-                Account acc = DFBnc.getAccountManager().createAccount(username, password);
-                if (DFBnc.getAccountManager().count() == 1) {
-                    acc.setAdmin(true);
-                    sendBotMessage("You are the first user of this bnc, and have been made admin");
-                } else {
-                    sendBotMessage("The given account does not exist, so an account has been created for you.");
-                }
-                DFBnc.getAccountManager().saveAccounts();
-                DFBnc.getBNC().getConfig().save();
-            }
+            authenticate(line[0]);
+        }
+    }
 
-            if (DFBnc.getAccountManager().exists(username) && DFBnc.getAccountManager().get(username).checkAuthentication(this, password)) {
-                myAccount = DFBnc.getAccountManager().get(username);
-                if (myAccount.isSuspended()) {
-                    sendBotMessage("This account has been suspended.");
-                    sendBotMessage("Reason: %s", myAccount.getSuspendReason());
-                    myAccount = null;
-                    close("Account suspended.");
-                } else {
-                    sendBotMessage("You are now logged in");
-                    if (myAccount.isAdmin()) {
-                        sendBotMessage("This is an Admin account");
-                    }
-                    // Run the firsttime command if this is the first time the account has been used
-                    if (myAccount.isFirst()) {
-                        final CommandOutputBuffer co = new CommandOutputBuffer(this);
-                        handleBotCommand(new String[]{"show", "firsttime"}, co);
-                        if (myAccount.isAdmin()) {
-                            sendBotMessage("");
-                            handleBotCommand(new String[]{"show", "firsttime", "admin"}, co);
-                        }
-                        co.send();
-                    }
-                    Logger.debug2("processNonAuthenticated - User Connected");
-                    myAccount.userConnected(this);
-                    Logger.debug2("userConnected finished");
-                }
+    /**
+     * Attempts to authenticate the user based on the information they've provided.
+     *
+     * @param lastCommand The command the user last attempted, used in error responses.
+     */
+    private void authenticate(final String lastCommand) {
+        final String[] bits = username.split("\\+");
+        username = bits[0];
+        clientID = (bits.length > 1 && !bits[1].isEmpty()) ? bits[1].replaceAll("[^a-z0-9_-]", "") : null;
+        if (bits.length > 2 && !bits[2].isEmpty()) {
+            clientType = ClientType.getFromName(bits[2].toLowerCase());
+        }
+
+        handleAutoAccountCreation();
+
+        if (accountManager.exists(username) && accountManager.get(username).checkAuthentication(this, password)) {
+            handleSuccessfulAuth();
+        } else {
+            handleInvalidPassword(lastCommand);
+        }
+    }
+
+    /**
+     * Handles automatic creation of accounts if the user is the first one to connect, or if auto-create is enabled
+     * and the account doesn't exist.
+     */
+    private void handleAutoAccountCreation() {
+        final DFBnc bnc = DFBnc.getBNC();
+        if (accountManager.count() == 0 || (bnc.allowAutoCreate() && !accountManager.exists(username))) {
+            Account acc = accountManager.createAccount(username, password);
+            if (accountManager.count() == 1) {
+                acc.setAdmin(true);
+                sendBotMessage("You are the first user of this bnc, and have been made admin");
             } else {
-                passwordTries++;
-                final StringBuilder message = new StringBuilder("Password incorrect, or account not found.");
-                message.append(" You have ");
-                // TODO: make this a config setting
-                int maxPasswordTries = 3;
-                message.append(maxPasswordTries - passwordTries);
-                message.append(" attempt(s) left.");
-                sendIRCLine(Consts.ERR_PASSWDMISMATCH, line[0], message.toString());
-                sendBotMessage("%s", message.toString());
-
-                // TODO: Remove this warning at some poing as it gives too much away.
-                if (DFBnc.getAccountManager().exists(username) && DFBnc.getAccountManager().get(username).checkAuthentication(this, password.toLowerCase())) {
-                    sendBotMessage("%s", "WARNING: Your password was previously hashed non case-sensitively.");
-                    sendBotMessage("%s", "WARNING: Please try connecting with a lowercase password and then changing it.");
-                }
-
-                password = null;
-                if (passwordTries >= maxPasswordTries) {
-                    sendIRCLine(Consts.ERR_PASSWDMISMATCH, line[0], "Too many password attempts, closing socket.");
-                    sendBotMessage("Too many password attempts, closing socket.");
-                    close("Too many password attempts.");
-                }
+                sendBotMessage("The given account does not exist, so an account has been created for you.");
             }
+            accountManager.saveAccounts();
+            bnc.getConfig().save();
+        }
+    }
+
+    /**
+     * Handles a successful authentication attempt.
+     */
+    private void handleSuccessfulAuth() {
+        myAccount = accountManager.get(username);
+        if (myAccount.isSuspended()) {
+            sendBotMessage("This account has been suspended.");
+            sendBotMessage("Reason: %s", myAccount.getSuspendReason());
+            myAccount = null;
+            close("Account suspended.");
+        } else {
+            sendBotMessage("You are now logged in");
+            if (myAccount.isAdmin()) {
+                sendBotMessage("This is an Admin account");
+            }
+            // Run the firsttime command if this is the first time the account has been used
+            if (myAccount.isFirst()) {
+                final CommandOutputBuffer co = new CommandOutputBuffer(this);
+                handleBotCommand(new String[]{"show", "firsttime"}, co);
+                if (myAccount.isAdmin()) {
+                    sendBotMessage("");
+                    handleBotCommand(new String[]{"show", "firsttime", "admin"}, co);
+                }
+                co.send();
+            }
+            Logger.debug2("processNonAuthenticated - User Connected");
+            myAccount.userConnected(this);
+            Logger.debug2("userConnected finished");
+        }
+    }
+
+    /**
+     * Deals with the user providing an invalid password.
+     *
+     * @param lastCommand The command the user last attempted, used in error responses.
+     */
+    private void handleInvalidPassword(final String lastCommand) {
+        passwordTries++;
+        final StringBuilder message = new StringBuilder("Password incorrect, or account not found.");
+        message.append(" You have ");
+        // TODO: make this a config setting
+        int maxPasswordTries = 3;
+        message.append(maxPasswordTries - passwordTries);
+        message.append(" attempt(s) left.");
+        sendIRCLine(Consts.ERR_PASSWDMISMATCH, lastCommand, message.toString());
+        sendBotMessage("%s", message.toString());
+
+        // TODO: Remove this warning at some point as it gives too much away.
+        if (accountManager.exists(username) && accountManager.get(username).checkAuthentication(this, password.toLowerCase())) {
+            sendBotMessage("%s", "WARNING: Your password was previously hashed non case-sensitively.");
+            sendBotMessage("%s", "WARNING: Please try connecting with a lowercase password and then changing it.");
+        }
+
+        password = null;
+        if (passwordTries >= maxPasswordTries) {
+            sendIRCLine(Consts.ERR_PASSWDMISMATCH, lastCommand, "Too many password attempts, closing socket.");
+            sendBotMessage("Too many password attempts, closing socket.");
+            close("Too many password attempts.");
         }
     }
 
