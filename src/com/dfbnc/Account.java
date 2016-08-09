@@ -22,6 +22,7 @@
 
 package com.dfbnc;
 
+import com.dfbnc.authentication.AuthProviderManager;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.config.Config;
 import com.dfbnc.config.ConfigChangeListener;
@@ -900,6 +901,36 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
     }
 
     /**
+     * Determines whether the given socket is authenticated in some manner according to the authlist.
+     *
+     * @param usersocket The socket to test.
+     * @param subclient The subclient whose authlist to check (or null).
+     * @param announce True to announce to the user if they are authenticated, false to suppress.
+     * @return True if the socket is authenticated by an authlist entry, false otherwise.
+     */
+    public boolean isAuthenticated(final UserSocket usersocket, final String subclient, final boolean announce) {
+        final AuthProviderManager authProviderManager = DFBnc.getAuthProviderManager();
+        final Config checkConfig = (subclient != null && hasSubClient(subclient)) ? getConfig(subclient) : getConfig(null);
+
+        int i = 0;
+        for (final String entry : checkConfig.getOptionList("user", "authlist")) {
+            final String[] bits = entry.split(" ", 2);
+            if (bits.length > 1 && authProviderManager.hasProvider(bits[0])) {
+                if (authProviderManager.getProvider(bits[0]).checkAuthentication(usersocket, bits[1])) {
+                    if (announce) {
+                        usersocket.sendBotMessage("Authenticated using %s (authlist entry #%d)", bits[0], i);
+                    }
+                    return true;
+                }
+            }
+
+            i++;
+        }
+
+        return false;
+    }
+
+    /**
      * Check if the given UserSocket authenticates for this account using
      * any of the authentication providers.
      *
@@ -909,21 +940,7 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
      */
     public boolean checkAuthentication(final UserSocket usersocket, final String password) {
         final String subclient = usersocket.getClientID();
-        final Config checkConfig = (subclient != null && hasSubClient(subclient)) ? getConfig(subclient) : getConfig(null);
-
-        int i = 0;
-        for (final String entry : checkConfig.getOptionList("user", "authlist")) {
-            final String[] bits = entry.split(" ", 2);
-            if (bits.length > 1 && DFBnc.getAuthProviderManager().hasProvider(bits[0])) {
-                if (DFBnc.getAuthProviderManager().getProvider(bits[0]).checkAuthentication(usersocket, bits[1])) {
-                    usersocket.sendBotMessage("Authenticated by AuthList using Entry #%d", i);
-                    return true;
-                }
-            }
-
-            i++;
-        }
-
-        return this.checkPassword(subclient, password);
+        return isAuthenticated(usersocket, subclient, true) || checkPassword(subclient, password);
     }
+
 }
