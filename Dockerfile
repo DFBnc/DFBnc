@@ -1,13 +1,20 @@
-FROM ubuntu:xenial 
+FROM java:8-jdk
 MAINTAINER Shane Mc Cormack <dataforce@dataforce.org.uk>
 
 RUN \
   apt-get update && \ 
-  apt-get -y install \
-    curl \
-    openjdk-8-jre-headless
+  apt-get -y install ant && \
+  rm -rf /var/lib/apt/lists/*
 
-RUN curl -L -o /DFBnc.jar https://github.com/ShaneMcC/DFBnc/releases/download/0.4.1/dfbnc.jar
+COPY . /dfbnc/
+
+RUN \
+  cd /dfbnc && \
+  git submodule update --init --recursive && \
+  ant jar && \
+  mv /dfbnc/dist/dfbnc.jar / && \
+  rm -rf /dfbnc && \
+  apt-get -y purge ant
 
 EXPOSE 33262 33263
 
@@ -15,4 +22,4 @@ VOLUME ["/var/lib/dfbnc"]
 
 WORKDIR /var/lib/dfbnc
 
-CMD ["/usr/bin/java", "-jar", "/DFBnc.jar", "--config", "/var/lib/dfbnc", "--foreground"]
+CMD ["/usr/bin/java", "-jar", "/dfbnc.jar", "--config", "/var/lib/dfbnc", "--foreground"]
