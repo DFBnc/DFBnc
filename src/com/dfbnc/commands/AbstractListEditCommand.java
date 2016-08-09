@@ -64,9 +64,10 @@ public abstract class AbstractListEditCommand extends Command {
      *
      * @param command The command passed as param[0]
      * @param input The input to validate
+     * @param user UserSocket that wants to make the change.
      * @return ListOption for this parameter.
      */
-    public ListOption checkItem(final String command, final String input) {
+    public ListOption checkItem(final String command, final String input, final UserSocket user) {
         return new ListOption(true, input, null);
     }
 
@@ -233,7 +234,7 @@ public abstract class AbstractListEditCommand extends Command {
                     for (int i = numParams; i < actualParams.length; ++i) {
                         allInput.append(actualParams[i]).append(" ");
                     }
-                    ListOption listOption = checkItem(listParamName, allInput.toString().trim());
+                    ListOption listOption = checkItem(listParamName, allInput.toString().trim(), user);
                     if (listOption.isValid()) {
                         if (actualParams[commandParam].equalsIgnoreCase("add")) {
                             myList.add(listOption.getParam());

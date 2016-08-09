@@ -21,6 +21,9 @@
  */
 package com.dfbnc.commands.user;
 
+import com.dfbnc.DFBnc;
+import com.dfbnc.authentication.AuthProvider;
+import com.dfbnc.authentication.AuthProviderManager;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.AbstractListEditCommand;
 import com.dfbnc.commands.ListOption;
@@ -42,8 +45,22 @@ public class AuthListCommand extends AbstractListEditCommand {
     public String getListName(final String command) { return "Auth List" + (!command.equalsIgnoreCase("--global") ? " (For Sub-Client: " + command + ")" : ""); }
 
     @Override
-    public ListOption checkItem(final String command, final String input) {
-        return new ListOption(true, input, null);
+    public ListOption checkItem(final String command, final String input, final UserSocket user) {
+        final String[] bits = input.split(" ", 2);
+        final AuthProviderManager apm = DFBnc.getAuthProviderManager();
+        if (apm.hasProvider(bits[0])) {
+            final AuthProvider ap = apm.getProvider(bits[0]);
+
+            final String params = ap.validateParams(user, (command.equalsIgnoreCase("--global") ? "" : command), (bits.length > 1 ? bits[1] : ""));
+
+            if (!params.isEmpty()) {
+                return new ListOption(true, ap.getProviderName() + " " + params, null);
+            } else {
+                return new ListOption(false, input, new String[]{"Invalid parameters for provider."});
+            }
+        }
+
+        return new ListOption(false, input, new String[]{"No such provider '" + bits[0] + "'"});
     }
 
     @Override
@@ -94,7 +111,7 @@ public class AuthListCommand extends AbstractListEditCommand {
 
     @Override
     public String[] handles() {
-        return new String[]{"authlist"};
+        return new String[]{"authlist", "*al"};
     }
 
     /**

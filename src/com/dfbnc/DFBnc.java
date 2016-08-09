@@ -21,6 +21,8 @@
  */
 package com.dfbnc;
 
+import com.dfbnc.authentication.AuthProviderManager;
+import com.dfbnc.authentication.providers.*;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.admin.*;
 import com.dfbnc.commands.user.*;
@@ -87,6 +89,9 @@ public class DFBnc {
 
     /** The account manager for this bnc */
     private static AccountManager accountManager = new AccountManager();
+
+    /** The provider manager for this bnc */
+    private static AuthProviderManager authProviderManager = new AuthProviderManager();
 
     /** The arraylist of listenSockets */
     private static ArrayList<ListenSocket> listenSockets = new ArrayList<>();
@@ -274,6 +279,9 @@ public class DFBnc {
         adminCommandManager.addCommand(new SetAdminCommand(adminCommandManager));
         adminCommandManager.addCommand(new ShutdownCommand(adminCommandManager));
         adminCommandManager.addCommand(new DebugCommand(adminCommandManager));
+
+        Logger.info("Setting up AuthProvider Manager");
+        authProviderManager.addProvider(new ClientCertProvider());
 
         Logger.info("Setting up ServerType Manager");
         myServerTypeManager.init();
@@ -577,6 +585,15 @@ public class DFBnc {
      */
     public static AccountManager getAccountManager() {
         return accountManager;
+    }
+
+    /**
+     * Get the AuthProviderManager
+     *
+     * @return The AuthProviderManager
+     */
+    public static AuthProviderManager getAuthProviderManager() {
+        return authProviderManager;
     }
 
     /**

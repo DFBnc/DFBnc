@@ -25,6 +25,7 @@ import com.dfbnc.commands.CommandManager;
 import com.dfbnc.commands.AbstractListEditCommand;
 import com.dfbnc.commands.ListOption;
 import com.dfbnc.servers.irc.IRCServerType;
+import com.dfbnc.sockets.UserSocket;
 
 /**
  * This file represents the 'ServerList' command
@@ -67,7 +68,7 @@ public class ServerListCommand extends AbstractListEditCommand {
      * @return ListOption for this parameter.
      */
     @Override
-    public ListOption checkItem(final String command, final String input) {
+    public ListOption checkItem(final String command, final String input, final UserSocket user) {
         String[] inputBits = IRCServerType.parseServerString(input);
         return new ListOption(true, inputBits[3], null);
     }

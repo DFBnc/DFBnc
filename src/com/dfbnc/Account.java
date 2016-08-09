@@ -43,7 +43,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -369,10 +368,8 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
      *
      * @param password Password to check
      * @return true/false depending on successful match
-     * @deprecated Use checkAuthentication instead.
      */
-    @Deprecated
-    public boolean checkPassword(final String password) {
+    private boolean checkPassword(final String password) {
         return checkPassword(null, password);
     }
 
@@ -383,10 +380,8 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
      * @param subclient Subclient to check, null for none.
      * @param password Password to check
      * @return true/false depending on successful match
-     * @deprecated Use checkAuthentication instead.
      */
-    @Deprecated
-    public boolean checkPassword(final String subclient, final String password) {
+    private boolean checkPassword(final String subclient, final String password) {
         final StringBuilder hashedPassword = new StringBuilder(myName.toLowerCase());
 
         // If the subclient doesn't exist, then use the default config so
@@ -908,12 +903,46 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
      * Check if the given UserSocket authenticates for this account using
      * any of the authentication providers.
      *
+     * TODO: I don't like the duplication below and the hackiness of hasOverriddenOption.
+     *
      * @param usersocket UserSocket to test.
      * @param password Password to test.
      * @return True if authentication passed.
      */
     public boolean checkAuthentication(final UserSocket usersocket, final String password) {
-        // TODO: Authentication Providers.
-        return this.checkPassword(usersocket.getClientID(), password);
+        final String subclient = usersocket.getClientID();
+
+        if (subclient != null && hasSubClient(subclient)) {
+            int i = 0;
+            final Config scconf = getConfig(subclient);
+            if (scconf instanceof DefaultsConfig && ((DefaultsConfig)scconf).hasOverriddenOption("user", "authlist")) {
+                for (final String entry : scconf.getOptionList("user", "authlist")) {
+                    final String[] bits = entry.split(" ", 2);
+                    if (bits.length > 1 && DFBnc.getAuthProviderManager().hasProvider(bits[0])) {
+                        if (DFBnc.getAuthProviderManager().getProvider(bits[0]).checkAuthentication(usersocket, bits[1])) {
+                            usersocket.sendBotMessage("Authenticated by SubClient AuthList using Entry #%d", i);
+                            return true;
+                        }
+                    }
+
+                    i++;
+                }
+            }
+        }
+
+        int i = 0;
+        for (final String entry : getConfig(null).getOptionList("user", "authlist")) {
+            final String[] bits = entry.split(" ", 2);
+            if (bits.length > 1 && DFBnc.getAuthProviderManager().hasProvider(bits[0])) {
+                if (DFBnc.getAuthProviderManager().getProvider(bits[0]).checkAuthentication(usersocket, bits[1])) {
+                    usersocket.sendBotMessage("Authenticated by Global AuthList using Entry #%d", i);
+                    return true;
+                }
+            }
+
+            i++;
+        }
+
+        return this.checkPassword(subclient, password);
     }
 }

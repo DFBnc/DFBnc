@@ -96,6 +96,18 @@ public class DefaultsConfig extends ConfigImpl {
         return config.hasOption(domain, option, validator) || defaults.hasOption(domain, option, validator);
     }
 
+    /**
+     * Do we know about the requested option without passing it up to the next level?
+     *
+     * @param domain Domain to check
+     * @param option Option to check
+     * @param validator Validator to use.
+     * @return True if we have the option without resorting to defaults.
+     */
+    public boolean hasOverriddenOption(final String domain, final String option) {
+        return config.hasOption(domain, option);
+    }
+
      @Override
     public Map<String, String> getOptions(final String domain) {
         return config.getOptions(domain);

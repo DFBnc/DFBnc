@@ -42,7 +42,7 @@ public class ChannelWhitelistCommand extends AbstractListEditCommand {
     public String getListName(final String command) { return "Channel White List (For Sub-Client: " + command + ")"; }
 
     @Override
-    public ListOption checkItem(final String command, final String input) {
+    public ListOption checkItem(final String command, final String input, final UserSocket user) {
         return new ListOption(true, input, null);
     }
 
