@@ -56,7 +56,7 @@ public class AuthListCommand extends AbstractListEditCommand {
             if (!params.isEmpty()) {
                 return new ListOption(true, ap.getProviderName() + " " + params, null);
             } else {
-                return new ListOption(false, input, new String[]{"Invalid parameters for provider."});
+                return new ListOption(false, input, new String[]{"Invalid parameters for provider.", "Expected: " + ap.getProviderName() + " " + ap.getExpectedParams()});
             }
         }
 

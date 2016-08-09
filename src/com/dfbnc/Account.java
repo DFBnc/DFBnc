@@ -903,8 +903,6 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
      * Check if the given UserSocket authenticates for this account using
      * any of the authentication providers.
      *
-     * TODO: I don't like the duplication below and the hackiness of hasOverriddenOption.
-     *
      * @param usersocket UserSocket to test.
      * @param password Password to test.
      * @return True if authentication passed.

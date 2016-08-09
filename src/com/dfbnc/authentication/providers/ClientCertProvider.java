@@ -36,7 +36,7 @@ public class ClientCertProvider extends AuthProvider {
 
     @Override
     public String getExpectedParams() {
-        return "<FINGERPRINT>";
+        return "[FINGERPRINT]";
     }
 
     @Override
