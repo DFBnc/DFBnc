@@ -10,6 +10,7 @@ COPY . /dfbnc/
 
 RUN \
   cd /dfbnc && \
+  git fetch --tags && \
   git submodule update --init --recursive && \
   ant jar && \
   mv /dfbnc/dist/dfbnc.jar / && \
