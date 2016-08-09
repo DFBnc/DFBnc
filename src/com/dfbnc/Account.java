@@ -911,31 +911,14 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
      */
     public boolean checkAuthentication(final UserSocket usersocket, final String password) {
         final String subclient = usersocket.getClientID();
-
-        if (subclient != null && hasSubClient(subclient)) {
-            int i = 0;
-            final Config scconf = getConfig(subclient);
-            if (scconf instanceof DefaultsConfig && ((DefaultsConfig)scconf).hasOverriddenOption("user", "authlist")) {
-                for (final String entry : scconf.getOptionList("user", "authlist")) {
-                    final String[] bits = entry.split(" ", 2);
-                    if (bits.length > 1 && DFBnc.getAuthProviderManager().hasProvider(bits[0])) {
-                        if (DFBnc.getAuthProviderManager().getProvider(bits[0]).checkAuthentication(usersocket, bits[1])) {
-                            usersocket.sendBotMessage("Authenticated by SubClient AuthList using Entry #%d", i);
-                            return true;
-                        }
-                    }
-
-                    i++;
-                }
-            }
-        }
+        final Config checkConfig = (subclient != null && hasSubClient(subclient)) ? getConfig(subclient) : getConfig(null);
 
         int i = 0;
-        for (final String entry : getConfig(null).getOptionList("user", "authlist")) {
+        for (final String entry : checkConfig.getOptionList("user", "authlist")) {
             final String[] bits = entry.split(" ", 2);
             if (bits.length > 1 && DFBnc.getAuthProviderManager().hasProvider(bits[0])) {
                 if (DFBnc.getAuthProviderManager().getProvider(bits[0]).checkAuthentication(usersocket, bits[1])) {
-                    usersocket.sendBotMessage("Authenticated by Global AuthList using Entry #%d", i);
+                    usersocket.sendBotMessage("Authenticated by AuthList using Entry #%d", i);
                     return true;
                 }
             }
