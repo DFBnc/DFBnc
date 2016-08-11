@@ -36,6 +36,7 @@ public class Authenticator {
     private String usernameFromUser;
     private String password;
     private String subclient;
+    private String clientType;
 
     private boolean needPassword = true;
 
@@ -150,6 +151,15 @@ public class Authenticator {
     }
 
     /**
+     * Returns the client type specified by the user, if any.
+     *
+     * @return The client type specified (or null).
+     */
+    public String getClientType() {
+        return clientType;
+    }
+
+    /**
      * Attempts to authenticate the connection.
      *
      * <p>Should only be called when {@link #getStatus()} indicates that the authenticator is {@link Status#READY}.
@@ -171,6 +181,8 @@ public class Authenticator {
             final Account account = accountManager.get(clientParts[0]);
             if (account.checkAuthentication(userSocket, clientParts[1], password)) {
                 this.subclient = clientParts[1];
+                this.clientType = clientParts[2];
+
                 return handleSuccessfulAuth(account);
             } else {
                 handleInvalidPassword(responseCommand);
@@ -256,19 +268,24 @@ public class Authenticator {
     }
 
     /**
-     * Splits a username into a client and subclient.
+     * Splits a username into a client, subclient and client type.
      *
      * @param username The username to be split.
-     * @return An array containing two entries - the client, and the (possibly null) subclient.
+     * @return An array containing three entries - the client, the (possibly null) subclient, and the (possibly null)
+     *         client type.
      */
     private static String[] splitUsername(final String username) {
-        final String[] res = {null, null};
+        final String[] res = {null, null, null};
 
-        final String[] clientParts = username.split("\\+", 2);
+        final String[] clientParts = username.split("\\+", 3);
         res[0]  = clientParts[0];
 
-        if (clientParts.length == 2 && !clientParts[1].isEmpty()) {
+        if (clientParts.length >= 2 && !clientParts[1].isEmpty()) {
             res[1] = clientParts[1].replaceAll("[^a-z0-9_-]", "");
+        }
+
+        if (clientParts.length >= 3) {
+            res[2] = clientParts[2];
         }
 
         return res;

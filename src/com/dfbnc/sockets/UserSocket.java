@@ -957,6 +957,7 @@ public class UserSocket extends ConnectedSocket {
         }
 
         myAccount = account;
+
         if (account.isFirst()) {
             final CommandOutputBuffer co = new CommandOutputBuffer(this);
             handleBotCommand(new String[]{"show", "firsttime"}, co);
@@ -965,6 +966,10 @@ public class UserSocket extends ConnectedSocket {
                 handleBotCommand(new String[]{"show", "firsttime", "admin"}, co);
             }
             co.send();
+        }
+
+        if (authenticator.getClientType() != null) {
+            clientType = ClientType.getFromName(authenticator.getClientType().toLowerCase());
         }
     }
 
