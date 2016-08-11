@@ -277,7 +277,7 @@ public class Authenticator {
     private static String[] splitUsername(final String username) {
         final String[] res = {null, null, null};
 
-        final String[] clientParts = username.split("\\+", 3);
+        final String[] clientParts = username.split("\\+");
         res[0]  = clientParts[0];
 
         if (clientParts.length >= 2 && !clientParts[1].isEmpty()) {
