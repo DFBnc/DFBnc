@@ -21,11 +21,14 @@
  */
 package com.dfbnc.sockets;
 
+import com.dmdirc.parser.irc.CapabilityState;
+import com.dmdirc.parser.irc.IRCParser;
+
 import com.dfbnc.Account;
-import com.dfbnc.AccountManager;
 import com.dfbnc.ConnectionHandler;
 import com.dfbnc.Consts;
 import com.dfbnc.DFBnc;
+import com.dfbnc.authentication.Authenticator;
 import com.dfbnc.commands.Command;
 import com.dfbnc.commands.CommandException;
 import com.dfbnc.commands.CommandNotFoundException;
@@ -38,11 +41,7 @@ import com.dfbnc.sockets.secure.HandshakeCompletedEvent;
 import com.dfbnc.util.MultiWriter;
 import com.dfbnc.util.UserSocketMessageWriter;
 import com.dfbnc.util.Util;
-import com.dmdirc.parser.irc.CapabilityState;
-import com.dmdirc.parser.irc.IRCParser;
-import uk.org.dataforce.libs.logger.Logger;
 
-import javax.net.ssl.SSLPeerUnverifiedException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
@@ -59,6 +58,10 @@ import java.util.Random;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+
+import javax.net.ssl.SSLPeerUnverifiedException;
+
+import uk.org.dataforce.libs.logger.Logger;
 
 /**
  * This socket handles actual clients connected to the bnc.
@@ -86,10 +89,6 @@ public class UserSocket extends ConnectedSocket {
     /** Has this socket been announced to other users? */
     private boolean socketAnnouncement = false;
 
-    /** Given username */
-    private String username = null;
-    /** Given clientID */
-    private String clientID = null;
     /** Given client version */
     private String clientVersion = null;
     /** Given client SSL Cert Fingerprint */
@@ -100,10 +99,6 @@ public class UserSocket extends ConnectedSocket {
     private String realname = null;
     /** Given nickname (post-authentication this is the nickname the client knows itself as) */
     private String nickname = null;
-    /** Given password */
-    private String password = null;
-    /** Password attempts */
-    private int passwordTries = 0;
     /** Counter for inactivity. */
     private int inactiveCounter = 0;
 
@@ -140,8 +135,8 @@ public class UserSocket extends ConnectedSocket {
     /** Set of debug flags. */
     private final Set<DebugFlag> debugFlags = new HashSet<>();
 
-    /** Account manager to use to check account details. */
-    private final AccountManager accountManager;
+    /** Authenticator to use to authenticate connections. */
+    private final Authenticator authenticator;
 
     /**
      * Create a new UserSocket.
@@ -153,8 +148,9 @@ public class UserSocket extends ConnectedSocket {
     public UserSocket(final SocketChannel sChannel, final boolean fromSSL) throws IOException {
         super(sChannel, "[UserSocket " + sChannel + "]", fromSSL);
 
-        // TODO: Pass this in, instead of using a static method.
-        accountManager = DFBnc.getAccountManager();
+        // TODO: Pass AccountManager in to UserSocket, instead of using a static method.
+        // TODO: Decouple Authenticator and UserSocket
+        authenticator = new Authenticator(DFBnc.getAccountManager(), this);
 
         synchronized (knownSockets) {
             final Random random = new Random();
@@ -208,7 +204,7 @@ public class UserSocket extends ConnectedSocket {
      * @return Server name that the BNC Uses
      */
     public String getServerName() {
-        return (myAccount != null) ? myAccount.getServerName() : DFBnc.getBNC().getDefaultServerName();
+        return myAccount == null ? DFBnc.getBNC().getDefaultServerName() : myAccount.getServerName();
     }
 
     /**
@@ -217,7 +213,7 @@ public class UserSocket extends ConnectedSocket {
      * @return The client ID for this socket.
      */
     public String getClientID() {
-        return clientID;
+        return authenticator.getSubClient();
     }
 
     /**
@@ -906,34 +902,16 @@ public class UserSocket extends ConnectedSocket {
 
         switch (line[0]) {
             case "USER":
-                // Username may be given in PASS so check that it hasn't before assigning
-                if (username == null) { username = line[1]; }
                 realname = line[line.length-1];
-                if (nickname != null && password == null) {
-                    sendBotMessage("Please enter your password.");
-                    sendBotMessage("This can be done using either: ");
-                    sendBotMessage("    /QUOTE PASS [<username>:]<password>");
-                    sendBotMessage("    /RAW PASS [<username>:]<password>");
-                }
+                authenticator.handleUserCommand(line[1], realname);
                 break;
             case "NICK":
                 nickname = line[1];
-                if (realname != null && password == null) {
-                    sendBotMessage("Please enter your password.");
-                    sendBotMessage("This can be done using either: ");
-                    sendBotMessage("    /QUOTE PASS [<username>:]<password");
-                    sendBotMessage("    /RAW PASS [<username>:]<password>");
-                }
+                authenticator.handleNickCommand(nickname);
                 sendBotLine("PRIVMSG", (char)1 + "VERSION" + (char)1);
                 break;
             case "PASS":
-                final String[] bits = line[line.length-1].split(":",2);
-                if (bits.length == 2) {
-                    username = bits[0];
-                    password = bits[1];
-                } else {
-                    password = bits[0];
-                }
+                authenticator.handlePassCommand(line[line.length - 1]);
                 break;
             case "TIMESTAMPEDIRC":
             case "TSIRC":
@@ -943,111 +921,50 @@ public class UserSocket extends ConnectedSocket {
                 sendIRCLine(Consts.ERR_NOTREGISTERED, line[0], "You must login first.");
         }
 
-        // After every message, check if we have everything we need...
-        if (realname != null && password != null && nickname != null) {
-            authenticate(line[0]);
+        checkAuthStatus(line[0]);
+    }
+
+    private void checkAuthStatus(final String lastCommand) {
+        final Authenticator.Status status = authenticator.getStatus();
+        Logger.debug2(String.format("Authenticator status after receiving %s: %s", lastCommand, status));
+
+        switch (status) {
+            case WAITING_FOR_PASS:
+                sendBotMessage("Please enter your password.");
+                sendBotMessage("This can be done using either: ");
+                sendBotMessage("    /QUOTE PASS [<username>:]<password>");
+                sendBotMessage("    /RAW PASS [<username>:]<password>");
+                break;
+            case READY:
+                handleAccount(authenticator.authenticate(lastCommand));
+                break;
+        }
+
+        if (authenticator.getStatus() != status) {
+            checkAuthStatus(lastCommand);
         }
     }
 
     /**
-     * Attempts to authenticate the user based on the information they've provided.
+     * Deals with an account returned from authentication.
      *
-     * @param lastCommand The command the user last attempted, used in error responses.
+     * @param account The account the user authed as (or null if they failed to auth).
      */
-    private void authenticate(final String lastCommand) {
-        final String[] bits = username.split("\\+");
-        username = bits[0];
-        clientID = (bits.length > 1 && !bits[1].isEmpty()) ? bits[1].replaceAll("[^a-z0-9_-]", "") : null;
-        if (bits.length > 2 && !bits[2].isEmpty()) {
-            clientType = ClientType.getFromName(bits[2].toLowerCase());
+    private void handleAccount(Account account) {
+        if (account == null) {
+            Logger.debug("Authentication failed.");
+            return;
         }
 
-        handleAutoAccountCreation();
-
-        if (accountManager.exists(username) && accountManager.get(username).checkAuthentication(this, password)) {
-            handleSuccessfulAuth();
-        } else {
-            handleInvalidPassword(lastCommand);
-        }
-    }
-
-    /**
-     * Handles automatic creation of accounts if the user is the first one to connect, or if auto-create is enabled
-     * and the account doesn't exist.
-     */
-    private void handleAutoAccountCreation() {
-        final DFBnc bnc = DFBnc.getBNC();
-        if (accountManager.count() == 0 || (bnc.allowAutoCreate() && !accountManager.exists(username))) {
-            Account acc = accountManager.createAccount(username, password);
-            if (accountManager.count() == 1) {
-                acc.setAdmin(true);
-                sendBotMessage("You are the first user of this bnc, and have been made admin");
-            } else {
-                sendBotMessage("The given account does not exist, so an account has been created for you.");
+        myAccount = account;
+        if (account.isFirst()) {
+            final CommandOutputBuffer co = new CommandOutputBuffer(this);
+            handleBotCommand(new String[]{"show", "firsttime"}, co);
+            if (account.isAdmin()) {
+                sendBotMessage("");
+                handleBotCommand(new String[]{"show", "firsttime", "admin"}, co);
             }
-            accountManager.saveAccounts();
-            bnc.getConfig().save();
-        }
-    }
-
-    /**
-     * Handles a successful authentication attempt.
-     */
-    private void handleSuccessfulAuth() {
-        myAccount = accountManager.get(username);
-        if (myAccount.isSuspended()) {
-            sendBotMessage("This account has been suspended.");
-            sendBotMessage("Reason: %s", myAccount.getSuspendReason());
-            myAccount = null;
-            close("Account suspended.");
-        } else {
-            sendBotMessage("You are now logged in");
-            if (myAccount.isAdmin()) {
-                sendBotMessage("This is an Admin account");
-            }
-            // Run the firsttime command if this is the first time the account has been used
-            if (myAccount.isFirst()) {
-                final CommandOutputBuffer co = new CommandOutputBuffer(this);
-                handleBotCommand(new String[]{"show", "firsttime"}, co);
-                if (myAccount.isAdmin()) {
-                    sendBotMessage("");
-                    handleBotCommand(new String[]{"show", "firsttime", "admin"}, co);
-                }
-                co.send();
-            }
-            Logger.debug2("processNonAuthenticated - User Connected");
-            myAccount.userConnected(this);
-            Logger.debug2("userConnected finished");
-        }
-    }
-
-    /**
-     * Deals with the user providing an invalid password.
-     *
-     * @param lastCommand The command the user last attempted, used in error responses.
-     */
-    private void handleInvalidPassword(final String lastCommand) {
-        passwordTries++;
-        final StringBuilder message = new StringBuilder("Password incorrect, or account not found.");
-        message.append(" You have ");
-        // TODO: make this a config setting
-        int maxPasswordTries = 3;
-        message.append(maxPasswordTries - passwordTries);
-        message.append(" attempt(s) left.");
-        sendIRCLine(Consts.ERR_PASSWDMISMATCH, lastCommand, message.toString());
-        sendBotMessage("%s", message.toString());
-
-        // TODO: Remove this warning at some point as it gives too much away.
-        if (accountManager.exists(username) && accountManager.get(username).checkAuthentication(this, password.toLowerCase())) {
-            sendBotMessage("%s", "WARNING: Your password was previously hashed non case-sensitively.");
-            sendBotMessage("%s", "WARNING: Please try connecting with a lowercase password and then changing it.");
-        }
-
-        password = null;
-        if (passwordTries >= maxPasswordTries) {
-            sendIRCLine(Consts.ERR_PASSWDMISMATCH, lastCommand, "Too many password attempts, closing socket.");
-            sendBotMessage("Too many password attempts, closing socket.");
-            close("Too many password attempts.");
+            co.send();
         }
     }
 

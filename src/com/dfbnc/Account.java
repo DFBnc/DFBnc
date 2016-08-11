@@ -22,22 +22,22 @@
 
 package com.dfbnc;
 
+import com.dmdirc.util.io.InvalidConfigFileException;
+
 import com.dfbnc.authentication.AuthProviderManager;
 import com.dfbnc.commands.CommandManager;
 import com.dfbnc.config.Config;
 import com.dfbnc.config.ConfigChangeListener;
 import com.dfbnc.config.ConfigFileConfig;
 import com.dfbnc.config.DefaultsConfig;
-import com.dfbnc.servers.logging.ServerLogger;
 import com.dfbnc.servers.ServerType;
 import com.dfbnc.servers.ServerTypeNotFound;
+import com.dfbnc.servers.logging.ServerLogger;
 import com.dfbnc.sockets.DebugFlag;
 import com.dfbnc.sockets.UnableToConnectException;
 import com.dfbnc.sockets.UserSocket;
 import com.dfbnc.sockets.UserSocketWatcher;
 import com.dfbnc.util.Util;
-import com.dmdirc.util.io.InvalidConfigFileException;
-import uk.org.dataforce.libs.logger.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,6 +51,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
+
+import uk.org.dataforce.libs.logger.Logger;
 
 /**
  * Functions related to Accounts
@@ -935,11 +937,11 @@ public final class Account implements UserSocketWatcher,ConfigChangeListener {
      * any of the authentication providers.
      *
      * @param usersocket UserSocket to test.
+     * @param subclient The subclient in use (or null).
      * @param password Password to test.
      * @return True if authentication passed.
      */
-    public boolean checkAuthentication(final UserSocket usersocket, final String password) {
-        final String subclient = usersocket.getClientID();
+    public boolean checkAuthentication(final UserSocket usersocket, final String subclient, final String password) {
         return isAuthenticated(usersocket, subclient, true) || checkPassword(subclient, password);
     }
 
