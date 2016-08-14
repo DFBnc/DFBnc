@@ -151,7 +151,7 @@ public abstract class AbstractSetCommand extends Command {
                         return;
                     }
                 } else if (paramType == ParamType.BOOL) {
-                    if (newValue.equalsIgnoreCase("true") || newValue.equalsIgnoreCase("yes") || newValue.equalsIgnoreCase("on") || newValue.equalsIgnoreCase("1")) {
+                    if (newValue.equalsIgnoreCase("true") || newValue.equalsIgnoreCase("yes") || newValue.equalsIgnoreCase("on") || newValue.equalsIgnoreCase("1") || newValue.equalsIgnoreCase("enable") || newValue.equalsIgnoreCase("enabled")) {
                         user.getAccount().getConfig(wantedClient).setOption(setDomain, actualParams[1], true);
                         newValue = "True";
                     } else {
