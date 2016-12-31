@@ -70,8 +70,9 @@ import com.dmdirc.parser.irc.SimpleNickInUseHandler;
 import com.dmdirc.parser.irc.SimplePingFailureHandler;
 import com.dmdirc.parser.irc.events.IRCDataInEvent;
 import com.dmdirc.parser.irc.outputqueue.OutputQueue;
-import com.dmdirc.parser.irc.outputqueue.PriorityQueueHandler;
-import com.dmdirc.parser.irc.outputqueue.SimpleRateLimitedQueueHandler;
+import com.dmdirc.parser.irc.outputqueue.PriorityOutputQueue;
+import com.dmdirc.parser.irc.outputqueue.SimpleRateLimitedOutputQueue;
+import java.io.IOException;
 import net.engio.mbassy.listener.Handler;
 import uk.org.dataforce.libs.logger.LogLevel;
 import uk.org.dataforce.libs.logger.Logger;
@@ -286,44 +287,40 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
 
         // Does the user want the rate limiting queue?
         if (myAccount.getAccountConfig().getOptionBool("irc", "ratelimit")) {
+            final SimpleRateLimitedOutputQueue q;
+            if (out instanceof SimpleRateLimitedOutputQueue) {
+                q = (SimpleRateLimitedOutputQueue)out;
+            } else {
+                q = new SimpleRateLimitedOutputQueue();
+            }
 
-            // Set a factory that will produce a queue with the settings the
-            // user wants.
-            out.setQueueFactory((outputQueue, queue, out1) -> {
-                final SimpleRateLimitedQueueHandler q = new SimpleRateLimitedQueueHandler(outputQueue, queue, out1);
-                q.setLimitTime(myAccount.getAccountConfig().getOptionInt("irc", "ratelimittime"));
-                q.setItems(myAccount.getAccountConfig().getOptionInt("irc", "ratelimititems"));
-                q.setWaitTime(myAccount.getAccountConfig().getOptionInt("irc", "ratelimitwaittime"));
-                return q;
-            });
+            q.setLimitTime(myAccount.getAccountConfig().getOptionInt("irc", "ratelimittime"));
+            q.setItems(myAccount.getAccountConfig().getOptionInt("irc", "ratelimititems"));
+            q.setWaitTime(myAccount.getAccountConfig().getOptionInt("irc", "ratelimitwaittime"));
 
             // If we are not currently using the SimpleRateLimitedQueueHandler
-            // (ie, we are not just changing the rates) then disable the current
-            // queuehandler.
-            if (!(out.getQueueHandler() instanceof SimpleRateLimitedQueueHandler)) {
+            // enable it.
+            if (!(out instanceof SimpleRateLimitedOutputQueue)) {
+                // Empty the old queue first, because setOutputQueue clears it.
                 out.setQueueEnabled(false);
-            }
-            // We want output queueing.
-            out.setQueueEnabled(true);
-
-            // If we currently have a SimpleRateLimitedQueueHandler output
-            // queue, then reconfigure it with the new settings.
-            if (out.getQueueHandler() instanceof SimpleRateLimitedQueueHandler) {
-                final SimpleRateLimitedQueueHandler q = (SimpleRateLimitedQueueHandler)out.getQueueHandler();
-                q.setLimitTime(myAccount.getAccountConfig().getOptionInt("irc", "ratelimittime"));
-                q.setItems(myAccount.getAccountConfig().getOptionInt("irc", "ratelimititems"));
-                q.setWaitTime(myAccount.getAccountConfig().getOptionInt("irc", "ratelimitwaittime"));
+                try {
+                    irc.setOutputQueue(q);
+                } catch (final IOException ioe) {
+                    myAccount.sendBotMessage("Error setting output queue: " + ioe.getMessage());
+                    Logger.error("Error setting output queue: " + ioe.getMessage());
+                }
             }
         } else {
             // Default to the basic priority queue.
-            out.setQueueFactory(PriorityQueueHandler.getFactory());
-            // If we are not already using the PriorityQueue then disable the
-            // old one.
-            if (!(out.getQueueHandler() instanceof PriorityQueueHandler)) {
+            if (out instanceof SimpleRateLimitedOutputQueue) {
                 out.setQueueEnabled(false);
+                try {
+                    irc.setOutputQueue(new PriorityOutputQueue());
+                } catch (final IOException ioe) {
+                    myAccount.sendBotMessage("Error setting output queue: " + ioe.getMessage());
+                    Logger.error("Error setting output queue: " + ioe.getMessage());
+                }
             }
-            // Yay, Queuing.
-            out.setQueueEnabled(true);
         }
 
     }
