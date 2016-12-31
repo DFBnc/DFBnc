@@ -351,7 +351,7 @@ public class IRCConnectionHandler implements ConnectionHandler, UserSocketWatche
     }
 
     @Override
-    public ServerLogger getServerLogger() {
+    public ServerLogger createServerLogger() {
         try {
             return new IRCServerLogger(myAccount, this);
         } catch (final Exception e) {

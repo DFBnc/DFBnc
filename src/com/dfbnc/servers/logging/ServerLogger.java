@@ -145,12 +145,24 @@ public class ServerLogger {
     }
 
     public void disableLogging() {
+        if (disabled.get()) { return; }
+
         handleSocketClose(new SocketCloseEvent(myConnectionHandler.getParser(), LocalDateTime.now()));
         disabled.set(true);
 
         if (idleFileTimer != null) {
             idleFileTimer.cancel();
             idleFileTimer.purge();
+        }
+
+        // Close all the open channels.
+        for (final ChannelInfo c : new LinkedList<>(myChannels)) {
+            final String filename = locator.getLogFile(c);
+            if (filename == null) { continue; }
+
+            appendLine(filename, "");
+            appendLine(filename, "*** Channel closed at: %s", OPENED_AT_FORMAT.format(new Date()));
+            myChannels.remove(c);
         }
 
         synchronized (openFiles) {

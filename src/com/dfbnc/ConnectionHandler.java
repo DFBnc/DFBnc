@@ -142,11 +142,11 @@ public interface ConnectionHandler {
     void unsubscribe(final Object listener);
 
     /**
-     * Get a ServerLogger that can deal with events from this ConnectionHandler.
+     * Create a ServerLogger that will deal with events from this ConnectionHandler.
      *
-     * @return a ServerLogger that can deal with events from this ConnectionHandler.
+     * @return a ServerLogger that will deal with events from this ConnectionHandler.
      */
-    ServerLogger getServerLogger();
+    ServerLogger createServerLogger();
 
     /**
      * Get the parser used by this ConnectionHandler.
