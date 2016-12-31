@@ -1139,33 +1139,37 @@ public class UserSocket extends ConnectedSocket {
         // for (String[] s : sections) { System.out.println(Arrays.toString(s)); }
 
         // Run the actual command.
-        if (doBotCommand(sections.get(0), output)) {
-            // Store current messages.
-            final List<String> oldMessages = output.getMessages();
+        if (sections.isEmpty()) {
+            output.addBotMessage("You must specify a command.");
+        } else {
+            if (doBotCommand(sections.get(0), output)) {
+                // Store current messages.
+                final List<String> oldMessages = output.getMessages();
 
-            // Now run any filters. If any of them fail or throw exceptions,
-            // we will restore the commandoutput back to unfiltered and not
-            // run any more.
-            String[] section = new String[0];
-            try {
-                if (sections.size() > 1) {
-                    for (int i = 1; i < sections.size(); i++) {
-                        section = sections.get(i);
-                        final CommandOutputFilter cof = CommandOutputFilterManager.getFilter(section[0]);
-                        final String[] filterParams = section.length > 1 ? Arrays.copyOfRange(section, 1, section.length) : new String[0];
+                // Now run any filters. If any of them fail or throw exceptions,
+                // we will restore the commandoutput back to unfiltered and not
+                // run any more.
+                String[] section = new String[0];
+                try {
+                    if (sections.size() > 1) {
+                        for (int i = 1; i < sections.size(); i++) {
+                            section = sections.get(i);
+                            final CommandOutputFilter cof = CommandOutputFilterManager.getFilter(section[0]);
+                            final String[] filterParams = section.length > 1 ? Arrays.copyOfRange(section, 1, section.length) : new String[0];
 
-                        if (cof != null) {
-                            cof.runFilter(filterParams, output);
-                        } else {
-                            throw new CommandOutputFilterException("Unknown filter.");
+                            if (cof != null) {
+                                cof.runFilter(filterParams, output);
+                            } else {
+                                throw new CommandOutputFilterException("Unknown filter.");
+                            }
                         }
                     }
+                } catch (final CommandOutputFilterException ex) {
+                    output.setMessages(oldMessages);
+                    output.addBotMessage("--------------------------------------");
+                    output.addBotMessage("Error with filter: %s", Arrays.toString(section));
+                    output.addBotMessage("Reason: %s", ex.getMessage());
                 }
-            } catch (final CommandOutputFilterException ex) {
-                output.setMessages(oldMessages);
-                output.addBotMessage("--------------------------------------");
-                output.addBotMessage("Error with filter: %s", Arrays.toString(section));
-                output.addBotMessage("Reason: %s", ex.getMessage());
             }
         }
     }
