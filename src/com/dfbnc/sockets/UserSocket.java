@@ -38,6 +38,8 @@ import com.dfbnc.commands.filters.CommandOutputFilterException;
 import com.dfbnc.commands.filters.CommandOutputFilterManager;
 import com.dfbnc.config.Config;
 import com.dfbnc.sockets.secure.HandshakeCompletedEvent;
+import com.dfbnc.sockets.secure.SSLContextManager;
+import com.dfbnc.util.IRCLine;
 import com.dfbnc.util.MultiWriter;
 import com.dfbnc.util.UserSocketMessageWriter;
 import com.dfbnc.util.Util;
@@ -142,11 +144,11 @@ public class UserSocket extends ConnectedSocket {
      * Create a new UserSocket.
      *
      * @param sChannel Socket to control
-     * @param fromSSL Did this come from an SSL ListenSocket ?
+     * @param sslContextManager SSLContextManager for creating SSL Sockets if this is an SSL Socket.
      * @throws IOException If there is a problem setting up the socket.
      */
-    public UserSocket(final SocketChannel sChannel, final boolean fromSSL) throws IOException {
-        super(sChannel, "[UserSocket " + sChannel + "]", fromSSL);
+    public UserSocket(final SocketChannel sChannel, final SSLContextManager sslContextManager) throws IOException {
+        super(sChannel, "[UserSocket " + sChannel + "]", sslContextManager);
 
         // TODO: Pass AccountManager in to UserSocket, instead of using a static method.
         // TODO: Decouple Authenticator and UserSocket
@@ -170,7 +172,7 @@ public class UserSocket extends ConnectedSocket {
         final String remoteInfo = "[" + remoteAddress.getAddress() + "]:" + remoteAddress.getPort();
         final InetSocketAddress localAddress = (InetSocketAddress)mySocketWrapper.getLocalSocketAddress();
         final String localInfo = "[" + localAddress.getAddress() + "]:" + localAddress.getPort();
-        if (fromSSL) {
+        if (sslContextManager != null) {
             myInfo = remoteInfo+" (" + localInfo + " [SSL]) [" + myID + "]";
         } else {
             myInfo = remoteInfo+" (" + localInfo + ") [" + myID + "]";
@@ -295,6 +297,7 @@ public class UserSocket extends ConnectedSocket {
     /**
      * Check the state of the requested capability.
      *
+     * @param capability Capability to get state for.
      * @return State of the requested capability.
      */
     public CapabilityState getCapabilityState(final String capability) {
@@ -452,6 +455,17 @@ public class UserSocket extends ConnectedSocket {
         this.closeSocket(reason);
     }
 
+    /**
+     * Used to send line(s) of IRC data to the underlying socket.
+     *
+     * @param lines IRCLines to send
+     */
+    public void sendLine(final IRCLine... lines) {
+        for (final IRCLine line : lines) {
+            this.sendLine(line.toString());
+        }
+    }
+    
     @Override
     public void socketOpened() {
         sendBotMessage("Welcome to DFBnc (%s)", DFBnc.getVersion());

@@ -6,6 +6,7 @@
             <name>DFBnc-Java</name>
             <source-roots>
                 <root id="src.dir" name="Main Source"/>
+                <root id="sockets.src.dir" name="Sockets Source"/>
                 <root id="parser.src.dir" name="IRC Parser Source"/>
                 <root id="parsercommon.src.dir" name="Parser Common Source"/>
                 <root id="akuma.src.dir" name="Akuma Source"/>

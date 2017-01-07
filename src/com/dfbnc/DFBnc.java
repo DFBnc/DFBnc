@@ -31,8 +31,10 @@ import com.dfbnc.config.ConfigFileConfig;
 import com.dfbnc.config.DefaultsConfig;
 import com.dfbnc.config.ReadOnlyConfig;
 import com.dfbnc.servers.ServerTypeManager;
+import com.dfbnc.sockets.NewSocketReadyHandler;
 import com.dfbnc.sockets.ListenSocket;
 import com.dfbnc.sockets.UserSocket;
+import com.dfbnc.sockets.secure.SSLContextManager;
 import com.dfbnc.util.MultiWriter;
 import com.dfbnc.util.RollingWriter;
 import com.dmdirc.util.io.InvalidConfigFileException;
@@ -49,6 +51,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
+import java.nio.channels.SocketChannel;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,7 +65,7 @@ import java.util.TimerTask;
 /**
  * Main BNC Class.
  */
-public class DFBnc {
+public class DFBnc implements NewSocketReadyHandler {
     /** Me */
     private static DFBnc me = null;
 
@@ -120,6 +123,9 @@ public class DFBnc {
     /** Log File Writer. */
     Writer logFileWriter;
 
+    /** Our SSLContextManager. */
+    private SSLContextManager sslContextManager;
+    
     /**
      * Create the BNC.
      */
@@ -376,9 +382,13 @@ public class DFBnc {
         int count = 0;
         final List<String> listenhosts = config.getOptionList("general", "listenhost");
 
+        if (sslContextManager == null) {
+            sslContextManager = new SSLContextManager(getConfig().getOption("ssl", "keystore"), getConfig().getOption("ssl", "storepass"), getConfig().getOption("ssl", "keypass"));
+        }
+        
         for (String listenhost : listenhosts) {
             try {
-                listenSockets.add(new ListenSocket(listenhost));
+                listenSockets.add(new ListenSocket(listenhost, this, sslContextManager));
                 count++;
             } catch (IOException e) {
                 Logger.error("Unable to open socket (" + listenhost +"): "+e.getMessage());
@@ -388,6 +398,12 @@ public class DFBnc {
             Logger.info("No sockets could be opened, Terminating");
             System.exit(1);
         }
+    }
+    
+    /** {@inheritDoc} */
+    @Override
+    public void handleNewSocketReady(final SocketChannel sChannel, final SSLContextManager newSocketSSLContextManager) throws IOException {
+        new UserSocket(sChannel, newSocketSSLContextManager).socketOpened();
     }
 
     /**
