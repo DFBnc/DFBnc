@@ -58,8 +58,8 @@
 	<property name="test.src.dir" value="test"/>
 	<property name="test.libs.jars" value="${libs.jars},libs/mockito/mockito-all-1.10.17.jar,libs/junit/junit-4.11.jar" />
         <propertyregex property="test.libs.classpath" input="${test.libs.jars}" regexp="," replace=":" global="true" />
-	<property name="parser-common.test.src.dir" value="modules/parser/common/test"/>
-	<property name="parser-irc.test.src.dir" value="modules/parser/irc/test"/>
+	<property name="parser-common.test.src.dir" value="modules/parser/common/src/test/java"/>
+	<property name="parser-irc.test.src.dir" value="modules/parser/irc/src/test/java"/>
 	<property name="test.includes" value="**/*Test.java"/>
 	<property name="test.build.classes.excludes" value="**/*.java,**/*.sh"/>
 	<property name="test.build.classes.dir" value="${build.dir}/test/classes"/>
