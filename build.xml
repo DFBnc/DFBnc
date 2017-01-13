@@ -41,7 +41,7 @@
 	<property name="parser-irc.src.dir" value="modules/parser/irc/src/main/java" />
         <property name="sockets.src.dir" value="modules/sockets/src" />
 	<property name="akuma.src.dir" value="modules/akuma/src/main/java/" />
-	<property name="util.src.dir" value="modules/util/src/" />
+	<property name="util.src.dir" value="modules/util/src/main/java" />
 	<property name="libs.jars" value="libs/jna/jna.jar,libs/jna/platform.jar,libs/dagger/dagger-1.2.2.jar,libs/dagger/dagger-compiler-1.2.2.jar,libs/dagger/javawriter-2.5.0.jar,libs/dagger/javax.inject-1.jar,libs/mbassador/juel-api-2.2.7.jar,libs/mbassador/juel-impl-2.2.7.jar,libs/mbassador/juel-spi-2.2.7.jar,libs/mbassador/mbassador-1.2.4.jar,libs/guava/guava-18.0.jar,libs/jsr305/jsr305-3.0.0.jar,libs/google/auto-value-1.4-rc1.jar" />
 	<propertyregex property="libs.classpath" input="${libs.jars}" regexp="," replace=":" global="true" />
 	<!-- <property name="libs.jars" value="libs/jna/jna.jar:libs/jna/platform.jar" /> -->
