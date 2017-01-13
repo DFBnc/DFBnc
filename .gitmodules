@@ -3,7 +3,7 @@
 	url = https://github.com/DMDirc/Parser.git
 [submodule "modules/akuma"]
 	path = modules/akuma
-	url = https://github.com/ShaneMcC/akuma.git
+	url = https://github.com/DFBnc/akuma.git
 [submodule "modules/util"]
 	path = modules/util
 	url = https://github.com/DMDirc/Util.git
