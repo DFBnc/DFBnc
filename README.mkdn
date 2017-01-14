@@ -17,43 +17,10 @@ All pull requests must pass CI before being accepted.
 
 There is a Getting Started guide on the wiki [here](https://github.com/DFBnc/DFBnc/wiki/GettingStarted)
 
-# History ######################################################################
-
-## Then ########################################################################
-
-DFBnc was originally an IRC Bouncer written in Delphi. It compiled on Linux
-(FreePascal) and windows (using both Delphi and FreePascal).
-
-DFBnc Was originally licensed under the ZLIB License, unfortunately this version
-had a number of bugs in it (random crashes, odd behaviour etc), and is no longer
-available.
-
-## Now #########################################################################
-
-Due to issues with the code and the "random" bugs, the decision was taken to
-completely rewrite DFBnc (for the 2nd time), and rather than relying on external
-librarys (lsocket and wsocket) and having to test on 3 compilers and work
-around the various differences in compilers/platforms by hand it was decided to
-be rewriten in Java (which results in much less headaches supporting multiple
-platforms), and to use the rock-solid IRC Parser from http://www.dmdirc.com/
-
-## Compatability ###############################################################
-
-Config files between the 2 versions are not compatible with each other, due to
-the config-directory structure used by dfbnc-java, there is no migration path,
-however there are no known users of the old version. (If you do use it, you
-should really stop and switch)
-
 # External Files ###############################################################
 
-DFBnc makes use of files from other projects. Included as git submodules where
-possible.
+DFBnc makes use of a number of libraries and files from other projects.
+Some of these are included as git submodules, others are jar libraries.
 
-Obviously the usual DFBnc License does not apply for code in these submodules,
+Obviously the usual DFBnc License does not apply for code in the submodules,
 and their own license should be used.
-
-The projects used are:
-
-  * [DMDirc](http://dmdirc.com/) (irc parser, some utilities)
-  * [DF Libs](http://code.google.com/p/dflibs/) (cliparser and logger)
-  * [AKUMA](http://akuma.kohsuke.org/) (Akuma - forking on java)
