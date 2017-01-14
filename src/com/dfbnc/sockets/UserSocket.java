@@ -726,7 +726,7 @@ public class UserSocket extends ConnectedSocket {
     }
 
     @Override
-    protected void processLine(final String line) {
+    public void processLine(final String line) {
         // Reset the inactive counter.
         this.inactiveCounter = 0;
 
