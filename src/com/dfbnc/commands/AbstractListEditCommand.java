@@ -299,6 +299,9 @@ public abstract class AbstractListEditCommand extends Command {
             }
         } else if (hasSubList && actualParams.length == 1) {
             output.addBotMessage("You must specify a sublist to edit eg:");
+            if (allowGlobalList()) {
+                output.addBotMessage("  /dfbnc %s --global <command>", actualParams[0]);
+            }
             output.addBotMessage("  /dfbnc %s <sublist> <command>", actualParams[0]);
         } else {
             final String listParamName = hasSubList && (!allowGlobalList || !actualParams[listParam].equalsIgnoreCase("--global")) ? validSubList(actualParams[listParam]) : actualParams[listParam];
