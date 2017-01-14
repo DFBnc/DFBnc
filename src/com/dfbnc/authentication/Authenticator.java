@@ -235,9 +235,6 @@ public class Authenticator {
             userSocket.sendBotMessage("This is an Admin account");
         }
 
-        Logger.debug2("processNonAuthenticated - User Connected");
-        account.userConnected(userSocket);
-        Logger.debug2("userConnected finished");
         return account;
     }
 

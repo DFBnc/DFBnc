@@ -465,7 +465,7 @@ public class UserSocket extends ConnectedSocket {
             this.sendLine(line.toString());
         }
     }
-    
+
     @Override
     public void socketOpened() {
         sendBotMessage("Welcome to DFBnc (%s)", DFBnc.getVersion());
@@ -940,7 +940,7 @@ public class UserSocket extends ConnectedSocket {
 
     private void checkAuthStatus(final String lastCommand) {
         final Authenticator.Status status = authenticator.getStatus();
-        Logger.debug2(String.format("Authenticator status after receiving %s: %s", lastCommand, status));
+        Logger.debug2(String.format("Authenticator has status after receiving %s: %s", lastCommand, status));
 
         switch (status) {
             case WAITING_FOR_PASS:
@@ -950,6 +950,7 @@ public class UserSocket extends ConnectedSocket {
                 sendBotMessage("    /RAW PASS [<username>:]<password>");
                 break;
             case READY:
+                Logger.debug2(String.format("Authenticator is ready"));
                 handleAccount(authenticator.authenticate(lastCommand));
                 break;
         }
@@ -965,12 +966,17 @@ public class UserSocket extends ConnectedSocket {
      * @param account The account the user authed as (or null if they failed to auth).
      */
     private void handleAccount(Account account) {
+        Logger.debug2(String.format("Authenticator handed back account: %s", account));
         if (account == null) {
             Logger.debug("Authentication failed.");
             return;
         }
 
         myAccount = account;
+
+        Logger.debug2("handleAccount - User Connected");
+        account.userConnected(this);
+        Logger.debug2("userConnected finished");
 
         if (authenticator.getClientType() != null) {
             clientType = ClientType.getFromName(authenticator.getClientType().toLowerCase());
