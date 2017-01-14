@@ -145,7 +145,6 @@ is divided into following sections:
                 <available file="${src.dir}"/>
                 <available file="${parser.src.dir}"/>
                 <available file="${parsercommon.src.dir}"/>
-                <available file="${akuma.src.dir}"/>
                 <available file="${util.src.dir}"/>
             </or>
         </condition>
@@ -214,7 +213,6 @@ is divided into following sections:
         <fail unless="src.dir">Must set src.dir</fail>
         <fail unless="parser.src.dir">Must set parser.src.dir</fail>
         <fail unless="parsercommon.src.dir">Must set parsercommon.src.dir</fail>
-        <fail unless="akuma.src.dir">Must set akuma.src.dir</fail>
         <fail unless="util.src.dir">Must set util.src.dir</fail>
         <fail unless="test.dir">Must set test.dir</fail>
         <fail unless="parser.test.dir">Must set parser.test.dir</fail>
@@ -239,7 +237,7 @@ is divided into following sections:
     </target>
     <target depends="-init-ap-cmdline-properties" if="ap.supported.internal" name="-init-macrodef-javac-with-processors">
         <macrodef name="javac" uri="http://www.netbeans.org/ns/j2se-project/3">
-            <attribute default="${src.dir}:${parser.src.dir}:${parsercommon.src.dir}:${akuma.src.dir}:${util.src.dir}" name="srcdir"/>
+            <attribute default="${src.dir}:${parser.src.dir}:${parsercommon.src.dir}:${util.src.dir}" name="srcdir"/>
             <attribute default="${build.classes.dir}" name="destdir"/>
             <attribute default="${javac.classpath}" name="classpath"/>
             <attribute default="${javac.processorpath}" name="processorpath"/>
@@ -279,7 +277,7 @@ is divided into following sections:
     </target>
     <target depends="-init-ap-cmdline-properties" name="-init-macrodef-javac-without-processors" unless="ap.supported.internal">
         <macrodef name="javac" uri="http://www.netbeans.org/ns/j2se-project/3">
-            <attribute default="${src.dir}:${parser.src.dir}:${parsercommon.src.dir}:${akuma.src.dir}:${util.src.dir}" name="srcdir"/>
+            <attribute default="${src.dir}:${parser.src.dir}:${parsercommon.src.dir}:${util.src.dir}" name="srcdir"/>
             <attribute default="${build.classes.dir}" name="destdir"/>
             <attribute default="${javac.classpath}" name="classpath"/>
             <attribute default="${javac.processorpath}" name="processorpath"/>
@@ -311,7 +309,7 @@ is divided into following sections:
     </target>
     <target depends="-init-macrodef-javac-with-processors,-init-macrodef-javac-without-processors" name="-init-macrodef-javac">
         <macrodef name="depend" uri="http://www.netbeans.org/ns/j2se-project/3">
-            <attribute default="${src.dir}:${parser.src.dir}:${parsercommon.src.dir}:${akuma.src.dir}:${util.src.dir}" name="srcdir"/>
+            <attribute default="${src.dir}:${parser.src.dir}:${parsercommon.src.dir}:${util.src.dir}" name="srcdir"/>
             <attribute default="${build.classes.dir}" name="destdir"/>
             <attribute default="${javac.classpath}" name="classpath"/>
             <sequential>
@@ -615,7 +613,7 @@ is divided into following sections:
                 <include name="*"/>
             </dirset>
         </pathconvert>
-        <j2seproject3:depend srcdir="${src.dir}:${parser.src.dir}:${parsercommon.src.dir}:${akuma.src.dir}:${util.src.dir}:${build.generated.subdirs}"/>
+        <j2seproject3:depend srcdir="${src.dir}:${parser.src.dir}:${parsercommon.src.dir}:${util.src.dir}:${build.generated.subdirs}"/>
     </target>
     <target depends="init,deps-jar,-pre-pre-compile,-pre-compile, -copy-persistence-xml,-compile-depend" if="have.sources" name="-do-compile">
         <j2seproject3:javac gensrcdir="${build.generated.sources.dir}"/>
@@ -623,7 +621,6 @@ is divided into following sections:
             <fileset dir="${src.dir}" excludes="${build.classes.excludes},${excludes}" includes="${includes}"/>
             <fileset dir="${parser.src.dir}" excludes="${build.classes.excludes},${excludes}" includes="${includes}"/>
             <fileset dir="${parsercommon.src.dir}" excludes="${build.classes.excludes},${excludes}" includes="${includes}"/>
-            <fileset dir="${akuma.src.dir}" excludes="${build.classes.excludes},${excludes}" includes="${includes}"/>
             <fileset dir="${util.src.dir}" excludes="${build.classes.excludes},${excludes}" includes="${includes}"/>
         </copy>
     </target>
@@ -645,7 +642,7 @@ is divided into following sections:
     <target depends="init,deps-jar,-pre-pre-compile" name="-do-compile-single">
         <fail unless="javac.includes">Must select some files in the IDE or set javac.includes</fail>
         <j2seproject3:force-recompile/>
-        <j2seproject3:javac excludes="" gensrcdir="${build.generated.sources.dir}" includes="${javac.includes}" sourcepath="${src.dir}:${parser.src.dir}:${parsercommon.src.dir}:${akuma.src.dir}:${util.src.dir}"/>
+        <j2seproject3:javac excludes="" gensrcdir="${build.generated.sources.dir}" includes="${javac.includes}" sourcepath="${src.dir}:${parser.src.dir}:${parsercommon.src.dir}:${util.src.dir}"/>
     </target>
     <target name="-post-compile-single">
         <!-- Empty placeholder for easier customization. -->
@@ -874,9 +871,6 @@ is divided into following sections:
             <fileset dir="${parsercommon.src.dir}" excludes="*.java,${excludes}" includes="${includes}">
                 <filename name="**/*.java"/>
             </fileset>
-            <fileset dir="${akuma.src.dir}" excludes="*.java,${excludes}" includes="${includes}">
-                <filename name="**/*.java"/>
-            </fileset>
             <fileset dir="${util.src.dir}" excludes="*.java,${excludes}" includes="${includes}">
                 <filename name="**/*.java"/>
             </fileset>
@@ -893,9 +887,6 @@ is divided into following sections:
                 <filename name="**/doc-files/**"/>
             </fileset>
             <fileset dir="${parsercommon.src.dir}" excludes="${excludes}" includes="${includes}">
-                <filename name="**/doc-files/**"/>
-            </fileset>
-            <fileset dir="${akuma.src.dir}" excludes="${excludes}" includes="${includes}">
                 <filename name="**/doc-files/**"/>
             </fileset>
             <fileset dir="${util.src.dir}" excludes="${excludes}" includes="${includes}">
