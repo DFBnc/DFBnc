@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2015 DFBnc Developers
+ * Copyright (c) 2006-2017 DFBnc Developers
  * Copyright (c) 2006-2015 DMDirc Developers
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy

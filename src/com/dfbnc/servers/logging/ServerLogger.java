@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2015 DFBnc Developers
+ * Copyright (c) 2006-2017 DFBnc Developers
  * Copyright (c) 2006-2015 DMDirc Developers
  *
  * Where no other license is explicitly given or mentioned in the file, all files
