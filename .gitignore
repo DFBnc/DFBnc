@@ -1,9 +1,11 @@
 DFBnc.conf
-nbproject/private
-dist
-build
+keystore.ks
+
+/nbproject
+/dist
+/build
 /DFBnc
 /lib
-.idea/workspace.xml
-.idea/tasks.xml
-keystore.ks
+/.idea
+/.gradle
+/.nb-gradle/
