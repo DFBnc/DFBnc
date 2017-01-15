@@ -61,10 +61,6 @@ jar {
 
     exclude 'com/dfbnc/version.config'
 
-    from("$projectDir/src/com/dfbnc/defaults.config") {
-        into 'com/dfbnc/'
-    }
-
     from("$buildDir/version.config") {
         into 'com/dfbnc/'
     }

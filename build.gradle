@@ -44,6 +44,12 @@ sourceSets {
                          'modules/parser/common/src/test/java']
 }
 
+processResources {
+    from("$projectDir/src/com/dfbnc/defaults.config") {
+        into 'com/dfbnc/'
+    }
+}
+
 dependencies {
     compile group: 'com.squareup.dagger', name: 'dagger-compiler', version: '1.2.5'
     compile group: 'com.google.auto.value', name: 'auto-value', version: '1.3'
