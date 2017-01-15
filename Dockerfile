@@ -1,11 +1,6 @@
 FROM java:8-jdk
 MAINTAINER Shane Mc Cormack <dataforce@dataforce.org.uk>
 
-RUN \
-  apt-get update && \ 
-  apt-get -y install ant && \
-  rm -rf /var/lib/apt/lists/*
-
 COPY . /dfbnc/
 
 RUN \
@@ -13,10 +8,9 @@ RUN \
   if [ -e .git/shallow ]; then git fetch --unshallow; fi && \
   git fetch --tags && \
   git submodule update --init --recursive && \
-  ant jar && \
+  ./gradlew jar && \
   mv /dfbnc/dist/dfbnc.jar / && \
-  rm -rf /dfbnc && \
-  apt-get -y purge ant
+  rm -rf /dfbnc
 
 EXPOSE 33262 33263
 
