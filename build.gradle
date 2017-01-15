@@ -61,6 +61,7 @@ dependencies {
     testCompile group: 'org.mockito', name: 'mockito-core', version: '2.2.7'
 }
 
+apply from: 'gradle/tests.gradle'
 apply from: 'gradle/jar.gradle'
 
 task wrapper(type: Wrapper) {
