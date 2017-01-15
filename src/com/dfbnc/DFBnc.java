@@ -125,7 +125,7 @@ public class DFBnc implements NewSocketReadyHandler {
 
     /** Our SSLContextManager. */
     private SSLContextManager sslContextManager;
-    
+
     /**
      * Create the BNC.
      */
@@ -260,6 +260,9 @@ public class DFBnc implements NewSocketReadyHandler {
         } catch (final InvalidConfigFileException ex) {
             Logger.error("Error loading config (" + ex.getMessage() + "). Exiting");
             System.exit(1);
+        } catch (final Throwable t) {
+            Logger.error("Unknown error loading config: " + t.getMessage() + "). Exiting");
+            System.exit(1);
         }
 
         // Now that we have a config file, set the log buffer capacity correctly.
@@ -385,7 +388,7 @@ public class DFBnc implements NewSocketReadyHandler {
         if (sslContextManager == null) {
             sslContextManager = new SSLContextManager(getConfig().getOption("ssl", "keystore"), getConfig().getOption("ssl", "storepass"), getConfig().getOption("ssl", "keypass"));
         }
-        
+
         for (String listenhost : listenhosts) {
             try {
                 listenSockets.add(new ListenSocket(listenhost, this, sslContextManager));
@@ -399,7 +402,7 @@ public class DFBnc implements NewSocketReadyHandler {
             System.exit(1);
         }
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public void handleNewSocketReady(final SocketChannel sChannel, final SSLContextManager newSocketSSLContextManager) throws IOException {
