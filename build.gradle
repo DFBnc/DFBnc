@@ -39,7 +39,9 @@ sourceSets {
                          'modules/sockets/src',
                          'modules/parser/irc/src/main/java',
                          'modules/parser/common/src/main/java']
-    test.java.srcDirs = ['test']
+    test.java.srcDirs = ['test',
+                         'modules/parser/irc/src/test/java',
+                         'modules/parser/common/src/test/java']
 }
 
 dependencies {
