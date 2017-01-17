@@ -8,19 +8,23 @@ group = 'com.dfbnc'
 repositories {
     mavenCentral()
     maven { url 'https://artifactory.dmdirc.com/artifactory/repo' }
+    maven { url  'http://dl.bintray.com/shanemcc/dflibs' }
+    maven { url  'http://dl.bintray.com/dfbnc/dfbnc' }
 }
 
 idea {
     module {
-         sourceDirs += file('modules/parser/irc/src/main/generated')
-         sourceDirs += file('modules/parser/common/src/main/generated')
-         testSourceDirs += file('modules/parser/irc/src/test/generated_tests')
-         testSourceDirs += file('modules/parser/common/src/test/generated_tests')
+        if (file('modules/parser').exists()) {
+            sourceDirs += file('modules/parser/irc/src/main/generated')
+            sourceDirs += file('modules/parser/common/src/main/generated')
+            testSourceDirs += file('modules/parser/irc/src/test/generated_tests')
+            testSourceDirs += file('modules/parser/common/src/test/generated_tests')
 
-         generatedSourceDirs = [file('modules/parser/irc/src/main/generated'),
-                                file('modules/parser/common/src/main/generated'),
-                                file('modules/parser/irc/src/test/generated_tests'),
-                                file('modules/parser/common/src/test/generated_tests')]
+            generatedSourceDirs = [file('modules/parser/irc/src/main/generated'),
+                                    file('modules/parser/common/src/main/generated'),
+                                    file('modules/parser/irc/src/test/generated_tests'),
+                                    file('modules/parser/common/src/test/generated_tests')]
+        }
     }
 }
 
@@ -46,9 +50,7 @@ processResources {
 }
 
 repositories {
-    maven {
-        url  "http://dl.bintray.com/shanemcc/dflibs"
-    }
+
 }
 
 dependencies {
@@ -58,9 +60,20 @@ dependencies {
     bundle group: 'org.kohsuke', name: 'akuma', version: '1.10'
     bundle group: 'com.dmdirc', name: 'util', version: 'null-SNAPSHOT'
 
-    bundle(project(":sockets"))
-    bundle project(":parser:common")
-    bundle project(":parser:irc")
+    if (file('modules/sockets').exists()) {
+        bundle project(":sockets")
+    } else {
+        bundle group: 'com.dfbnc', name: 'sockets', version: '0.2'
+    }
+
+    if (file('modules/parser').exists()) {
+        bundle project(":parser:common")
+        bundle project(":parser:irc")
+    } else {
+        bundle group: 'net.engio', name: 'mbassador', version: '1.3.0'
+        bundle group: 'com.dmdirc', name: 'parser-irc', version: '0.8-322-g7a0c767-SNAPSHOT'
+        bundle group: 'com.dmdirc', name: 'parser-common', version: '0.8-322-g7a0c767-SNAPSHOT'
+    }
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
     testCompile group: 'org.mockito', name: 'mockito-core', version: '2.2.7'

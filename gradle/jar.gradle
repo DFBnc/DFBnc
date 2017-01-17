@@ -37,6 +37,20 @@ task createVersionConfig {
         return stdout.toString().trim().isEmpty() ? "Unknown" : stdout.toString().trim();
     }
 
+    ext.getBundledDependencyVersion = {group, name ->
+        def compileConfiguration = project.configurations.getByName("compile")
+        def resolvedConfiguration = compileConfiguration.resolvedConfiguration
+        def resolvedArtifacts = resolvedConfiguration.resolvedArtifacts
+        for (def dp : resolvedArtifacts) {
+            def version = dp.moduleVersion.id
+            if (version.group.equals(group) && version.name.equals(name)) {
+                return version.version;
+            }
+        }
+
+        return "Unknown";
+    }
+
     doLast {
         def targetFile = new File(buildDir, 'version.config')
         def component, componentVersion;
@@ -50,8 +64,20 @@ task createVersionConfig {
         targetFile << "\n"
         targetFile << "versions:\n"
         targetFile << "   dfbnc=" + getGitVersion(project.projectDir) + "\n"
-        targetFile << "   parser=" + getGitVersion(new File(project.projectDir, "modules/parser")) + "\n"
-        targetFile << "   sockets=" + getGitVersion(new File(project.projectDir, "modules/sockets")) + "\n"
+
+        if (file('modules/parser').exists()) {
+            targetFile << "   parser-common=local: " + getGitVersion(new File(project.projectDir, "modules/parser")) + "\n"
+            targetFile << "   parser-irc=local: " + getGitVersion(new File(project.projectDir, "modules/parser")) + "\n"
+        } else {
+            targetFile << "   parser-common=bundled: " + getBundledDependencyVersion("com.dmdirc", "parser-common") + "\n"
+            targetFile << "   parser-irc=bundled: " + getBundledDependencyVersion("com.dmdirc", "parser-irc") + "\n"
+        }
+
+        if (file('modules/sockets').exists()) {
+            targetFile << "   sockets=local: " + getGitVersion(new File(project.projectDir, "modules/sockets")) + "\n"
+        } else {
+            targetFile << "   sockets=bundled: " + getBundledDependencyVersion("com.dfbnc", "sockets") + "\n"
+        }
     }
 }
 

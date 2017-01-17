@@ -1,10 +1,14 @@
 rootProject.name = 'dfbnc'
 
-include ':sockets'
-project(':sockets').projectDir = file('modules/sockets')
+if (file('modules/sockets').exists()) {
+	include ':sockets'
+	project(':sockets').projectDir = file('modules/sockets')
+}
 
-include ':parser'
-project(':parser').projectDir = new File('modules/parser')
+if (file('modules/parser').exists()) {
+	include ':parser'
+	project(':parser').projectDir = new File('modules/parser')
 
-include ':parser:irc'
-include ':parser:common'
+	include ':parser:irc'
+	include ':parser:common'
+}
