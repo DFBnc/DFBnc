@@ -65,7 +65,7 @@ task createVersionConfig {
         targetFile << "versions:\n"
         targetFile << "   dfbnc=" + getGitVersion(project.projectDir) + "\n"
 
-        if (file('modules/parser').exists()) {
+        if (file('modules/parser/build.gradle').exists()) {
             targetFile << "   parser-common=local: " + getGitVersion(new File(project.projectDir, "modules/parser")) + "\n"
             targetFile << "   parser-irc=local: " + getGitVersion(new File(project.projectDir, "modules/parser")) + "\n"
         } else {
@@ -73,7 +73,7 @@ task createVersionConfig {
             targetFile << "   parser-irc=bundled: " + getBundledDependencyVersion("com.dmdirc", "parser-irc") + "\n"
         }
 
-        if (file('modules/sockets').exists()) {
+        if (file('modules/sockets/build.gradle').exists()) {
             targetFile << "   sockets=local: " + getGitVersion(new File(project.projectDir, "modules/sockets")) + "\n"
         } else {
             targetFile << "   sockets=bundled: " + getBundledDependencyVersion("com.dfbnc", "sockets") + "\n"

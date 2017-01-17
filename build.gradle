@@ -60,13 +60,13 @@ dependencies {
     bundle group: 'org.kohsuke', name: 'akuma', version: '1.10'
     bundle group: 'com.dmdirc', name: 'util', version: 'null-SNAPSHOT'
 
-    if (file('modules/sockets').exists()) {
+    if (file('modules/sockets/build.gradle').exists()) {
         bundle project(":sockets")
     } else {
         bundle group: 'com.dfbnc', name: 'sockets', version: '0.2'
     }
 
-    if (file('modules/parser').exists()) {
+    if (file('modules/parser/build.gradle').exists()) {
         bundle project(":parser:common")
         bundle project(":parser:irc")
     } else {

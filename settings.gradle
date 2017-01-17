@@ -1,11 +1,11 @@
 rootProject.name = 'dfbnc'
 
-if (file('modules/sockets').exists()) {
+if (file('modules/sockets/build.gradle').exists()) {
 	include ':sockets'
 	project(':sockets').projectDir = file('modules/sockets')
 }
 
-if (file('modules/parser').exists()) {
+if (file('modules/parser/build.gradle').exists()) {
 	include ':parser'
 	project(':parser').projectDir = new File('modules/parser')
 
