@@ -1,1 +1,5 @@
 rootProject.name = 'dfbnc'
+
+include 'modules/sockets'
+include 'modules/parser:irc'
+include 'modules/parser:common'
