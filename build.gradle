@@ -58,9 +58,9 @@ dependencies {
     bundle group: 'org.kohsuke', name: 'akuma', version: '1.10'
     bundle group: 'com.dmdirc', name: 'util', version: 'null-SNAPSHOT'
 
-    bundle(project("modules/sockets"))
-    bundle project("modules/parser:common")
-    bundle project("modules/parser:irc")
+    bundle(project(":sockets"))
+    bundle project(":parser:common")
+    bundle project(":parser:irc")
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
     testCompile group: 'org.mockito', name: 'mockito-core', version: '2.2.7'

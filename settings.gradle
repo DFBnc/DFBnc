@@ -1,5 +1,10 @@
 rootProject.name = 'dfbnc'
 
-include 'modules/sockets'
-include 'modules/parser:irc'
-include 'modules/parser:common'
+include ':sockets'
+project(':sockets').projectDir = file('modules/sockets')
+
+include ':parser'
+project(':parser').projectDir = new File('modules/parser')
+
+include ':parser:irc'
+include ':parser:common'
