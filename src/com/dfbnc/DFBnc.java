@@ -386,7 +386,16 @@ public class DFBnc implements NewSocketReadyHandler {
         final List<String> listenhosts = config.getOptionList("general", "listenhost");
 
         if (sslContextManager == null) {
-            sslContextManager = new SSLContextManager(getConfig().getOption("ssl", "keystore"), getConfig().getOption("ssl", "storepass"), getConfig().getOption("ssl", "keypass"));
+            if ("pem".equalsIgnoreCase(getConfig().getOption("ssl", "source"))) {
+                sslContextManager = new SSLContextManager(
+                        getConfig().getOption("ssl", "certificatefile"),
+                        getConfig().getOption("ssl", "privatekeyfile"));
+            } else {
+                sslContextManager = new SSLContextManager(
+                        getConfig().getOption("ssl", "keystore"),
+                        getConfig().getOption("ssl", "storepass"),
+                        getConfig().getOption("ssl", "keypass"));
+            }
         }
 
         for (String listenhost : listenhosts) {
