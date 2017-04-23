@@ -40,17 +40,8 @@ targetCompatibility = 1.8
 
 sourceSets {
     main.java.srcDirs = ['src']
+    main.resources.srcDirs = ['res']
     test.java.srcDirs = ['test']
-}
-
-processResources {
-    from("$projectDir/src/com/dfbnc/defaults.config") {
-        into 'com/dfbnc/'
-    }
-}
-
-repositories {
-
 }
 
 dependencies {
