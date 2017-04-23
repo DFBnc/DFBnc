@@ -54,7 +54,7 @@ dependencies {
     if (file('modules/sockets/build.gradle').exists()) {
         bundle project(":sockets")
     } else {
-        bundle group: 'com.dfbnc', name: 'sockets', version: '0.2'
+        bundle group: 'com.dfbnc', name: 'sockets', version: '0.3'
     }
 
     if (file('modules/parser/build.gradle').exists()) {
