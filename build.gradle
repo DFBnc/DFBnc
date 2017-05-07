@@ -62,8 +62,8 @@ dependencies {
         bundle project(":parser:irc")
     } else {
         bundle group: 'net.engio', name: 'mbassador', version: '1.3.0'
-        bundle group: 'com.dmdirc', name: 'parser-irc', version: '0.8-322-g7a0c767-SNAPSHOT'
-        bundle group: 'com.dmdirc', name: 'parser-common', version: '0.8-322-g7a0c767-SNAPSHOT'
+        bundle group: 'com.dmdirc', name: 'parser-irc', version: '0.8-348-gcf32f85-SNAPSHOT'
+        bundle group: 'com.dmdirc', name: 'parser-common', version: '0.8-344-g4105a94-SNAPSHOT'
     }
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
