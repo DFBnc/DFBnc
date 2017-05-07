@@ -108,6 +108,9 @@ public class DFBnc implements NewSocketReadyHandler {
     /** Shutdown hook. */
     private ShutdownHook shutdownHook;
 
+    /** Signal Handler. */
+    private SignalHandler signalHandler;
+
     /** Daemon. */
     public final static DFBncDaemon daemon = new DFBncDaemon();
 
@@ -170,6 +173,8 @@ public class DFBnc implements NewSocketReadyHandler {
         shutdownHook = new ShutdownHook(this);
         Runtime.getRuntime().addShutdownHook(shutdownHook);
 
+        signalHandler = new SignalHandler(this);
+
         setupLogging();
 
         if (DFBncDaemon.canFork() && daemon.isDaemonized()) {
@@ -194,6 +199,7 @@ public class DFBnc implements NewSocketReadyHandler {
                 // Before forking, close any sockets and files.
                 Logger.setLevel(LogLevel.SILENT);
                 shutdownHook.inactivate();
+                signalHandler.inactivate();
                 this.shutdown(true);
 
                 // Daemonise.
@@ -377,6 +383,19 @@ public class DFBnc implements NewSocketReadyHandler {
         }
     }
 
+    public void createSSLContextManager() {
+        if ("pem".equalsIgnoreCase(getConfig().getOption("ssl", "source"))) {
+            sslContextManager = new SSLContextManager(
+                    getConfig().getOption("ssl", "certificatefile"),
+                    getConfig().getOption("ssl", "privatekeyfile"));
+        } else {
+            sslContextManager = new SSLContextManager(
+                    getConfig().getOption("ssl", "keystore"),
+                    getConfig().getOption("ssl", "storepass"),
+                    getConfig().getOption("ssl", "keypass"));
+        }
+    }
+
     /**
      * Open the listen sockets.
      */
@@ -386,16 +405,7 @@ public class DFBnc implements NewSocketReadyHandler {
         final List<String> listenhosts = config.getOptionList("general", "listenhost");
 
         if (sslContextManager == null) {
-            if ("pem".equalsIgnoreCase(getConfig().getOption("ssl", "source"))) {
-                sslContextManager = new SSLContextManager(
-                        getConfig().getOption("ssl", "certificatefile"),
-                        getConfig().getOption("ssl", "privatekeyfile"));
-            } else {
-                sslContextManager = new SSLContextManager(
-                        getConfig().getOption("ssl", "keystore"),
-                        getConfig().getOption("ssl", "storepass"),
-                        getConfig().getOption("ssl", "keypass"));
-            }
+            createSSLContextManager();
         }
 
         for (String listenhost : listenhosts) {
@@ -494,6 +504,20 @@ public class DFBnc implements NewSocketReadyHandler {
     }
 
     /**
+     * Handle signal
+     *
+     * @param signal Signal name to handle.
+     */
+    public void signal(final String signal) {
+        if (signal.equalsIgnoreCase("HUP")) {
+            Logger.info("Got sighup.");
+
+            Logger.info("Resetting SSL Context.");
+            sslContextManager.setSSLContext(null);
+        }
+    }
+
+    /**
      * Handle shutdown
      */
     public void shutdown() {
@@ -555,6 +579,10 @@ public class DFBnc implements NewSocketReadyHandler {
 
         Logger.info("Deactivating shutdown hook.");
         if (shutdownHook != null) { shutdownHook.inactivate(); }
+
+        Logger.info("Deactivating signal handler.");
+        if (signalHandler != null) { signalHandler.inactivate(); }
+
         if (!shuttingDown) {
             Logger.info("Exiting.");
             System.exit(0);
