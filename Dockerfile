@@ -6,15 +6,25 @@ ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 ENV JAVA_TOOL_OPTIONS -Dfile.encoding=UTF8
 
-COPY . /dfbnc/
+COPY . /tmp/dfbnc/
 
 RUN \
-  cd /dfbnc && \
+  useradd dfbnc && \
+  mkdir /home/dfbnc && \
+  mkdir /var/lib/dfbnc && \
+  chown -R dfbnc /tmp/dfbnc && \
+  chown -R dfbnc /home/dfbnc && \
+  chown -R dfbnc /var/lib/dfbnc
+
+USER dfbnc
+
+RUN \
+  cd /tmp/dfbnc && \
   if [ -e .git/shallow ]; then git fetch --unshallow; fi && \
   git fetch --tags && \
   ./gradlew jar && \
-  mv /dfbnc/dist/dfbnc.jar / && \
-  rm -rf /dfbnc
+  mv /tmp/dfbnc/dist/dfbnc.jar /home/dfbnc/ && \
+  rm -rf /tmp/dfbnc
 
 EXPOSE 33262 33263
 
@@ -22,4 +32,4 @@ VOLUME ["/var/lib/dfbnc"]
 
 WORKDIR /var/lib/dfbnc
 
-CMD ["/usr/bin/java", "-jar", "/dfbnc.jar", "--config", "/var/lib/dfbnc", "--foreground"]
+CMD ["/usr/bin/java", "-jar", "/home/dfbnc/dfbnc.jar", "--config", "/var/lib/dfbnc", "--foreground"]
