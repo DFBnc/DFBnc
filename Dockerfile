@@ -1,4 +1,4 @@
-FROM java:8-jdk
+FROM openjdk:8-jdk
 MAINTAINER Shane Mc Cormack <dataforce@dataforce.org.uk>
 
 ENV LANG en_US.UTF-8
