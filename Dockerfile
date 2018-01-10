@@ -1,4 +1,4 @@
-FROM openjdk:8-jdk
+FROM openjdk:alpine
 MAINTAINER Shane Mc Cormack <dataforce@dataforce.org.uk>
 
 ENV LANG en_US.UTF-8
@@ -9,12 +9,15 @@ ENV JAVA_TOOL_OPTIONS -Dfile.encoding=UTF8
 COPY . /tmp/dfbnc/
 
 RUN \
-  useradd dfbnc && \
-  mkdir /home/dfbnc && \
+  addgroup -g 3456 -S dfbnc && \
+  adduser -S -G dfbnc -u 3456 -s /bin/bash -h /home/dfbnc dfbnc && \
   mkdir /var/lib/dfbnc && \
   chown -R dfbnc /tmp/dfbnc && \
   chown -R dfbnc /home/dfbnc && \
   chown -R dfbnc /var/lib/dfbnc
+
+RUN \
+  apk add --no-cache git
 
 USER dfbnc
 
