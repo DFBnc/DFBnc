@@ -281,6 +281,10 @@ public abstract class AbstractListEditCommand extends Command {
                     output.addBotMessage("You must specify an item number to delete");
                 }
             } else if (actualParams[commandParam].equalsIgnoreCase("clear")) {
+                if (user.isReadOnly()) {
+                    output.addBotMessage("Sorry, read-only sub-clients are unable to make changes to lists.");
+                    return;
+                }
                 myList.clear();
                 output.addBotMessage("Your %s has been cleared.", getListName(listParamName));
             } else {
