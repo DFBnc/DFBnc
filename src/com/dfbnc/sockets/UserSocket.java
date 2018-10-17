@@ -43,6 +43,7 @@ import com.dfbnc.util.IRCLine;
 import com.dfbnc.util.MultiWriter;
 import com.dfbnc.util.UserSocketMessageWriter;
 import com.dfbnc.util.Util;
+import com.dfbnc.util.RollingList;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
