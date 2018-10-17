@@ -120,7 +120,7 @@ public class UserSocket extends ConnectedSocket {
     private boolean isQuitting = false;
 
     /** Lines buffered during negotiation. */
-    private List<String> negotiationLines = new LinkedList<>();
+    private List<String> negotiationLines = new RollingList<20>();
 
     /** Map of capabilities and their state. */
     private final Map<String, CapabilityState> capabilities = new HashMap<>();
@@ -732,6 +732,9 @@ public class UserSocket extends ConnectedSocket {
 
         // Don't process any more lines if we are quitting.
         if (isQuitting) { return; }
+        
+        // Don't process overly-excessive (and technically invalid) lines.
+        if (line.length() > 2048) { return; }
 
         // Tokenise the line
         final String[] newLine = IRCParser.tokeniseLine(line);
