@@ -120,7 +120,7 @@ public class UserSocket extends ConnectedSocket {
     private boolean isQuitting = false;
 
     /** Lines buffered during negotiation. */
-    private List<String> negotiationLines = new RollingList<20>();
+    private List<String> negotiationLines = new RollingList<>(20);
 
     /** Map of capabilities and their state. */
     private final Map<String, CapabilityState> capabilities = new HashMap<>();
