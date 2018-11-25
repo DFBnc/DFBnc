@@ -35,6 +35,6 @@ WORKDIR /var/lib/dfbnc
 
 COPY ssl.sh /var/lib/dfbnc/ssl.sh
 
-RUN /var/lib/dfbnc/ssl.sh
+RUN /var/lib/dfbnc/ssl.sh && rm /var/lib/dfbnc/ssl.sh
 
 CMD ["/usr/bin/java", "-jar", "/home/dfbnc/dfbnc.jar", "--config", "/var/lib/dfbnc", "--foreground"]
