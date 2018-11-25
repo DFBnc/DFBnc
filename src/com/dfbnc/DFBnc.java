@@ -392,8 +392,7 @@ public class DFBnc implements NewSocketReadyHandler {
                     getConfig().getOption("ssl", "certificatefile"),
                     getConfig().getOption("ssl", "privatekeyfile"));
         } else {
-            final Path path = FileSystems.getDefault().getPath(DFBnc.class.getProtectionDomain().getCodeSource()
-                    .getLocation().getFile()).getParent().toAbsolutePath().resolve("keystore.p12");
+            final Path path = FileSystems.getDefault().getPath(System.getProperty("user.dir")).toAbsolutePath().resolve(".keystore.p12");
             if (path.toFile().exists()) {
                 sslContextManager = new SSLContextManager(
                         getConfig().getOption("ssl", "keystore").isEmpty() ? path.toString() : getConfig().getOption("ssl", "keystore"),
