@@ -62,6 +62,9 @@ import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import java.nio.file.Path;
+import java.nio.file.FileSystems;
+
 /**
  * Main BNC Class.
  */
@@ -389,10 +392,19 @@ public class DFBnc implements NewSocketReadyHandler {
                     getConfig().getOption("ssl", "certificatefile"),
                     getConfig().getOption("ssl", "privatekeyfile"));
         } else {
-            sslContextManager = new SSLContextManager(
-                    getConfig().getOption("ssl", "keystore"),
-                    getConfig().getOption("ssl", "storepass"),
-                    getConfig().getOption("ssl", "keypass"));
+            final Path path = FileSystems.getDefault().getPath(DFBnc.class.getProtectionDomain().getCodeSource()
+                    .getLocation().getFile()).getParent().toAbsolutePath().resolve("keystore.p12");
+            if (path.toFile().exists()) {
+                sslContextManager = new SSLContextManager(
+                        getConfig().getOption("ssl", "keystore").isEmpty() ? path.toString() : getConfig().getOption("ssl", "keystore"),
+                        getConfig().getOption("ssl", "storepass").isEmpty() ? "password" : getConfig().getOption("ssl", "storepass"),
+                        getConfig().getOption("ssl", "keypass").isEmpty() ? "password" : getConfig().getOption("ssl", "keypass"));
+            } else {
+                sslContextManager = new SSLContextManager(
+                        getConfig().getOption("ssl", "keystore"),
+                        getConfig().getOption("ssl", "storepass"),
+                        getConfig().getOption("ssl", "keypass"));
+            }
         }
     }
 
