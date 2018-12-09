@@ -17,7 +17,7 @@ RUN \
   chown -R dfbnc /var/lib/dfbnc
 
 RUN \
-  apk add --no-cache git
+  apk add --no-cache git openssl
 
 USER dfbnc
 
@@ -31,8 +31,10 @@ RUN \
 
 EXPOSE 33262 33263
 
-VOLUME ["/var/lib/dfbnc"]
+COPY ssl.sh /home/dfbnc/ssl.sh
 
 WORKDIR /var/lib/dfbnc
+
+ENTRYPOINT ["/home/dfbnc/ssl.sh"]
 
 CMD ["/usr/bin/java", "-jar", "/home/dfbnc/dfbnc.jar", "--config", "/var/lib/dfbnc", "--foreground"]
