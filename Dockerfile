@@ -31,10 +31,10 @@ RUN \
 
 EXPOSE 33262 33263
 
+COPY ssl.sh /home/dfbnc/ssl.sh
+
 WORKDIR /var/lib/dfbnc
 
-COPY ssl.sh /var/lib/dfbnc/ssl.sh
-
-RUN /var/lib/dfbnc/ssl.sh
+ENTRYPOINT ["/home/dfbnc/ssl.sh"]
 
 CMD ["/usr/bin/java", "-jar", "/home/dfbnc/dfbnc.jar", "--config", "/var/lib/dfbnc", "--foreground"]
