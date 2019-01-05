@@ -45,7 +45,7 @@ sourceSets {
 }
 
 dependencies {
-    bundle group: 'uk.org.dataforce.libs', name: 'logger', version: '0.1'
+    bundle group: 'uk.org.dataforce.libs', name: 'logger', version: '0.4'
     bundle group: 'uk.org.dataforce.libs', name: 'cliparser', version: '0.2'
 
     bundle group: 'org.kohsuke', name: 'akuma', version: '1.10'
