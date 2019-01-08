@@ -14,23 +14,24 @@ RUN \
   mkdir /var/lib/dfbnc && \
   chown -R dfbnc /tmp/dfbnc && \
   chown -R dfbnc /home/dfbnc && \
-  chown -R dfbnc /var/lib/dfbnc
+  chown -R dfbnc /var/lib/dfbnc && \
+  mv /tmp/dfbnc/ssl.sh /home/dfbnc/ssl.sh && \
+  chmod a+x /home/dfbnc/ssl.sh
 
 RUN \
   apk add --no-cache git openssl
 
 USER dfbnc
 
-COPY ssl.sh /home/dfbnc/ssl.sh
-
 RUN \
   cd /tmp/dfbnc && \
-  if [ -e .git/shallow ]; then git fetch --unshallow; git submodule foreach git fetch --unshallow; fi && \
+  if [ -e $(git rev-parse --git-dir)/shallow ]; then git fetch --unshallow; fi && \
   git fetch --tags && \
+  git submodule foreach 'if [ -e $(git rev-parse --git-dir)/shallow ]; then git fetch --unshallow; fi' && \
+  git submodule foreach 'git fetch --tags' && \
   ./gradlew jar && \
   mv /tmp/dfbnc/dist/dfbnc.jar /home/dfbnc/ && \
-  rm -rf /tmp/dfbnc && \
-  chmod a+x /home/dfbnc/ssl.sh
+  rm -rf /tmp/dfbnc
 
 EXPOSE 33262 33263
 
