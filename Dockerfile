@@ -25,9 +25,9 @@ USER dfbnc
 
 RUN \
   cd /tmp/dfbnc && \
-  if [ -e $(git rev-parse --git-dir)/shallow ]; then git fetch --unshallow; fi && \
+  if [ -e $(git rev-parse --git-dir)/shallow ]; then git init; git fetch --unshallow; fi && \
   git fetch --tags && \
-  git submodule foreach 'if [ -e $(git rev-parse --git-dir)/shallow ]; then git fetch --unshallow; fi' && \
+  git submodule foreach 'if [ -e $(git rev-parse --git-dir)/shallow ]; then git init; git fetch --unshallow; fi' && \
   git submodule foreach 'git fetch --tags' && \
   ./gradlew jar && \
   mv /tmp/dfbnc/dist/dfbnc.jar /home/dfbnc/ && \
