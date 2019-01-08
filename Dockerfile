@@ -21,17 +21,18 @@ RUN \
 
 USER dfbnc
 
+COPY ssl.sh /home/dfbnc/ssl.sh
+
 RUN \
   cd /tmp/dfbnc && \
-  if [ -e .git/shallow ]; then git fetch --unshallow; fi && \
+  if [ -e .git/shallow ]; then git fetch --unshallow; git submodule foreach git fetch --unshallow; fi && \
   git fetch --tags && \
   ./gradlew jar && \
   mv /tmp/dfbnc/dist/dfbnc.jar /home/dfbnc/ && \
-  rm -rf /tmp/dfbnc
+  rm -rf /tmp/dfbnc && \
+  chmod a+x /home/dfbnc/ssl.sh
 
 EXPOSE 33262 33263
-
-COPY ssl.sh /home/dfbnc/ssl.sh
 
 WORKDIR /var/lib/dfbnc
 
