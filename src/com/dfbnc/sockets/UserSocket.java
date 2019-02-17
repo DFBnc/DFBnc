@@ -471,9 +471,9 @@ public class UserSocket extends ConnectedSocket {
     public void socketOpened() {
         sendBotMessage("Welcome to DFBnc (%s)", DFBnc.getVersion());
         if (isSSL) {
-            sendBotMessage("You are connected using SSL");
+            sendBotMessage("You are connected to an SSL Socket");
         } else {
-            sendBotMessage("You are not connected using SSL");
+            sendBotMessage("You are not connected to an SSL Socket");
         }
     }
 
@@ -733,7 +733,7 @@ public class UserSocket extends ConnectedSocket {
 
         // Don't process any more lines if we are quitting.
         if (isQuitting) { return; }
-        
+
         // Don't process overly-excessive (and technically invalid) lines.
         if (line.length() > 2048) { return; }
 
