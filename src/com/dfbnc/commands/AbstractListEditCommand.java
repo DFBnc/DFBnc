@@ -72,7 +72,7 @@ public abstract class AbstractListEditCommand extends Command {
     }
 
     /**
-     * Get the output to give for an "add", "edit" or "ins" request without sufficient parameters
+     * Get the output to give for an "add", "edit" or "insert" request without sufficient parameters
      *
      * @param command Command to get usage info for (add, edit, ins)
      * @return The output to give
@@ -206,7 +206,7 @@ public abstract class AbstractListEditCommand extends Command {
                 } else {
                     output.addBotMessage("Your %s is currently empty.", getListName(listParamName));
                 }
-            } else if (canAdd(listParamName) && (actualParams[commandParam].equalsIgnoreCase("add") || actualParams[commandParam].equalsIgnoreCase("edit") || actualParams[commandParam].equalsIgnoreCase("ins"))) {
+            } else if (canAdd(listParamName) && (actualParams[commandParam].equalsIgnoreCase("add") || actualParams[commandParam].equalsIgnoreCase("edit") || actualParams[commandParam].equalsIgnoreCase("ins") || actualParams[commandParam].equalsIgnoreCase("insert"))) {
                 if (user.isReadOnly()) {
                     output.addBotMessage("Sorry, read-only sub-clients are unable to make changes to lists.");
                     return;
