@@ -1,5 +1,5 @@
 language: java
-jdk: [oraclejdk9]
+jdk: [oraclejdk14]
 sudo: false
 git:
   submodules: false
