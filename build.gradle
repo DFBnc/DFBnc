@@ -67,7 +67,7 @@ dependencies {
     }
 
     testCompile group: 'junit', name: 'junit', version: '4.13'
-    testCompile group: 'org.mockito', name: 'mockito-core', version: '3.3.3'
+    testCompile group: 'org.mockito', name: 'mockito-core', version: '3.4.6'
 }
 
 apply from: 'gradle/tests.gradle'
