@@ -7,8 +7,8 @@ group = 'com.dfbnc'
 
 repositories {
     mavenCentral()
-    maven { url 'https://artifactory.dmdirc.com/artifactory/repo' }
-    maven { url  'http://dl.bintray.com/shanemcc/dflibs' }
+    maven { url 'https://artifactory.dmdirc.com/releases' }
+    maven { url 'https://artifactory.dmdirc.com/snapshots' }
     maven { url  'http://dl.bintray.com/dfbnc/dfbnc' }
 }
 
