@@ -7,10 +7,8 @@ group = 'com.dfbnc'
 
 repositories {
     mavenCentral()
-    maven { url 'https://artifactory.dmdirc.com/releases' }
     maven { url 'https://artifactory.dmdirc.com/snapshots' }
-    maven { url  'http://dl.bintray.com/shanemcc/dflibs' }
-    maven { url  'http://dl.bintray.com/dfbnc/dfbnc' }
+    maven { url 'https://maven.shanemcc.net/releases' }
 }
 
 idea {
@@ -46,8 +44,8 @@ sourceSets {
 }
 
 dependencies {
-    bundle group: 'uk.org.dataforce.libs', name: 'logger', version: '0.4'
-    bundle group: 'uk.org.dataforce.libs', name: 'cliparser', version: '0.2'
+    bundle group: 'uk.org.dataforce.libs', name: 'logger', version: '0.4.1'
+    bundle group: 'uk.org.dataforce.libs', name: 'cliparser', version: '0.2.1'
 
     bundle group: 'org.kohsuke', name: 'akuma', version: '1.10'
     bundle group: 'com.dmdirc', name: 'util', version: 'null-SNAPSHOT'
