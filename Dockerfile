@@ -26,6 +26,7 @@ USER dfbnc
 RUN \
   cd /tmp/dfbnc && \
   find -type f -name .git -exec bash -c 'f="{}"; cd $(dirname $f); echo "gitdir: ../../.git/modules/$(realpath --relative-to=/tmp/dfbnc .)" > .git' \; && \
+  find .git -type f -name config -exec sed -i 's#url = git@github.com:#url = https://github.com/#g' {} \; && \
   if [ -e $(git rev-parse --git-dir)/shallow ]; then git init; git fetch --unshallow; fi && \
   git fetch --tags && \
   git submodule foreach 'if [ -e $(git rev-parse --git-dir)/shallow ]; then git init; git fetch --unshallow; fi' && \
