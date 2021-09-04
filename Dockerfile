@@ -26,6 +26,8 @@ WORKDIR /tmp/dfbnc
 #       main repo and the submodules.
 #
 #       Leaving it in for now, but will look to remove in future.
+#
+#       I think this was mainly for DockerHub rather than Travis?
 RUN \
   find -type f -name .git -exec bash -c 'f="{}"; cd $(dirname $f); echo "gitdir: ../../.git/modules/$(realpath --relative-to=/tmp/dfbnc .)" > .git' \; && \
   find .git -type f -name config -exec sed -i 's#url = git@github.com:#url = https://github.com/#g' {} \; && \
