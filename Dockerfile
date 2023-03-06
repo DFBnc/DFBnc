@@ -1,4 +1,4 @@
-FROM openjdk:alpine AS build
+FROM eclipse-temurin:19-alpine AS build
 MAINTAINER Shane Mc Cormack <dataforce@dataforce.org.uk>
 
 ENV LANG en_US.UTF-8
@@ -39,7 +39,7 @@ RUN \
 RUN ./gradlew jar
 
 
-FROM openjdk:alpine AS run
+FROM eclipse-temurin:19-alpine AS run
 
 RUN apk add --no-cache openssl
 
@@ -62,4 +62,4 @@ WORKDIR /var/lib/dfbnc
 
 ENTRYPOINT ["/home/dfbnc/ssl.sh"]
 
-CMD ["/usr/bin/java", "-jar", "/home/dfbnc/dfbnc.jar", "--config", "/var/lib/dfbnc", "--foreground"]
+CMD ["/usr/bin/env", "java", "-jar", "/home/dfbnc/dfbnc.jar", "--config", "/var/lib/dfbnc", "--foreground"]
