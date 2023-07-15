@@ -50,19 +50,19 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - name: Login to Registry
-        uses: docker/login-action@v2
-        with:
-          registry: registry.shanemcc.net
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
-
       - name: Login to GHCR
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login to Registry
+        uses: docker/login-action@v2
+        with:
+          registry: registry.shanemcc.net
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
 
       # Build
       - name: Build using buildx
@@ -73,6 +73,37 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
+      # Push to each registry.
+      - uses: mr-smithers-excellent/docker-build-push@v6
+        name: Push to Dockerhub
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          image: dfbnc/dfbnc
+          tags: ${{ inputs.buildtag }}
+          multiPlatform: true
+
+      - uses: mr-smithers-excellent/docker-build-push@v6
+        name: Push to GHCR
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          image: dfbnc/dfbnc
+          tags: ${{ inputs.buildtag }}
+          multiPlatform: true
+
+      - uses: mr-smithers-excellent/docker-build-push@v6
+        name: Push to Registry
+        with:
+          registry: registry.shanemcc.net
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+          image: dfbnc-public/dfbnc
+          tags: ${{ inputs.buildtag }}
+          multiPlatform: true
+
         # This ugly bit is necessary if you don't want your cache to grow forever
         # until it hits GitHub's limit of 5GB.
         # Temp fix
@@ -82,26 +113,3 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-
-      # Push to each registry.
-      - uses: mr-smithers-excellent/docker-build-push@v6
-        name: Push to Dockerhub
-        with:
-          registry: docker.io
-          image: dfbnc/dfbnc
-          tags: ${{ inputs.buildtag }}
-
-      - uses: mr-smithers-excellent/docker-build-push@v6
-        name: Push to GHCR
-        with:
-          registry: ghcr.io
-          image: dfbnc/dfbnc
-          tags: ${{ inputs.buildtag }}
-
-      - uses: mr-smithers-excellent/docker-build-push@v6
-        name: Push to Registry
-        with:
-          registry: registry.shanemcc.net
-          image: dfbnc-public/dfbnc
-          tags: ${{ inputs.buildtag }}
-          multiPlatform: true
