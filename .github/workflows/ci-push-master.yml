@@ -1,0 +1,16 @@
+name: CI Push
+
+on:
+  push:
+    branches:
+    - master
+
+jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+    secrets: inherit
+
+  build-and-push:
+    uses: ./.github/workflows/build-and-push.yml
+    needs: test
+    secrets: inherit
