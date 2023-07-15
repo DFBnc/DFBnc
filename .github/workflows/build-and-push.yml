@@ -31,48 +31,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Prepare
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Cache Docker layers
-        uses: actions/cache@v3
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
-      # Login everywhere
-      - name: Login to DockerHub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-
-      - name: Login to GHCR
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Login to Registry
-        uses: docker/login-action@v2
-        with:
-          registry: registry.shanemcc.net
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
-
-      # Build
-      - name: Build using buildx
-        uses: docker/build-push-action@v4
-        with:
-          push: false
-          context: .
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
-
       # Push to each registry.
       - uses: mr-smithers-excellent/docker-build-push@v6
         name: Push to Dockerhub
@@ -82,7 +40,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
           image: dfbnc/dfbnc
           tags: ${{ inputs.buildtag }}
-          multiPlatform: true
+          enableBuildKit: true
 
       - uses: mr-smithers-excellent/docker-build-push@v6
         name: Push to GHCR
@@ -92,7 +50,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
           image: dfbnc/dfbnc
           tags: ${{ inputs.buildtag }}
-          multiPlatform: true
+          enableBuildKit: true
 
       - uses: mr-smithers-excellent/docker-build-push@v6
         name: Push to Registry
@@ -102,7 +60,7 @@ jobs:
           password: ${{ secrets.REGISTRY_PASSWORD }}
           image: dfbnc-public/dfbnc
           tags: ${{ inputs.buildtag }}
-          multiPlatform: true
+          enableBuildKit: true
 
         # This ugly bit is necessary if you don't want your cache to grow forever
         # until it hits GitHub's limit of 5GB.
