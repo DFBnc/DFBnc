@@ -64,16 +64,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Build and push to each registry
-      - name: Build and push to DockerHub
+      # Build
+      - name: Build using buildx
         uses: docker/build-push-action@v4
         with:
-          push: true
+          push: false
           context: .
-          tags: |
-            dfbnc/dfbnc:${{ inputs.buildtag }}
-            ghcr.io/dfbnc/dfbnc:${{ inputs.buildtag }}
-            registry.shanemcc.net/dfbnc-public/dfbnc:${{ inputs.buildtag }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
@@ -86,3 +82,25 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+      # Push to each registry.
+      - uses: mr-smithers-excellent/docker-build-push@v6
+        name: Push to Dockerhub
+        with:
+          image: dfbnc/dfbnc
+          tags: ${{ inputs.buildtag }}
+
+      - uses: mr-smithers-excellent/docker-build-push@v6
+        name: Push to GHCR
+        with:
+          registry: ghcr.io
+          image: dfbnc/dfbnc
+          tags: ${{ inputs.buildtag }}
+
+      - uses: mr-smithers-excellent/docker-build-push@v6
+        name: Push to Registry
+        with:
+          registry: registry.shanemcc.net
+          image: dfbnc-public/dfbnc
+          tags: ${{ inputs.buildtag }}
+          multiPlatform: true
