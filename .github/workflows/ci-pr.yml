@@ -1,50 +1,12 @@
 name: CI
 
 on:
-  push:
-    branches:
-    - master
   pull_request:
     branches:
     - master
 
 jobs:
   test:
-    name: CI Build and Test
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up JDK 19
-        uses: actions/setup-java@v3
-        with:
-          java-version: '19'
-          distribution: 'temurin'
-          cache: 'gradle'
-
-      - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@v1
-
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
-
-      - name: Build
-        uses: gradle/gradle-build-action@v2
-        with:
-          arguments: build
-
-      - name: Test
-        uses: gradle/gradle-build-action@v2
-        with:
-          arguments: test
-
-      - name: Jar
-        uses: gradle/gradle-build-action@v2
-        with:
-          arguments: jar
-
-  build-and-push:
-    uses: ./.github/workflows/build-and-push.yml
-    needs: test
+    uses: ./.github/workflows/test.yml
     secrets: inherit
+
