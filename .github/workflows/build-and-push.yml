@@ -69,6 +69,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           push: true
+          context: .
           tags: |
             dfbnc/dfbnc:${{ inputs.buildtag }}
             ghcr.io/dfbnc/dfbnc:${{ inputs.buildtag }}
