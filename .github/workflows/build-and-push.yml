@@ -64,15 +64,6 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: dfbnc/dfbnc:latest
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
-
-      # Build and push to each registry
-      - name: Build and push to DockerHub
-        uses: docker/build-push-action@v2
-        with:
-          push: true
           tags: |
             dfbnc/dfbnc:latest
             ghcr.io/dfbnc/dfbnc:latest
