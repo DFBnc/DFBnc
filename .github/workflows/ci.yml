@@ -9,7 +9,7 @@ on:
     - master
 
 jobs:
-  build:
+  test:
     name: CI Build and Test
     runs-on: ubuntu-latest
 
@@ -43,3 +43,8 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           arguments: jar
+
+  build-and-push:
+    uses: ./.github/workflows/build-and-push.yml
+    needs: test
+    secrets: inherit
