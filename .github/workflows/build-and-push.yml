@@ -69,7 +69,7 @@ jobs:
       - name: Generate Tag list
         id: tags
         env:
-          IMAGES: "docker.io/dfbnc/dfbnc ghcr.io/dfbnc/dfbnc registry.shanemcc.net/dfbnc-public/dfbnc"
+          IMAGES: "docker.io/dfbnc/dfbnc registry.shanemcc.net/dfbnc-public/dfbnc"
           TAGS: "${{ inputs.buildtag }}"
         run: |
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
@@ -89,7 +89,7 @@ jobs:
           context: .
           tags: ${{ steps.tags.outputs.TAGS }}
           cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
 
         # This ugly bit is necessary if you don't want your cache to grow forever
         # until it hits GitHub's limit of 5GB.
