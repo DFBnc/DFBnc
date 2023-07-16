@@ -69,7 +69,7 @@ jobs:
       - name: Generate Tag list
         id: tags
         env:
-          IMAGES: "docker.io/dfbnc/dfbnc registry.shanemcc.net/dfbnc-public/dfbnc"
+          IMAGES: "docker.io/dfbnc/dfbnc ghcr.io/dfbnc/dfbnc registry.shanemcc.net/dfbnc-public/dfbnc"
           TAGS: "${{ inputs.buildtag }}"
         run: |
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
