@@ -73,7 +73,7 @@ jobs:
           TAGS: "${{ inputs.buildtag }}"
         run: |
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "TAGS=<<$EOF" >> "$GITHUB_OUTPUT"
+          echo "TAGS<<$EOF" >> "$GITHUB_OUTPUT"
           for IMAGE in ${IMAGES}; do
             for TAG in ${TAGS}; do
               echo "${IMAGE}:${TAG}" >> "$GITHUB_OUTPUT"
