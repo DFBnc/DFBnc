@@ -68,8 +68,8 @@ jobs:
       # Generate Tag list
       - name: Generate Tag list
         env:
-          IMAGES="docker.io/dfbnc/dfbnc ghcr.io/dfbnc/dfbnc registry.shanemcc.net/dfbnc-public/dfbnc"
-          TAGS="${{ inputs.buildtag }}"
+          IMAGES: "docker.io/dfbnc/dfbnc ghcr.io/dfbnc/dfbnc registry.shanemcc.net/dfbnc-public/dfbnc"
+          TAGS: "{{ inputs.buildtag }}"
         run: |
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           echo "TAGS=<<$EOF" >> "$GITHUB_OUTPUT"
