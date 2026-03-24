@@ -1,23 +1,43 @@
 version: 2
 updates:
 - package-ecosystem: gradle
-  directory: "/"
+  directory: /
   schedule:
     interval: daily
   open-pull-requests-limit: 10
   cooldown:
     default-days: 32 # Slightly over 1 month
+  groups:
+    gradle-minor-patch:
+      update-types:
+      - minor
+      - patch
+    gradle-major:
+      update-types:
+      - major
 - package-ecosystem: gitsubmodule
-  directory: "/"
+  directory: /
   schedule:
     interval: daily
   open-pull-requests-limit: 10
   cooldown:
     default-days: 32 # Slightly over 1 month
-- package-ecosystem: "github-actions"
-  directory: "/"
+  groups:
+    gitsubmodule-minor-patch:
+      update-types:
+      - minor
+      - patch
+    gitsubmodule-major:
+      update-types:
+      - major
+- package-ecosystem: github-actions
+  directory: /
   schedule:
-    interval: "daily"
+    interval: daily
   open-pull-requests-limit: 10
   cooldown:
     default-days: 32 # Slightly over 1 month
+  groups:
+    github-actions-all:
+      patterns:
+      - '*'
